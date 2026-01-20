@@ -1,0 +1,32 @@
+# --- System & IDE ---
+.DS_Store
+.vscode/
+
+# --- Python Essentials ---
+__pycache__/
+*.pyc
+
+# --- Virtual Environments ---
+.venv/
+env/
+venv/
+
+# --- Build Artifacts (from packaging) ---
+*.egg-info/
+dist/
+build/
+
+# --- Testing & Code Quality ---
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- R Project Artifacts ---
+scripts/main.R
+
+# --- Project Data & Outputs ---
+data/raw
+data/processed
+data/final
+MATLAB_Results.pdf
+R_Results.pdf
