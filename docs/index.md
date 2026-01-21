@@ -1,0 +1,53 @@
+# DigiQual
+
+ **Statistical Toolkit for Reliability Assessment in NDT**
+
+`digiqual` is a Python library designed for Non-Destructive Evaluation (NDE) engineers. It provides a robust statistical framework for performing Model-Assisted Probability of Detection (MAPOD) studies and reliability assessments.
+
+The package is built to implement the **Generalized** $\hat{a}$-versus-a Method, allowing users to assess inspection reliability even when traditional assumptions (linearity, constant variance, Gaussian noise) are not met.
+
+------------------------------------------------------------------------
+
+## Core Features
+
+### 1. Experimental Design
+
+Before running expensive Finite Element (FE) simulations, `digiqual` helps you design your experiment efficiently.
+
+- **Latin Hypercube Sampling (LHS):** Generate space-filling experimental designs to cover your deterministic parameter space (e.g., defect size) and stochastic nuisance parameters (e.g., roughness, orientation).
+- **Scale & Bound:** Automatically scale samples to your specific variable bounds.
+
+### 2. Data Validation
+
+Ensure your simulation outputs are statistically valid before processing.
+
+- **Type Checking:** Verifies that input dataframes contain strictly numeric values for signals and proper string identifiers for variables.
+- **Sanity Checks:** Detects overlap between input and outcome variables and flags insufficient sample sizes (\<10 rows) to prevent unstable analysis.
+
+### 3. Reliability Analysis (In Development)
+
+Implementing the generalized framework by Malkiel et al. (2025).
+
+-   **Relaxed Assumptions:** Moves beyond the rigid constraints of the classical $\hat{a}$-versus-$a$ method.
+-   **Advanced Regression:** Fits nonlinear expectation models and models non-constant variance (heteroscedasticity) using Kernel Average Smoothers\[cite: 103, 231\].
+-   **Uncertainty Quantification:** Uses bootstrap resampling to generate robust confidence bounds for Probability of Detection (PoD) curves\[cite: 26, 307\].
+
+------------------------------------------------------------------------
+
+## Installation
+
+``` bash
+# Install via pip
+pip install digiqual
+
+# Or via uv (recommended)
+uv pip install digiqual
+```
+
+------------------------------------------------------------------------
+
+## References
+
+This package implements methods described in:
+
+**Malkiel, N., Croxford, A. J., & Wilcox, P. D. (2025).** A generalized method for the reliability assessment of safety–critical inspection. Proceedings of the Royal Society A, 481: 20240654. https://doi.org/10.1098/rspa.2024.0654
