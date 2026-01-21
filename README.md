@@ -41,7 +41,7 @@ If you want to contribute to digiqual or run the test suite locally, follow thes
 This project uses uv for dependency management.
 
 ``` bash
-git clone [https://github.com/JGIBristol/DigiQual-Python.git](https://github.com/JGIBristol/DigiQual-Python.git)
+git clone https://github.com/JGIBristol/DigiQual-Python.git
 cd digiqual
 uv pip install -e ".[dev]"  # Install package in editable mode + dev tools
 ```
