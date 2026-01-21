@@ -2,9 +2,9 @@
 
 **Statistical Toolkit for Reliability Assessment in NDT**
 
-`digiqual` is a Python library designed for Non-Destructive Evaluation (NDE) engineers. \[cite_start\]It implements the **Generalized** $\hat{a}$-versus-$a$ Method\[cite: 96, 958\], allowing users to perform reliability assessments without the rigid assumptions of linearity or constant variance found in standard methods.
+`digiqual` is a Python library designed for Non-Destructive Evaluation (NDE) engineers. It implements the **Generalized** $\hat{a}$-versus-$a$ Method, allowing users to perform reliability assessments without the rigid assumptions of linearity or constant variance found in standard methods.
 
-> **Documentation:** [Read the full documentation here](https://your-username.github.io/digiqual/) *(Update this link once you deploy!)*
+> **Documentation:** [Read the full documentation here](https://github.com/JGIBristol/DigiQual-Python)
 
 ------------------------------------------------------------------------
 
@@ -41,7 +41,7 @@ If you want to contribute to digiqual or run the test suite locally, follow thes
 This project uses uv for dependency management.
 
 ``` bash
-git clone [https://github.com/your-username/digiqual.git](https://github.com/your-username/digiqual.git)
+git clone [https://github.com/JGIBristol/DigiQual-Python.git](https://github.com/JGIBristol/DigiQual-Python.git)
 cd digiqual
 uv pip install -e ".[dev]"  # Install package in editable mode + dev tools
 ```
