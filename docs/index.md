@@ -29,8 +29,8 @@ Ensure your simulation outputs are statistically valid before processing.
 Implementing the generalized framework by Malkiel et al. (2025).
 
 -   **Relaxed Assumptions:** Moves beyond the rigid constraints of the classical $\hat{a}$-versus-$a$ method.
--   **Advanced Regression:** Fits nonlinear expectation models and models non-constant variance (heteroscedasticity) using Kernel Average Smoothers\[cite: 103, 231\].
--   **Uncertainty Quantification:** Uses bootstrap resampling to generate robust confidence bounds for Probability of Detection (PoD) curves\[cite: 26, 307\].
+-   **Advanced Regression:** Fits nonlinear expectation models and models non-constant variance (heteroscedasticity) using Kernel Average Smoothers.
+-   **Uncertainty Quantification:** Uses bootstrap resampling to generate robust confidence bounds for Probability of Detection (PoD) curves.
 
 ------------------------------------------------------------------------
 
