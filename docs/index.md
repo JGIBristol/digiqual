@@ -42,9 +42,9 @@ You can install `digiqual` directly from GitHub.
 
 If you are managing a project with `uv`, add `digiqual` as a dependency:
 ```bash
-# To install the latest stable release (v0.1.1):
+# To install the latest stable release (v0.2.0):
 
-uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git@v0.1.1"
+uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git@v0.2.0"
 
 # To install the latest development version (main branch):
 
@@ -54,15 +54,15 @@ uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git"
 If you just want to install it into a virtual environment without modifying a project file (e.g., for a quick script), use pip interface:
 
 ```bash
-uv pip install "git+https://github.com/JGIBristol/digiqual.git@v0.1.1"
+uv pip install "git+https://github.com/JGIBristol/digiqual.git@v0.2.0"
 ```
 
 ### Option 2: Install via standard pip
 
-To install the latest stable release (v0.1.1):
+To install the latest stable release (v0.2.0):
 
 ```bash
-pip install "git+https://github.com/JGIBristol/digiqual.git@v0.1.1"
+pip install "git+https://github.com/JGIBristol/digiqual.git@v0.2.0"
 ```
 To install the latest development version:
 
