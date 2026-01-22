@@ -70,7 +70,7 @@ jobs:
       - name: Deploy Docs
         run: uv run mkdocs gh-deploy --force
 
-  # JOB 3: Draft Release (Only on Tags)
+# JOB 3: Build & Draft Release (Only on Tags)
   create-release:
     needs: test
     if: startsWith(github.ref, 'refs/tags/v')
@@ -81,8 +81,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v1
+
+      - name: Build Package
+        run: uv build
+
       - name: Create Release Draft
         uses: softprops/action-gh-release@v1
         with:
           draft: true
           generate_release_notes: true
+          files: dist/*
