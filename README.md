@@ -63,7 +63,6 @@ This project uses uv for dependency management.
 ``` bash
 git clone https://github.com/JGIBristol/digiqual.git
 cd digiqual
-uv pip install -e ".[dev]"  # Install package in editable mode + dev tools
 ```
 
 2.  Run Tests
@@ -71,7 +70,7 @@ uv pip install -e ".[dev]"  # Install package in editable mode + dev tools
 The package includes a full test suite using pytest.
 
 ``` bash
-pytest
+uv run pytest
 ```
 
 3.  Build Documentation
@@ -79,7 +78,7 @@ pytest
 To preview the documentation site locally:
 
 ``` bash
-mkdocs serve
+uv run mkdocs serve
 ```
 
 ## References
