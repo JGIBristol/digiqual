@@ -1,0 +1,68 @@
+name: CI/CD
+
+# Trigger on pushes to main and any pull request
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# Permissions needed to write to the gh-pages branch
+permissions:
+  contents: write
+
+jobs:
+  # JOB 1: Run Tests
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v1
+
+      - name: Set up Python
+        run: uv python install 3.9
+
+      - name: Install dependencies
+        # Installs your package + dev tools (pytest)
+        run: |
+          uv venv
+          uv pip install -e ".[dev]"
+
+      - name: Run Tests
+        # Fails the job if tests fail
+        run: uv run pytest
+
+  # JOB 2: Deploy Documentation
+  deploy-docs:
+    needs: test  # Only runs if tests pass
+    if: github.ref == 'refs/heads/main' # Only runs on main branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v1
+
+      - name: Set up Python
+        run: uv python install 3.9
+
+      - name: Install dependencies
+        # Installs your package + doc tools (mkdocs-material)
+        run: |
+          uv venv
+          uv pip install -e ".[dev]"
+
+      - name: Configure Git User
+        # MkDocs needs a git identity to commit to gh-pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Deploy Docs
+        run: uv run mkdocs gh-deploy --force
