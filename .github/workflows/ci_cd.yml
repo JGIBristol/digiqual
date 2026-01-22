@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-    tags:              # <--- Listen for tags
+    tags:
       - 'v*'
   pull_request:
     branches:
@@ -14,7 +14,7 @@ permissions:
   contents: write
 
 jobs:
-  # JOB 1: Run Tests (Runs on EVERYTHING - commits, PRs, and tags)
+  # JOB 1: Run Tests
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -42,7 +42,7 @@ jobs:
       - name: Verify Docs Build
         run: uv run mkdocs build --strict
 
-  # JOB 2: Deploy Documentation (Runs ONLY on Tags)
+  # JOB 2: Deploy Documentation (Only on Tags)
   deploy-docs:
     needs: test
     if: startsWith(github.ref, 'refs/tags/v')
@@ -68,5 +68,21 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Deploy Docs
-        # Force push the update to the website
         run: uv run mkdocs gh-deploy --force
+
+  # JOB 3: Draft Release (Only on Tags)
+  create-release:
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Release Draft
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          generate_release_notes: true

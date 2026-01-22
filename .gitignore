@@ -23,7 +23,6 @@ site/
 htmlcov/
 
 # --- Scripts ---
-scripts
 
 # --- Project Data & Outputs ---
 data
