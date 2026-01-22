@@ -28,20 +28,15 @@ Once you have your simulation results, ensure they are ready for PoD analysis.
 
 ```python
 from digiqual.diagnostics import validate_simulation
+from numpy.random import default_rng
 
-# For this example, we can take the dataframe
-#  we created above and add a synthetic result
+# Here we create a Signal variable that we would usually collect from the simulations.
+# We add some noise to showcase the validate_simulation function.
 
-df['Signal'] = df['Length']*df['Roughness']
+df['Signal'] = (df['Length'] * df['Roughness']) + rng.uniform(-1, 1, size=len(df))
 
-report = validate_simulation(
-    df=df,
-    input_cols=["Length","Angle","Roughness"],
-    outcome_col="Signal"
-)
+df_clean, df_removed = dq.validate_simulation(df=df, input_cols=["Length", "Angle", "Roughness"], outcome_col="Signal")
 
-if report["valid"]:
-    print("Data is ready for analysis!")
-else:
-    print(f"Validation failed: {report['message']}")
+len(df_clean)
+len(df_removed)
 ```
