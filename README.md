@@ -4,25 +4,46 @@
 
 `digiqual` is a Python library designed for Non-Destructive Evaluation (NDE) engineers. It implements the **Generalized** $\hat{a}$-versus-a Method, allowing users to perform reliability assessments without the rigid assumptions of linearity or constant variance found in standard methods.
 
-> **Documentation:** [Read the full documentation here](https://github.com/JGIBristol/DigiQual-Python)
+> **Documentation:** [Read the full documentation here](https://github.com/JGIBristol/digiqual)
 
 ------------------------------------------------------------------------
 
 ## Installation
 
-You can install `digiqual` directly from PyPI (once published) or from source.
+You can install `digiqual` directly from GitHub.
 
-### Using pip
+### Option 1: Install via uv (Recommended)
 
-``` bash
-pip install digiqual
+If you are managing a project with `uv`, add `digiqual` as a dependency:
+```bash
+# To install the latest stable release (v0.1.0):
+
+uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git@v0.1.0"
+
+# To install the latest development version (main branch):
+
+uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git"
 ```
 
-### Using uv (Recommended)
+If you just want to install it into a virtual environment without modifying a project file (e.g., for a quick script), use pip interface:
 
-``` bash
-uv pip install digiqual
+```bash
+uv pip install "git+https://github.com/JGIBristol/digiqual.git@v0.1.0"
 ```
+
+### Option 2: Install via standard pip
+
+To install the latest stable release (v0.1.0):
+
+```bash
+pip install "git+https://github.com/JGIBristol/digiqual.git@v0.1.0"
+```
+To install the latest development version:
+
+```bash
+pip install "git+https://github.com/JGIBristol/digiqual.git"
+
+------------------------------------------------------------------------
 
 ## Features
 
@@ -31,6 +52,8 @@ uv pip install digiqual
 -   Data Validation: Automatically check simulation results for type errors, overlaps, and sample size sufficiency.
 
 -   Reliability Analysis: (In Development) Calculate Probability of Detection (PoD) curves using advanced regression and bootstrap confidence bounds.
+
+------------------------------------------------------------------------
 
 ## Development
 
@@ -41,7 +64,7 @@ If you want to contribute to digiqual or run the test suite locally, follow thes
 This project uses uv for dependency management.
 
 ``` bash
-git clone https://github.com/JGIBristol/DigiQual-Python.git
+git clone https://github.com/JGIBristol/digiqual.git
 cd digiqual
 uv pip install -e ".[dev]"  # Install package in editable mode + dev tools
 ```

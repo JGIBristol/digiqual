@@ -1,4 +1,4 @@
-# DigiQual
+# digiqual
 
  **Statistical Toolkit for Reliability Assessment in NDT**
 
@@ -36,14 +36,39 @@ Implementing the generalized framework by Malkiel et al. (2025).
 
 ## Installation
 
-``` bash
-# Install via pip
-pip install digiqual
+You can install `digiqual` directly from GitHub.
 
-# Or via uv (recommended)
-uv pip install digiqual
+### Option 1: Install via uv (Recommended)
+
+If you are managing a project with `uv`, add `digiqual` as a dependency:
+```bash
+# To install the latest stable release (v0.1.0):
+
+uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git@v0.1.0"
+
+# To install the latest development version (main branch):
+
+uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git"
 ```
 
+If you just want to install it into a virtual environment without modifying a project file (e.g., for a quick script), use pip interface:
+
+```bash
+uv pip install "git+https://github.com/JGIBristol/digiqual.git@v0.1.0"
+```
+
+### Option 2: Install via standard pip
+
+To install the latest stable release (v0.1.0):
+
+```bash
+pip install "git+https://github.com/JGIBristol/digiqual.git@v0.1.0"
+```
+To install the latest development version:
+
+```bash
+pip install "git+https://github.com/JGIBristol/digiqual.git"
+```
 ------------------------------------------------------------------------
 
 ## References
