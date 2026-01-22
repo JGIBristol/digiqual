@@ -21,6 +21,9 @@ test: ## Run the full test suite with pytest
 docs: ## Build and serve documentation (opens in browser)
 	uv run mkdocs serve --open
 
+deploy-docs: ## Force deploy documentation to GitHub Pages immediately
+	uv run mkdocs gh-deploy --force
+
 build: ## Build the distribution package (wheel & sdist)
 	uv build
 
