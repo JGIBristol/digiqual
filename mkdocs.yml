@@ -1,6 +1,10 @@
 site_name: digiqual Docs
+repo_url: https://github.com/JGIBristol/digiqual
+repo_name: JGIBristol/digiqual
 theme:
   name: material
+
+edit_uri: edit/main/docs/
 
 plugins:
   - mkdocstrings:
