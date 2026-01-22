@@ -25,16 +25,13 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["hatchling >= 1.26"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/digiqual"]
+requires = ["uv_build>=0.8.14,<0.9.0"]
+build-backend = "uv_build"
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.4.2",
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.7.1",
-    "mkdocstrings>=0.30.1",
+    "mkdocstrings[python]>=0.30.1",
 ]
