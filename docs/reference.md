@@ -1,7 +1,7 @@
 # API Reference
 
-## LHS Design
-::: digiqual.lhs_design
+## Sampling
+::: digiqual.sampling
 
-## Validation
-::: digiqual.validation
+## Diagnostics
+::: digiqual.diagnostics

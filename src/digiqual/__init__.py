@@ -1,3 +1,7 @@
 __version__ = "0.1.0"
-from .lhs_design import generate_lhs_design
-from .validation import validate_data
+from .sampling import generate_lhs
+from .diagnostics import validate_simulation, check_sample_sufficiency
+
+
+# 2. Define __all__ to stop the "unused import" warning
+__all__ = ["generate_lhs", "validate_simulation", "check_sample_sufficiency"]

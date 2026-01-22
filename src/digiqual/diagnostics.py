@@ -1,7 +1,7 @@
 import pandas as pd
-from typing import List, Dict, Union, Optional
+from typing import List, Dict, Union
 
-def validate_data(
+def validate_simulation(
     df: pd.DataFrame,
     input_cols: List[str],
     outcome_col: str
@@ -90,3 +90,24 @@ def validate_data(
         "n_dropped": n_dropped,
         "message": msg
     }
+
+def check_sample_sufficiency(
+    df: pd.DataFrame,
+    input_cols: List[str],
+    outcome_col: str,
+    complexity: int
+) -> Dict[str, Union[bool, pd.DataFrame, None]]:
+    """
+    Ensures data is numeric and outcome is positive.
+
+    Args:
+        df (pd.DataFrame): Validated dataframe (from validate_data()).
+        input_cols (List[str]): List of input variable names.
+        outcome_col (str): Signal column name.
+
+    Returns:
+        dict: A dictionary containing:
+            - 'valid' (bool): True if all variables converge.
+            - 'new_samples' (pd.DataFrame or None): The new sampling framework if more samples are required for convergence.
+            - 'message' (str): Status message.
+    """

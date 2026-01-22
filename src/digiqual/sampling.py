@@ -3,7 +3,7 @@ from scipy.stats import qmc
 from typing import Optional
 
 
-def generate_lhs_design(
+def generate_lhs(
     n: int, vars_df: pd.DataFrame, seed: Optional[int] = None
 ) -> pd.DataFrame:
     """

@@ -6,7 +6,7 @@ Create a Latin Hypercube design for a simulation study involving defect size (a)
 
 ```python
 import pandas as pd
-from digiqual.lhs_design import generate_lhs_design
+from digiqual.sampling import generate_lhs
 
 # Define your variables and bounds
 vars_df = pd.DataFrame({
@@ -25,7 +25,7 @@ print(design.head())
 Once you have your simulation results, ensure they are ready for PoD analysis.
 
 ```python
-from digiqual.validation import validate_data
+from digiqual.diagnostics import validate_simulation
 
 # Assume 'results_df' is your dataframe containing simulation outputs
 report = validate_data(

@@ -15,18 +15,17 @@ venv/
 *.egg-info/
 dist/
 build/
+site/
 
 # --- Testing & Code Quality ---
 .pytest_cache/
 .coverage
 htmlcov/
 
-# --- R Project Artifacts ---
-scripts/main.R
+# --- Scripts ---
+scripts
 
 # --- Project Data & Outputs ---
-data/raw
-data/processed
-data/final
+data
 MATLAB_Results.pdf
 R_Results.pdf
