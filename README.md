@@ -1,4 +1,4 @@
-# DigiQual
+# digiqual
 
 **Statistical Toolkit for Reliability Assessment in NDT**
 
@@ -42,7 +42,7 @@ To install the latest development version:
 
 ```bash
 pip install "git+https://github.com/JGIBristol/digiqual.git"
-
+```
 ------------------------------------------------------------------------
 
 ## Features
