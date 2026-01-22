@@ -57,11 +57,8 @@ def validate_simulation(
     initial_rows = len(df_clean)
 
     # --- 2. Numeric Coercion ---
-    # 'apply(pd.to_numeric)' works like R's lapply(as.numeric).
-    # 'errors="coerce"' turns strings/errors into NaN (comparable to R's NAs with warning)
     df_clean = df_clean.apply(pd.to_numeric, errors='coerce')
 
-    # Drop NAs created by coercion or existing before (comparable to na.omit)
     df_clean.dropna(inplace=True)
 
     # --- 3. Outcome Validation (Signal) ---
