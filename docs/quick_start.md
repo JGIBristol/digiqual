@@ -37,7 +37,7 @@ df['Signal'] = df['Length']*df['Roughness']
 report = validate_simulation(
     df=df,
     input_cols=["Length","Angle","Roughness"],
-    outcome_col="Signal
+    outcome_col="Signal"
 )
 
 if report["valid"]:
