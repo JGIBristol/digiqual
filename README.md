@@ -6,7 +6,6 @@
 
 > **Documentation:** [Read the full documentation here](https://jgibristol.github.io/digiqual/)
 
-------------------------------------------------------------------------
 
 ## Installation
 
@@ -43,7 +42,6 @@ To install the latest development version:
 ```bash
 pip install "git+https://github.com/JGIBristol/digiqual.git"
 ```
-------------------------------------------------------------------------
 
 ## Features
 
@@ -53,7 +51,6 @@ pip install "git+https://github.com/JGIBristol/digiqual.git"
 
 -   Reliability Analysis: (In Development) Calculate Probability of Detection (PoD) curves using advanced regression and bootstrap confidence bounds.
 
-------------------------------------------------------------------------
 
 ## Development
 
