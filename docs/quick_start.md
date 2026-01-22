@@ -30,12 +30,14 @@ Once you have your simulation results, ensure they are ready for PoD analysis.
 from digiqual.diagnostics import validate_simulation
 from numpy.random import default_rng
 
-# Here we create a Signal variable that we would usually collect from the simulations.
-# We add some noise to showcase the validate_simulation function.
+# Here we create a Signal variable that we would usually
+# collect from the simulations. We add some noise to
+# showcase the validate_simulation function.
 
 df['Signal'] = (df['Length'] * df['Roughness']) + rng.uniform(-1, 1, size=len(df))
 
-df_clean, df_removed = dq.validate_simulation(df=df, input_cols=["Length", "Angle", "Roughness"], outcome_col="Signal")
+df_clean, df_removed = dq.validate_simulation(
+    df=df,input_cols=["Length", "Angle", "Roughness"],outcome_col="Signal")
 
 len(df_clean)
 len(df_removed)
