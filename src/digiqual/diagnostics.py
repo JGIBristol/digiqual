@@ -1,13 +1,19 @@
 import pandas as pd
-from typing import List, Dict, Union
+from typing import List, Tuple
+
+# Define a custom exception for clarity
+class ValidationError(Exception):
+    """Raised when simulation data fails validation checks."""
+    pass
+
 
 def validate_simulation(
     df: pd.DataFrame,
     input_cols: List[str],
     outcome_col: str
-) -> Dict[str, Union[bool, str, pd.DataFrame, int, None]]:
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Ensures data is numeric and outcome is positive.
+    Validates simulation data, coercing to numeric and removing invalid rows.
 
     Args:
         df (pd.DataFrame): Raw data.
@@ -15,96 +21,58 @@ def validate_simulation(
         outcome_col (str): Signal column name.
 
     Returns:
-        dict: A dictionary containing:
-            - 'valid' (bool): True if data passed validation.
-            - 'data' (pd.DataFrame or None): The cleaned dataframe.
-            - 'n_dropped' (int): Number of rows removed.
-            - 'message' (str): Status message.
+        Tuple[pd.DataFrame, pd.DataFrame]:
+            - df_clean: The validated, numeric dataframe ready for analysis.
+            - df_removed: A dataframe containing the rows that were dropped (with original values).
+
+    Raises:
+        ValidationError: If columns are missing, types are wrong, or too few valid rows remain.
     """
-    # --- 1. Basic Structure Checks ---
+    # --- 1. Basic Structure Checks (Fail Fast) ---
     if not isinstance(df, pd.DataFrame) or df.empty:
-        return {
-            "valid": False,
-            "message": "Input is not a valid data frame.",
-            "data": None,
-            "n_dropped": 0
-        }
+        raise ValidationError("Input is not a valid pandas DataFrame or is empty.")
 
-    # Check if all columns exist
-    # We combine lists to check everything at once
     required_cols = input_cols + [outcome_col]
-    if not set(required_cols).issubset(df.columns):
-        return {
-            "valid": False,
-            "message": "Missing columns.",
-            "data": None,
-            "n_dropped": 0
-        }
 
-    # --- NEW: Overlap Check ---
+    # Check for missing columns
+    missing = [col for col in required_cols if col not in df.columns]
+    if missing:
+        raise ValidationError(f"Missing required columns: {missing}")
+
+    # Check for variable overlap
     if outcome_col in input_cols:
-        return {
-            "valid": False,
-            "message": "The Outcome variable cannot also be an Input variable.",
-            "data": None,
-            "n_dropped": 0
-        }
+        raise ValidationError(f"Outcome variable '{outcome_col}' cannot also be an Input variable.")
 
-    # Select only relevant columns to create the clean copy
-    df_clean = df[required_cols].copy()
+    # --- 2. Data Cleaning ---
+    # We work on a subset to avoid touching unrelated columns
+    subset = df[required_cols].copy()
 
-    # Count rows before cleaning to calculate drops later
-    initial_rows = len(df_clean)
+    # Coerce to numeric (turn "Error", "N/A" into NaN)
+    subset_numeric = subset.apply(pd.to_numeric, errors='coerce')
 
-    # --- 2. Numeric Coercion ---
-    df_clean = df_clean.apply(pd.to_numeric, errors='coerce')
+    # Identify rows that are valid (No NaNs AND Outcome > 0)
+    # 1. Must be numeric (not NaN)
+    mask_numeric = subset_numeric.notna().all(axis=1)
+    # 2. Outcome must be positive (Signal > 0)
+    # (We use fillna(False) to ensure NaNs in outcome don't crash this check)
+    mask_positive = subset_numeric[outcome_col] > 0
+    mask_positive = mask_positive.fillna(False)
 
-    df_clean.dropna(inplace=True)
+    # Combine masks
+    mask_valid = mask_numeric & mask_positive
 
-    # --- 3. Outcome Validation (Signal) ---
-    # Signals usually MUST be positive (> 0)
-    df_clean = df_clean[df_clean[outcome_col] > 0]
+    # --- 3. Split Data ---
+    # Clean data: Use the numeric version
+    df_clean = subset_numeric.loc[mask_valid].copy()
 
-    # Calculate how many we dropped
-    final_rows = len(df_clean)
-    n_dropped = initial_rows - final_rows
+    # Removed data: Use the ORIGINAL version so user can see why it failed
+    df_removed = df.loc[~mask_valid].copy()
 
-    # Check if we have enough data left
-    if final_rows < 10:
-        return {
-            "valid": False,
-            "message": "Too few valid rows (<10) after cleaning.",
-            "data": None,
-            "n_dropped": n_dropped
-        }
+    # --- 4. Final Sufficiency Check ---
+    if len(df_clean) < 10:
+        raise ValidationError(
+            f"Too few valid rows remaining ({len(df_clean)}) after cleaning. "
+            "Analysis requires at least 10 valid data points."
+        )
 
-    # Construct the success message
-    msg = f"Data validated. {n_dropped} rows dropped."
-
-    return {
-        "valid": True,
-        "data": df_clean,
-        "n_dropped": n_dropped,
-        "message": msg
-    }
-
-def check_sample_sufficiency(
-    df: pd.DataFrame,
-    input_cols: List[str],
-    outcome_col: str,
-    complexity: int
-) -> Dict[str, Union[bool, pd.DataFrame, None]]:
-    """
-    Ensures data is numeric and outcome is positive.
-
-    Args:
-        df (pd.DataFrame): Validated dataframe (from validate_data()).
-        input_cols (List[str]): List of input variable names.
-        outcome_col (str): Signal column name.
-
-    Returns:
-        dict: A dictionary containing:
-            - 'valid' (bool): True if all variables converge.
-            - 'new_samples' (pd.DataFrame or None): The new sampling framework if more samples are required for convergence.
-            - 'message' (str): Status message.
-    """
+    return df_clean, df_removed

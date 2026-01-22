@@ -1,9 +1,10 @@
+import pytest
 import pandas as pd
-from digiqual.diagnostics import validate_simulation
+from digiqual.diagnostics import validate_simulation, ValidationError
 
 # 1. Test the "Happy Path" (Good Data)
 def test_validate_simulation_success():
-    # Create 15 rows of good data (mixed floats and ints)
+    # Create 15 rows of good data
     data = {
         'InputA': [1, 2, 3] * 5,
         'InputB': [10.5, 20.5, 30.5] * 5,
@@ -11,31 +12,29 @@ def test_validate_simulation_success():
     }
     df = pd.DataFrame(data)
 
-    result = validate_simulation(df, input_cols=['InputA', 'InputB'], outcome_col='Signal')
+    # New API: Returns tuple (clean, removed)
+    df_clean, df_removed = validate_simulation(df, input_cols=['InputA', 'InputB'], outcome_col='Signal')
 
-    assert result['valid'] is True
-    assert result['n_dropped'] == 0
-    assert len(result['data']) == 15
-    assert "Data validated" in result['message']
+    # Assertions
+    assert len(df_clean) == 15
+    assert df_removed.empty  # Should be empty for perfect data
+    assert list(df_clean.columns) == ['InputA', 'InputB', 'Signal']
 
-# 2. Test Missing Columns
+# 2. Test Missing Columns (Expect Error)
 def test_validate_simulation_missing_cols():
     df = pd.DataFrame({'InputA': [1]*15}) # Missing InputB and Signal
 
-    result = validate_simulation(df, input_cols=['InputA', 'InputB'], outcome_col='Signal')
+    # We expect the function to raise a ValidationError
+    with pytest.raises(ValidationError, match="Missing required columns"):
+        validate_simulation(df, input_cols=['InputA', 'InputB'], outcome_col='Signal')
 
-    assert result['valid'] is False
-    assert result['message'] == "Missing columns."
-
-# 3. Test Overlap Check (Outcome inside Inputs)
+# 3. Test Overlap Check (Expect Error)
 def test_validate_simulation_overlap():
-    df = pd.DataFrame({'InputA': [1], 'Signal': [1]})
+    df = pd.DataFrame({'InputA': [1]*15, 'Signal': [1]*15})
 
     # 'Signal' is listed as both input and outcome
-    result = validate_simulation(df, input_cols=['InputA', 'Signal'], outcome_col='Signal')
-
-    assert result['valid'] is False
-    assert "Outcome variable cannot also be an Input" in result['message']
+    with pytest.raises(ValidationError, match="Outcome variable.*cannot also be an Input"):
+        validate_simulation(df, input_cols=['InputA', 'Signal'], outcome_col='Signal')
 
 # 4. Test Numeric Cleaning (Text strings becoming NaNs)
 def test_validate_simulation_non_numeric_drop():
@@ -45,27 +44,28 @@ def test_validate_simulation_non_numeric_drop():
         'Signal': [5]*12
     })
 
-    result = validate_simulation(df, input_cols=['InputA'], outcome_col='Signal')
+    df_clean, df_removed = validate_simulation(df, input_cols=['InputA'], outcome_col='Signal')
 
-    assert result['valid'] is True
-    assert result['n_dropped'] == 2 # The 2 text rows should be gone
-    assert len(result['data']) == 10
+    assert len(df_clean) == 10
+    assert len(df_removed) == 2
+    # Verify the bad data is preserved in df_removed
+    assert "bad_text" in df_removed['InputA'].values
 
 # 5. Test Negative/Zero Signal Drop
 def test_validate_simulation_negative_signal():
-    # Create 15 rows, but 5 have negative or zero signal
+    # Create 15 rows: 10 good, 5 bad (negative/zero)
     df = pd.DataFrame({
         'InputA': [1]*15,
         'Signal': [10]*10 + [-5, 0, -1, 0, -10]
     })
 
-    result = validate_simulation(df, input_cols=['InputA'], outcome_col='Signal')
+    df_clean, df_removed = validate_simulation(df, input_cols=['InputA'], outcome_col='Signal')
 
-    assert result['valid'] is True
-    assert result['n_dropped'] == 5
-    assert len(result['data']) == 10
+    assert len(df_clean) == 10
+    assert len(df_removed) == 5
+    assert (df_clean['Signal'] > 0).all() # Verify all remaining signals are positive
 
-# 6. Test "Too Few Rows" Failure
+# 6. Test "Too Few Rows" (Expect Error)
 def test_validate_simulation_too_few_rows():
     # Only 5 rows total (below the <10 threshold)
     df = pd.DataFrame({
@@ -73,7 +73,6 @@ def test_validate_simulation_too_few_rows():
         'Signal': [1, 1, 1, 1, 1]
     })
 
-    result = validate_simulation(df, input_cols=['InputA'], outcome_col='Signal')
-
-    assert result['valid'] is False
-    assert "Too few valid rows" in result['message']
+    # This is now a critical error, not just a "valid: False" flag
+    with pytest.raises(ValidationError, match="Too few valid rows"):
+        validate_simulation(df, input_cols=['InputA'], outcome_col='Signal')
