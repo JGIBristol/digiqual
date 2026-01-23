@@ -58,7 +58,7 @@ release part="patch": check
     # 1. Update version in files
     # (The script runs, updates files, and we capture the version number)
     version=$(python3 scripts/bump_version.py {{part}})
-    @echo "New version: $version"
+    echo "New version: $version"
 
     # 2. Update lock file
     uv lock
@@ -79,10 +79,10 @@ fix-docs:
     @if [ -n "$(git status --porcelain)" ]; then echo "❌ Work tree is dirty. Please commit or stash changes first."; exit 1; fi
     @echo "Finding latest tag..."
     tag=$(git describe --tags --abbrev=0); \
-    @echo "Checking out $tag..."; \
+    echo "Checking out $tag..."; \
     git checkout $tag; \
-    @echo "✅ You are now editing version $tag."; \
-    @echo "👉 Make your changes now. When done, run 'just finish-fix'"
+    echo "✅ You are now editing version $tag."; \
+    echo "👉 Make your changes now. When done, run 'just finish-fix'"
 
 # 2. Finish hotfix: Deploys the site and returns you to main
 finish-fix:
