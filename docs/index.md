@@ -4,7 +4,7 @@
 
 `digiqual` is a Python library designed for Non-Destructive Evaluation (NDE) engineers. It provides a robust statistical framework for performing Model-Assisted Probability of Detection (MAPOD) studies and reliability assessments.
 
-The package is built to implement the **Generalized** $\hat{a}$-versus-$a$ Method, allowing users to assess inspection reliability even when traditional assumptions (linearity, constant variance, Gaussian noise) are not met.
+The package is built to implement the Generalised $\hat{a}$-versus-$a$ Method, allowing users to assess inspection reliability even when traditional assumptions (linearity, constant variance, Gaussian noise) are not met.
 
 ------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ Ensure your simulation outputs are statistically valid before processing.
 
 ### 3. Reliability Analysis (In Development)
 
-Implementing the generalized framework by Malkiel et al. (2025).
+Implementing the generalised framework by Malkiel et al. (2025).
 
 -   **Relaxed Assumptions:** Moves beyond the rigid constraints of the classical $\hat{a}$-versus-$a$ method.
 -   **Advanced Regression:** Fits nonlinear expectation models and models non-constant variance (heteroscedasticity) using Kernel Average Smoothers.
