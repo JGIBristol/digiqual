@@ -41,13 +41,14 @@ You can install `digiqual` directly from GitHub.
 ### Option 1: Install via uv (Recommended)
 
 If you are managing a project with `uv`, add `digiqual` as a dependency:
+
+- To install the latest stable release (v0.2.1):
 ```bash
-# To install the latest stable release (v0.2.1):
-
 uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git@v0.2.1"
+```
 
-# To install the latest development version (main branch):
-
+- To install the latest development version (main branch):
+```bash
 uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git"
 ```
 
