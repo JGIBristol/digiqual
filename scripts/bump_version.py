@@ -41,10 +41,8 @@ def bump_version(part):
             content = file_path.read_text()
             new_content = content.replace(f"v{old_version}", f"v{new_version}")
             file_path.write_text(new_content)
-            # CRITICAL FIX BELOW: file=sys.stderr
             print(f"Updated {filename}", file=sys.stderr)
 
-    # This is the ONLY thing that should print to stdout
     print(new_version)
 
 if __name__ == "__main__":
