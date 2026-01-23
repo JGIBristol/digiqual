@@ -23,8 +23,10 @@ site/
 htmlcov/
 
 # --- Scripts ---
+scripts/main.R
+scripts/matlab.py
 
 # --- Project Data & Outputs ---
-data
-MATLAB_Results.pdf
-R_Results.pdf
+data/raw
+data/processed
+data/final

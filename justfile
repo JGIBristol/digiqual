@@ -51,11 +51,14 @@ clean:
 # 🚀 Bump version & Push. (Usage: just release minor)
 # SAFETY: Automatically runs 'check' first. If 'check' fails, this aborts.
 release part="patch": check
-    @echo "Bumping {{part}} version..."
+    #!/usr/bin/env bash
+    set -e
+    echo "Bumping {{part}} version..."
 
     # 1. Update version in files
+    # (The script runs, updates files, and we capture the version number)
     version=$(python3 scripts/bump_version.py {{part}})
-    @echo "New version: $version"
+    echo "New version: $version"
 
     # 2. Update lock file
     uv lock
