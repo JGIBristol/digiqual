@@ -88,7 +88,11 @@ fix-docs:
 finish-fix:
     @echo "Deploying fixed documentation..."
     uv run mkdocs gh-deploy --force
+    @echo "Stashing changes to carry them to main..."
+    git stash
     @echo "Returning to main branch..."
     git checkout main
+    @echo "Restoring changes..."
+    git stash pop
     @echo "✅ Back on main. Your typo fix is in your working directory."
     @echo "👉 Don't forget to commit the fix to main!"
