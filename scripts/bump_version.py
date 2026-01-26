@@ -33,7 +33,7 @@ def bump_version(part):
     toml_path.write_text(new_toml_content)
 
     # --- 2. Update Documentation Files ---
-    files_to_update = ["README.md", "docs/index.md"]
+    files_to_update = ["README.md", "docs/index.md","src/digiqual/__init__.py"]
 
     for filename in files_to_update:
         file_path = Path(filename)

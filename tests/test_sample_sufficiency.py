@@ -20,7 +20,7 @@ def basic_df():
         'Angle': np.linspace(-90, 90, n),
         'Roughness': np.linspace(0, 1, n)
     })
-    # Strong signal: y = 2x + 10 (Easy for models to fit)
+
     df['Signal'] = 2 * df['Length'] + 10
     return df
 
@@ -45,7 +45,6 @@ def test_check_input_coverage_fail():
 
     res = _check_input_coverage(df, ['A'])
 
-    # FIX: Use 'not' for False checks
     assert not res['A']['sufficient_coverage']
     assert res['A']['max_gap_ratio'] > 0.2
 
@@ -127,7 +126,7 @@ def test_sample_sufficiency_fail_coverage():
         (results['Test'] == 'Input Coverage') &
         (results['Variable'] == 'A')
     ]
-    # FIX: Use 'not' on the extracted value
+
     assert not coverage_fail['Pass'].values[0]
 
 def test_sample_sufficiency_fail_stability():
