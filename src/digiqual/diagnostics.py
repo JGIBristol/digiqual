@@ -22,14 +22,14 @@ def validate_simulation(
     Validates simulation data, coercing to numeric and removing invalid rows.
 
     Args:
-        df (pd.DataFrame): Clean data from validate_simulation.
+        df (pd.DataFrame): The raw dataframe containing input columns and the outcome column.
         input_cols (List[str]): List of input variable names.
-        outcome_col (str): Signal column name.
+        outcome_col (str): Name of the outcome variable.
 
     Returns:
         (Tuple[pd.DataFrame, pd.DataFrame]):
-            - df_clean: The validated, numeric dataframe ready for analysis.
-            - df_removed: A dataframe containing the rows that were dropped (with original values).
+            * `df_clean`: The validated, numeric dataframe ready for analysis.
+            * `df_removed`: A dataframe containing the rows that were dropped.
 
     Raises:
         ValidationError: If columns are missing, types are wrong, or too few valid rows remain.
@@ -155,14 +155,14 @@ def sample_sufficiency(
     Performs statistical tests on sampling sufficiency.
 
     Runs 3 checks:
-        1. Input Space Coverage (Gaps)
-        2. Model Fit Stability (CV Score)
-        3. Bootstrap Convergence (CI Width)
+        1. **Input Space Coverage** (Gaps)
+        2. **Model Fit Stability** (CV Score)
+        3. **Bootstrap Convergence** (CI Width)
 
     Args:
-        df (pd.DataFrame): Clean data from validate_simulation.
+        df (pd.DataFrame): The simulation data. Will be validated via `validate_simulation` internally.
         input_cols (List[str]): List of input variable names.
-        outcome_col (str): Signal column name.
+        outcome_col (str): Name of the outcome variable.
 
     Returns:
         pd.DataFrame: A table containing pass/fail metrics for each test.
@@ -171,9 +171,12 @@ def sample_sufficiency(
     df_clean, df_removed = validate_simulation(df, input_cols, outcome_col)
 
     if not df_removed.empty:
+        print(f"Note: {len(df_removed)} invalid rows were dropped automatically.")
+
+    if len(df_clean) < 10:
         raise ValidationError(
-            f"Data contained {len(df_removed)} invalid rows. "
-            "Please clean inputs using `validate_simulation()`."
+            f"Insufficient valid data ({len(df_clean)} rows). "
+            "Diagnostics require at least 10 valid data points."
         )
 
     # 2. Run All Checks

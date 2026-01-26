@@ -11,12 +11,14 @@ def generate_lhs(
 
     Args:
         n (int): The total number of samples to generate.
-        vars_df (pd.DataFrame): A dataframe containing the variable definitions.
-            Must contain columns: 'Name', 'Min', 'Max'.
+        vars_df (pd.DataFrame): A dataframe defining the input variables.
+            Must contain columns: `'Name'`, `'Min'`, `'Max'`.
         seed (int, optional): Sets the random seed for reproducibility. Defaults to None.
 
     Returns:
-        pd.DataFrame: A dataframe containing the scaled simulation parameters, where column names correspond to vars_df['Name']. Returns an empty DataFrame if input vars_df is empty.
+        pd.DataFrame: A dataframe containing the scaled simulation parameters,
+        where column names correspond to `vars_df['Name']`.
+        Returns an empty DataFrame if `vars_df` is empty.
 
     Raises:
         ValueError: If required columns are missing, types are incorrect, or Min >= Max.
