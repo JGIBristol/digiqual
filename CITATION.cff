@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Tyler"
+  given-names: "Josh"
+title: "digiqual: Statistical Toolkit for Reliability Assessment in NDT"
+version: 0.2.1
+date-released: 2026-01-23
+url: "https://github.com/JGIBristol/digiqual"
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Malkiel"
+    given-names: "N."
+  - family-names: "Croxford"
+    given-names: "A. J."
+  - family-names: "Wilcox"
+    given-names: "P. D."
+  doi: "10.1098/rspa.2024.0654"
+  journal: "Proceedings of the Royal Society A"
+  title: "A generalized method for the reliability assessment of safety–critical inspection"
+  volume: 481
+  year: 2025
