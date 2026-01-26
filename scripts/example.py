@@ -2,7 +2,7 @@ from numpy.random import default_rng
 import pandas as pd
 import digiqual as dq
 
-rng = default_rng()  # instantiate a Generator (seeded for reproducibility)
+rng = default_rng(123)  # instantiate a Generator (seeded for reproducibility)
 
 #### Data Creation ####
 
@@ -28,3 +28,13 @@ len(df_clean)
 len(df_removed)
 
 #### Sample Sufficiency ####
+
+# NOTE: We pass 'df_clean' here. If we passed the raw 'df', sample_sufficiency
+# would raise a ValidationError because it strictly requires 0 invalid rows.
+
+ss = dq.sample_sufficiency(
+    df=df_clean,
+    input_cols=["Length", "Angle", "Roughness"],
+    outcome_col="Signal"
+)
+print(ss)
