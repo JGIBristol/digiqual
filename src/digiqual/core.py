@@ -2,6 +2,7 @@ import pandas as pd
 from typing import List
 
 from .diagnostics import validate_simulation, sample_sufficiency, ValidationError
+from .adaptive import generate_targeted_samples
 
 class SimulationStudy:
     """
@@ -86,3 +87,35 @@ class SimulationStudy:
             self.clean_data, self.inputs, self.outcome
         )
         return self.sufficiency_results
+
+    def refine(self,n_points: int = 10)-> pd.DataFrame:
+        """
+        Generates new targeted samples to fix diagnostic failures (Active Learning).
+
+        This method inspects the latest diagnostics. If issues are found (e.g. gaps
+        or instability), it generates specific points to resolve them.
+
+        Args:
+            n_points (int): Number of new samples to generate per detected issue. Defaults to 10.
+
+        Returns:
+            pd.DataFrame: A dataframe of recommended simulation parameters. Returns empty if the study is already sufficient.
+        """
+        if self.clean_data.empty:
+            print("No clean data available. Running validation...")
+            self.validate()
+
+            if self.clean_data.empty:
+                print("Cannot generate samples: No valid data found.")
+                return pd.DataFrame()
+
+        # 2. Delegate the work to the Active Learning module
+        # We pass self.clean_data so it learns from the best available info
+        new_samples = generate_targeted_samples(
+            df=self.clean_data,
+            input_cols=self.inputs,
+            outcome_col=self.outcome,
+            n_new_per_fix=n_points
+        )
+
+        return new_samples
