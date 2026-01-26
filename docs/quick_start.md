@@ -4,7 +4,7 @@
 
 Create a Latin Hypercube design for a simulation study involving defect size ($a$), angle ($\theta$) and roughness ($\sigma_{R}$).
 
-```python
+``` python
 import pandas as pd
 from digiqual.sampling import generate_lhs
 
@@ -26,7 +26,7 @@ print(df.head())
 
 Once you have your simulation results, ensure they are ready for PoD analysis.
 
-```python
+``` python
 from digiqual.diagnostics import validate_simulation
 from numpy.random import default_rng
 
@@ -34,9 +34,11 @@ from numpy.random import default_rng
 # collect from the simulations. We add some noise to
 # showcase the validate_simulation function.
 
+rng=default_rng(123)
+
 df['Signal'] = (df['Length'] * df['Roughness']) + rng.uniform(-1, 1, size=len(df))
 
-df_clean, df_removed = dq.validate_simulation(
+df_clean, df_removed = validate_simulation(
     df=df,input_cols=["Length", "Angle", "Roughness"],outcome_col="Signal")
 
 len(df_clean)
