@@ -20,6 +20,19 @@ def validate_simulation(
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Validates simulation data, coercing to numeric and removing invalid rows.
+
+    Args:
+        df (pd.DataFrame): Clean data from validate_simulation.
+        input_cols (List[str]): List of input variable names.
+        outcome_col (str): Signal column name.
+
+    Returns:
+        (Tuple[pd.DataFrame, pd.DataFrame]):
+            - df_clean: The validated, numeric dataframe ready for analysis.
+            - df_removed: A dataframe containing the rows that were dropped (with original values).
+
+    Raises:
+        ValidationError: If columns are missing, types are wrong, or too few valid rows remain.
     """
     if not isinstance(df, pd.DataFrame) or df.empty:
         raise ValidationError("Input is not a valid pandas DataFrame or is empty.")
@@ -142,9 +155,9 @@ def sample_sufficiency(
     Performs statistical tests on sampling sufficiency.
 
     Runs 3 checks:
-    1. Input Space Coverage (Gaps)
-    2. Model Fit Stability (CV Score)
-    3. Bootstrap Convergence (CI Width)
+        1. Input Space Coverage (Gaps)
+        2. Model Fit Stability (CV Score)
+        3. Bootstrap Convergence (CI Width)
 
     Args:
         df (pd.DataFrame): Clean data from validate_simulation.
