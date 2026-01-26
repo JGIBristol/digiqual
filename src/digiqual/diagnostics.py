@@ -7,12 +7,12 @@ from sklearn.model_selection import cross_val_score, KFold
 from sklearn.pipeline import make_pipeline
 from sklearn.utils import resample
 
-# Error Function
+#### Error Function ####
 class ValidationError(Exception):
     """Raised when simulation data fails validation checks."""
     pass
 
-
+#### Simulation Validation ####
 def validate_simulation(
     df: pd.DataFrame,
     input_cols: List[str],
@@ -66,7 +66,7 @@ def validate_simulation(
 
     return df_clean, df_removed
 
-# Helper Functions
+#### Helper Functions for sample_sufficiency() ####
 
 def _check_input_coverage(df: pd.DataFrame, input_cols: List[str]) -> Dict:
     """
@@ -145,6 +145,7 @@ def _check_bootstrap_convergence(df: pd.DataFrame, input_cols: List[str], outcom
         "converged": relative_width < 0.10
     }
 
+#### Main Function: sample_sufficiency() ####
 
 def sample_sufficiency(
     df: pd.DataFrame,
