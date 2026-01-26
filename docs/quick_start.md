@@ -67,30 +67,42 @@ print(ss)
 
 Use the `SimulationStudy` manager to handle data storage, validation, and diagnostics in one place. This prevents errors caused by passing the wrong dataframe between functions.
 
-### Initialise & Load
-
 ```python
-import digiqual as dq
+from numpy.random import default_rng
 import pandas as pd
+import digiqual as dq
 
-# 1. Define the study once
+rng = default_rng(123)  # instantiate a Generator (seeded for reproducibility)
+
+#### Data Creation ####
+
+# Create sample framework using generate_lhs()
+vars_df = pd.DataFrame(
+    [
+        {"Name": "Length", "Min": 0.1, "Max": 10},
+        {"Name": "Angle", "Min": -90, "Max": 90},
+        {"Name": "Roughness", "Min": 0, "Max": 1},
+    ]
+)
+
+df = dq.generate_lhs(n=1000, seed=123, vars_df=vars_df)
+
+rng=default_rng(123)
+
+# Create a fake signal output column with some noise
+df['Signal'] = (df['Length'] * df['Roughness']) + rng.uniform(-1, 1, size=len(df))
+
+#### Class - SimulationStudy ####
+
+# 1. Define the study
 study = dq.SimulationStudy(
-    input_cols=["Length", "Angle", "Roughness"],
+    input_cols=["Length", "Roughness"],
     outcome_col="Signal"
 )
 
-# 2. Add your raw data (Simulating the load here)
-# You can call add_data() multiple times; the class manages the merging.
-df = pd.read_csv("my_simulation_results.csv")
+# 2. Add the Data
 study.add_data(df)
-```
 
-### Run Diagnostics
-The manager automatically validates your data before running diagnostics.
-
-```python
-# 3. Diagnose quality
-# Returns a report on Coverage, Model Fit, and Bootstrap Convergence
-report = study.diagnose()
-print(report)
+# 3. Validate & Test
+study.diagnose()
 ```
