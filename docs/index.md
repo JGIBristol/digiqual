@@ -36,6 +36,8 @@ Implementing the generalised framework by Malkiel et al. (2025).
 
 ## Installation
 
+[![CI Status](https://github.com/JGIBristol/digiqual/actions/workflows/ci_cd.yml/badge.svg)](https://github.com/JGIBristol/digiqual/actions) [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/) [![License](https://img.shields.io/github/license/JGIBristol/digiqual)](LICENSE)
+
 You can install `digiqual` directly from GitHub.
 
 ### Option 1: Install via uv (Recommended)
