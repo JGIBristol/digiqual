@@ -17,8 +17,8 @@ def generate_lhs(
 
     Returns:
         pd.DataFrame: A dataframe containing the scaled simulation parameters,
-        where column names correspond to `vars_df['Name']`.
-        Returns an empty DataFrame if `vars_df` is empty.
+            where column names correspond to `vars_df['Name']`.
+            Returns an empty DataFrame if `vars_df` is empty.
 
     Raises:
         ValueError: If required columns are missing, types are incorrect, or Min >= Max.
