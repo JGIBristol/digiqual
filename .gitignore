@@ -22,11 +22,5 @@ site/
 .coverage
 htmlcov/
 
-# --- Scripts ---
-scripts/main.R
-scripts/matlab.py
-
 # --- Project Data & Outputs ---
-data/raw
-data/processed
-data/final
+reference
