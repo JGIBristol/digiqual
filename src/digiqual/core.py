@@ -16,6 +16,7 @@ class SimulationStudy:
         sufficiency_results (pd.DataFrame): The latest diagnostic results.
     """
 
+    #### Initialisation ####
     def __init__(
         self,
         input_cols: List[str],
@@ -30,6 +31,7 @@ class SimulationStudy:
         self.removed_data: pd.DataFrame = pd.DataFrame()
         self.sufficiency_results: pd.DataFrame = pd.DataFrame()
 
+    #### Adding Data ####
     def add_data(self, df: pd.DataFrame) -> None:
         """
         Ingests raw simulation data. Resets downstream results (clean_data, results).
@@ -44,6 +46,7 @@ class SimulationStudy:
         self.clean_data = pd.DataFrame()
         self.sufficiency_results = pd.DataFrame()
 
+    #### Validating self.data ####
     def validate(self) -> None:
         """
         Explicitly runs data cleaning. Useful for debugging dropped rows.
@@ -60,34 +63,31 @@ class SimulationStudy:
             print(f"Validation FAILED: {e}")
             self.clean_data = pd.DataFrame()
 
+    #### Checking Sample Sufficiency of self.clean_data ####
     def diagnose(self) -> pd.DataFrame:
         """
         Runs statistical diagnostics on the data.
 
         Automatically runs validate() first if needed.
         """
-        # 1. Ensure we have clean data (The "Lazy Load")
         if self.clean_data.empty:
             if self.data.empty:
                 print("No data found. Please run add_data() first.")
                 return pd.DataFrame()
 
-            # Auto-trigger validation
             self.validate()
 
-            # If validation failed, we can't proceed
             if self.clean_data.empty:
                 print("Cannot run diagnostics because validation failed.")
                 return pd.DataFrame()
 
-        # 2. Run Diagnostics
         print("Checking sample sufficiency...")
-        # We pass self.clean_data. The function will re-validate it, find it perfect, and proceed.
         self.sufficiency_results = sample_sufficiency(
             self.clean_data, self.inputs, self.outcome
         )
         return self.sufficiency_results
 
+    #### Find new samples based on results in self.sufficiency_results and self.clean_data ####
     def refine(self,n_points: int = 10)-> pd.DataFrame:
         """
         Generates new targeted samples to fix diagnostic failures (Active Learning).
@@ -109,8 +109,6 @@ class SimulationStudy:
                 print("Cannot generate samples: No valid data found.")
                 return pd.DataFrame()
 
-        # 2. Delegate the work to the Active Learning module
-        # We pass self.clean_data so it learns from the best available info
         new_samples = generate_targeted_samples(
             df=self.clean_data,
             input_cols=self.inputs,
