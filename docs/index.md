@@ -17,21 +17,26 @@ Before running expensive Finite Element (FE) simulations, `digiqual` helps you d
 - **Latin Hypercube Sampling (LHS):** Generate space-filling experimental designs to cover your deterministic parameter space (e.g., defect size) and stochastic nuisance parameters (e.g., roughness, orientation).
 - **Scale & Bound:** Automatically scale samples to your specific variable bounds.
 
-### 2. Data Validation
+### 2. Data Validation & Diagnostics
 
 Ensure your simulation outputs are statistically valid before processing.
 
-- **Type Checking:** Verifies that input dataframes contain strictly numeric values for signals and proper string identifiers for variables.
-- **Sanity Checks:** Detects overlap between input and outcome variables and flags insufficient sample sizes (\<10 rows) to prevent unstable analysis.
+- **Sanity Checks:** Detects overlap between variables, type errors, and insufficient sample sizes.
+- **Sufficiency Diagnostics:** rigorous statistical tests to flag issues like "Input Coverage Gaps" or "Model Instability" before you trust the results.
 
-### 3. Reliability Analysis (In Development)
+### 3. Adaptive Refinement (Active Learning)
+
+`digiqual` closes the loop between analysis and design. Instead of guessing where to run more simulations, use the `refine()` method to:
+
+- **Fill Gaps:** Automatically detect and target empty regions in your input space.
+- **Reduce Uncertainty:** Use bootstrap committees to find regions of high model variance and suggest new points exactly where the model is "confused."
+
+### 4. Reliability Analysis (In Development)
 
 Implementing the generalised framework by Malkiel et al. (2025).
 
 -   **Relaxed Assumptions:** Moves beyond the rigid constraints of the classical $\hat{a}$-versus-$a$ method.
--   **Advanced Regression:** Fits nonlinear expectation models and models non-constant variance (heteroscedasticity) using Kernel Average Smoothers.
 -   **Uncertainty Quantification:** Uses bootstrap resampling to generate robust confidence bounds for Probability of Detection (PoD) curves.
-
 ------------------------------------------------------------------------
 
 ## Installation
@@ -44,9 +49,9 @@ You can install `digiqual` directly from GitHub.
 
 If you are managing a project with `uv`, add `digiqual` as a dependency:
 
-- To install the latest stable release (v0.4.1):
+- To install the latest stable release (v0.5.0):
 ```bash
-uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git@v0.4.1"
+uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git@v0.5.0"
 ```
 
 - To install the latest development version (main branch):
@@ -57,15 +62,15 @@ uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git"
 If you just want to install it into a virtual environment without modifying a project file (e.g., for a quick script), use pip interface:
 
 ```bash
-uv pip install "git+https://github.com/JGIBristol/digiqual.git@v0.4.1"
+uv pip install "git+https://github.com/JGIBristol/digiqual.git@v0.5.0"
 ```
 
 ### Option 2: Install via standard pip
 
-To install the latest stable release (v0.4.1):
+To install the latest stable release (v0.5.0):
 
 ```bash
-pip install "git+https://github.com/JGIBristol/digiqual.git@v0.4.1"
+pip install "git+https://github.com/JGIBristol/digiqual.git@v0.5.0"
 ```
 To install the latest development version:
 

@@ -15,9 +15,9 @@ You can install `digiqual` directly from GitHub.
 
 If you are managing a project with `uv`, add `digiqual` as a dependency:
 ```bash
-# To install the latest stable release (v0.4.1):
+# To install the latest stable release (v0.5.0):
 
-uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git@v0.4.1"
+uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git@v0.5.0"
 
 # To install the latest development version (main branch):
 
@@ -27,15 +27,15 @@ uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git"
 If you just want to install it into a virtual environment without modifying a project file (e.g., for a quick script), use pip interface:
 
 ```bash
-uv pip install "git+https://github.com/JGIBristol/digiqual.git@v0.4.1"
+uv pip install "git+https://github.com/JGIBristol/digiqual.git@v0.5.0"
 ```
 
 ### Option 2: Install via standard pip
 
-To install the latest stable release (v0.4.1):
+To install the latest stable release (v0.5.0):
 
 ```bash
-pip install "git+https://github.com/JGIBristol/digiqual.git@v0.4.1"
+pip install "git+https://github.com/JGIBristol/digiqual.git@v0.5.0"
 ```
 To install the latest development version:
 
@@ -45,12 +45,13 @@ pip install "git+https://github.com/JGIBristol/digiqual.git"
 
 ## Features
 
--   Experimental Design: Generate Latin Hypercube Sampling (LHS) designs for simulation inputs.
+-   **Experimental Design:** Generate Latin Hypercube Sampling (LHS) designs for simulation inputs.
 
--   Data Validation: Automatically check simulation results for type errors, overlaps, and sample size sufficiency.
+-   **Data Validation:** Automatically check simulation results for type errors, overlaps, and sample size sufficiency.
 
--   Reliability Analysis: (In Development) Calculate Probability of Detection (PoD) curves using advanced regression and bootstrap confidence bounds.
+-   **Adaptive Refinement:** Automatically generate targeted new samples to fill coverage gaps or resolve model instability (Active Learning).
 
+-   **Reliability Analysis:** (In Development) Calculate Probability of Detection (PoD) curves using advanced regression and bootstrap confidence bounds.
 
 ## Development
 
