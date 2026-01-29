@@ -88,7 +88,7 @@ class SimulationStudy:
         return self.sufficiency_results
 
     #### Find new samples based on results in self.sufficiency_results and self.clean_data ####
-    def refine(self,n_points: int = 10)-> pd.DataFrame:
+    def refine(self, n_points: int = 10) -> pd.DataFrame:
         """
         Generates new targeted samples to fix diagnostic failures (Active Learning).
 

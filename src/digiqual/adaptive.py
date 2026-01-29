@@ -51,31 +51,50 @@ def _sample_uncertainty(
     n: int
     ) -> pd.DataFrame:
     """Uses Bootstrap Query-by-Committee to find regions of high variance."""
-    # 1. Create a large candidate pool (e.g. 1000 points)
+
+    if n <= 0:
+        return pd.DataFrame(columns=input_cols)
+
+    # --- STEP 1: GENERATE CANDIDATE POOL ---
+    # We create 1,000 "what-if" scenarios across your input ranges.
     n_candidates = 1000
     sampler = qmc.LatinHypercube(d=len(input_cols))
     sample_01 = sampler.random(n=n_candidates)
 
     candidates = pd.DataFrame(index=range(n_candidates))
     for i, col in enumerate(input_cols):
+        # This math scales the 0-1 random samples to your data's actual Min and Max
         candidates[col] = sample_01[:, i] * (df[col].max() - df[col].min()) + df[col].min()
 
-    # 2. Train Committee (10 models on resampled data)
+    # --- STEP 2: TRAIN THE COMMITTEE ---
+    # We prepare to store predictions from 10 different versions of our model.
     X = df[input_cols].values
     y = df[outcome_col].values
-    preds = np.zeros((n_candidates, 10))
+    preds = np.zeros((n_candidates, 10)) # A matrix to hold 1,000 rows x 10 model guesses
 
     for i in range(10):
-        X_res, y_res = resample(X, y, random_state=i) # seeded for reproducibility
-        model = make_pipeline(PolynomialFeatures(2), LinearRegression())
+        # A) Resample: Create a 'bootstrap' dataset (same size as original, but shuffled with duplicates)
+        X_res, y_res = resample(X, y, random_state=i)
+
+        # B) Define Model: Polynomial (curves) + Linear Regression (solver)
+        model = make_pipeline(PolynomialFeatures(3), LinearRegression())
+
+        # C) Train: The model learns the relationship based on this specific bootstrap sample
         model.fit(X_res, y_res)
+
+        # D) Predict: We ask this specific model to guess the outcomes for all 1,000 candidates
         preds[:, i] = model.predict(candidates[input_cols].values)
 
-    # 3. Calculate Uncertainty (Standard Deviation of predictions)
+    # --- STEP 3: MEASURE DISAGREEMENT ---
+    # For each candidate point, we look at the 10 guesses.
+    # If the Standard Deviation is high, the models are "confused" or disagreeing.
     uncertainty = np.std(preds, axis=1)
 
-    # 4. Pick top N points with highest uncertainty
+    # --- STEP 4: SELECTION ---
+    # We sort the candidates by uncertainty and take the 'n' highest ones.
     top_indices = np.argsort(uncertainty)[-n:]
+
+    # These are the coordinates where you should run your next experiments/simulations!
     return candidates.iloc[top_indices].copy()
 
 
@@ -104,10 +123,10 @@ def generate_targeted_samples(
     Returns:
         pd.DataFrame: A dataframe of recommended new simulation parameters.
     """
-    # Run the diagnostics to get the status report
+    # 1. SENSE: Run the diagnostics to get the status report
     report = sample_sufficiency(df, input_cols, outcome_col)
 
-    # Exit if all Pass
+    # Quick exit if everything is green
     if report.empty or report['Pass'].all():
         print("All diagnostic checks passed. No new samples needed.")
         return pd.DataFrame()
@@ -127,9 +146,17 @@ def generate_targeted_samples(
 
         # --- Handler A: Input Coverage (Exploration) ---
         if test_name == "Input Coverage":
+            # Check if we already handled this variable
+            if var_name in handled_vars:
+                continue
+
             print(f" -> Strategy: Exploration (Filling gaps in {var_name})")
             # Call the specific solver for gaps
             samples = _fill_gaps(df, var_name, input_cols, n_new_per_fix)
+
+            # --- NEW: Tag the reason for these samples ---
+            samples['Refinement_Reason'] = f"Gap in {var_name}"
+
             new_samples_list.append(samples)
             handled_vars.add(var_name)
 
@@ -140,6 +167,10 @@ def generate_targeted_samples(
                 print(" -> Strategy: Exploitation (Targeting high uncertainty regions)")
                 # Call the specific solver for uncertainty
                 samples = _sample_uncertainty(df, input_cols, outcome_col, n_new_per_fix)
+
+                # --- NEW: Tag the reason for these samples ---
+                samples['Refinement_Reason'] = "High Model Uncertainty"
+
                 new_samples_list.append(samples)
                 handled_vars.add("Global_Model")
 
