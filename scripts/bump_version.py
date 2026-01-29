@@ -39,7 +39,7 @@ def bump_version(part):
         file_path = Path(filename)
         if file_path.exists():
             content = file_path.read_text()
-            new_content = content.replace(f"v{old_version}", f"v{new_version}")
+            new_content = content.replace(f"{old_version}", f"{new_version}")
             file_path.write_text(new_content)
             print(f"Updated {filename}", file=sys.stderr)
 

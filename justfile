@@ -65,7 +65,7 @@ release part="patch": check
 
     # 3. Commit, Tag, Push
     git add pyproject.toml uv.lock README.md docs/index.md
-    git commit -m "chore: release v$version"
+    git commit -m "gh-action: release v$version"
     git tag v$version
     git push origin main
     git push origin v$version
