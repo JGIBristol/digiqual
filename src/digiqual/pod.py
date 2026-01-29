@@ -6,9 +6,9 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score, KFold
 
-# ==============================================================================
-# 1. MEAN MODEL (Robust Polynomial Regression)
-# ==============================================================================
+
+#### Mean Model - Robust Polynomial Regression ####
+
 
 def fit_robust_mean_model(
     X: np.ndarray,
@@ -47,9 +47,9 @@ def fit_robust_mean_model(
 
     return final_model
 
-# ==============================================================================
-# 2. VARIANCE MODEL (Kernel Smoothing)
-# ==============================================================================
+
+#### Variance Model - Kernel Smoothing ####
+
 
 def fit_variance_model(
     X: np.ndarray,
@@ -93,9 +93,7 @@ def predict_local_std(
 
     return np.sqrt(weights @ sq_residuals)
 
-# ==============================================================================
-# 3. DISTRIBUTION INFERENCE
-# ==============================================================================
+#### Residual Distribution Fitting ####
 
 def infer_best_distribution(
     residuals: np.ndarray,
@@ -109,7 +107,14 @@ def infer_best_distribution(
     local_std = predict_local_std(X, residuals, X, bandwidth)
     z_scores = residuals.flatten() / local_std.flatten()
 
-    candidates = ["norm", "gumbel_r", "gumbel_l", "logistic", "laplace", "t"]
+    candidates = [
+        "norm",         # Gaussian (The Standard)
+        "gumbel_r",     # Right-skewed Extreme Value
+        "gumbel_l",     # Left-skewed Extreme Value (Common for cracks)
+        "logistic",     # Heavier tails than Normal
+        "laplace",      # Sharper peak, heavy tails
+        "t",            # Student's t (Very robust to outliers)
+    ]
 
     best_aic = np.inf
     best_result = ("norm", (0, 1))
@@ -131,9 +136,8 @@ def infer_best_distribution(
 
     return best_result
 
-# ==============================================================================
-# 4. PREDICTION & BOOTSTRAP
-# ==============================================================================
+
+#### PoD Generation and Bootstrap Intervals ####
 
 def compute_pod_curve(
     X_eval: np.ndarray,
