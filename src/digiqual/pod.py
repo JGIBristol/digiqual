@@ -6,9 +6,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score, KFold
 
-
 #### Mean Model - Robust Polynomial Regression ####
-
 
 def fit_robust_mean_model(
     X: np.ndarray,
@@ -18,7 +16,23 @@ def fit_robust_mean_model(
     plot_cv: bool = False
 ) -> Any:
     """
-    Automatically selects the best polynomial degree using k-fold Cross Validation.
+    Fits a polynomial regression model, automatically selecting the optimal degree.
+
+    This function performs k-fold Cross Validation (CV) to find the polynomial degree
+    that minimizes the Mean Squared Error (MSE), balancing bias and variance.
+
+    Args:
+        X (np.ndarray): 1D array of input variable values (e.g., flaw size).
+        y (np.ndarray): 1D array of outcome values (e.g., signal response).
+        max_degree (int, optional): The maximum polynomial degree to test. Defaults to 10.
+        n_folds (int, optional): Number of folds for Cross Validation. Defaults to 10.
+        plot_cv (bool, optional): If True, generates a plot of CV Score vs Degree.
+            Defaults to False.
+
+    Returns:
+        sklearn.pipeline.Pipeline: A fitted pipeline containing `PolynomialFeatures`
+        and `LinearRegression`. The pipeline object has an added attribute
+        `best_degree_` indicating the selected integer degree.
     """
     X_2d = X.reshape(-1, 1)
     degrees = range(1, max_degree + 1)
@@ -50,7 +64,6 @@ def fit_robust_mean_model(
 
 #### Variance Model - Kernel Smoothing ####
 
-
 def fit_variance_model(
     X: np.ndarray,
     y: np.ndarray,
@@ -59,7 +72,25 @@ def fit_variance_model(
     n_eval_points: int = 100
 ) -> Tuple[np.ndarray, float, np.ndarray]:
     """
-    Prepares the Variance Model and Evaluation Grid.
+    Calculates residuals and prepares the grid for variance estimation.
+
+    This acts as the setup phase for the heteroscedasticity model. It computes
+    the raw residuals from the mean model and defines the smoothing bandwidth.
+
+    Args:
+        X (np.ndarray): The original input data.
+        y (np.ndarray): The original outcome data.
+        mean_model (Any): The fitted sklearn pipeline from `fit_robust_mean_model`.
+        bandwidth_ratio (float, optional): The kernel smoothing window size as a
+            fraction of the data range (X_max - X_min). Defaults to 0.1.
+        n_eval_points (int, optional): Number of points in the evaluation grid.
+            Defaults to 100.
+
+    Returns:
+        Tuple[np.ndarray, float, np.ndarray]:
+            - residuals: Raw differences between `y` and the mean model prediction.
+            - bandwidth: The calculated smoothing window size (absolute units).
+            - X_eval: A linearly spaced grid over the X domain for plotting/evaluation.
     """
     X_2d = X.reshape(-1, 1)
     y_pred = mean_model.predict(X_2d)
@@ -70,6 +101,7 @@ def fit_variance_model(
 
     return residuals, bandwidth, X_eval
 
+
 def predict_local_std(
     X: np.ndarray,
     residuals: np.ndarray,
@@ -77,7 +109,19 @@ def predict_local_std(
     bandwidth: float
 ) -> np.ndarray:
     """
-    Calculates Local Standard Deviation using Gaussian Kernel Smoothing.
+    Estimates the local standard deviation using Gaussian Kernel Smoothing.
+
+    This implements a Nadaraya-Watson estimator specifically for the squared
+    residuals to model how noise varies across the input domain (heteroscedasticity).
+
+    Args:
+        X (np.ndarray): The source locations (original data inputs).
+        residuals (np.ndarray): The residuals observed at `X`.
+        X_eval (np.ndarray): The target locations to estimate variance at.
+        bandwidth (float): The width of the Gaussian kernel (sigma).
+
+    Returns:
+        np.ndarray: An array of standard deviation estimates corresponding to `X_eval`.
     """
     X_source = X.reshape(1, -1)
     X_target = X_eval.reshape(-1, 1)
@@ -93,6 +137,7 @@ def predict_local_std(
 
     return np.sqrt(weights @ sq_residuals)
 
+
 #### Residual Distribution Fitting ####
 
 def infer_best_distribution(
@@ -101,9 +146,23 @@ def infer_best_distribution(
     bandwidth: float
 ) -> Tuple[str, Tuple]:
     """
-    Tests candidate distributions against standardized residuals.
-    Returns (best_name, best_params).
+    Selects the best statistical distribution for the standardized residuals using AIC.
+
+    This function normalizes residuals by their local standard deviation (Z-scores)
+    and tests them against a suite of candidate distributions (Normal, Gumbel,
+    Logistic, Laplace, t-Student).
+
+    Args:
+        residuals (np.ndarray): Raw residuals from the mean model.
+        X (np.ndarray): Input locations for the residuals.
+        bandwidth (float): Bandwidth used for local standardization.
+
+    Returns:
+        Tuple[str, Tuple]:
+            - best_name: The SciPy name of the best-fitting distribution (e.g., 'norm').
+            - best_params: The fitted parameters for that distribution (e.g., loc, scale).
     """
+    #
     local_std = predict_local_std(X, residuals, X, bandwidth)
     z_scores = residuals.flatten() / local_std.flatten()
 
@@ -149,8 +208,26 @@ def compute_pod_curve(
     threshold: float
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Calculates PoD using the dynamic best-fit distribution.
+    Calculates the Probability of Detection (PoD) curve.
+
+    Combines the Mean Model, Variance Model, and Error Distribution to compute
+    the probability that the signal exceeds the threshold at every point in `X_eval`.
+
+    Args:
+        X_eval (np.ndarray): The grid points to calculate PoD for.
+        mean_model (Any): The fitted sklearn mean response model.
+        X (np.ndarray): Original input data (needed for variance prediction).
+        residuals (np.ndarray): Original residuals (needed for variance prediction).
+        bandwidth (float): Smoothing bandwidth.
+        dist_info (Tuple[str, Tuple]): The (name, params) of the error distribution.
+        threshold (float): The detection threshold value.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]:
+            - pod_curve: Array of probabilities [0, 1] for each point in X_eval.
+            - mean_curve: Array of mean signal response values for X_eval.
     """
+    #
     dist_name, dist_params = dist_info
 
     mean_curve = mean_model.predict(X_eval.reshape(-1, 1))
@@ -163,6 +240,7 @@ def compute_pod_curve(
 
     return pod_curve, mean_curve
 
+
 def bootstrap_pod_ci(
     X: np.ndarray,
     y: np.ndarray,
@@ -174,7 +252,26 @@ def bootstrap_pod_ci(
     n_boot: int = 1000
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Bootstraps the PoD curve using the specific distribution parameters found.
+    Estimates 95% Confidence Bounds for the PoD curve via Bootstrapping.
+
+    This function resamples the original data with replacement `n_boot` times.
+    For each resample, it refits the Mean Model, recalculates residuals, and
+    generates a new PoD curve.
+
+    Args:
+        X (np.ndarray): Original input data.
+        y (np.ndarray): Original outcome data.
+        X_eval (np.ndarray): Grid points for evaluation.
+        threshold (float): Detection threshold.
+        degree (int): Polynomial degree (fixed from the original best fit).
+        bandwidth (float): Smoothing bandwidth (fixed from original).
+        dist_info (Tuple[str, Tuple]): Error distribution (fixed from original).
+        n_boot (int, optional): Number of bootstrap iterations. Defaults to 1000.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]:
+            - lower_ci: The 2.5th percentile PoD curve (Lower 95% Bound).
+            - upper_ci: The 97.5th percentile PoD curve (Upper 95% Bound).
     """
     n_samples = len(y)
     pod_matrix = np.zeros((n_boot, len(X_eval)))

@@ -1,6 +1,5 @@
 import pandas as pd
-import numpy as np
-from typing import List, Dict, Any, Tuple, Optional
+from typing import List, Dict, Any
 
 from .diagnostics import validate_simulation, sample_sufficiency, ValidationError
 from .adaptive import generate_targeted_samples
@@ -38,7 +37,18 @@ class SimulationStudy:
     #### Adding Data ####
     def add_data(self, df: pd.DataFrame) -> None:
         """
-        Ingests raw simulation data. Resets downstream results (clean_data, results).
+        Ingests raw simulation data and updates the internal data state.
+
+        This method appends the provided DataFrame to `self.data`. Because this
+        changes the underlying dataset, all downstream results (clean_data,
+        sufficiency_results, and pod_results) are reset to empty states.
+
+        Args:
+            df (pd.DataFrame): The DataFrame to ingest. It should contain
+                the columns specified in `self.inputs` and `self.outcome`.
+
+        Returns:
+            None: Updates the internal `self.data` attribute in place.
         """
         if self.data.empty:
             self.data = df.copy()
@@ -54,7 +64,15 @@ class SimulationStudy:
     #### Validating self.data ####
     def validate(self) -> None:
         """
-        Explicitly runs data cleaning. Useful for debugging dropped rows.
+        Cleans and validates the raw data stored in `self.data`.
+
+        This method filters the raw data based on project-specific rules. It
+        populates `self.clean_data` with valid rows and `self.removed_data`
+        with invalid ones.
+
+        Side Effects:
+            Updates `self.clean_data` and `self.removed_data`.
+            Resets `self.clean_data` to empty if validation fails critically.
         """
         print("Running validation...")
         try:
@@ -71,7 +89,14 @@ class SimulationStudy:
     #### Checking Sample Sufficiency of self.clean_data ####
     def diagnose(self) -> pd.DataFrame:
         """
-        Runs statistical diagnostics on the data.
+        Runs statistical diagnostics to evaluate if the current sample size is sufficient.
+
+        If `self.clean_data` is empty, this method will automatically attempt
+        to run `self.validate()` before proceeding.
+
+        Returns:
+            pd.DataFrame: A summary of diagnostic metrics. Also updates
+                the internal `self.sufficiency_results` attribute.
         """
         if self.clean_data.empty:
             if self.data.empty:
@@ -93,7 +118,17 @@ class SimulationStudy:
     #### Find new samples based on results in self.sufficiency_results and self.clean_data ####
     def refine(self, n_points: int = 10) -> pd.DataFrame:
         """
-        Generates new targeted samples to fix diagnostic failures (Active Learning).
+        Identifies gaps in the design space and suggests new simulation points.
+
+        Uses an Active Learning approach based on `self.clean_data`. If no
+        clean data exists, it triggers `self.validate()`.
+
+        Args:
+            n_points (int): Number of new samples to suggest per failed region.
+
+        Returns:
+            pd.DataFrame: A table of suggested input coordinates for the next
+                iteration of simulations. Does not modify internal data.
         """
         if self.clean_data.empty:
             print("No clean data available. Running validation...")
