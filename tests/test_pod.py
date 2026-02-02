@@ -10,6 +10,8 @@ from digiqual.pod import (
     compute_pod_curve,
     bootstrap_pod_ci
 )
+import pandas as pd
+from digiqual.core import SimulationStudy
 
 # --- FIXTURES: Synthetic Physics Data ---
 
@@ -218,3 +220,54 @@ def test_bootstrap_pod_ci_structure(linear_data):
 
     # Logical check: Bounds must be within [0, 1]
     assert np.all(lower >= 0.0) and np.all(upper <= 1.0)
+
+
+
+# --- 6. INTEGRATION TEST (Core Class Wiring) ---
+
+def test_simulation_study_pod_integration(linear_data):
+    """
+    Test the full 'analyze_reliability' workflow via the main SimulationStudy class.
+    This ensures core.py correctly connects to pod.py.
+    """
+    X, y = linear_data
+
+    # 1. Setup: Create a study populated with data
+    df = pd.DataFrame({'Crack_Len': X, 'Signal': y, 'Noise_Factor': np.random.rand(len(X))})
+
+    study = SimulationStudy(input_cols=['Crack_Len', 'Noise_Factor'], outcome_col='Signal')
+    study.add_data(df)
+
+    # 2. Action: Run the analysis (using low n_boot for speed)
+    # We deliberately use a threshold that sits in the middle of the y range
+    results = study.pod(
+        poi_col='Crack_Len',
+        threshold=5.0,
+        n_boot=20
+    )
+
+    # 3. Assertions: Check the "Contract" (Output Dictionary Structure)
+    assert isinstance(results, dict)
+
+    # Check Inputs were preserved
+    assert results['poi_col'] == 'Crack_Len'
+    assert results['threshold'] == 5.0
+
+    # Check Models
+    assert hasattr(results['mean_model'], 'predict')
+    assert isinstance(results['bandwidth'], float)
+
+    # Check Curves (The most important output for the GUI/Plotting)
+    curves = results['curves']
+    assert 'pod' in curves
+    assert 'ci_lower' in curves
+    assert 'ci_upper' in curves
+    assert 'mean_response' in curves
+
+    # Check Dimensions (Should match default evaluation grid of 100)
+    assert len(curves['pod']) == 100
+    assert len(curves['ci_lower']) == 100
+
+    # Check Internal State Update
+    # The study object should remember the results
+    assert study.pod_results is results
