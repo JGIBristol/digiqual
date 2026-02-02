@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from typing import Optional
 
 def plot_signal_model(
-    X_train: np.ndarray,
-    y_train: np.ndarray,
+    X: np.ndarray,
+    y: np.ndarray,
     X_eval: np.ndarray,
     mean_curve: np.ndarray,
     threshold: float,
@@ -18,8 +18,8 @@ def plot_signal_model(
     Equivalent to Figure 6/12 in the Generalized Method paper.
 
     Args:
-        X_train: The raw crack sizes (or PoI).
-        y_train: The raw signal responses.
+        X: The raw crack sizes (or PoI).
+        y: The raw signal responses.
         X_eval: The grid of points used for the curves.
         mean_curve: The predicted mean response at X_eval.
         threshold: The detection threshold (horizontal line).
@@ -31,7 +31,7 @@ def plot_signal_model(
         fig, ax = plt.subplots(figsize=(8, 6))
 
     # 1. Plot Raw Data (Simulations)
-    ax.scatter(X_train, y_train, alpha=0.5, c='grey', s=20, label='Simulation Data')
+    ax.scatter(X, y, alpha=0.5, c='grey', s=20, label='Simulation Data')
 
     # 2. Plot The Mean Model
     ax.plot(X_eval, mean_curve, color='blue', linewidth=2, label='Mean Response')

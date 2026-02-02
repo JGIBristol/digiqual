@@ -82,12 +82,12 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
 # Plot Signal Model (Physics)
 local_std = dq.pod.predict_local_std(
-    results['X_train'], results['residuals'], results['X_eval'], results['bandwidth']
+    results['X'], results['residuals'], results['X_eval'], results['bandwidth']
 )
 
 plot.plot_signal_model(
-    X_train=results['X_train'],
-    y_train=results['y_train'],
+    X=results['X'],
+    y=results['y'],
     X_eval=results['X_eval'],
     mean_curve=results['curves']['mean_response'],
     threshold=results['threshold'],
