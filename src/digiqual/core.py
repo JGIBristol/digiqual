@@ -187,8 +187,8 @@ class SimulationStudy:
         self.pod_results = {
             "poi_col": poi_col,
             "threshold": threshold,
-            "X_train": X,
-            "y_train": y,
+            "X": X,
+            "y": y,
             "X_eval": X_eval,
             "mean_model": mean_model,
             "bandwidth": bandwidth,
