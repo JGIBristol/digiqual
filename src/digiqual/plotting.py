@@ -12,19 +12,18 @@ def plot_signal_model(
     ax: Optional[plt.Axes] = None
 ) -> plt.Axes:
     """
-    Diagnostic Plot 1: Signal vs Crack Length (The Physics).
+    Diagnostic Plot 1: Signal vs Parameter of Interest (The Physics).
 
     Visualizes the raw simulation data, the fitted mean model, and the detection threshold.
     Equivalent to Figure 6/12 in the Generalized Method paper.
 
     Args:
-        X: The raw crack sizes (or PoI).
+        X: The raw PoI.
         y: The raw signal responses.
         X_eval: The grid of points used for the curves.
         mean_curve: The predicted mean response at X_eval.
         threshold: The detection threshold (horizontal line).
-        local_std: (Optional) The predicted standard deviation at X_eval.
-                   If provided, adds 95% prediction bounds to show noise structure.
+        local_std: (Optional) The predicted standard deviation at X_eval. If provided, adds 95% prediction bounds to show noise structure.
         ax: (Optional) Matplotlib axes to plot on. Creates new if None.
     """
     if ax is None:

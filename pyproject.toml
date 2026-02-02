@@ -1,6 +1,6 @@
 [project]
 name = "digiqual"
-version = "0.6.1"
+version = "0.6.2"
 description = "Statistical Toolkit for Reliability Assessment in NDT"
 authors = [
   {name = "Josh Tyler", email = "josh.tyler@bristol.ac.uk"}
