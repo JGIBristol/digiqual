@@ -23,8 +23,7 @@ def plot_signal_model(
         X_eval: The grid of points used for the curves.
         mean_curve: The predicted mean response at X_eval.
         threshold: The detection threshold (horizontal line).
-        local_std: (Optional) The predicted standard deviation at X_eval.
-                   If provided, adds 95% prediction bounds to show noise structure.
+        local_std: (Optional) The predicted standard deviation at X_eval. If provided, adds 95% prediction bounds to show noise structure.
         ax: (Optional) Matplotlib axes to plot on. Creates new if None.
     """
     if ax is None:
