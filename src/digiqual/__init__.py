@@ -1,4 +1,4 @@
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 from .sampling import generate_lhs
 from .diagnostics import validate_simulation, sample_sufficiency

@@ -78,44 +78,47 @@ new_samples = generate_targeted_samples(
 )
 ```
 
-
-## Option 2: Class-Based Approach (Streamlined)
-
-Use the `SimulationStudy` manager to handle the entire lifecycle: storage, diagnostics, and active refinement. This allows you to automatically fix issues in your design.
-
-In this example, we will intentionally feed the study "bad" data (with a large gap) to see how it identifies and fixes the problem.
+### Running Generalised PoD Analysis
+Finally, we generate the Probability of Detection curve. This pipeline automatically handles non-linear physics and heteroscedastic noise.
 
 ```python
-import numpy as np
-import pandas as pd
-import digiqual as dq
+import matplotlib.pyplot as plt
+import digiqual.pod as pod
+import digiqual.plotting as plot
 
-# --- 1. Create a "Flawed" Dataset ---
-# We simulate a scenario where we forgot to simulate lengths between 3.0 and 7.0
-# Range is 0 to 10, so a gap of 4.0 is huge (40% of the domain).
-df_part1 = pd.DataFrame({'Length': np.random.uniform(0, 3, 10), 'Angle': np.random.uniform(0, 45, 10)})
-df_part2 = pd.DataFrame({'Length': np.random.uniform(7, 10, 10), 'Angle': np.random.uniform(0, 45, 10)})
-df = pd.concat([df_part1, df_part2], ignore_index=True)
+# Prepare vectors (X = Crack Size, y = Signal)
+X = df_clean['Length'].values
+y = df_clean['Signal'].values
+threshold = 3.0  # Detection threshold (e.g., 3.0 dB)
 
-# Add a dummy signal
-df['Signal'] = df['Length'] * 2 + 10
+# A. Fit Robust Mean Model (Polynomial)
+mean_model = pod.fit_robust_mean_model(X, y)
 
-# --- 2. Initialize the Study ---
-study = dq.SimulationStudy(
-    input_cols=["Length", "Angle"],
-    outcome_col="Signal"
+# B. Fit Variance Model (Kernel Smoothing)
+residuals, bandwidth, X_eval = pod.fit_variance_model(X, y, mean_model)
+
+# C. Infer Error Distribution (AIC Selection)
+dist_name, dist_params = pod.infer_best_distribution(residuals, X, bandwidth)
+print(f"Selected Distribution: {dist_name}")
+
+# D. Compute PoD Curve & Confidence Intervals
+pod_curve, mean_curve = pod.compute_pod_curve(
+    X_eval, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold
 )
-study.add_data(df)
 
-# --- 3. Diagnose & Adapt ---
-print(study.diagnose())
-# You will see 'Input Coverage' fails for 'Length' due to the gap.
+lower_ci, upper_ci = pod.bootstrap_pod_ci(
+    X, y, X_eval, threshold, mean_model.best_degree_, bandwidth, (dist_name, dist_params)
+)
 
-# --- 4. Refine (The Fix) ---
-# The study automatically generates points specifically to fill the gap.
-new_points = study.refine(n_points=5)
+# E. Plotting
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 
-print(new_points)
+# Plot Physics (Signal vs Size)
+local_std = pod.predict_local_std(X, residuals, X_eval, bandwidth)
+plot.plot_signal_model(X, y, X_eval, mean_curve, threshold, local_std=local_std, ax=ax1)
 
-# Verify: The new Length values will be between 3.0 and 7.0
+# Plot Reliability (PoD vs Size)
+plot.plot_pod_curve(X_eval, pod_curve, lower_ci, upper_ci, ax=ax2)
+
+plt.show()
 ```
