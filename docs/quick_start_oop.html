@@ -8,7 +8,7 @@
 
 <meta name="description" content="A streamlined guide using the SimulationStudy manager.">
 
-<title>Class-Based Approach – digiqual Docs</title>
+<title>Class-Based Approach – digiqual</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -76,13 +76,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-355c415dd6b9922ddaf04a2341011fe1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-9a347e24af8b5307031dbc024441bff7.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
-  "location": "sidebar",
+  "location": "navbar",
   "copy-button": false,
   "collapse-after": 3,
-  "panel-placement": "start",
-  "type": "textbox",
+  "panel-placement": "end",
+  "type": "overlay",
   "limit": 50,
   "keyboard-shortcut": [
     "f",
@@ -111,10 +111,34 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </head>
 
-<body class="nav-sidebar floating quarto-light">
+<body class="nav-sidebar floating nav-fixed quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">digiqual</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/JGIBristol/digiqual"> <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
   <nav class="quarto-secondary-nav">
     <div class="container-fluid d-flex">
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
@@ -123,26 +147,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/quick_start_function.html">Quick Start</a></li><li class="breadcrumb-item"><a href="../docs/quick_start_oop.html">Class-Based Approach</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
-      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
-        <i class="bi bi-search"></i>
-      </button>
     </div>
   </nav>
 </header>
 <!-- content -->
-<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
-    <div class="pt-lg-2 mt-2 text-left sidebar-header">
-    <div class="sidebar-title mb-0 py-0">
-      <a href="../">digiqual Docs</a> 
-    </div>
-      </div>
-        <div class="mt-2 flex-shrink-0 align-items-center">
-        <div class="sidebar-search">
-        <div id="quarto-search" class="" title="Search"></div>
-        </div>
-        </div>
     <div class="sidebar-menu-container"> 
     <ul class="list-unstyled mt-1">
         <li class="sidebar-item">
@@ -177,7 +188,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../api_reference/index.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Reference</span></a>
+ <span class="menu-text">API Reference</span></a>
   </div>
 </li>
     </ul>
@@ -190,13 +201,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#the-simulationstudy-manager" id="toc-the-simulationstudy-manager" class="nav-link active" data-scroll-target="#the-simulationstudy-manager">The SimulationStudy Manager</a>
-  <ul class="collapse">
-  <li><a href="#setup-flawed-data-generation" id="toc-setup-flawed-data-generation" class="nav-link" data-scroll-target="#setup-flawed-data-generation">1. Setup &amp; “Flawed” Data Generation</a></li>
+  <li><a href="#setup-flawed-data-generation" id="toc-setup-flawed-data-generation" class="nav-link active" data-scroll-target="#setup-flawed-data-generation">1. Setup &amp; “Flawed” Data Generation</a></li>
   <li><a href="#diagnosis-detecting-the-issue" id="toc-diagnosis-detecting-the-issue" class="nav-link" data-scroll-target="#diagnosis-detecting-the-issue">2. Diagnosis (Detecting the Issue)</a></li>
   <li><a href="#adaptive-refinement-the-fix" id="toc-adaptive-refinement-the-fix" class="nav-link" data-scroll-target="#adaptive-refinement-the-fix">3. Adaptive Refinement (The Fix)</a></li>
   <li><a href="#full-reliability-analysis" id="toc-full-reliability-analysis" class="nav-link" data-scroll-target="#full-reliability-analysis">4. Full Reliability Analysis</a></li>
-  </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/quick_start_oop.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -227,15 +235,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>DigiQual offers two ways to work: the <strong>Functional Approach</strong> (great for specific tasks) and the <strong>Class-Based Approach</strong> (recommended for full study management).</p>
-<section id="the-simulationstudy-manager" class="level2">
-<h2 class="anchored" data-anchor-id="the-simulationstudy-manager">The SimulationStudy Manager</h2>
 <p>Use the <code>SimulationStudy</code> manager to handle the entire lifecycle: storage, diagnostics, and active refinement. This allows you to automatically fix issues in your design.</p>
 <p>In this example, we will <strong>intentionally feed the study “bad” data</strong> (with a large gap in the input space) to demonstrate how the active learning module identifies and fixes the problem.</p>
 <section id="setup-flawed-data-generation" class="level3">
 <h3 class="anchored" data-anchor-id="setup-flawed-data-generation">1. Setup &amp; “Flawed” Data Generation</h3>
 <p>First, we define our physics simulation and create a dataset with a deliberate gap (missing data between 3mm and 7mm).</p>
-<div id="32c22955" class="cell" data-execution_count="1">
+<div id="b248cca6" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> digiqual <span class="im">as</span> dq</span>
@@ -285,7 +290,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="diagnosis-detecting-the-issue" class="level3">
 <h3 class="anchored" data-anchor-id="diagnosis-detecting-the-issue">2. Diagnosis (Detecting the Issue)</h3>
 <p>We now ask the study manager to diagnose the health of our experiment. We expect it to flag the Input Coverage test because of the gap we created.</p>
-<div id="9ada2ff0" class="cell" data-execution_count="2">
+<div id="d3357972" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Running validation...
@@ -313,7 +318,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.4500</td>
+<td>0.4459</td>
 <td>False</td>
 </tr>
 <tr class="even">
@@ -321,7 +326,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.1094</td>
+<td>0.1428</td>
 <td>True</td>
 </tr>
 <tr class="odd">
@@ -329,7 +334,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.1032</td>
+<td>0.1334</td>
 <td>True</td>
 </tr>
 <tr class="even">
@@ -337,7 +342,7 @@ Checking sample sufficiency...</code></pre>
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9965</td>
+<td>0.9934</td>
 <td>True</td>
 </tr>
 <tr class="odd">
@@ -345,7 +350,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Relative CI Width</td>
-<td>0.1089</td>
+<td>0.1637</td>
 <td>False</td>
 </tr>
 </tbody>
@@ -358,7 +363,7 @@ Checking sample sufficiency...</code></pre>
 <section id="adaptive-refinement-the-fix" class="level3">
 <h3 class="anchored" data-anchor-id="adaptive-refinement-the-fix">3. Adaptive Refinement (The Fix)</h3>
 <p>Instead of manually guessing where to add points, we use refine(). The study manager automatically detects the gap and generates targeted samples to fill it.</p>
-<div id="5471f7c1" class="cell" data-execution_count="3">
+<div id="7dfa262e" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate active learning samples (20 points to fill the gap)</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>new_samples <span class="op">=</span> study.refine(n_points<span class="op">=</span><span class="dv">20</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -374,25 +379,26 @@ Checking sample sufficiency...</code></pre>
 <span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    display(Markdown(<span class="st">"**Result:** Refinement complete. New data merged."</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Strategy: Exploration (Filling gaps in Length)</code></pre>
+ -&gt; Strategy: Exploration (Filling gaps in Length)
+ -&gt; Strategy: Exploitation (Targeting high uncertainty regions)</code></pre>
 </div>
 <div class="cell-output cell-output-display cell-output-markdown">
-<p><strong>Action:</strong> Generated <code>20</code> new samples to fix data issues.</p>
+<p><strong>Action:</strong> Generated <code>40</code> new samples to fix data issues.</p>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Data updated. Total rows: 60</code></pre>
+<pre><code>Data updated. Total rows: 80</code></pre>
 </div>
 <div class="cell-output cell-output-display cell-output-markdown">
 <p><strong>Result:</strong> Refinement complete. New data merged.</p>
 </div>
 </div>
 <p>Now we verify that the issue is resolved:</p>
-<div id="89ac3933" class="cell" data-execution_count="4">
+<div id="59d34355" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-run diagnostics to confirm the green light</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Running validation...
-Validation passed. 60 valid rows ready.
+Validation passed. 80 valid rows ready.
 Checking sample sufficiency...</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="4">
@@ -416,7 +422,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.0512</td>
+<td>0.0436</td>
 <td>True</td>
 </tr>
 <tr class="even">
@@ -424,7 +430,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.0537</td>
+<td>0.0468</td>
 <td>True</td>
 </tr>
 <tr class="odd">
@@ -432,7 +438,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.0702</td>
+<td>0.0425</td>
 <td>True</td>
 </tr>
 <tr class="even">
@@ -440,7 +446,7 @@ Checking sample sufficiency...</code></pre>
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9971</td>
+<td>0.9958</td>
 <td>True</td>
 </tr>
 <tr class="odd">
@@ -448,7 +454,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Relative CI Width</td>
-<td>0.0336</td>
+<td>0.0396</td>
 <td>True</td>
 </tr>
 </tbody>
@@ -499,11 +505,11 @@ Checking sample sufficiency...</code></pre>
 <div class="cell-output cell-output-stdout">
 <pre><code>--- Starting Reliability Analysis (PoI: Length) ---
 1. Selecting Mean Model (Cross-Validation)...
-   -&gt; Selected Polynomial Degree: 5
+   -&gt; Selected Polynomial Degree: 2
 2. Fitting Variance Model (Kernel Smoothing)...
-   -&gt; Smoothing Bandwidth: 0.9761
+   -&gt; Smoothing Bandwidth: 0.9331
 3. Inferring Error Distribution (AIC)...
-   -&gt; Selected Distribution: gumbel_l
+   -&gt; Selected Distribution: norm
 4. Computing PoD Curve...
 5. Running Bootstrap (1000 iterations)...
 --- Analysis Complete ---</code></pre>
@@ -523,7 +529,6 @@ Figure&nbsp;1: Automated Generalized PoD Analysis
 </div>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->
