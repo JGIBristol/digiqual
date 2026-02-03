@@ -387,7 +387,7 @@ wheels = [
 
 [[package]]
 name = "digiqual"
-version = "0.6.2"
+version = "0.6.3"
 source = { editable = "." }
 dependencies = [
     { name = "matplotlib" },

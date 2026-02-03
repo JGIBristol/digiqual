@@ -1,4 +1,4 @@
-__version__ = "0.6.2"
+__version__ = "0.6.3"
 
 # 1. Import Core Components
 from .core import SimulationStudy
