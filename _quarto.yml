@@ -31,7 +31,7 @@ format:
   html:
     theme: [cosmo, custom.scss]
     toc: true
-    page-layout: article
+    page-layout: full
     code-copy: true
     mainfont: "Inter, system-ui, -apple-system, sans-serif"
     fontcolor: "#212529"
@@ -60,9 +60,9 @@ quartodoc:
       - section: "Quick Start"
         contents:
           - text: "Functional Approach"
-            href: docs/quick_start_function.qmd
+            href: docs/qs/function.qmd
           - text: "Class-Based Approach"
-            href: docs/quick_start_oop.qmd
+            href: docs/qs/oop.qmd
 
       # B. The API Injection Point
       # This placeholder tells quartodoc: "Put the generated API tree here"
