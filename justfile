@@ -42,7 +42,7 @@ check: test
 
 # Clean up build artifacts (dist, _site, api_reference)
 clean:
-    rm -rf dist/ _site/ api_reference/ .pytest_cache/ .ruff_cache/ .quarto objects.json
+    rm -rf dist/ _site/ api_reference/ .pytest_cache/ .ruff_cache/ .quarto objects.json _sidebar.yml
     find . -type d -name "__pycache__" -exec rm -rf {} +
     find . -type d -name "*.egg-info" -exec rm -rf {} +
 

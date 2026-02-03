@@ -11,40 +11,21 @@ website:
   title: "digiqual"
   repo-url: https://github.com/JGIBristol/digiqual
   repo-actions: [edit, issue]
+  page-navigation: true
+
 
   # --- TOP BANNER ---
-  # Purely for Branding (Title) and External Links (GitHub)
   navbar:
     background: primary
     foreground: light
     search: true
-
-    # Right: GitHub & Version
     right:
       - icon: github
         href: https://github.com/JGIBristol/digiqual
         aria-label: GitHub
 
-  # --- SIDE NAVIGATION ---
-  # Handles all internal links and Search
-  sidebar:
-    style: "floating"
-    contents:
-      # 1. Home
-      - text: "Home"
-        file: index.qmd
-
-      # 2. Quick Start (Collapsible)
-      - section: "Quick Start"
-        contents:
-          - text: "Functional Approach"
-            file: docs/quick_start_function.qmd
-          - text: "Class-Based Approach"
-            file: docs/quick_start_oop.qmd
-
-      # 3. API Reference (Top-level Link)
-      - text: "API Reference"
-        file: api_reference/index.qmd
+metadata-files:
+    - _sidebar.yml
 
 format:
   html:
@@ -52,54 +33,97 @@ format:
     toc: true
     page-layout: article
     code-copy: true
-
-    # --- AESTHETICS ---
-    # Modern, clean typography and colors (overrides Cosmo defaults)
     mainfont: "Inter, system-ui, -apple-system, sans-serif"
-    fontcolor: "#212529"          # Softer black for text
-    backgroundcolor: "#f9fafb"    # Soft cool grey background (Not bright white)
+    fontcolor: "#212529"
+    backgroundcolor: "#f9fafb"
 
 # --- QUARTODOC CONFIG ---
 quartodoc:
   package: digiqual
   dir: api_reference
+  parser: google
+  title: "API Overview"
+
+# NEW SIDEBAR CONFIGURATION
+  # This generates the Master Sidebar file in the root
+  sidebar:
+    file: _sidebar.yml      # Save to Root (important for path links)
+    style: floating         # Keep your floating style
+    search: true
+    contents:
+      # A. Your Manual Links (Moved here)
+      - text: "Home"
+        href: index.qmd
+
+      - section: "Quick Start"
+        contents:
+          - text: "Functional Approach"
+            href: docs/quick_start_function.qmd
+          - text: "Class-Based Approach"
+            href: docs/quick_start_oop.qmd
+
+      # B. The API Injection Point
+      # This placeholder tells quartodoc: "Put the generated API tree here"
+      - section: "API Reference"
+        contents:
+          - "{{ contents }}"
+
+  # Global Options
   options:
     dynamic: true
-  sections:
-    - title: Core
-      desc: "Workflow management and data structures."
-      contents:
-        - core.SimulationStudy
+    signature_name: short
 
+  sections:
+    # 1. CORE MANAGER
+    - title: Core Workflow
+      desc: "The central engine for managing reliability studies."
+      contents:
+        - name: core.SimulationStudy
+          children: separate
+
+    # 2. EXPERIMENTAL DESIGN
     - title: Sampling
-      desc: "Experimental design and Latin Hypercube Sampling."
+      desc: "Tools for generating space-filling experimental designs."
       contents:
         - sampling.generate_lhs
 
+    # 3. DIAGNOSTICS
     - title: Diagnostics
-      desc: "Statistical checks for sample sufficiency and validity."
+      desc: "Statistical checks to ensure simulation validity."
       contents:
         - diagnostics.validate_simulation
         - diagnostics.sample_sufficiency
         - diagnostics.ValidationError
 
-    - title: Adaptive
-      desc: "Active learning algorithms for targeted sampling."
+    # 4. ADAPTIVE REFINEMENT
+    - title: Adaptive Learning
+      desc: "Active learning algorithms for closing the design loop."
       contents:
         - adaptive.generate_targeted_samples
 
-    - title: PoD (Probability of Detection)
-      desc: "Statistical engine for reliability analysis."
+    # 5. POD ANALYSIS - Unified Main Section
+    - title: Probability of Detection (PoD)
+      desc: "The statistical engine for reliability assessment."
+
+    # 5a. Sub-section: Fitting
+    - subtitle: "Model Fitting"  # Added this to match the style of Part B
+      desc: "Functions to fit trends and variance models."
       contents:
         - pod.fit_robust_mean_model
         - pod.fit_variance_model
-        - pod.predict_local_std
         - pod.infer_best_distribution
+
+    # 5b. Sub-section: Prediction
+    - subtitle: "Prediction & Statistics"
+      desc: "Functions to compute curves and confidence intervals."
+      contents:
+        - pod.predict_local_std
         - pod.compute_pod_curve
         - pod.bootstrap_pod_ci
 
+    # 6. VISUALIZATION
     - title: Plotting
-      desc: "Visualization utilities for models and curves."
+      desc: "Visualization utilities for inspection results."
       contents:
         - plotting.plot_signal_model
         - plotting.plot_pod_curve
