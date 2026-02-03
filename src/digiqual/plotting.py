@@ -9,6 +9,7 @@ def plot_signal_model(
     mean_curve: np.ndarray,
     threshold: float,
     local_std: Optional[np.ndarray] = None,
+    poi_name: str = "Parameter of Interest",
     ax: Optional[plt.Axes] = None
 ) -> plt.Axes:
     """
@@ -39,16 +40,11 @@ def plot_signal_model(
     ax.axhline(threshold, color='red', linestyle='--', linewidth=1.5, label=f'Threshold ({threshold} dB)')
 
     # 4. (Optional) Plot Prediction Intervals (+/- 2 Sigma)
-    # This visualizes the "Heteroscedasticity" (changing noise levels)
     if local_std is not None:
         upper = mean_curve + 2 * local_std
         lower = mean_curve - 2 * local_std
-
-        # Plot the bounds
         ax.plot(X_eval, upper, color='blue', linestyle=':', alpha=0.6)
         ax.plot(X_eval, lower, color='blue', linestyle=':', alpha=0.6)
-
-        # Shade the region
         ax.fill_between(
             X_eval, lower, upper,
             color='blue', alpha=0.1,
@@ -56,9 +52,9 @@ def plot_signal_model(
         )
 
     # Formatting
-    ax.set_xlabel("Parameter of Interest (e.g. Crack Length)")
+    ax.set_xlabel(poi_name)  # <--- DYNAMIC LABEL
     ax.set_ylabel("Signal Response")
-    ax.set_title("Signal Response Model (â vs a)")
+    ax.set_title(f"Signal Response Model ({poi_name})")
     ax.legend(loc='lower right')
     ax.grid(True, alpha=0.3)
 
@@ -71,6 +67,7 @@ def plot_pod_curve(
     ci_lower: Optional[np.ndarray] = None,
     ci_upper: Optional[np.ndarray] = None,
     target_pod: float = 0.90,
+    poi_name: str = "Parameter of Interest",
     ax: Optional[plt.Axes] = None
 ) -> plt.Axes:
     """
@@ -93,38 +90,36 @@ def plot_pod_curve(
     # 1. Plot the Main PoD Curve
     ax.plot(X_eval, pod_curve, color='black', linewidth=2, label='PoD Estimate')
 
-    # 2. Plot Confidence Bounds (The "Band of Uncertainty")
+    # 2. Plot Confidence Bounds
     if ci_lower is not None and ci_upper is not None:
         ax.fill_between(
             X_eval, ci_lower, ci_upper,
             color='orange', alpha=0.3,
             label='95% Confidence Bounds'
         )
-        # Often in NDE we specifically care about the "Conservative" (Lower) bound
         ax.plot(X_eval, ci_lower, color='orange', linestyle='--', linewidth=1)
 
     # 3. Mark the a90/95 point (The "Qualifiable Size")
-    # We find the crack size where the Lower Bound crosses 90% (or target)
     if ci_lower is not None:
         try:
-            # Find index where lower bound exceeds target
+            # Find index where lower bound exceeds target (90%)
             idx = np.where(ci_lower >= target_pod)[0][0]
             a90_95 = X_eval[idx]
 
             # Draw the marker lines
-            ax.axvline(a90_95, color='green', linestyle='-.', label=f'a90/95 = {a90_95:.2f} mm')
+            label_text = f"a90/95 = {a90_95:.2f}"
+            ax.axvline(a90_95, color='green', linestyle='-.', label=label_text)
             ax.axhline(target_pod, color='green', linestyle=':', alpha=0.5)
             ax.scatter([a90_95], [target_pod], color='green', zorder=5)
 
         except IndexError:
-            # Curve never reached target
-            pass
+            pass # Curve never reached target
 
     # Formatting
     ax.set_ylim(0, 1.05)
-    ax.set_xlabel("Parameter of Interest (e.g. Crack Length)")
+    ax.set_xlabel(poi_name)
     ax.set_ylabel("Probability of Detection")
-    ax.set_title("PoD Curve w/ Confidence Bounds")
+    ax.set_title(f"PoD Curve ({poi_name})")
     ax.legend(loc='lower right')
     ax.grid(True, alpha=0.3)
 

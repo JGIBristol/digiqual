@@ -3,6 +3,7 @@ from typing import List, Dict, Any
 
 from .diagnostics import validate_simulation, sample_sufficiency, ValidationError
 from .adaptive import generate_targeted_samples
+from .plotting import plot_signal_model, plot_pod_curve  # <--- IMPORTED
 from . import pod
 
 class SimulationStudy:
@@ -16,6 +17,7 @@ class SimulationStudy:
         clean_data (pd.DataFrame): Data that has passed validation.
         sufficiency_results (pd.DataFrame): The latest diagnostic results.
         pod_results (Dict): Results from the latest PoD analysis.
+        plots (Dict): Stores the latest generated figures (keys: 'signal_model', 'pod_curve').
     """
 
     #### Initialisation ####
@@ -34,6 +36,9 @@ class SimulationStudy:
         self.sufficiency_results: pd.DataFrame = pd.DataFrame()
         self.pod_results: Dict[str, Any] = {}
 
+        # NEW: A home for your figures
+        self.plots: Dict[str, Any] = {}
+
     #### Adding Data ####
     def add_data(self, df: pd.DataFrame) -> None:
         """
@@ -41,7 +46,7 @@ class SimulationStudy:
 
         This method appends the provided DataFrame to `self.data`. Because this
         changes the underlying dataset, all downstream results (clean_data,
-        sufficiency_results, and pod_results) are reset to empty states.
+        sufficiency_results, pod_results, and plots) are reset.
 
         Args:
             df (pd.DataFrame): The DataFrame to ingest. It should contain
@@ -60,6 +65,7 @@ class SimulationStudy:
         self.clean_data = pd.DataFrame()
         self.sufficiency_results = pd.DataFrame()
         self.pod_results = {}
+        self.plots = {}  # <--- NEW: Reset plots so they match the new data
 
     #### Validating self.data ####
     def validate(self) -> None:
@@ -239,3 +245,59 @@ class SimulationStudy:
 
         print("--- Analysis Complete ---")
         return self.pod_results
+
+    #### Visualise Results ####
+    def visualise(self, show: bool = True, save_path: str = None) -> None:
+        """
+        Generates, stores, and displays standard diagnostic plots.
+        """
+        if not self.pod_results:
+            print("No PoD results found. Please run .pod() first.")
+            return
+
+        res = self.pod_results
+
+        # EXTRACT THE COLUMN NAME AUTOMATICALLY
+        # We default to a generic name just in case, but 'poi_col' should be there.
+        poi_label = res.get("poi_col", "Parameter of Interest")
+
+
+        # 0. Pre-calculate Local Std
+        local_std = pod.predict_local_std(
+            res["X"], res["residuals"], res["X_eval"], res["bandwidth"]
+        )
+
+        # 1. Signal Model Plot (Physics View)
+        self.plots["signal_model"] = plot_signal_model(
+            X=res["X"],
+            y=res["y"],
+            X_eval=res["X_eval"],
+            mean_curve=res["curves"]["mean_response"],
+            threshold=res["threshold"],
+            local_std=local_std,
+            poi_name=poi_label
+        )
+
+        # 2. PoD Curve Plot (Reliability View)
+        self.plots["pod_curve"] = plot_pod_curve(
+            X_eval=res["X_eval"],
+            pod_curve=res["curves"]["pod"],
+            ci_lower=res["curves"]["ci_lower"],
+            ci_upper=res["curves"]["ci_upper"],
+            target_pod=0.90,
+            poi_name=poi_label
+        )
+
+        # Handle Saving
+        if save_path:
+            self.plots["signal_model"].savefig(f"{save_path}_signal.png")
+            self.plots["pod_curve"].savefig(f"{save_path}_pod.png")
+            print(f"Plots saved to {save_path}_*.png")
+
+        # Handle Display
+        if show:
+            try:
+                self.plots["signal_model"].show()
+                self.plots["pod_curve"].show()
+            except AttributeError:
+                pass
