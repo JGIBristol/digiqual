@@ -97,7 +97,7 @@ new_samples = generate_targeted_samples(
 
 ### Running Generalised PoD Analysis
 
-Finally, we generate the Probability of Detection curve. This pipeline automatically handles non-linear physics and heteroscedastic noise.
+Finally, we generate the Probability of Detection curve. This pipeline automatically handles non-linear physics and heteroscedastic noise. Some functions have hidden helper functions too.
 
 ```{python}
 #| label: fig-pod-results
