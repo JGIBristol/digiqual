@@ -433,7 +433,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="setup-flawed-data-generation" class="level3">
 <h3 class="anchored" data-anchor-id="setup-flawed-data-generation">1. Setup &amp; “Flawed” Data Generation</h3>
 <p>First, we define our physics simulation and create a dataset with a deliberate gap (missing data between 3mm and 7mm).</p>
-<div id="20f99d9b" class="cell" data-execution_count="1">
+<div id="b9027a03" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> digiqual <span class="im">as</span> dq</span>
@@ -483,7 +483,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="diagnosis-detecting-the-issue" class="level3">
 <h3 class="anchored" data-anchor-id="diagnosis-detecting-the-issue">2. Diagnosis (Detecting the Issue)</h3>
 <p>We now ask the study manager to diagnose the health of our experiment. We expect it to flag the Input Coverage test because of the gap we created.</p>
-<div id="780edefc" class="cell" data-execution_count="2">
+<div id="b442d5c4" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Running validation...
@@ -511,7 +511,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.4820</td>
+<td>0.4636</td>
 <td>False</td>
 </tr>
 <tr class="even">
@@ -519,7 +519,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.0741</td>
+<td>0.0829</td>
 <td>True</td>
 </tr>
 <tr class="odd">
@@ -527,7 +527,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.1245</td>
+<td>0.1347</td>
 <td>True</td>
 </tr>
 <tr class="even">
@@ -535,7 +535,7 @@ Checking sample sufficiency...</code></pre>
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9949</td>
+<td>0.9788</td>
 <td>True</td>
 </tr>
 <tr class="odd">
@@ -543,7 +543,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Relative CI Width</td>
-<td>0.1382</td>
+<td>0.1060</td>
 <td>False</td>
 </tr>
 </tbody>
@@ -556,7 +556,7 @@ Checking sample sufficiency...</code></pre>
 <section id="adaptive-refinement-the-fix" class="level3">
 <h3 class="anchored" data-anchor-id="adaptive-refinement-the-fix">3. Adaptive Refinement (The Fix)</h3>
 <p>Instead of manually guessing where to add points, we use refine(). The study manager automatically detects the gap and generates targeted samples to fill it.</p>
-<div id="05fde8a3" class="cell" data-execution_count="3">
+<div id="edaab9ce" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate active learning samples (20 points to fill the gap)</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>new_samples <span class="op">=</span> study.refine(n_points<span class="op">=</span><span class="dv">20</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -586,7 +586,7 @@ Checking sample sufficiency...</code></pre>
 </div>
 </div>
 <p>Now we verify that the issue is resolved:</p>
-<div id="d5052223" class="cell" data-execution_count="4">
+<div id="040b62f9" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-run diagnostics to confirm the green light</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -615,7 +615,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.0383</td>
+<td>0.0435</td>
 <td>True</td>
 </tr>
 <tr class="even">
@@ -623,7 +623,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.0709</td>
+<td>0.0497</td>
 <td>True</td>
 </tr>
 <tr class="odd">
@@ -631,7 +631,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.0501</td>
+<td>0.0628</td>
 <td>True</td>
 </tr>
 <tr class="even">
@@ -639,7 +639,7 @@ Checking sample sufficiency...</code></pre>
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9978</td>
+<td>0.9973</td>
 <td>True</td>
 </tr>
 <tr class="odd">
@@ -647,7 +647,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Relative CI Width</td>
-<td>0.0319</td>
+<td>0.0269</td>
 <td>True</td>
 </tr>
 </tbody>
@@ -667,9 +667,9 @@ Checking sample sufficiency...</code></pre>
 <div class="cell-output cell-output-stdout">
 <pre><code>--- Starting Reliability Analysis (PoI: Length) ---
 1. Selecting Mean Model (Cross-Validation)...
-   -&gt; Selected Polynomial Degree: 2
+   -&gt; Selected Polynomial Degree: 7
 2. Fitting Variance Model (Kernel Smoothing)...
-   -&gt; Smoothing Bandwidth: 0.9401
+   -&gt; Smoothing Bandwidth: 0.9398
 3. Inferring Error Distribution (AIC)...
    -&gt; Selected Distribution: norm
 4. Computing PoD Curve...
@@ -688,7 +688,7 @@ Checking sample sufficiency...</code></pre>
 <div id="fig-oop-results-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-oop-results-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="quick_start_oop_files/figure-html/fig-oop-results-output-1.png" data-ref-parent="fig-oop-results" width="659" height="523" class="figure-img">
+<img src="quick_start_oop_files/figure-html/fig-oop-results-output-1.png" data-ref-parent="fig-oop-results" width="665" height="523" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-oop-results-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (a) Signal Response Model (Physics)
@@ -700,7 +700,7 @@ Checking sample sufficiency...</code></pre>
 <div id="fig-oop-results-2" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-oop-results-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="quick_start_oop_files/figure-html/fig-oop-results-output-2.png" data-ref-parent="fig-oop-results" width="663" height="523" class="figure-img">
+<img src="quick_start_oop_files/figure-html/fig-oop-results-output-2.png" data-ref-parent="fig-oop-results" width="669" height="523" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-oop-results-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (b) Probability of Detection Curve (Reliability)
