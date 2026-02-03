@@ -59,7 +59,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="../site_libs/quarto-nav/headroom.min.js"></script>
 <script src="../site_libs/clipboard/clipboard.min.js"></script>
 <script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
@@ -104,6 +104,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
 
 </head>
@@ -187,7 +190,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#option-2-class-based-approach-streamlined" id="toc-option-2-class-based-approach-streamlined" class="nav-link active" data-scroll-target="#option-2-class-based-approach-streamlined">Option 2: Class-Based Approach (Streamlined)</a></li>
+  <li><a href="#the-simulationstudy-manager" id="toc-the-simulationstudy-manager" class="nav-link active" data-scroll-target="#the-simulationstudy-manager">The SimulationStudy Manager</a>
+  <ul class="collapse">
+  <li><a href="#setup-flawed-data-generation" id="toc-setup-flawed-data-generation" class="nav-link" data-scroll-target="#setup-flawed-data-generation">1. Setup &amp; “Flawed” Data Generation</a></li>
+  <li><a href="#diagnosis-detecting-the-issue" id="toc-diagnosis-detecting-the-issue" class="nav-link" data-scroll-target="#diagnosis-detecting-the-issue">2. Diagnosis (Detecting the Issue)</a></li>
+  <li><a href="#adaptive-refinement-the-fix" id="toc-adaptive-refinement-the-fix" class="nav-link" data-scroll-target="#adaptive-refinement-the-fix">3. Adaptive Refinement (The Fix)</a></li>
+  <li><a href="#full-reliability-analysis" id="toc-full-reliability-analysis" class="nav-link" data-scroll-target="#full-reliability-analysis">4. Full Reliability Analysis</a></li>
+  </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/quick_start_oop.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -219,20 +228,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p>DigiQual offers two ways to work: the <strong>Functional Approach</strong> (great for specific tasks) and the <strong>Class-Based Approach</strong> (recommended for full study management).</p>
-<section id="option-2-class-based-approach-streamlined" class="level2">
-<h2 class="anchored" data-anchor-id="option-2-class-based-approach-streamlined">Option 2: Class-Based Approach (Streamlined)</h2>
+<section id="the-simulationstudy-manager" class="level2">
+<h2 class="anchored" data-anchor-id="the-simulationstudy-manager">The SimulationStudy Manager</h2>
 <p>Use the <code>SimulationStudy</code> manager to handle the entire lifecycle: storage, diagnostics, and active refinement. This allows you to automatically fix issues in your design.</p>
-<p>In this example, we will intentionally feed the study “bad” data (with a large gap) to see how it identifies and fixes the problem.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<p>In this example, we will <strong>intentionally feed the study “bad” data</strong> (with a large gap in the input space) to demonstrate how the active learning module identifies and fixes the problem.</p>
+<section id="setup-flawed-data-generation" class="level3">
+<h3 class="anchored" data-anchor-id="setup-flawed-data-generation">1. Setup &amp; “Flawed” Data Generation</h3>
+<p>First, we define our physics simulation and create a dataset with a deliberate gap (missing data between 3mm and 7mm).</p>
+<div id="32c22955" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> digiqual <span class="im">as</span> dq</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> digiqual.plotting <span class="im">as</span> plot</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display, Markdown</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Define the Physics ---</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># We use a lambda or function to ensure we apply the SAME physics later</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> apply_physics(df):</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. Base Signal: Quadratic trend (2*Length + 0.5*Length^2)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> apply_physics(df):</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Simulates a signal with quadratic trends and heteroscedastic noise."""</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. Base Signal: Quadratic trend (2*L + 0.5*L^2)</span></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. Angle Penalty: Misalignment (-0.1*Angle) reduces signal</span></span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    signal <span class="op">=</span> <span class="fl">10.0</span> <span class="op">+</span> (<span class="fl">2.0</span> <span class="op">*</span> df[<span class="st">'Length'</span>]) <span class="op">+</span> (<span class="fl">0.5</span> <span class="op">*</span> df[<span class="st">'Length'</span>]<span class="op">**</span><span class="dv">2</span>) <span class="op">-</span> (<span class="fl">0.1</span> <span class="op">*</span> np.<span class="bu">abs</span>(df[<span class="st">'Angle'</span>]))</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
@@ -255,73 +268,262 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Roughness'</span>: np.random.uniform(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="dv">20</span>)</span>
 <span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.concat([df1, df2], ignore_index<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Signal'</span>] <span class="op">=</span> apply_physics(df)</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Initialize Study ---</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Combine and Initialize Study</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>df_initial <span class="op">=</span> pd.concat([df1, df2], ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>df_initial[<span class="st">'Signal'</span>] <span class="op">=</span> apply_physics(df_initial)</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>study <span class="op">=</span> dq.SimulationStudy(</span>
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    input_cols<span class="op">=</span>[<span class="st">"Length"</span>, <span class="st">"Angle"</span>, <span class="st">"Roughness"</span>],</span>
 <span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    outcome_col<span class="op">=</span><span class="st">"Signal"</span></span>
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>study.add_data(df)</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Diagnose &amp; Adapt ---</span></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="co"># Check health (Will fail "Input Coverage")</span></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(study.diagnose())</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate active learning samples (20 points to fill the gap)</span></span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>new_samples <span class="op">=</span> study.refine(n_points<span class="op">=</span><span class="dv">20</span>)</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> new_samples.empty:</span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Generated </span><span class="sc">{</span><span class="bu">len</span>(new_samples)<span class="sc">}</span><span class="ss"> new samples to fix data issues."</span>)</span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Apply the exact same physics model to the new points</span></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>    new_samples[<span class="st">'Signal'</span>] <span class="op">=</span> apply_physics(new_samples)</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Add back to study</span></span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>    study.add_data(new_samples)</span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Refinement Complete. Re-running diagnostics..."</span>)</span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(study.diagnose())</span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Running the PoD Analysis ---</span></span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a><span class="co"># Run the full reliability pipeline in a single call. This fits the models, determines the distribution, and runs the bootstrap.</span></span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="co"># Run Analysis (Threshold = 18 dB)</span></span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> study.pod(poi_col<span class="op">=</span><span class="st">"Length"</span>, threshold<span class="op">=</span><span class="fl">18.0</span>)</span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Selected Degree: </span><span class="sc">{</span>results[<span class="st">'mean_model'</span>]<span class="sc">.</span>best_degree_<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a><span class="co"># Plotting</span></span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>fig, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">14</span>, <span class="dv">6</span>))</span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot Signal Model (Physics)</span></span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>local_std <span class="op">=</span> dq.pod.predict_local_std(</span>
-<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>    results[<span class="st">'X'</span>], results[<span class="st">'residuals'</span>], results[<span class="st">'X_eval'</span>], results[<span class="st">'bandwidth'</span>]</span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>plot.plot_signal_model(</span>
-<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a>    X<span class="op">=</span>results[<span class="st">'X'</span>],</span>
-<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span>results[<span class="st">'y'</span>],</span>
-<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>    X_eval<span class="op">=</span>results[<span class="st">'X_eval'</span>],</span>
-<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>    mean_curve<span class="op">=</span>results[<span class="st">'curves'</span>][<span class="st">'mean_response'</span>],</span>
-<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>    threshold<span class="op">=</span>results[<span class="st">'threshold'</span>],</span>
-<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>    local_std<span class="op">=</span>local_std,</span>
-<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>ax1</span>
-<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot PoD Curve (Reliability)</span></span>
-<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a>plot.plot_pod_curve(</span>
-<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a>    X_eval<span class="op">=</span>results[<span class="st">'X_eval'</span>],</span>
-<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>    pod_curve<span class="op">=</span>results[<span class="st">'curves'</span>][<span class="st">'pod'</span>],</span>
-<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a>    ci_lower<span class="op">=</span>results[<span class="st">'curves'</span>][<span class="st">'ci_lower'</span>],</span>
-<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>    ci_upper<span class="op">=</span>results[<span class="st">'curves'</span>][<span class="st">'ci_upper'</span>],</span>
-<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>    target_pod<span class="op">=</span><span class="fl">0.90</span>,</span>
-<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>ax2</span>
-<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>study.add_data(df_initial)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Data updated. Total rows: 40</code></pre>
+</div>
+</div>
+</section>
+<section id="diagnosis-detecting-the-issue" class="level3">
+<h3 class="anchored" data-anchor-id="diagnosis-detecting-the-issue">2. Diagnosis (Detecting the Issue)</h3>
+<p>We now ask the study manager to diagnose the health of our experiment. We expect it to flag the Input Coverage test because of the gap we created.</p>
+<div id="9ada2ff0" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Running validation...
+Validation passed. 40 valid rows ready.
+Checking sample sufficiency...</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="2">
+<div>
 
 
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Test</th>
+<th data-quarto-table-cell-role="th">Variable</th>
+<th data-quarto-table-cell-role="th">Metric</th>
+<th data-quarto-table-cell-role="th">Value</th>
+<th data-quarto-table-cell-role="th">Pass</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>Input Coverage</td>
+<td>Length</td>
+<td>Max Gap Ratio</td>
+<td>0.4500</td>
+<td>False</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>Input Coverage</td>
+<td>Angle</td>
+<td>Max Gap Ratio</td>
+<td>0.1094</td>
+<td>True</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>Input Coverage</td>
+<td>Roughness</td>
+<td>Max Gap Ratio</td>
+<td>0.1032</td>
+<td>True</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>Model Fit (CV)</td>
+<td>Signal</td>
+<td>Mean R2 Score</td>
+<td>0.9965</td>
+<td>True</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>Bootstrap Convergence</td>
+<td>Signal</td>
+<td>Relative CI Width</td>
+<td>0.1089</td>
+<td>False</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</section>
+<section id="adaptive-refinement-the-fix" class="level3">
+<h3 class="anchored" data-anchor-id="adaptive-refinement-the-fix">3. Adaptive Refinement (The Fix)</h3>
+<p>Instead of manually guessing where to add points, we use refine(). The study manager automatically detects the gap and generates targeted samples to fill it.</p>
+<div id="5471f7c1" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate active learning samples (20 points to fill the gap)</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>new_samples <span class="op">=</span> study.refine(n_points<span class="op">=</span><span class="dv">20</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> new_samples.empty:</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    display(Markdown(<span class="ss">f"**Action:** Generated `</span><span class="sc">{</span><span class="bu">len</span>(new_samples)<span class="sc">}</span><span class="ss">` new samples to fix data issues."</span>))</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Apply the exact same physics model to the new points</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    new_samples[<span class="st">'Signal'</span>] <span class="op">=</span> apply_physics(new_samples)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Add back to study</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    study.add_data(new_samples)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    display(Markdown(<span class="st">"**Result:** Refinement complete. New data merged."</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Diagnostics flagged issues. Initiating Active Learning...
+ -&gt; Strategy: Exploration (Filling gaps in Length)</code></pre>
+</div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Action:</strong> Generated <code>20</code> new samples to fix data issues.</p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Data updated. Total rows: 60</code></pre>
+</div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Result:</strong> Refinement complete. New data merged.</p>
+</div>
+</div>
+<p>Now we verify that the issue is resolved:</p>
+<div id="89ac3933" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-run diagnostics to confirm the green light</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Running validation...
+Validation passed. 60 valid rows ready.
+Checking sample sufficiency...</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="4">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Test</th>
+<th data-quarto-table-cell-role="th">Variable</th>
+<th data-quarto-table-cell-role="th">Metric</th>
+<th data-quarto-table-cell-role="th">Value</th>
+<th data-quarto-table-cell-role="th">Pass</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>Input Coverage</td>
+<td>Length</td>
+<td>Max Gap Ratio</td>
+<td>0.0512</td>
+<td>True</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>Input Coverage</td>
+<td>Angle</td>
+<td>Max Gap Ratio</td>
+<td>0.0537</td>
+<td>True</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>Input Coverage</td>
+<td>Roughness</td>
+<td>Max Gap Ratio</td>
+<td>0.0702</td>
+<td>True</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>Model Fit (CV)</td>
+<td>Signal</td>
+<td>Mean R2 Score</td>
+<td>0.9971</td>
+<td>True</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>Bootstrap Convergence</td>
+<td>Signal</td>
+<td>Relative CI Width</td>
+<td>0.0336</td>
+<td>True</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</section>
+<section id="full-reliability-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="full-reliability-analysis">4. Full Reliability Analysis</h3>
+<p>With a validated dataset, we can now run the complete PoD pipeline. The pod() method handles model fitting, distribution selection, and bootstrapping in a single call.</p>
+<div id="cell-fig-oop-results" class="cell" data-fig-height="6" data-fig-width="12" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> digiqual.plotting <span class="im">as</span> plot</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Run Analysis (Threshold = 18 dB)</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> study.pod(poi_col<span class="op">=</span><span class="st">"Length"</span>, threshold<span class="op">=</span><span class="fl">18.0</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Create Plots</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>fig, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">14</span>, <span class="dv">6</span>))</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot Signal Model (Physics)</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>local_std <span class="op">=</span> dq.pod.predict_local_std(</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    results[<span class="st">'X'</span>], results[<span class="st">'residuals'</span>], results[<span class="st">'X_eval'</span>], results[<span class="st">'bandwidth'</span>]</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>plot.plot_signal_model(</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    X<span class="op">=</span>results[<span class="st">'X'</span>],</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span>results[<span class="st">'y'</span>],</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    X_eval<span class="op">=</span>results[<span class="st">'X_eval'</span>],</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    mean_curve<span class="op">=</span>results[<span class="st">'curves'</span>][<span class="st">'mean_response'</span>],</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    threshold<span class="op">=</span>results[<span class="st">'threshold'</span>],</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    local_std<span class="op">=</span>local_std,</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>ax1</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot PoD Curve (Reliability)</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>plot.plot_pod_curve(</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>    X_eval<span class="op">=</span>results[<span class="st">'X_eval'</span>],</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>    pod_curve<span class="op">=</span>results[<span class="st">'curves'</span>][<span class="st">'pod'</span>],</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>    ci_lower<span class="op">=</span>results[<span class="st">'curves'</span>][<span class="st">'ci_lower'</span>],</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>    ci_upper<span class="op">=</span>results[<span class="st">'curves'</span>][<span class="st">'ci_upper'</span>],</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>    target_pod<span class="op">=</span><span class="fl">0.90</span>,</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>ax2</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>--- Starting Reliability Analysis (PoI: Length) ---
+1. Selecting Mean Model (Cross-Validation)...
+   -&gt; Selected Polynomial Degree: 5
+2. Fitting Variance Model (Kernel Smoothing)...
+   -&gt; Smoothing Bandwidth: 0.9761
+3. Inferring Error Distribution (AIC)...
+   -&gt; Selected Distribution: gumbel_l
+4. Computing PoD Curve...
+5. Running Bootstrap (1000 iterations)...
+--- Analysis Complete ---</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div id="fig-oop-results" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-oop-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="quick_start_oop_files/figure-html/fig-oop-results-output-2.png" class="quarto-figure quarto-figure-center figure-img" width="1105" height="524">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-oop-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Automated Generalized PoD Analysis
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+
+
+</section>
 </section>
 
 </main> <!-- /main -->

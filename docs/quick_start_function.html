@@ -59,7 +59,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="../site_libs/quarto-nav/headroom.min.js"></script>
 <script src="../site_libs/clipboard/clipboard.min.js"></script>
 <script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
@@ -104,6 +104,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
@@ -216,7 +219,7 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#option-1-functional-approach-manual-control" id="toc-option-1-functional-approach-manual-control" class="nav-link active" data-scroll-target="#option-1-functional-approach-manual-control">Option 1: Functional Approach (Manual Control)</a>
+  <li><a href="#functional-approach-manual-control" id="toc-functional-approach-manual-control" class="nav-link active" data-scroll-target="#functional-approach-manual-control">Functional Approach (Manual Control)</a>
   <ul class="collapse">
   <li><a href="#generating-an-experimental-design" id="toc-generating-an-experimental-design" class="nav-link" data-scroll-target="#generating-an-experimental-design">Generating an Experimental Design</a></li>
   <li><a href="#validating-simulation-data" id="toc-validating-simulation-data" class="nav-link" data-scroll-target="#validating-simulation-data">Validating Simulation Data</a></li>
@@ -255,63 +258,196 @@ window.Quarto = {
 
 
 <p>DigiQual offers two ways to work: the <strong>Functional Approach</strong> (great for specific tasks) and the <strong>Class-Based Approach</strong> (recommended for full study management).</p>
-<section id="option-1-functional-approach-manual-control" class="level2">
-<h2 class="anchored" data-anchor-id="option-1-functional-approach-manual-control">Option 1: Functional Approach (Manual Control)</h2>
+<section id="functional-approach-manual-control" class="level2">
+<h2 class="anchored" data-anchor-id="functional-approach-manual-control">Functional Approach (Manual Control)</h2>
 <p>In this scenario, we generate a high-quality Latin Hypercube design. We will see that the active learning module confirms the design is sufficient and requires no further sampling.</p>
 <section id="generating-an-experimental-design" class="level3">
 <h3 class="anchored" data-anchor-id="generating-an-experimental-design">Generating an Experimental Design</h3>
 <p>Create a Latin Hypercube design for a simulation study involving defect size (<span class="math inline">\(a\)</span>), angle (<span class="math inline">\(\theta\)</span>) and roughness (<span class="math inline">\(\sigma_{R}\)</span>).</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.sampling <span class="im">import</span> generate_lhs</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Define your variables and bounds</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>vars_df <span class="op">=</span> pd.DataFrame(</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    [</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"Name"</span>: <span class="st">"Length"</span>, <span class="st">"Min"</span>: <span class="fl">0.1</span>, <span class="st">"Max"</span>: <span class="dv">10</span>},</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"Name"</span>: <span class="st">"Angle"</span>, <span class="st">"Min"</span>: <span class="op">-</span><span class="dv">90</span>, <span class="st">"Max"</span>: <span class="dv">90</span>},</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"Name"</span>: <span class="st">"Roughness"</span>, <span class="st">"Min"</span>: <span class="dv">0</span>, <span class="st">"Max"</span>: <span class="dv">1</span>},</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    ]</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate 1000 samples</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> generate_lhs(n<span class="op">=</span><span class="dv">1000</span>, seed<span class="op">=</span><span class="dv">123</span>, vars_df<span class="op">=</span>vars_df)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df.head())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="9a4485b0" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.sampling <span class="im">import</span> generate_lhs</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Define your variables and bounds</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>vars_df <span class="op">=</span> pd.DataFrame(</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    [</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"Name"</span>: <span class="st">"Length"</span>, <span class="st">"Min"</span>: <span class="fl">0.1</span>, <span class="st">"Max"</span>: <span class="dv">10</span>},</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"Name"</span>: <span class="st">"Angle"</span>, <span class="st">"Min"</span>: <span class="op">-</span><span class="dv">90</span>, <span class="st">"Max"</span>: <span class="dv">90</span>},</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"Name"</span>: <span class="st">"Roughness"</span>, <span class="st">"Min"</span>: <span class="dv">0</span>, <span class="st">"Max"</span>: <span class="dv">1</span>},</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate 1000 samples</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> generate_lhs(n<span class="op">=</span><span class="dv">1000</span>, seed<span class="op">=</span><span class="dv">123</span>, vars_df<span class="op">=</span>vars_df)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>df.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="2">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">Name</th>
+<th data-quarto-table-cell-role="th">Length</th>
+<th data-quarto-table-cell-role="th">Angle</th>
+<th data-quarto-table-cell-role="th">Roughness</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>0.835745</td>
+<td>-41.409688</td>
+<td>0.147780</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>1.632675</td>
+<td>-40.711663</td>
+<td>0.392188</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>0.566059</td>
+<td>-50.989783</td>
+<td>0.265180</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>1.338590</td>
+<td>61.647665</td>
+<td>0.858755</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>9.635440</td>
+<td>-27.038477</td>
+<td>0.469259</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
 </section>
 <section id="validating-simulation-data" class="level3">
 <h3 class="anchored" data-anchor-id="validating-simulation-data">Validating Simulation Data</h3>
 <p>Once you have your simulation results, ensure they are ready for PoD analysis.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.diagnostics <span class="im">import</span> validate_simulation</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> numpy.random <span class="im">import</span> default_rng</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a fake signal output column with some noise</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> default_rng(<span class="dv">123</span>)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Signal'</span>] <span class="op">=</span> (df[<span class="st">'Length'</span>] <span class="op">*</span> df[<span class="st">'Roughness'</span>]) <span class="op">+</span> rng.uniform(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>, size<span class="op">=</span><span class="bu">len</span>(df))</span>
+<div id="a0a0f470" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.diagnostics <span class="im">import</span> validate_simulation</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> apply_physics(df):</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. Base Signal: Quadratic trend (2*Length + 0.5*Length^2)</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. Angle Penalty: Misalignment (-0.1*Angle) reduces signal</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    signal <span class="op">=</span> <span class="fl">10.0</span> <span class="op">+</span> (<span class="fl">2.0</span> <span class="op">*</span> df[<span class="st">'Length'</span>]) <span class="op">+</span> (<span class="fl">0.5</span> <span class="op">*</span> df[<span class="st">'Length'</span>]<span class="op">**</span><span class="dv">2</span>) <span class="op">-</span> (<span class="fl">0.1</span> <span class="op">*</span> np.<span class="bu">abs</span>(df[<span class="st">'Angle'</span>]))</span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>df_clean, df_removed <span class="op">=</span> validate_simulation(</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    df<span class="op">=</span>df,</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    input_cols<span class="op">=</span>[<span class="st">"Length"</span>, <span class="st">"Angle"</span>, <span class="st">"Roughness"</span>],</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    outcome_col<span class="op">=</span><span class="st">"Signal"</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. Heteroscedastic Noise: Higher roughness = More scatter</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    noise_scale <span class="op">=</span> <span class="fl">0.5</span> <span class="op">+</span> (<span class="fl">1.5</span> <span class="op">*</span> df[<span class="st">'Roughness'</span>])</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    noise <span class="op">=</span> np.random.normal(loc<span class="op">=</span><span class="dv">0</span>, scale<span class="op">=</span>noise_scale, size<span class="op">=</span><span class="bu">len</span>(df))</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> signal <span class="op">+</span> noise</span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Valid rows: </span><span class="sc">{</span><span class="bu">len</span>(df_clean)<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Dropped rows: </span><span class="sc">{</span><span class="bu">len</span>(df_removed)<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a fake signal output column with some noise</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Signal'</span>] <span class="op">=</span> apply_physics(df)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>df_clean, df_removed <span class="op">=</span> validate_simulation(</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    df<span class="op">=</span>df,</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    input_cols<span class="op">=</span>[<span class="st">"Length"</span>, <span class="st">"Angle"</span>, <span class="st">"Roughness"</span>],</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    outcome_col<span class="op">=</span><span class="st">"Signal"</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>display(Markdown(<span class="ss">f"**Valid rows:** </span><span class="sc">{</span><span class="bu">len</span>(df_clean)<span class="sc">}</span><span class="ss">"</span>))</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>display(Markdown(<span class="ss">f"**Dropped rows:** </span><span class="sc">{</span><span class="bu">len</span>(df_removed)<span class="sc">}</span><span class="ss">"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Valid rows:</strong> 1000</p>
+</div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><strong>Dropped rows:</strong> 0</p>
+</div>
+</div>
 </section>
 <section id="checking-sample-sufficiency" class="level3">
 <h3 class="anchored" data-anchor-id="checking-sample-sufficiency">Checking Sample Sufficiency</h3>
 <p>We have validated data so now we want to check if we have enough samples to produce an accurate PoD Curve.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.diagnostics <span class="im">import</span> sample_sufficiency</span>
+<div id="73f54986" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.diagnostics <span class="im">import</span> sample_sufficiency</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>ss <span class="op">=</span> sample_sufficiency(</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    df<span class="op">=</span>df_clean,</span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    input_cols<span class="op">=</span>[<span class="st">"Length"</span>, <span class="st">"Angle"</span>, <span class="st">"Roughness"</span>],</span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    outcome_col<span class="op">=</span><span class="st">"Signal"</span></span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(ss)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>ss</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="4">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Test</th>
+<th data-quarto-table-cell-role="th">Variable</th>
+<th data-quarto-table-cell-role="th">Metric</th>
+<th data-quarto-table-cell-role="th">Value</th>
+<th data-quarto-table-cell-role="th">Pass</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>Input Coverage</td>
+<td>Length</td>
+<td>Max Gap Ratio</td>
+<td>0.0019</td>
+<td>True</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>Input Coverage</td>
+<td>Angle</td>
+<td>Max Gap Ratio</td>
+<td>0.0020</td>
+<td>True</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>Input Coverage</td>
+<td>Roughness</td>
+<td>Max Gap Ratio</td>
+<td>0.0020</td>
+<td>True</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>Model Fit (CV)</td>
+<td>Signal</td>
+<td>Mean R2 Score</td>
+<td>0.9946</td>
+<td>True</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>Bootstrap Convergence</td>
+<td>Signal</td>
+<td>Relative CI Width</td>
+<td>0.0111</td>
+<td>True</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
 </section>
 <section id="adaptive-refinement-check" class="level3">
 <h3 class="anchored" data-anchor-id="adaptive-refinement-check">Adaptive Refinement Check</h3>
 <p>We now run the targeted sampler. Because <code>generate_lhs</code> provides good coverage by default, we expect the adaptive module to return an empty result, confirming no more work is needed.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.adaptive <span class="im">import</span> generate_targeted_samples</span>
+<div id="26608065" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.adaptive <span class="im">import</span> generate_targeted_samples</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>new_samples <span class="op">=</span> generate_targeted_samples(</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    df<span class="op">=</span>df_clean,</span>
@@ -319,49 +455,66 @@ window.Quarto = {
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    outcome_col<span class="op">=</span><span class="st">"Signal"</span>,</span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    n_new_per_fix<span class="op">=</span><span class="dv">5</span></span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>All diagnostic checks passed. No new samples needed.</code></pre>
+</div>
+</div>
 </section>
 <section id="running-generalised-pod-analysis" class="level3">
 <h3 class="anchored" data-anchor-id="running-generalised-pod-analysis">Running Generalised PoD Analysis</h3>
 <p>Finally, we generate the Probability of Detection curve. This pipeline automatically handles non-linear physics and heteroscedastic noise.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> digiqual.pod <span class="im">as</span> pod</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> digiqual.plotting <span class="im">as</span> plot</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Prepare vectors (X = Crack Size, y = Signal)</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> df_clean[<span class="st">'Length'</span>].values</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> df_clean[<span class="st">'Signal'</span>].values</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>threshold <span class="op">=</span> <span class="fl">3.0</span>  <span class="co"># Detection threshold (e.g., 3.0 dB)</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co"># A. Fit Robust Mean Model (Polynomial)</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>mean_model <span class="op">=</span> pod.fit_robust_mean_model(X, y)</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co"># B. Fit Variance Model (Kernel Smoothing)</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>residuals, bandwidth, X_eval <span class="op">=</span> pod.fit_variance_model(X, y, mean_model)</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co"># C. Infer Error Distribution (AIC Selection)</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>dist_name, dist_params <span class="op">=</span> pod.infer_best_distribution(residuals, X, bandwidth)</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Selected Distribution: </span><span class="sc">{</span>dist_name<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co"># D. Compute PoD Curve &amp; Confidence Intervals</span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>pod_curve, mean_curve <span class="op">=</span> pod.compute_pod_curve(</span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    X_eval, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>lower_ci, upper_ci <span class="op">=</span> pod.bootstrap_pod_ci(</span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    X, y, X_eval, threshold, mean_model.best_degree_, bandwidth, (dist_name, dist_params)</span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="co"># E. Plotting</span></span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>fig, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">5</span>))</span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot Physics (Signal vs Size)</span></span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>local_std <span class="op">=</span> pod.predict_local_std(X, residuals, X_eval, bandwidth)</span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>plot.plot_signal_model(X, y, X_eval, mean_curve, threshold, local_std<span class="op">=</span>local_std, ax<span class="op">=</span>ax1)</span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot Reliability (PoD vs Size)</span></span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>plot.plot_pod_curve(X_eval, pod_curve, lower_ci, upper_ci, ax<span class="op">=</span>ax2)</span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="cell-fig-pod-results" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> digiqual.pod <span class="im">as</span> pod</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> digiqual.plotting <span class="im">as</span> plot</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Prepare vectors (X = Crack Size, y = Signal)</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> df_clean[<span class="st">'Length'</span>].values</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> df_clean[<span class="st">'Signal'</span>].values</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>threshold <span class="op">=</span> <span class="fl">18.0</span>  <span class="co"># Detection threshold (e.g., 3.0 dB)</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co"># A. Fit Robust Mean Model (Polynomial)</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>mean_model <span class="op">=</span> pod.fit_robust_mean_model(X, y)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co"># B. Fit Variance Model (Kernel Smoothing)</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>residuals, bandwidth, X_eval <span class="op">=</span> pod.fit_variance_model(X, y, mean_model)</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co"># C. Infer Error Distribution (AIC Selection)</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>dist_name, dist_params <span class="op">=</span> pod.infer_best_distribution(residuals, X, bandwidth)</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="co"># D. Compute PoD Curve &amp; Confidence Intervals</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>pod_curve, mean_curve <span class="op">=</span> pod.compute_pod_curve(</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    X_eval, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>lower_ci, upper_ci <span class="op">=</span> pod.bootstrap_pod_ci(</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    X, y, X_eval, threshold, mean_model.best_degree_, bandwidth, (dist_name, dist_params)</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="co"># E. Plotting</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>fig, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">5</span>))</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot Physics (Signal vs Size)</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>local_std <span class="op">=</span> pod.predict_local_std(X, residuals, X_eval, bandwidth)</span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>plot.plot_signal_model(X, y, X_eval, mean_curve, threshold, local_std<span class="op">=</span>local_std, ax<span class="op">=</span>ax1)</span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot Reliability (PoD vs Size)</span></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>plot.plot_pod_curve(X_eval, pod_curve, lower_ci, upper_ci, ax<span class="op">=</span>ax2)</span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="fig-pod-results" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pod-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="quick_start_function_files/figure-html/fig-pod-results-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="957" height="450">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pod-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Generalized PoD Analysis Results
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
 
 
 </section>
