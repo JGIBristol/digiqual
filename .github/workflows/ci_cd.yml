@@ -2,106 +2,44 @@ name: CI/CD
 
 on:
   push:
-    branches:
-      - main
-    tags:
-      - 'v*'
-  pull_request:
-    branches:
-      - main
+    branches: [main]
+    tags: ['v*']
 
 permissions:
   contents: write
 
 jobs:
-  # JOB 1: Run Tests
-  test:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11", "3.12"]
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Install uv
         uses: astral-sh/setup-uv@v1
-        with:
-          version: "latest"
 
-      - name: Set up Python ${{ matrix.python-version }}
-        run: uv python install ${{ matrix.python-version }}
+      - name: Set up Python
+        run: uv python install 3.11
 
-      - name: Install dependencies
+      - name: Install Package & Docs Deps
         run: |
           uv venv
-          uv pip install -e ".[dev]"
+          uv pip install -e ".[dev]" quartodoc
+          # Ensure the venv bin is in the path for quarto to find the package
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> $GITHUB_PATH
 
       - name: Run Tests
         run: uv run pytest
 
+      - name: Build API Reference
+        run: uv run quartodoc build
 
-
-  # JOB 2: Deploy Documentation (Quarto)
-  deploy-docs:
-    needs: test
-    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # 1. Install Quarto CLI
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
 
-      # 2. Install Python & Dependencies
-      - name: Install Python and Dependencies
-        uses: astral-sh/setup-uv@v1
-      - run: |
-          uv python install 3.11
-          uv venv
-          uv pip install ".[dev]" quartodoc
-          # ADD THIS LINE BELOW:
-          echo "$GITHUB_WORKSPACE/.venv/bin" >> $GITHUB_PATH
-
-      # 3. Generate the API Reference (.qmd files)
-      - name: Build API Docs
-        run: uv run quartodoc build
-
-      # 4. Render and Publish to gh-pages
       - name: Publish to GitHub Pages
         uses: quarto-dev/quarto-actions/publish@v2
         with:
           target: gh-pages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-# JOB 3: Build & Draft Release (Only on Tags)
-  create-release:
-    needs: test
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v1
-        with:
-          version: "latest"
-
-      - name: Build Package
-        run: uv build
-
-      - name: Create Release Draft
-        uses: softprops/action-gh-release@v1
-        with:
-          draft: true
-          generate_release_notes: true
-          files: dist/*
