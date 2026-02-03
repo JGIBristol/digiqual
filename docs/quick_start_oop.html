@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.8.27">
+<meta name="generator" content="quarto-1.7.32">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -59,7 +59,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="../site_libs/quarto-nav/headroom.min.js"></script>
 <script src="../site_libs/clipboard/clipboard.min.js"></script>
 <script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
@@ -70,15 +70,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../docs/quick_start_function.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-ef127cc8d1aa417dace7c8d7db77fe93.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-4093ccf4accdef9458a71a81a908e23b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -106,7 +105,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
-<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
 
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
@@ -213,7 +212,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
- <span class="menu-text">Core Workflow</span></a>
+ <span class="menu-text">SimulationStudy Class</span></a>
           <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
@@ -433,8 +432,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="setup-flawed-data-generation" class="level3">
 <h3 class="anchored" data-anchor-id="setup-flawed-data-generation">1. Setup &amp; “Flawed” Data Generation</h3>
 <p>First, we define our physics simulation and create a dataset with a deliberate gap (missing data between 3mm and 7mm).</p>
-<div id="da3256a0" class="cell" data-execution_count="1">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<div id="24add32c" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> digiqual <span class="im">as</span> dq</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -474,7 +473,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    input_cols<span class="op">=</span>[<span class="st">"Length"</span>, <span class="st">"Angle"</span>, <span class="st">"Roughness"</span>],</span>
 <span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    outcome_col<span class="op">=</span><span class="st">"Signal"</span></span>
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>study.add_data(df_initial)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>study.add_data(df_initial)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Data updated. Total rows: 40</code></pre>
 </div>
@@ -483,8 +482,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="diagnosis-detecting-the-issue" class="level3">
 <h3 class="anchored" data-anchor-id="diagnosis-detecting-the-issue">2. Diagnosis (Detecting the Issue)</h3>
 <p>We now ask the study manager to diagnose the health of our experiment. We expect it to flag the Input Coverage test because of the gap we created.</p>
-<div id="a0acb8c0" class="cell" data-execution_count="2">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="69a72e3f" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Running validation...
 Validation passed. 40 valid rows ready.
@@ -494,7 +493,7 @@ Checking sample sufficiency...</code></pre>
 <div>
 
 
-<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
@@ -507,43 +506,43 @@ Checking sample sufficiency...</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">0</th>
+<td data-quarto-table-cell-role="th">0</td>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.4304</td>
+<td>0.4278</td>
 <td>False</td>
 </tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">1</th>
+<td data-quarto-table-cell-role="th">1</td>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.1007</td>
+<td>0.0943</td>
 <td>True</td>
 </tr>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">2</th>
+<td data-quarto-table-cell-role="th">2</td>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.1401</td>
+<td>0.0975</td>
 <td>True</td>
 </tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">3</th>
+<td data-quarto-table-cell-role="th">3</td>
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9967</td>
+<td>0.9945</td>
 <td>True</td>
 </tr>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">4</th>
+<td data-quarto-table-cell-role="th">4</td>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Relative CI Width</td>
-<td>0.1017</td>
+<td>0.1085</td>
 <td>False</td>
 </tr>
 </tbody>
@@ -556,8 +555,8 @@ Checking sample sufficiency...</code></pre>
 <section id="adaptive-refinement-the-fix" class="level3">
 <h3 class="anchored" data-anchor-id="adaptive-refinement-the-fix">3. Adaptive Refinement (The Fix)</h3>
 <p>Instead of manually guessing where to add points, we use refine(). The study manager automatically detects the gap and generates targeted samples to fill it.</p>
-<div id="c6aca30f" class="cell" data-execution_count="3">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate active learning samples (20 points to fill the gap)</span></span>
+<div id="96b806f5" class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate active learning samples (20 points to fill the gap)</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>new_samples <span class="op">=</span> study.refine(n_points<span class="op">=</span><span class="dv">20</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> new_samples.empty:</span>
@@ -569,7 +568,7 @@ Checking sample sufficiency...</code></pre>
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Add back to study</span></span>
 <span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    study.add_data(new_samples)</span>
 <span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    display(Markdown(<span class="st">"**Result:** Refinement complete. New data merged."</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    display(Markdown(<span class="st">"**Result:** Refinement complete. New data merged."</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Diagnostics flagged issues. Initiating Active Learning...
  -&gt; Strategy: Exploration (Filling gaps in Length)
@@ -586,9 +585,9 @@ Checking sample sufficiency...</code></pre>
 </div>
 </div>
 <p>Now we verify that the issue is resolved:</p>
-<div id="8304bc5f" class="cell" data-execution_count="4">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-run diagnostics to confirm the green light</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="f73d825f" class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-run diagnostics to confirm the green light</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Running validation...
 Validation passed. 80 valid rows ready.
@@ -598,7 +597,7 @@ Checking sample sufficiency...</code></pre>
 <div>
 
 
-<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
@@ -611,43 +610,43 @@ Checking sample sufficiency...</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">0</th>
+<td data-quarto-table-cell-role="th">0</td>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.0726</td>
+<td>0.0488</td>
 <td>True</td>
 </tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">1</th>
+<td data-quarto-table-cell-role="th">1</td>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.0516</td>
+<td>0.0594</td>
 <td>True</td>
 </tr>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">2</th>
+<td data-quarto-table-cell-role="th">2</td>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.0642</td>
+<td>0.0667</td>
 <td>True</td>
 </tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">3</th>
+<td data-quarto-table-cell-role="th">3</td>
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9979</td>
+<td>0.9971</td>
 <td>True</td>
 </tr>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">4</th>
+<td data-quarto-table-cell-role="th">4</td>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Relative CI Width</td>
-<td>0.0418</td>
+<td>0.0253</td>
 <td>True</td>
 </tr>
 </tbody>
@@ -659,66 +658,61 @@ Checking sample sufficiency...</code></pre>
 </section>
 <section id="full-reliability-analysis" class="level3">
 <h3 class="anchored" data-anchor-id="full-reliability-analysis">4. Full Reliability Analysis</h3>
-<p>With a validated dataset, we can now run the complete PoD pipeline. The pod() method handles model fitting, distribution selection, and bootstrapping in a single call.</p>
-<div id="cell-fig-oop-results" class="cell" data-fig-height="6" data-fig-width="12" data-execution_count="5">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> digiqual.plotting <span class="im">as</span> plot</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Run Analysis (Threshold = 18 dB)</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> study.pod(poi_col<span class="op">=</span><span class="st">"Length"</span>, threshold<span class="op">=</span><span class="fl">18.0</span>)</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Create Plots</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>fig, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">14</span>, <span class="dv">6</span>))</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot Signal Model (Physics)</span></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>local_std <span class="op">=</span> dq.pod.predict_local_std(</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    results[<span class="st">'X'</span>], results[<span class="st">'residuals'</span>], results[<span class="st">'X_eval'</span>], results[<span class="st">'bandwidth'</span>]</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>plot.plot_signal_model(</span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    X<span class="op">=</span>results[<span class="st">'X'</span>],</span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span>results[<span class="st">'y'</span>],</span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    X_eval<span class="op">=</span>results[<span class="st">'X_eval'</span>],</span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    mean_curve<span class="op">=</span>results[<span class="st">'curves'</span>][<span class="st">'mean_response'</span>],</span>
-<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    threshold<span class="op">=</span>results[<span class="st">'threshold'</span>],</span>
-<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    local_std<span class="op">=</span>local_std,</span>
-<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>ax1</span>
-<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot PoD Curve (Reliability)</span></span>
-<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>plot.plot_pod_curve(</span>
-<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>    X_eval<span class="op">=</span>results[<span class="st">'X_eval'</span>],</span>
-<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>    pod_curve<span class="op">=</span>results[<span class="st">'curves'</span>][<span class="st">'pod'</span>],</span>
-<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>    ci_lower<span class="op">=</span>results[<span class="st">'curves'</span>][<span class="st">'ci_lower'</span>],</span>
-<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>    ci_upper<span class="op">=</span>results[<span class="st">'curves'</span>][<span class="st">'ci_upper'</span>],</span>
-<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>    target_pod<span class="op">=</span><span class="fl">0.90</span>,</span>
-<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>ax2</span>
-<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>With a validated dataset, we can now run the complete PoD pipeline. The <code>pod()</code> method handles model fitting, distribution selection, and bootstrapping in a single call.</p>
+<p>Because the <code>SimulationStudy</code> object manages the state, we can run the analysis and immediately generate standard diagnostics without needing to manually handle the output data.</p>
+<div id="analysis-run" class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Run Analysis (Threshold = 18 dB)</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>_ <span class="op">=</span> study.pod(poi_col<span class="op">=</span><span class="st">"Length"</span>, threshold<span class="op">=</span><span class="fl">18.0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>--- Starting Reliability Analysis (PoI: Length) ---
 1. Selecting Mean Model (Cross-Validation)...
-   -&gt; Selected Polynomial Degree: 3
+   -&gt; Selected Polynomial Degree: 2
 2. Fitting Variance Model (Kernel Smoothing)...
-   -&gt; Smoothing Bandwidth: 0.9681
+   -&gt; Smoothing Bandwidth: 0.9744
 3. Inferring Error Distribution (AIC)...
    -&gt; Selected Distribution: norm
 4. Computing PoD Curve...
 5. Running Bootstrap (1000 iterations)...
 --- Analysis Complete ---</code></pre>
 </div>
-<div class="cell-output cell-output-display">
-<div id="fig-oop-results" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+</div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Visualize Results</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># This automatically generates the Signal Model and PoD Curve plots</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>study.visualise()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="fig-oop-results" class="quarto-layout-panel">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-oop-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="quick_start_oop_files/figure-html/fig-oop-results-output-2.png" class="quarto-figure quarto-figure-center figure-img" width="1105" height="524">
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-oop-results" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div id="fig-oop-results-1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-oop-results-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="quick_start_oop_files/figure-html/fig-oop-results-output-1.png" class="img-fluid figure-img" data-ref-parent="fig-oop-results">
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-oop-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1: Automated Generalized PoD Analysis
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-oop-results-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Signal Response Model (Physics)
 </figcaption>
 </figure>
 </div>
 </div>
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-oop-results" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div id="fig-oop-results-2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-oop-results-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="quick_start_oop_files/figure-html/fig-oop-results-output-2.png" class="img-fluid figure-img" data-ref-parent="fig-oop-results">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-oop-results-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) Probability of Detection Curve (Reliability)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-oop-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Reliability Analysis Results
+</figcaption>
+</figure>
 </div>
 
 
@@ -776,14 +770,13 @@ Figure&nbsp;1: Automated Generalized PoD Analysis
       e.clearSelection();
     }
     const getTextToCopy = function(trigger) {
-      const outerScaffold = trigger.parentElement.cloneNode(true);
-      const codeEl = outerScaffold.querySelector('code');
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
         }
-      }
-      return codeEl.innerText;
+        return codeEl.innerText;
     }
     const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
       text: getTextToCopy
