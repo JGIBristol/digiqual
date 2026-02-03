@@ -66,7 +66,7 @@ Ensure your simulation outputs are statistically valid before processing.
 - **Fill Gaps:** Automatically detect and target empty regions in your input space.
 - **Reduce Uncertainty:** Use bootstrap committees to find regions of high model variance and suggest new points exactly where the model is "confused".
 
-### 4. Generalized Reliability Analysis
+### 4. Generalised Reliability Analysis
 
 The package includes a full statistical engine for calculating Probability of Detection (PoD) curves.
 
