@@ -5,23 +5,27 @@ description: "A streamlined guide using the SimulationStudy manager."
 
 DigiQual offers two ways to work: the **Functional Approach** (great for specific tasks) and the **Class-Based Approach** (recommended for full study management).
 
-## Option 2: Class-Based Approach (Streamlined)
+## The SimulationStudy Manager
 
 Use the `SimulationStudy` manager to handle the entire lifecycle: storage, diagnostics, and active refinement. This allows you to automatically fix issues in your design.
 
-In this example, we will intentionally feed the study "bad" data (with a large gap) to see how it identifies and fixes the problem.
+In this example, we will **intentionally feed the study "bad" data** (with a large gap in the input space) to demonstrate how the active learning module identifies and fixes the problem.
 
-```python
+### 1. Setup & "Flawed" Data Generation
+
+First, we define our physics simulation and create a dataset with a deliberate gap (missing data between 3mm and 7mm).
+
+```{python}
 import numpy as np
 import pandas as pd
 import digiqual as dq
-import digiqual.plotting as plot
 import matplotlib.pyplot as plt
+from IPython.display import display, Markdown
 
 # --- Define the Physics ---
-# We use a lambda or function to ensure we apply the SAME physics later
 def apply_physics(df):
-    # 1. Base Signal: Quadratic trend (2*Length + 0.5*Length^2)
+    """Simulates a signal with quadratic trends and heteroscedastic noise."""
+    # 1. Base Signal: Quadratic trend (2*L + 0.5*L^2)
     # 2. Angle Penalty: Misalignment (-0.1*Angle) reduces signal
     signal = 10.0 + (2.0 * df['Length']) + (0.5 * df['Length']**2) - (0.1 * np.abs(df['Angle']))
 
@@ -44,25 +48,38 @@ df2 = pd.DataFrame({
     'Roughness': np.random.uniform(0, 0.5, 20)
 })
 
-df = pd.concat([df1, df2], ignore_index=True)
-df['Signal'] = apply_physics(df)
+# Combine and Initialize Study
+df_initial = pd.concat([df1, df2], ignore_index=True)
+df_initial['Signal'] = apply_physics(df_initial)
 
-# --- Initialize Study ---
 study = dq.SimulationStudy(
     input_cols=["Length", "Angle", "Roughness"],
     outcome_col="Signal"
 )
-study.add_data(df)
+study.add_data(df_initial)
 
-# --- Diagnose & Adapt ---
-# Check health (Will fail "Input Coverage")
-print(study.diagnose())
+```
 
+### 2. Diagnosis (Detecting the Issue)
+
+We now ask the study manager to diagnose the health of our experiment. We expect it to flag the Input Coverage test because of the gap we created.
+
+
+```{python}
+study.diagnose()
+```
+
+### 3. Adaptive Refinement (The Fix)
+
+Instead of manually guessing where to add points, we use refine(). The study manager automatically detects the gap and generates targeted samples to fill it.
+
+
+```{python}
 # Generate active learning samples (20 points to fill the gap)
 new_samples = study.refine(n_points=20)
 
 if not new_samples.empty:
-    print(f"\nGenerated {len(new_samples)} new samples to fix data issues.")
+    display(Markdown(f"**Action:** Generated `{len(new_samples)}` new samples to fix data issues."))
 
     # Apply the exact same physics model to the new points
     new_samples['Signal'] = apply_physics(new_samples)
@@ -70,17 +87,35 @@ if not new_samples.empty:
     # Add back to study
     study.add_data(new_samples)
 
-    print("\nRefinement Complete. Re-running diagnostics...")
-    print(study.diagnose())
+    display(Markdown("**Result:** Refinement complete. New data merged."))
+```
 
-# --- Running the PoD Analysis ---
-# Run the full reliability pipeline in a single call. This fits the models, determines the distribution, and runs the bootstrap.
+Now we verify that the issue is resolved:
+
+
+```{python}
+# Re-run diagnostics to confirm the green light
+study.diagnose()
+```
+
+### 4. Full Reliability Analysis
+
+With a validated dataset, we can now run the complete PoD pipeline. The pod() method handles model fitting, distribution selection, and bootstrapping in a single call.
+
+
+```{python}
+#| label: fig-oop-results
+#| fig-cap: "Automated Generalized PoD Analysis"
+#| fig-align: center
+#| fig-height: 6
+#| fig-width: 12
+
+import digiqual.plotting as plot
+
 # Run Analysis (Threshold = 18 dB)
 results = study.pod(poi_col="Length", threshold=18.0)
 
-print(f"Selected Degree: {results['mean_model'].best_degree_}")
-
-# Plotting
+# Create Plots
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
 # Plot Signal Model (Physics)
@@ -109,5 +144,4 @@ plot.plot_pod_curve(
 )
 
 plt.show()
-
 ```

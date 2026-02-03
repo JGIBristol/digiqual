@@ -2,10 +2,16 @@
 title: "Function-Based Approach"
 description: "A quick-start guide to using the digiqual functions."
 ---
+```{python}
+#| output: False
+#| echo: False
+from IPython.display import display, Markdown
+```
+
 
 DigiQual offers two ways to work: the **Functional Approach** (great for specific tasks) and the **Class-Based Approach** (recommended for full study management).
 
-## Option 1: Functional Approach (Manual Control)
+## Functional Approach (Manual Control)
 
 In this scenario, we generate a high-quality Latin Hypercube design. We will see that the active learning module confirms the design is sufficient and requires no further sampling.
 
@@ -13,8 +19,9 @@ In this scenario, we generate a high-quality Latin Hypercube design. We will see
 
 Create a Latin Hypercube design for a simulation study involving defect size ($a$), angle ($\theta$) and roughness ($\sigma_{R}$).
 
-```python
+```{python}
 import pandas as pd
+import numpy as np
 from digiqual.sampling import generate_lhs
 
 # Define your variables and bounds
@@ -28,20 +35,30 @@ vars_df = pd.DataFrame(
 
 # Generate 1000 samples
 df = generate_lhs(n=1000, seed=123, vars_df=vars_df)
-print(df.head())
+df.head()
 ```
+
 
 ### Validating Simulation Data
 
 Once you have your simulation results, ensure they are ready for PoD analysis.
 
-``` python
+```{python}
 from digiqual.diagnostics import validate_simulation
-from numpy.random import default_rng
+
+def apply_physics(df):
+    # 1. Base Signal: Quadratic trend (2*Length + 0.5*Length^2)
+    # 2. Angle Penalty: Misalignment (-0.1*Angle) reduces signal
+    signal = 10.0 + (2.0 * df['Length']) + (0.5 * df['Length']**2) - (0.1 * np.abs(df['Angle']))
+
+    # 3. Heteroscedastic Noise: Higher roughness = More scatter
+    noise_scale = 0.5 + (1.5 * df['Roughness'])
+    noise = np.random.normal(loc=0, scale=noise_scale, size=len(df))
+
+    return signal + noise
 
 # Create a fake signal output column with some noise
-rng = default_rng(123)
-df['Signal'] = (df['Length'] * df['Roughness']) + rng.uniform(-1, 1, size=len(df))
+df['Signal'] = apply_physics(df)
 
 df_clean, df_removed = validate_simulation(
     df=df,
@@ -49,14 +66,14 @@ df_clean, df_removed = validate_simulation(
     outcome_col="Signal"
 )
 
-print(f"Valid rows: {len(df_clean)}")
-print(f"Dropped rows: {len(df_removed)}")
+display(Markdown(f"**Valid rows:** {len(df_clean)}"))
+display(Markdown(f"**Dropped rows:** {len(df_removed)}"))
 ```
 
 ### Checking Sample Sufficiency
 We have validated data so now we want to check if we have enough samples to produce an accurate PoD Curve.
 
-``` python
+```{python}
 from digiqual.diagnostics import sample_sufficiency
 
 ss = sample_sufficiency(
@@ -64,13 +81,13 @@ ss = sample_sufficiency(
     input_cols=["Length", "Angle", "Roughness"],
     outcome_col="Signal"
 )
-print(ss)
+ss
 ```
 
 ### Adaptive Refinement Check
 We now run the targeted sampler. Because `generate_lhs` provides good coverage by default, we expect the adaptive module to return an empty result, confirming no more work is needed.
 
-```python
+```{python}
 from digiqual.adaptive import generate_targeted_samples
 
 new_samples = generate_targeted_samples(
@@ -84,7 +101,10 @@ new_samples = generate_targeted_samples(
 ### Running Generalised PoD Analysis
 Finally, we generate the Probability of Detection curve. This pipeline automatically handles non-linear physics and heteroscedastic noise.
 
-```python
+```{python}
+#| label: fig-pod-results
+#| fig-cap: "Generalized PoD Analysis Results"
+#| fig-align: center
 import matplotlib.pyplot as plt
 import digiqual.pod as pod
 import digiqual.plotting as plot
@@ -92,7 +112,7 @@ import digiqual.plotting as plot
 # Prepare vectors (X = Crack Size, y = Signal)
 X = df_clean['Length'].values
 y = df_clean['Signal'].values
-threshold = 3.0  # Detection threshold (e.g., 3.0 dB)
+threshold = 18.0  # Detection threshold (e.g., 3.0 dB)
 
 # A. Fit Robust Mean Model (Polynomial)
 mean_model = pod.fit_robust_mean_model(X, y)
@@ -102,7 +122,6 @@ residuals, bandwidth, X_eval = pod.fit_variance_model(X, y, mean_model)
 
 # C. Infer Error Distribution (AIC Selection)
 dist_name, dist_params = pod.infer_best_distribution(residuals, X, bandwidth)
-print(f"Selected Distribution: {dist_name}")
 
 # D. Compute PoD Curve & Confidence Intervals
 pod_curve, mean_curve = pod.compute_pod_curve(
