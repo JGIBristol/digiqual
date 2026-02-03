@@ -1,12 +1,13 @@
-# digiqual
-
- **Statistical Toolkit for Reliability Assessment in NDT**
+---
+title: "digiqual"
+subtitle: "Statistical Toolkit for Reliability Assessment in NDT"
+page-layout: article  # Forces the centered "paper" layout
+---
 
 `digiqual` is a Python library designed for Non-Destructive Evaluation (NDE) engineers. It provides a robust statistical framework for performing Model-Assisted Probability of Detection (MAPOD) studies and reliability assessments.
 
 The package is built to implement the Generalised $\hat{a}$-versus-$a$ Method, allowing users to assess inspection reliability even when traditional assumptions (linearity, constant variance, Gaussian noise) are not met.
 
-------------------------------------------------------------------------
 
 ## Core Features
 
@@ -29,15 +30,16 @@ Ensure your simulation outputs are statistically valid before processing.
 `digiqual` closes the loop between analysis and design. Instead of guessing where to run more simulations, use the `refine()` method to:
 
 - **Fill Gaps:** Automatically detect and target empty regions in your input space.
-- **Reduce Uncertainty:** Use bootstrap committees to find regions of high model variance and suggest new points exactly where the model is "confused."
+- **Reduce Uncertainty:** Use bootstrap committees to find regions of high model variance and suggest new points exactly where the model is "confused".
 
-### 4. Reliability Analysis (In Development)
+### 4. Generalized Reliability Analysis
 
-Implementing the generalised framework by Malkiel et al. (2025).
+The package includes a full statistical engine for calculating Probability of Detection (PoD) curves.
 
--   **Relaxed Assumptions:** Moves beyond the rigid constraints of the classical $\hat{a}$-versus-$a$ method.
--   **Uncertainty Quantification:** Uses bootstrap resampling to generate robust confidence bounds for Probability of Detection (PoD) curves.
-------------------------------------------------------------------------
+-   **Relaxed Assumptions:** Moves beyond the rigid constraints of the classical $\hat{a}$-versus-$a$ method by handling non-linear signal responses and heteroscedastic noise.
+-   **Robust Statistics:** Automatically selects the best polynomial degree and error distribution (e.g., Normal, Gumbel, Logistic) based on data fit (AIC).
+-   **Uncertainty Quantification:** Uses bootstrap resampling to generate robust confidence bounds and $a_{90/95}$ estimates.
+
 
 ## Installation
 

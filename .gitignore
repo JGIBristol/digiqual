@@ -15,7 +15,9 @@ venv/
 *.egg-info/
 dist/
 build/
-site/
+_site/
+api_reference/
+objects.json
 
 # --- Testing & Code Quality ---
 .pytest_cache/
@@ -24,3 +26,4 @@ htmlcov/
 
 # --- Project Data & Outputs ---
 reference
+/.quarto/

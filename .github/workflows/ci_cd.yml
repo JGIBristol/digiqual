@@ -41,38 +41,42 @@ jobs:
       - name: Run Tests
         run: uv run pytest
 
-      - name: Verify Docs Build
-        run: uv run mkdocs build --strict
 
-  # JOB 2: Deploy Documentation (Only on Tags)
+
+  # JOB 2: Deploy Documentation (Quarto)
   deploy-docs:
     needs: test
     if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install uv
+      # 1. Install Quarto CLI
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      # 2. Install Python & Dependencies (including quartodoc)
+      - name: Install Python and Dependencies
         uses: astral-sh/setup-uv@v1
-        with:
-          version: "latest"
-
-      - name: Set up Python 3.11
-        run: uv python install 3.11
-
-      - name: Install dependencies
-        run: |
+      - run: |
+          uv python install 3.11
           uv venv
-          uv pip install -e ".[dev]"
+          uv pip install ".[dev]" quartodoc  # Add quartodoc here!
 
-      - name: Configure Git User
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      # 3. Generate the API Reference (.qmd files)
+      - name: Build API Docs
+        run: uv run quartodoc build
 
-      - name: Deploy Docs
-        run: uv run mkdocs gh-deploy --force
+      # 4. Render and Publish to gh-pages
+      - name: Publish to GitHub Pages
+        uses: quarto-dev/quarto-actions/publish@v2
+        with:
+          target: gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 # JOB 3: Build & Draft Release (Only on Tags)
   create-release:

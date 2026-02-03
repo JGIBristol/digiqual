@@ -45,13 +45,36 @@ pip install "git+https://github.com/JGIBristol/digiqual.git"
 
 ## Features
 
--   **Experimental Design:** Generate Latin Hypercube Sampling (LHS) designs for simulation inputs.
+### 1. Experimental Design
 
--   **Data Validation:** Automatically check simulation results for type errors, overlaps, and sample size sufficiency.
+Before running expensive Finite Element (FE) simulations, `digiqual` helps you design your experiment efficiently.
 
--   **Adaptive Refinement:** Automatically generate targeted new samples to fill coverage gaps or resolve model instability (Active Learning).
+- **Latin Hypercube Sampling (LHS):** Generate space-filling experimental designs to cover your deterministic parameter space (e.g., defect size) and stochastic nuisance parameters (e.g., roughness, orientation).
+- **Scale & Bound:** Automatically scale samples to your specific variable bounds.
 
--   **Reliability Analysis:** (In Development) Calculate Probability of Detection (PoD) curves using advanced regression and bootstrap confidence bounds.
+### 2. Data Validation & Diagnostics
+
+Ensure your simulation outputs are statistically valid before processing.
+
+- **Sanity Checks:** Detects overlap between variables, type errors, and insufficient sample sizes.
+- **Sufficiency Diagnostics:** rigorous statistical tests to flag issues like "Input Coverage Gaps" or "Model Instability" before you trust the results.
+
+### 3. Adaptive Refinement (Active Learning)
+
+`digiqual` closes the loop between analysis and design. Instead of guessing where to run more simulations, use the `refine()` method to:
+
+- **Fill Gaps:** Automatically detect and target empty regions in your input space.
+- **Reduce Uncertainty:** Use bootstrap committees to find regions of high model variance and suggest new points exactly where the model is "confused".
+
+### 4. Generalized Reliability Analysis
+
+The package includes a full statistical engine for calculating Probability of Detection (PoD) curves.
+
+-   **Relaxed Assumptions:** Moves beyond the rigid constraints of the classical $\hat{a}$-versus-$a$ method by handling non-linear signal responses and heteroscedastic noise.
+-   **Robust Statistics:** Automatically selects the best polynomial degree and error distribution (e.g., Normal, Gumbel, Logistic) based on data fit (AIC).
+-   **Uncertainty Quantification:** Uses bootstrap resampling to generate robust confidence bounds and $a_{90/95}$ estimates.
+
+
 
 ## Development
 

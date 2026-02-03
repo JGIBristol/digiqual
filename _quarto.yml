@@ -1,0 +1,81 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - "*.qmd"
+    - "docs/"
+    - "api_reference/"
+    - "!reference/"
+
+website:
+  title: "digiqual Docs"
+  repo-url: https://github.com/JGIBristol/digiqual
+  repo-actions: [edit, issue]
+
+  # Navigation
+  sidebar:
+    style: "floating"
+    search: true
+    contents:
+      - text: "Home"
+        file: index.qmd
+      - section: "Quick Start"
+        contents:
+          - text: "Functional Approach"
+            file: docs/quick_start_function.qmd
+          - text: "Class-Based Approach"
+            file: docs/quick_start_oop.qmd
+      - text: "Reference"
+        file: api_reference/index.qmd
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    page-layout: article
+    code-copy: true
+
+# --- QUARTODOC CONFIG ---
+quartodoc:
+  package: digiqual
+  dir: api_reference
+  options:
+    dynamic: true
+  sections:
+    - title: Core
+      desc: "Workflow management and data structures."
+      contents:
+        - core.SimulationStudy
+
+    - title: Sampling
+      desc: "Experimental design and Latin Hypercube Sampling."
+      contents:
+        - sampling.generate_lhs
+
+    - title: Diagnostics
+      desc: "Statistical checks for sample sufficiency and validity."
+      contents:
+        - diagnostics.validate_simulation
+        - diagnostics.sample_sufficiency
+        - diagnostics.ValidationError
+
+    - title: Adaptive
+      desc: "Active learning algorithms for targeted sampling."
+      contents:
+        - adaptive.generate_targeted_samples
+
+    - title: PoD (Probability of Detection)
+      desc: "Statistical engine for reliability analysis."
+      contents:
+        - pod.fit_robust_mean_model
+        - pod.fit_variance_model
+        - pod.predict_local_std
+        - pod.infer_best_distribution
+        - pod.compute_pod_curve
+        - pod.bootstrap_pod_ci
+
+    - title: Plotting
+      desc: "Visualization utilities for models and curves."
+      contents:
+        - plotting.plot_signal_model
+        - plotting.plot_pod_curve

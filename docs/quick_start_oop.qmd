@@ -1,4 +1,7 @@
-# Quick Start
+---
+title: "Class-Based Approach"
+description: "A streamlined guide using the SimulationStudy manager."
+---
 
 DigiQual offers two ways to work: the **Functional Approach** (great for specific tasks) and the **Class-Based Approach** (recommended for full study management).
 

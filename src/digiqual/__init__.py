@@ -1,12 +1,21 @@
 __version__ = "0.6.2"
 
-from .sampling import generate_lhs
-from .diagnostics import validate_simulation, sample_sufficiency
+# 1. Import Core Components
 from .core import SimulationStudy
 
+# 2. Import Submodules (Crucial for quartodoc to find them!)
+from . import sampling
+from . import diagnostics
+from . import adaptive
+from . import pod
+from . import plotting
+
+# 3. Define Public API
 __all__ = [
     "SimulationStudy",
-    "generate_lhs",
-    "validate_simulation",
-    "sample_sufficiency"
+    "sampling",
+    "diagnostics",
+    "adaptive",
+    "pod",
+    "plotting"
 ]

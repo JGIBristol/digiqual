@@ -1,4 +1,7 @@
-# Quick Start
+---
+title: "Function-Based Approach"
+description: "A quick-start guide to using the digiqual functions."
+---
 
 DigiQual offers two ways to work: the **Functional Approach** (great for specific tasks) and the **Class-Based Approach** (recommended for full study management).
 

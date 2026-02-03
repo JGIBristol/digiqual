@@ -12,7 +12,7 @@ default:
 # DAILY DEVELOPMENT
 # ----------------------------------------------------------------------------
 
-# Sync dependencies and set up the dev environment
+# Sync dependencies (Ensure 'quartodoc' is in your pyproject.toml dev-dependencies!)
 install:
     uv sync --extra dev
 
@@ -20,27 +20,29 @@ install:
 test:
     uv run pytest
 
-# Preview documentation in the browser
+# Preview documentation (Replaces mkdocs serve)
 docs:
-    uv run mkdocs serve --open
+    uv run quartodoc build
+    uv run quarto preview index.qmd
 
 # ----------------------------------------------------------------------------
 # QUALITY GATES
 # ----------------------------------------------------------------------------
 
-# The "CI Simulator": Runs Tests, Builds Package, then Cleans up
+# The "CI Simulator": Tests -> Build Docs -> Build Package -> Clean
 check: test
     @echo "1. Tests Passed. Now checking Docs..."
-    uv run mkdocs build --strict
+    uv run quartodoc build
+    uv run quarto render
     @echo "2. Docs Valid. Now verifying Package Build..."
     uv build
     @echo "3. Build Successful. Cleaning up artifacts..."
     just clean
     @echo "✅ All checks passed & workspace cleaned."
 
-# Clean up build artifacts (dist, site, caches)
+# Clean up build artifacts (dist, _site, api_reference)
 clean:
-    rm -rf dist/ site/ .pytest_cache/ .ruff_cache/
+    rm -rf dist/ _site/ api_reference/ .pytest_cache/ .ruff_cache/
     find . -type d -name "__pycache__" -exec rm -rf {} +
     find . -type d -name "*.egg-info" -exec rm -rf {} +
 
