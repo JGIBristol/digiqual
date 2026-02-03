@@ -5,7 +5,7 @@ project:
     - "*.qmd"
     - "docs/"
     - "api_reference/"
-    - "!reference/"
+    - "!materials/"
 
 website:
   title: "digiqual Docs"

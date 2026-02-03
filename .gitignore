@@ -25,5 +25,5 @@ objects.json
 htmlcov/
 
 # --- Project Data & Outputs ---
-reference
+materials
 /.quarto/
