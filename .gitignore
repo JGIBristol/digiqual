@@ -18,6 +18,7 @@ build/
 _site/
 api_reference/
 objects.json
+_sidebar.yml
 
 # --- Testing & Code Quality ---
 .pytest_cache/
