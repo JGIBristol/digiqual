@@ -226,17 +226,17 @@ window.Quarto = {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
  <span class="menu-text">API Reference</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../api_reference/index.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">API Overview</span></a>
+ <span class="menu-text">All Functions</span></a>
   </div>
 </li>
           <li class="sidebar-item sidebar-item-section">
@@ -462,7 +462,7 @@ window.Quarto = {
 <section id="generating-an-experimental-design" class="level3">
 <h3 class="anchored" data-anchor-id="generating-an-experimental-design">Generating an Experimental Design</h3>
 <p>Create a Latin Hypercube design for a simulation study involving defect size (<span class="math inline">\(a\)</span>), angle (<span class="math inline">\(\theta\)</span>) and roughness (<span class="math inline">\(\sigma_{R}\)</span>).</p>
-<div id="10d411a0" class="cell" data-execution_count="2">
+<div id="ce8bfdde" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.sampling <span class="im">import</span> generate_lhs</span>
@@ -533,7 +533,7 @@ window.Quarto = {
 <section id="validating-simulation-data" class="level3">
 <h3 class="anchored" data-anchor-id="validating-simulation-data">Validating Simulation Data</h3>
 <p>Once you have your simulation results, ensure they are ready for PoD analysis.</p>
-<div id="b7ceb7e4" class="cell" data-execution_count="3">
+<div id="ad80a700" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.diagnostics <span class="im">import</span> validate_simulation</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> apply_physics(df):</span>
@@ -559,17 +559,17 @@ window.Quarto = {
 <span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>display(Markdown(<span class="ss">f"**Valid rows:** </span><span class="sc">{</span><span class="bu">len</span>(df_clean)<span class="sc">}</span><span class="ss">"</span>))</span>
 <span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>display(Markdown(<span class="ss">f"**Dropped rows:** </span><span class="sc">{</span><span class="bu">len</span>(df_removed)<span class="sc">}</span><span class="ss">"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display cell-output-markdown">
-<p><strong>Valid rows:</strong> 1000</p>
+<p><strong>Valid rows:</strong> 999</p>
 </div>
 <div class="cell-output cell-output-display cell-output-markdown">
-<p><strong>Dropped rows:</strong> 0</p>
+<p><strong>Dropped rows:</strong> 1</p>
 </div>
 </div>
 </section>
 <section id="checking-sample-sufficiency" class="level3">
 <h3 class="anchored" data-anchor-id="checking-sample-sufficiency">Checking Sample Sufficiency</h3>
 <p>We have validated data so now we want to check if we have enough samples to produce an accurate PoD Curve.</p>
-<div id="e826496e" class="cell" data-execution_count="4">
+<div id="8bfe920a" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.diagnostics <span class="im">import</span> sample_sufficiency</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>ss <span class="op">=</span> sample_sufficiency(</span>
@@ -599,7 +599,7 @@ window.Quarto = {
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.0019</td>
+<td>0.0021</td>
 <td>True</td>
 </tr>
 <tr class="even">
@@ -607,7 +607,7 @@ window.Quarto = {
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.0020</td>
+<td>0.0027</td>
 <td>True</td>
 </tr>
 <tr class="odd">
@@ -615,7 +615,7 @@ window.Quarto = {
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.0020</td>
+<td>0.0024</td>
 <td>True</td>
 </tr>
 <tr class="even">
@@ -623,7 +623,7 @@ window.Quarto = {
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9946</td>
+<td>0.9947</td>
 <td>True</td>
 </tr>
 <tr class="odd">
@@ -631,7 +631,7 @@ window.Quarto = {
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Relative CI Width</td>
-<td>0.0137</td>
+<td>0.0142</td>
 <td>True</td>
 </tr>
 </tbody>
@@ -644,7 +644,7 @@ window.Quarto = {
 <section id="adaptive-refinement-check" class="level3">
 <h3 class="anchored" data-anchor-id="adaptive-refinement-check">Adaptive Refinement Check</h3>
 <p>We now run the targeted sampler. Because <code>generate_lhs</code> provides good coverage by default, we expect the adaptive module to return an empty result, confirming no more work is needed.</p>
-<div id="4de3aab6" class="cell" data-execution_count="5">
+<div id="7a09251b" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.adaptive <span class="im">import</span> generate_targeted_samples</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>new_samples <span class="op">=</span> generate_targeted_samples(</span>
