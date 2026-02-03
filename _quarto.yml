@@ -42,14 +42,16 @@ quartodoc:
   package: digiqual
   dir: api_reference
   parser: google
-  title: "API Overview"
+  title: "All Functions"
 
 # NEW SIDEBAR CONFIGURATION
   # This generates the Master Sidebar file in the root
   sidebar:
     file: _sidebar.yml      # Save to Root (important for path links)
     style: floating         # Keep your floating style
+    id: ""
     search: true
+    collapse-level: 1
     contents:
       # A. Your Manual Links (Moved here)
       - text: "Home"
