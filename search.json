@@ -1,0 +1,261 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "digiqual",
+    "section": "",
+    "text": "digiqual is a Python library designed for Non-Destructive Evaluation (NDE) engineers. It provides a robust statistical framework for performing Model-Assisted Probability of Detection (MAPOD) studies and reliability assessments.\nThe package is built to implement the Generalised \\(\\hat{a}\\)-versus-\\(a\\) Method, allowing users to assess inspection reliability even when traditional assumptions (linearity, constant variance, Gaussian noise) are not met.",
+    "crumbs": [
+      "Home"
+    ]
+  },
+  {
+    "objectID": "index.html#core-features",
+    "href": "index.html#core-features",
+    "title": "digiqual",
+    "section": "Core Features",
+    "text": "Core Features\n\n1. Experimental Design\nBefore running expensive Finite Element (FE) simulations, digiqual helps you design your experiment efficiently.\n\nLatin Hypercube Sampling (LHS): Generate space-filling experimental designs to cover your deterministic parameter space (e.g., defect size) and stochastic nuisance parameters (e.g., roughness, orientation).\nScale & Bound: Automatically scale samples to your specific variable bounds.\n\n\n\n2. Data Validation & Diagnostics\nEnsure your simulation outputs are statistically valid before processing.\n\nSanity Checks: Detects overlap between variables, type errors, and insufficient sample sizes.\nSufficiency Diagnostics: rigorous statistical tests to flag issues like “Input Coverage Gaps” or “Model Instability” before you trust the results.\n\n\n\n3. Adaptive Refinement (Active Learning)\ndigiqual closes the loop between analysis and design. Instead of guessing where to run more simulations, use the refine() method to:\n\nFill Gaps: Automatically detect and target empty regions in your input space.\nReduce Uncertainty: Use bootstrap committees to find regions of high model variance and suggest new points exactly where the model is “confused”.\n\n\n\n4. Generalized Reliability Analysis\nThe package includes a full statistical engine for calculating Probability of Detection (PoD) curves.\n\nRelaxed Assumptions: Moves beyond the rigid constraints of the classical \\(\\hat{a}\\)-versus-\\(a\\) method by handling non-linear signal responses and heteroscedastic noise.\nRobust Statistics: Automatically selects the best polynomial degree and error distribution (e.g., Normal, Gumbel, Logistic) based on data fit (AIC).\nUncertainty Quantification: Uses bootstrap resampling to generate robust confidence bounds and \\(a_{90/95}\\) estimates.",
+    "crumbs": [
+      "Home"
+    ]
+  },
+  {
+    "objectID": "index.html#installation",
+    "href": "index.html#installation",
+    "title": "digiqual",
+    "section": "Installation",
+    "text": "Installation\n  \nYou can install digiqual directly from GitHub.\n\nOption 1: Install via uv (Recommended)\nIf you are managing a project with uv, add digiqual as a dependency:\n\nTo install the latest stable release (v0.6.3):\n\nuv add \"digiqual @ git+https://github.com/JGIBristol/digiqual.git@v0.6.3\"\n\nTo install the latest development version (main branch):\n\nuv add \"digiqual @ git+https://github.com/JGIBristol/digiqual.git\"\nIf you just want to install it into a virtual environment without modifying a project file (e.g., for a quick script), use pip interface:\nuv pip install \"git+https://github.com/JGIBristol/digiqual.git@v0.6.3\"\n\n\nOption 2: Install via standard pip\nTo install the latest stable release (v0.6.3):\npip install \"git+https://github.com/JGIBristol/digiqual.git@v0.6.3\"\nTo install the latest development version:\npip install \"git+https://github.com/JGIBristol/digiqual.git\"",
+    "crumbs": [
+      "Home"
+    ]
+  },
+  {
+    "objectID": "index.html#references",
+    "href": "index.html#references",
+    "title": "digiqual",
+    "section": "References",
+    "text": "References\nThis package implements methods described in:\nMalkiel, N., Croxford, A. J., & Wilcox, P. D. (2025). A generalized method for the reliability assessment of safety–critical inspection. Proceedings of the Royal Society A, 481: 20240654. https://doi.org/10.1098/rspa.2024.0654",
+    "crumbs": [
+      "Home"
+    ]
+  },
+  {
+    "objectID": "docs/quick_start_function.html",
+    "href": "docs/quick_start_function.html",
+    "title": "Function-Based Approach",
+    "section": "",
+    "text": "DigiQual offers two ways to work: the Functional Approach (great for specific tasks) and the Class-Based Approach (recommended for full study management).",
+    "crumbs": [
+      "Quick Start",
+      "Functional Approach"
+    ]
+  },
+  {
+    "objectID": "docs/quick_start_function.html#option-1-functional-approach-manual-control",
+    "href": "docs/quick_start_function.html#option-1-functional-approach-manual-control",
+    "title": "Function-Based Approach",
+    "section": "Option 1: Functional Approach (Manual Control)",
+    "text": "Option 1: Functional Approach (Manual Control)\nIn this scenario, we generate a high-quality Latin Hypercube design. We will see that the active learning module confirms the design is sufficient and requires no further sampling.\n\nGenerating an Experimental Design\nCreate a Latin Hypercube design for a simulation study involving defect size (\\(a\\)), angle (\\(\\theta\\)) and roughness (\\(\\sigma_{R}\\)).\nimport pandas as pd\nfrom digiqual.sampling import generate_lhs\n\n# Define your variables and bounds\nvars_df = pd.DataFrame(\n    [\n        {\"Name\": \"Length\", \"Min\": 0.1, \"Max\": 10},\n        {\"Name\": \"Angle\", \"Min\": -90, \"Max\": 90},\n        {\"Name\": \"Roughness\", \"Min\": 0, \"Max\": 1},\n    ]\n)\n\n# Generate 1000 samples\ndf = generate_lhs(n=1000, seed=123, vars_df=vars_df)\nprint(df.head())\n\n\nValidating Simulation Data\nOnce you have your simulation results, ensure they are ready for PoD analysis.\nfrom digiqual.diagnostics import validate_simulation\nfrom numpy.random import default_rng\n\n# Create a fake signal output column with some noise\nrng = default_rng(123)\ndf['Signal'] = (df['Length'] * df['Roughness']) + rng.uniform(-1, 1, size=len(df))\n\ndf_clean, df_removed = validate_simulation(\n    df=df,\n    input_cols=[\"Length\", \"Angle\", \"Roughness\"],\n    outcome_col=\"Signal\"\n)\n\nprint(f\"Valid rows: {len(df_clean)}\")\nprint(f\"Dropped rows: {len(df_removed)}\")\n\n\nChecking Sample Sufficiency\nWe have validated data so now we want to check if we have enough samples to produce an accurate PoD Curve.\nfrom digiqual.diagnostics import sample_sufficiency\n\nss = sample_sufficiency(\n    df=df_clean,\n    input_cols=[\"Length\", \"Angle\", \"Roughness\"],\n    outcome_col=\"Signal\"\n)\nprint(ss)\n\n\nAdaptive Refinement Check\nWe now run the targeted sampler. Because generate_lhs provides good coverage by default, we expect the adaptive module to return an empty result, confirming no more work is needed.\nfrom digiqual.adaptive import generate_targeted_samples\n\nnew_samples = generate_targeted_samples(\n    df=df_clean,\n    input_cols=[\"Length\", \"Angle\",\"Roughness\"],\n    outcome_col=\"Signal\",\n    n_new_per_fix=5\n)\n\n\nRunning Generalised PoD Analysis\nFinally, we generate the Probability of Detection curve. This pipeline automatically handles non-linear physics and heteroscedastic noise.\nimport matplotlib.pyplot as plt\nimport digiqual.pod as pod\nimport digiqual.plotting as plot\n\n# Prepare vectors (X = Crack Size, y = Signal)\nX = df_clean['Length'].values\ny = df_clean['Signal'].values\nthreshold = 3.0  # Detection threshold (e.g., 3.0 dB)\n\n# A. Fit Robust Mean Model (Polynomial)\nmean_model = pod.fit_robust_mean_model(X, y)\n\n# B. Fit Variance Model (Kernel Smoothing)\nresiduals, bandwidth, X_eval = pod.fit_variance_model(X, y, mean_model)\n\n# C. Infer Error Distribution (AIC Selection)\ndist_name, dist_params = pod.infer_best_distribution(residuals, X, bandwidth)\nprint(f\"Selected Distribution: {dist_name}\")\n\n# D. Compute PoD Curve & Confidence Intervals\npod_curve, mean_curve = pod.compute_pod_curve(\n    X_eval, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold\n)\n\nlower_ci, upper_ci = pod.bootstrap_pod_ci(\n    X, y, X_eval, threshold, mean_model.best_degree_, bandwidth, (dist_name, dist_params)\n)\n\n# E. Plotting\nfig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))\n\n# Plot Physics (Signal vs Size)\nlocal_std = pod.predict_local_std(X, residuals, X_eval, bandwidth)\nplot.plot_signal_model(X, y, X_eval, mean_curve, threshold, local_std=local_std, ax=ax1)\n\n# Plot Reliability (PoD vs Size)\nplot.plot_pod_curve(X_eval, pod_curve, lower_ci, upper_ci, ax=ax2)\n\nplt.show()",
+    "crumbs": [
+      "Quick Start",
+      "Functional Approach"
+    ]
+  },
+  {
+    "objectID": "api_reference/pod.predict_local_std.html",
+    "href": "api_reference/pod.predict_local_std.html",
+    "title": "pod.predict_local_std",
+    "section": "",
+    "text": "pod.predict_local_std\npod.predict_local_std(X, residuals, X_eval, bandwidth)\nEstimates the local standard deviation using Gaussian Kernel Smoothing.\nThis implements a Nadaraya-Watson estimator specifically for the squared residuals to model how noise varies across the input domain (heteroscedasticity).\nArgs: X (np.ndarray): The source locations (original data inputs). residuals (np.ndarray): The residuals observed at X. X_eval (np.ndarray): The target locations to estimate variance at. bandwidth (float): The width of the Gaussian kernel (sigma).\nReturns: np.ndarray: An array of standard deviation estimates corresponding to X_eval."
+  },
+  {
+    "objectID": "api_reference/pod.fit_variance_model.html",
+    "href": "api_reference/pod.fit_variance_model.html",
+    "title": "pod.fit_variance_model",
+    "section": "",
+    "text": "pod.fit_variance_model\npod.fit_variance_model(X, y, mean_model, bandwidth_ratio=0.1, n_eval_points=100)\nCalculates residuals and prepares the grid for variance estimation.\nThis acts as the setup phase for the heteroscedasticity model. It computes the raw residuals from the mean model and defines the smoothing bandwidth.\nArgs: X (np.ndarray): The original input data. y (np.ndarray): The original outcome data. mean_model (Any): The fitted sklearn pipeline from fit_robust_mean_model. bandwidth_ratio (float, optional): The kernel smoothing window size as a fraction of the data range (X_max - X_min). Defaults to 0.1. n_eval_points (int, optional): Number of points in the evaluation grid. Defaults to 100.\nReturns: Tuple[np.ndarray, float, np.ndarray]: - residuals: Raw differences between y and the mean model prediction. - bandwidth: The calculated smoothing window size (absolute units). - X_eval: A linearly spaced grid over the X domain for plotting/evaluation."
+  },
+  {
+    "objectID": "api_reference/pod.compute_pod_curve.html",
+    "href": "api_reference/pod.compute_pod_curve.html",
+    "title": "pod.compute_pod_curve",
+    "section": "",
+    "text": "pod.compute_pod_curve\npod.compute_pod_curve(\n    X_eval,\n    mean_model,\n    X,\n    residuals,\n    bandwidth,\n    dist_info,\n    threshold,\n)\nCalculates the Probability of Detection (PoD) curve.\nCombines the Mean Model, Variance Model, and Error Distribution to compute the probability that the signal exceeds the threshold at every point in X_eval.\nArgs: X_eval (np.ndarray): The grid points to calculate PoD for. mean_model (Any): The fitted sklearn mean response model. X (np.ndarray): Original input data (needed for variance prediction). residuals (np.ndarray): Original residuals (needed for variance prediction). bandwidth (float): Smoothing bandwidth. dist_info (Tuple[str, Tuple]): The (name, params) of the error distribution. threshold (float): The detection threshold value.\nReturns: Tuple[np.ndarray, np.ndarray]: - pod_curve: Array of probabilities [0, 1] for each point in X_eval. - mean_curve: Array of mean signal response values for X_eval."
+  },
+  {
+    "objectID": "api_reference/plotting.plot_signal_model.html",
+    "href": "api_reference/plotting.plot_signal_model.html",
+    "title": "plotting.plot_signal_model",
+    "section": "",
+    "text": "plotting.plot_signal_model\nplotting.plot_signal_model(\n    X,\n    y,\n    X_eval,\n    mean_curve,\n    threshold,\n    local_std=None,\n    ax=None,\n)\nDiagnostic Plot 1: Signal vs Parameter of Interest (The Physics).\nVisualizes the raw simulation data, the fitted mean model, and the detection threshold. Equivalent to Figure 6/12 in the Generalized Method paper.\nArgs: X: The raw PoI. y: The raw signal responses. X_eval: The grid of points used for the curves. mean_curve: The predicted mean response at X_eval. threshold: The detection threshold (horizontal line). local_std: (Optional) The predicted standard deviation at X_eval. If provided, adds 95% prediction bounds to show noise structure. ax: (Optional) Matplotlib axes to plot on. Creates new if None."
+  },
+  {
+    "objectID": "api_reference/index.html",
+    "href": "api_reference/index.html",
+    "title": "Function reference",
+    "section": "",
+    "text": "Workflow management and data structures.\n\n\n\ncore.SimulationStudy\nA workflow manager for simulation reliability assessment.\n\n\n\n\n\n\nExperimental design and Latin Hypercube Sampling.\n\n\n\nsampling.generate_lhs\nGenerates a Latin Hypercube Sample and scales it to the provided variable bounds.\n\n\n\n\n\n\nStatistical checks for sample sufficiency and validity.\n\n\n\ndiagnostics.validate_simulation\nValidates simulation data, coercing to numeric and removing invalid rows.\n\n\ndiagnostics.sample_sufficiency\nPerforms statistical tests on sampling sufficiency.\n\n\ndiagnostics.ValidationError\nRaised when simulation data fails validation checks.\n\n\n\n\n\n\nActive learning algorithms for targeted sampling.\n\n\n\nadaptive.generate_targeted_samples\nActive Learning Engine: Generates new samples based on diagnostic failures.\n\n\n\n\n\n\nStatistical engine for reliability analysis.\n\n\n\npod.fit_robust_mean_model\nFits a polynomial regression model, automatically selecting the optimal degree.\n\n\npod.fit_variance_model\nCalculates residuals and prepares the grid for variance estimation.\n\n\npod.predict_local_std\nEstimates the local standard deviation using Gaussian Kernel Smoothing.\n\n\npod.infer_best_distribution\nSelects the best statistical distribution for the standardized residuals using AIC.\n\n\npod.compute_pod_curve\nCalculates the Probability of Detection (PoD) curve.\n\n\npod.bootstrap_pod_ci\nEstimates 95% Confidence Bounds for the PoD curve via Bootstrapping.\n\n\n\n\n\n\nVisualization utilities for models and curves.\n\n\n\nplotting.plot_signal_model\nDiagnostic Plot 1: Signal vs Parameter of Interest (The Physics).\n\n\nplotting.plot_pod_curve\nResult Plot 2: Probability of Detection (The Reliability).",
+    "crumbs": [
+      "Reference"
+    ]
+  },
+  {
+    "objectID": "api_reference/index.html#core",
+    "href": "api_reference/index.html#core",
+    "title": "Function reference",
+    "section": "",
+    "text": "Workflow management and data structures.\n\n\n\ncore.SimulationStudy\nA workflow manager for simulation reliability assessment.",
+    "crumbs": [
+      "Reference"
+    ]
+  },
+  {
+    "objectID": "api_reference/index.html#sampling",
+    "href": "api_reference/index.html#sampling",
+    "title": "Function reference",
+    "section": "",
+    "text": "Experimental design and Latin Hypercube Sampling.\n\n\n\nsampling.generate_lhs\nGenerates a Latin Hypercube Sample and scales it to the provided variable bounds.",
+    "crumbs": [
+      "Reference"
+    ]
+  },
+  {
+    "objectID": "api_reference/index.html#diagnostics",
+    "href": "api_reference/index.html#diagnostics",
+    "title": "Function reference",
+    "section": "",
+    "text": "Statistical checks for sample sufficiency and validity.\n\n\n\ndiagnostics.validate_simulation\nValidates simulation data, coercing to numeric and removing invalid rows.\n\n\ndiagnostics.sample_sufficiency\nPerforms statistical tests on sampling sufficiency.\n\n\ndiagnostics.ValidationError\nRaised when simulation data fails validation checks.",
+    "crumbs": [
+      "Reference"
+    ]
+  },
+  {
+    "objectID": "api_reference/index.html#adaptive",
+    "href": "api_reference/index.html#adaptive",
+    "title": "Function reference",
+    "section": "",
+    "text": "Active learning algorithms for targeted sampling.\n\n\n\nadaptive.generate_targeted_samples\nActive Learning Engine: Generates new samples based on diagnostic failures.",
+    "crumbs": [
+      "Reference"
+    ]
+  },
+  {
+    "objectID": "api_reference/index.html#pod-probability-of-detection",
+    "href": "api_reference/index.html#pod-probability-of-detection",
+    "title": "Function reference",
+    "section": "",
+    "text": "Statistical engine for reliability analysis.\n\n\n\npod.fit_robust_mean_model\nFits a polynomial regression model, automatically selecting the optimal degree.\n\n\npod.fit_variance_model\nCalculates residuals and prepares the grid for variance estimation.\n\n\npod.predict_local_std\nEstimates the local standard deviation using Gaussian Kernel Smoothing.\n\n\npod.infer_best_distribution\nSelects the best statistical distribution for the standardized residuals using AIC.\n\n\npod.compute_pod_curve\nCalculates the Probability of Detection (PoD) curve.\n\n\npod.bootstrap_pod_ci\nEstimates 95% Confidence Bounds for the PoD curve via Bootstrapping.",
+    "crumbs": [
+      "Reference"
+    ]
+  },
+  {
+    "objectID": "api_reference/index.html#plotting",
+    "href": "api_reference/index.html#plotting",
+    "title": "Function reference",
+    "section": "",
+    "text": "Visualization utilities for models and curves.\n\n\n\nplotting.plot_signal_model\nDiagnostic Plot 1: Signal vs Parameter of Interest (The Physics).\n\n\nplotting.plot_pod_curve\nResult Plot 2: Probability of Detection (The Reliability).",
+    "crumbs": [
+      "Reference"
+    ]
+  },
+  {
+    "objectID": "api_reference/diagnostics.sample_sufficiency.html",
+    "href": "api_reference/diagnostics.sample_sufficiency.html",
+    "title": "diagnostics.sample_sufficiency",
+    "section": "",
+    "text": "diagnostics.sample_sufficiency\ndiagnostics.sample_sufficiency(df, input_cols, outcome_col)\nPerforms statistical tests on sampling sufficiency.\nRuns 3 checks: 1. Input Space Coverage (Gaps) 2. Model Fit Stability (CV Score) 3. Bootstrap Convergence (CI Width)\nArgs: df (pd.DataFrame): The simulation data. Will be validated via validate_simulation internally. input_cols (List[str]): List of input variable names. outcome_col (str): Name of the outcome variable.\nReturns: pd.DataFrame: A table containing pass/fail metrics for each test."
+  },
+  {
+    "objectID": "api_reference/core.SimulationStudy.html",
+    "href": "api_reference/core.SimulationStudy.html",
+    "title": "core.SimulationStudy",
+    "section": "",
+    "text": "core.SimulationStudy(input_cols, outcome_col)\nA workflow manager for simulation reliability assessment.\nAttributes: inputs (List[str]): List of input variable names. outcome (str): Name of the outcome variable. data (pd.DataFrame): The raw simulation data. clean_data (pd.DataFrame): Data that has passed validation. sufficiency_results (pd.DataFrame): The latest diagnostic results. pod_results (Dict): Results from the latest PoD analysis.\n\n\n\n\n\nName\nDescription\n\n\n\n\nadd_data\nIngests raw simulation data and updates the internal data state.\n\n\ndiagnose\nRuns statistical diagnostics to evaluate if the current sample size is sufficient.\n\n\npod\nRuns the full ‘Generalized â vs a’ pipeline.\n\n\nrefine\nIdentifies gaps in the design space and suggests new simulation points.\n\n\nvalidate\nCleans and validates the raw data stored in self.data.\n\n\n\n\n\ncore.SimulationStudy.add_data(df)\nIngests raw simulation data and updates the internal data state.\nThis method appends the provided DataFrame to self.data. Because this changes the underlying dataset, all downstream results (clean_data, sufficiency_results, and pod_results) are reset to empty states.\nArgs: df (pd.DataFrame): The DataFrame to ingest. It should contain the columns specified in self.inputs and self.outcome.\nReturns: None: Updates the internal self.data attribute in place.\n\n\n\ncore.SimulationStudy.diagnose()\nRuns statistical diagnostics to evaluate if the current sample size is sufficient.\nIf self.clean_data is empty, this method will automatically attempt to run self.validate() before proceeding.\nReturns: pd.DataFrame: A summary of diagnostic metrics. Also updates the internal self.sufficiency_results attribute.\n\n\n\ncore.SimulationStudy.pod(poi_col, threshold, bandwidth_ratio=0.1, n_boot=1000)\nRuns the full ‘Generalized â vs a’ pipeline.\n\nFits Robust Mean Model (Polynomial Selection).\nFits Variance Model (Kernel Smoothing).\nInfers Statistical Distribution (AIC Selection).\nCalculates PoD Curve.\nCalculates 95% Confidence Bounds (Bootstrap).\n\nArgs: poi_col (str): The ‘Parameter of Interest’ column name (e.g., ‘Crack Length’). Must be one of the input columns. threshold (float): The detection threshold (e.g., 4.0 dB). bandwidth_ratio (float): Smoothing window size as a fraction of data range (Default 0.1). n_boot (int): Number of bootstrap iterations for confidence bounds (Default 1000).\nReturns: Dict: A dictionary containing all curves and models needed for plotting/reporting.\n\n\n\ncore.SimulationStudy.refine(n_points=10)\nIdentifies gaps in the design space and suggests new simulation points.\nUses an Active Learning approach based on self.clean_data. If no clean data exists, it triggers self.validate().\nArgs: n_points (int): Number of new samples to suggest per failed region.\nReturns: pd.DataFrame: A table of suggested input coordinates for the next iteration of simulations. Does not modify internal data.\n\n\n\ncore.SimulationStudy.validate()\nCleans and validates the raw data stored in self.data.\nThis method filters the raw data based on project-specific rules. It populates self.clean_data with valid rows and self.removed_data with invalid ones.\nSide Effects: Updates self.clean_data and self.removed_data. Resets self.clean_data to empty if validation fails critically."
+  },
+  {
+    "objectID": "api_reference/core.SimulationStudy.html#methods",
+    "href": "api_reference/core.SimulationStudy.html#methods",
+    "title": "core.SimulationStudy",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nadd_data\nIngests raw simulation data and updates the internal data state.\n\n\ndiagnose\nRuns statistical diagnostics to evaluate if the current sample size is sufficient.\n\n\npod\nRuns the full ‘Generalized â vs a’ pipeline.\n\n\nrefine\nIdentifies gaps in the design space and suggests new simulation points.\n\n\nvalidate\nCleans and validates the raw data stored in self.data.\n\n\n\n\n\ncore.SimulationStudy.add_data(df)\nIngests raw simulation data and updates the internal data state.\nThis method appends the provided DataFrame to self.data. Because this changes the underlying dataset, all downstream results (clean_data, sufficiency_results, and pod_results) are reset to empty states.\nArgs: df (pd.DataFrame): The DataFrame to ingest. It should contain the columns specified in self.inputs and self.outcome.\nReturns: None: Updates the internal self.data attribute in place.\n\n\n\ncore.SimulationStudy.diagnose()\nRuns statistical diagnostics to evaluate if the current sample size is sufficient.\nIf self.clean_data is empty, this method will automatically attempt to run self.validate() before proceeding.\nReturns: pd.DataFrame: A summary of diagnostic metrics. Also updates the internal self.sufficiency_results attribute.\n\n\n\ncore.SimulationStudy.pod(poi_col, threshold, bandwidth_ratio=0.1, n_boot=1000)\nRuns the full ‘Generalized â vs a’ pipeline.\n\nFits Robust Mean Model (Polynomial Selection).\nFits Variance Model (Kernel Smoothing).\nInfers Statistical Distribution (AIC Selection).\nCalculates PoD Curve.\nCalculates 95% Confidence Bounds (Bootstrap).\n\nArgs: poi_col (str): The ‘Parameter of Interest’ column name (e.g., ‘Crack Length’). Must be one of the input columns. threshold (float): The detection threshold (e.g., 4.0 dB). bandwidth_ratio (float): Smoothing window size as a fraction of data range (Default 0.1). n_boot (int): Number of bootstrap iterations for confidence bounds (Default 1000).\nReturns: Dict: A dictionary containing all curves and models needed for plotting/reporting.\n\n\n\ncore.SimulationStudy.refine(n_points=10)\nIdentifies gaps in the design space and suggests new simulation points.\nUses an Active Learning approach based on self.clean_data. If no clean data exists, it triggers self.validate().\nArgs: n_points (int): Number of new samples to suggest per failed region.\nReturns: pd.DataFrame: A table of suggested input coordinates for the next iteration of simulations. Does not modify internal data.\n\n\n\ncore.SimulationStudy.validate()\nCleans and validates the raw data stored in self.data.\nThis method filters the raw data based on project-specific rules. It populates self.clean_data with valid rows and self.removed_data with invalid ones.\nSide Effects: Updates self.clean_data and self.removed_data. Resets self.clean_data to empty if validation fails critically."
+  },
+  {
+    "objectID": "api_reference/adaptive.generate_targeted_samples.html",
+    "href": "api_reference/adaptive.generate_targeted_samples.html",
+    "title": "adaptive.generate_targeted_samples",
+    "section": "",
+    "text": "adaptive.generate_targeted_samples\nadaptive.generate_targeted_samples(\n    df,\n    input_cols,\n    outcome_col,\n    n_new_per_fix=10,\n)\nActive Learning Engine: Generates new samples based on diagnostic failures.\nIt consumes the results table from sample_sufficiency. - If Input Coverage fails -&gt; Triggers _fill_gaps (Exploration). - If Model Fit or Bootstrap fails -&gt; Triggers _sample_uncertainty (Exploitation).\nArgs: df (pd.DataFrame): Current simulation data. input_cols (List[str]): Input variable names. outcome_col (str): Outcome variable name. n_new_per_fix (int): Number of samples to generate per detected issue.\nReturns: pd.DataFrame: A dataframe of recommended new simulation parameters."
+  },
+  {
+    "objectID": "api_reference/diagnostics.ValidationError.html",
+    "href": "api_reference/diagnostics.ValidationError.html",
+    "title": "diagnostics.ValidationError",
+    "section": "",
+    "text": "diagnostics.ValidationError\ndiagnostics.ValidationError()\nRaised when simulation data fails validation checks."
+  },
+  {
+    "objectID": "api_reference/diagnostics.validate_simulation.html",
+    "href": "api_reference/diagnostics.validate_simulation.html",
+    "title": "diagnostics.validate_simulation",
+    "section": "",
+    "text": "diagnostics.validate_simulation\ndiagnostics.validate_simulation(df, input_cols, outcome_col)\nValidates simulation data, coercing to numeric and removing invalid rows.\nArgs: df (pd.DataFrame): The raw dataframe containing input columns and the outcome column. input_cols (List[str]): List of input variable names. outcome_col (str): Name of the outcome variable.\nReturns: (Tuple[pd.DataFrame, pd.DataFrame]): * df_clean: The validated, numeric dataframe ready for analysis. * df_removed: A dataframe containing the rows that were dropped.\nRaises: ValidationError: If columns are missing, types are wrong, or too few valid rows remain."
+  },
+  {
+    "objectID": "api_reference/plotting.plot_pod_curve.html",
+    "href": "api_reference/plotting.plot_pod_curve.html",
+    "title": "plotting.plot_pod_curve",
+    "section": "",
+    "text": "plotting.plot_pod_curve\nplotting.plot_pod_curve(\n    X_eval,\n    pod_curve,\n    ci_lower=None,\n    ci_upper=None,\n    target_pod=0.9,\n    ax=None,\n)\nResult Plot 2: Probability of Detection (The Reliability).\nVisualizes the PoD curve with Bootstrap Confidence Intervals. Equivalent to Figure 11 in the Generalized Method paper.\nArgs: X_eval: The grid of points used for the curves. pod_curve: The main PoD estimate (0.0 to 1.0). ci_lower: (Optional) The lower 95% confidence bound. ci_upper: (Optional) The upper 95% confidence bound. target_pod: The target reliability level (usually 0.90) to mark on the plot. ax: (Optional) Matplotlib axes to plot on."
+  },
+  {
+    "objectID": "api_reference/pod.bootstrap_pod_ci.html",
+    "href": "api_reference/pod.bootstrap_pod_ci.html",
+    "title": "pod.bootstrap_pod_ci",
+    "section": "",
+    "text": "pod.bootstrap_pod_ci\npod.bootstrap_pod_ci(\n    X,\n    y,\n    X_eval,\n    threshold,\n    degree,\n    bandwidth,\n    dist_info,\n    n_boot=1000,\n)\nEstimates 95% Confidence Bounds for the PoD curve via Bootstrapping.\nThis function resamples the original data with replacement n_boot times. For each resample, it refits the Mean Model, recalculates residuals, and generates a new PoD curve.\nArgs: X (np.ndarray): Original input data. y (np.ndarray): Original outcome data. X_eval (np.ndarray): Grid points for evaluation. threshold (float): Detection threshold. degree (int): Polynomial degree (fixed from the original best fit). bandwidth (float): Smoothing bandwidth (fixed from original). dist_info (Tuple[str, Tuple]): Error distribution (fixed from original). n_boot (int, optional): Number of bootstrap iterations. Defaults to 1000.\nReturns: Tuple[np.ndarray, np.ndarray]: - lower_ci: The 2.5th percentile PoD curve (Lower 95% Bound). - upper_ci: The 97.5th percentile PoD curve (Upper 95% Bound)."
+  },
+  {
+    "objectID": "api_reference/pod.fit_robust_mean_model.html",
+    "href": "api_reference/pod.fit_robust_mean_model.html",
+    "title": "pod.fit_robust_mean_model",
+    "section": "",
+    "text": "pod.fit_robust_mean_model\npod.fit_robust_mean_model(X, y, max_degree=10, n_folds=10, plot_cv=False)\nFits a polynomial regression model, automatically selecting the optimal degree.\nThis function performs k-fold Cross Validation (CV) to find the polynomial degree that minimizes the Mean Squared Error (MSE), balancing bias and variance.\nArgs: X (np.ndarray): 1D array of input variable values (e.g., flaw size). y (np.ndarray): 1D array of outcome values (e.g., signal response). max_degree (int, optional): The maximum polynomial degree to test. Defaults to 10. n_folds (int, optional): Number of folds for Cross Validation. Defaults to 10. plot_cv (bool, optional): If True, generates a plot of CV Score vs Degree. Defaults to False.\nReturns: sklearn.pipeline.Pipeline: A fitted pipeline containing PolynomialFeatures and LinearRegression. The pipeline object has an added attribute best_degree_ indicating the selected integer degree."
+  },
+  {
+    "objectID": "api_reference/pod.infer_best_distribution.html",
+    "href": "api_reference/pod.infer_best_distribution.html",
+    "title": "pod.infer_best_distribution",
+    "section": "",
+    "text": "pod.infer_best_distribution\npod.infer_best_distribution(residuals, X, bandwidth)\nSelects the best statistical distribution for the standardized residuals using AIC.\nThis function normalizes residuals by their local standard deviation (Z-scores) and tests them against a suite of candidate distributions (Normal, Gumbel, Logistic, Laplace, t-Student).\nArgs: residuals (np.ndarray): Raw residuals from the mean model. X (np.ndarray): Input locations for the residuals. bandwidth (float): Bandwidth used for local standardization.\nReturns: Tuple[str, Tuple]: - best_name: The SciPy name of the best-fitting distribution (e.g., ‘norm’). - best_params: The fitted parameters for that distribution (e.g., loc, scale)."
+  },
+  {
+    "objectID": "api_reference/sampling.generate_lhs.html",
+    "href": "api_reference/sampling.generate_lhs.html",
+    "title": "sampling.generate_lhs",
+    "section": "",
+    "text": "sampling.generate_lhs\nsampling.generate_lhs(n, vars_df, seed=None)\nGenerates a Latin Hypercube Sample and scales it to the provided variable bounds.\nArgs: n (int): The total number of samples to generate. vars_df (pd.DataFrame): A dataframe defining the input variables. Must contain columns: 'Name', 'Min', 'Max'. seed (int, optional): Sets the random seed for reproducibility. Defaults to None.\nReturns: pd.DataFrame: A dataframe containing the scaled simulation parameters, where column names correspond to vars_df['Name']. Returns an empty DataFrame if vars_df is empty.\nRaises: ValueError: If required columns are missing, types are incorrect, or Min &gt;= Max."
+  },
+  {
+    "objectID": "docs/quick_start_oop.html",
+    "href": "docs/quick_start_oop.html",
+    "title": "Class-Based Approach",
+    "section": "",
+    "text": "DigiQual offers two ways to work: the Functional Approach (great for specific tasks) and the Class-Based Approach (recommended for full study management).",
+    "crumbs": [
+      "Quick Start",
+      "Class-Based Approach"
+    ]
+  },
+  {
+    "objectID": "docs/quick_start_oop.html#option-2-class-based-approach-streamlined",
+    "href": "docs/quick_start_oop.html#option-2-class-based-approach-streamlined",
+    "title": "Class-Based Approach",
+    "section": "Option 2: Class-Based Approach (Streamlined)",
+    "text": "Option 2: Class-Based Approach (Streamlined)\nUse the SimulationStudy manager to handle the entire lifecycle: storage, diagnostics, and active refinement. This allows you to automatically fix issues in your design.\nIn this example, we will intentionally feed the study “bad” data (with a large gap) to see how it identifies and fixes the problem.\nimport numpy as np\nimport pandas as pd\nimport digiqual as dq\nimport digiqual.plotting as plot\nimport matplotlib.pyplot as plt\n\n# --- Define the Physics ---\n# We use a lambda or function to ensure we apply the SAME physics later\ndef apply_physics(df):\n    # 1. Base Signal: Quadratic trend (2*Length + 0.5*Length^2)\n    # 2. Angle Penalty: Misalignment (-0.1*Angle) reduces signal\n    signal = 10.0 + (2.0 * df['Length']) + (0.5 * df['Length']**2) - (0.1 * np.abs(df['Angle']))\n\n    # 3. Heteroscedastic Noise: Higher roughness = More scatter\n    noise_scale = 0.5 + (1.5 * df['Roughness'])\n    noise = np.random.normal(loc=0, scale=noise_scale, size=len(df))\n\n    return signal + noise\n\n# --- Create Flawed Data (Gap between 3mm and 7mm) ---\ndf1 = pd.DataFrame({\n    'Length': np.random.uniform(0.1, 3.0, 20),\n    'Angle': np.random.uniform(-10, 10, 20),\n    'Roughness': np.random.uniform(0, 0.5, 20)\n})\n\ndf2 = pd.DataFrame({\n    'Length': np.random.uniform(7.0, 10.0, 20),\n    'Angle': np.random.uniform(-10, 10, 20),\n    'Roughness': np.random.uniform(0, 0.5, 20)\n})\n\ndf = pd.concat([df1, df2], ignore_index=True)\ndf['Signal'] = apply_physics(df)\n\n# --- Initialize Study ---\nstudy = dq.SimulationStudy(\n    input_cols=[\"Length\", \"Angle\", \"Roughness\"],\n    outcome_col=\"Signal\"\n)\nstudy.add_data(df)\n\n# --- Diagnose & Adapt ---\n# Check health (Will fail \"Input Coverage\")\nprint(study.diagnose())\n\n# Generate active learning samples (20 points to fill the gap)\nnew_samples = study.refine(n_points=20)\n\nif not new_samples.empty:\n    print(f\"\\nGenerated {len(new_samples)} new samples to fix data issues.\")\n\n    # Apply the exact same physics model to the new points\n    new_samples['Signal'] = apply_physics(new_samples)\n\n    # Add back to study\n    study.add_data(new_samples)\n\n    print(\"\\nRefinement Complete. Re-running diagnostics...\")\n    print(study.diagnose())\n\n# --- Running the PoD Analysis ---\n# Run the full reliability pipeline in a single call. This fits the models, determines the distribution, and runs the bootstrap.\n# Run Analysis (Threshold = 18 dB)\nresults = study.pod(poi_col=\"Length\", threshold=18.0)\n\nprint(f\"Selected Degree: {results['mean_model'].best_degree_}\")\n\n# Plotting\nfig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))\n\n# Plot Signal Model (Physics)\nlocal_std = dq.pod.predict_local_std(\n    results['X'], results['residuals'], results['X_eval'], results['bandwidth']\n)\n\nplot.plot_signal_model(\n    X=results['X'],\n    y=results['y'],\n    X_eval=results['X_eval'],\n    mean_curve=results['curves']['mean_response'],\n    threshold=results['threshold'],\n    local_std=local_std,\n    ax=ax1\n)\n\n# Plot PoD Curve (Reliability)\nplot.plot_pod_curve(\n    X_eval=results['X_eval'],\n    pod_curve=results['curves']['pod'],\n    ci_lower=results['curves']['ci_lower'],\n    ci_upper=results['curves']['ci_upper'],\n    target_pod=0.90,\n    ax=ax2\n)\n\nplt.show()",
+    "crumbs": [
+      "Quick Start",
+      "Class-Based Approach"
+    ]
+  }
+]

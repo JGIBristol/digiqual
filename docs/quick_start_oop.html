@@ -6,8 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="description" content="A streamlined guide using the SimulationStudy manager.">
 
-<title>digiqual – digiqual Docs</title>
+<title>Class-Based Approach – digiqual Docs</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -58,24 +59,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-355c415dd6b9922ddaf04a2341011fe1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-355c415dd6b9922ddaf04a2341011fe1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -104,35 +105,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
 
 </head>
 
@@ -145,7 +117,7 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Home</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/quick_start_function.html">Quick Start</a></li><li class="breadcrumb-item"><a href="../docs/quick_start_oop.html">Class-Based Approach</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -160,7 +132,7 @@ window.Quarto = {
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
-      <a href="./">digiqual Docs</a> 
+      <a href="../">digiqual Docs</a> 
     </div>
       </div>
         <div class="mt-2 flex-shrink-0 align-items-center">
@@ -172,7 +144,7 @@ window.Quarto = {
     <ul class="list-unstyled mt-1">
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./index.html" class="sidebar-item-text sidebar-link active">
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Home</span></a>
   </div>
 </li>
@@ -187,13 +159,13 @@ window.Quarto = {
       <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./docs/quick_start_function.html" class="sidebar-item-text sidebar-link">
+  <a href="../docs/quick_start_function.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Functional Approach</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./docs/quick_start_oop.html" class="sidebar-item-text sidebar-link">
+  <a href="../docs/quick_start_oop.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Class-Based Approach</span></a>
   </div>
 </li>
@@ -201,7 +173,7 @@ window.Quarto = {
   </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./api_reference/index.html" class="sidebar-item-text sidebar-link">
+  <a href="../api_reference/index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Reference</span></a>
   </div>
 </li>
@@ -215,31 +187,23 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#core-features" id="toc-core-features" class="nav-link active" data-scroll-target="#core-features">Core Features</a>
-  <ul class="collapse">
-  <li><a href="#experimental-design" id="toc-experimental-design" class="nav-link" data-scroll-target="#experimental-design">1. Experimental Design</a></li>
-  <li><a href="#data-validation-diagnostics" id="toc-data-validation-diagnostics" class="nav-link" data-scroll-target="#data-validation-diagnostics">2. Data Validation &amp; Diagnostics</a></li>
-  <li><a href="#adaptive-refinement-active-learning" id="toc-adaptive-refinement-active-learning" class="nav-link" data-scroll-target="#adaptive-refinement-active-learning">3. Adaptive Refinement (Active Learning)</a></li>
-  <li><a href="#generalized-reliability-analysis" id="toc-generalized-reliability-analysis" class="nav-link" data-scroll-target="#generalized-reliability-analysis">4. Generalized Reliability Analysis</a></li>
-  </ul></li>
-  <li><a href="#installation" id="toc-installation" class="nav-link" data-scroll-target="#installation">Installation</a>
-  <ul class="collapse">
-  <li><a href="#option-1-install-via-uv-recommended" id="toc-option-1-install-via-uv-recommended" class="nav-link" data-scroll-target="#option-1-install-via-uv-recommended">Option 1: Install via uv (Recommended)</a></li>
-  <li><a href="#option-2-install-via-standard-pip" id="toc-option-2-install-via-standard-pip" class="nav-link" data-scroll-target="#option-2-install-via-standard-pip">Option 2: Install via standard pip</a></li>
-  </ul></li>
-  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  <li><a href="#option-2-class-based-approach-streamlined" id="toc-option-2-class-based-approach-streamlined" class="nav-link active" data-scroll-target="#option-2-class-based-approach-streamlined">Option 2: Class-Based Approach (Streamlined)</a></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/quick_start_oop.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/quick_start_function.html">Quick Start</a></li><li class="breadcrumb-item"><a href="../docs/quick_start_oop.html">Class-Based Approach</a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title">digiqual</h1>
-<p class="subtitle lead">Statistical Toolkit for Reliability Assessment in NDT</p>
+<h1 class="title">Class-Based Approach</h1>
 </div>
 
+<div>
+  <div class="description">
+    A streamlined guide using the SimulationStudy manager.
+  </div>
+</div>
 
 
 <div class="quarto-title-meta">
@@ -254,75 +218,108 @@ window.Quarto = {
 </header>
 
 
-<p><code>digiqual</code> is a Python library designed for Non-Destructive Evaluation (NDE) engineers. It provides a robust statistical framework for performing Model-Assisted Probability of Detection (MAPOD) studies and reliability assessments.</p>
-<p>The package is built to implement the Generalised <span class="math inline">\(\hat{a}\)</span>-versus-<span class="math inline">\(a\)</span> Method, allowing users to assess inspection reliability even when traditional assumptions (linearity, constant variance, Gaussian noise) are not met.</p>
-<section id="core-features" class="level2">
-<h2 class="anchored" data-anchor-id="core-features">Core Features</h2>
-<section id="experimental-design" class="level3">
-<h3 class="anchored" data-anchor-id="experimental-design">1. Experimental Design</h3>
-<p>Before running expensive Finite Element (FE) simulations, <code>digiqual</code> helps you design your experiment efficiently.</p>
-<ul>
-<li><strong>Latin Hypercube Sampling (LHS):</strong> Generate space-filling experimental designs to cover your deterministic parameter space (e.g., defect size) and stochastic nuisance parameters (e.g., roughness, orientation).</li>
-<li><strong>Scale &amp; Bound:</strong> Automatically scale samples to your specific variable bounds.</li>
-</ul>
-</section>
-<section id="data-validation-diagnostics" class="level3">
-<h3 class="anchored" data-anchor-id="data-validation-diagnostics">2. Data Validation &amp; Diagnostics</h3>
-<p>Ensure your simulation outputs are statistically valid before processing.</p>
-<ul>
-<li><strong>Sanity Checks:</strong> Detects overlap between variables, type errors, and insufficient sample sizes.</li>
-<li><strong>Sufficiency Diagnostics:</strong> rigorous statistical tests to flag issues like “Input Coverage Gaps” or “Model Instability” before you trust the results.</li>
-</ul>
-</section>
-<section id="adaptive-refinement-active-learning" class="level3">
-<h3 class="anchored" data-anchor-id="adaptive-refinement-active-learning">3. Adaptive Refinement (Active Learning)</h3>
-<p><code>digiqual</code> closes the loop between analysis and design. Instead of guessing where to run more simulations, use the <code>refine()</code> method to:</p>
-<ul>
-<li><strong>Fill Gaps:</strong> Automatically detect and target empty regions in your input space.</li>
-<li><strong>Reduce Uncertainty:</strong> Use bootstrap committees to find regions of high model variance and suggest new points exactly where the model is “confused”.</li>
-</ul>
-</section>
-<section id="generalized-reliability-analysis" class="level3">
-<h3 class="anchored" data-anchor-id="generalized-reliability-analysis">4. Generalized Reliability Analysis</h3>
-<p>The package includes a full statistical engine for calculating Probability of Detection (PoD) curves.</p>
-<ul>
-<li><strong>Relaxed Assumptions:</strong> Moves beyond the rigid constraints of the classical <span class="math inline">\(\hat{a}\)</span>-versus-<span class="math inline">\(a\)</span> method by handling non-linear signal responses and heteroscedastic noise.</li>
-<li><strong>Robust Statistics:</strong> Automatically selects the best polynomial degree and error distribution (e.g., Normal, Gumbel, Logistic) based on data fit (AIC).</li>
-<li><strong>Uncertainty Quantification:</strong> Uses bootstrap resampling to generate robust confidence bounds and <span class="math inline">\(a_{90/95}\)</span> estimates.</li>
-</ul>
-</section>
-</section>
-<section id="installation" class="level2">
-<h2 class="anchored" data-anchor-id="installation">Installation</h2>
-<p><a href="https://github.com/JGIBristol/digiqual/actions"><img src="https://github.com/JGIBristol/digiqual/actions/workflows/ci_cd.yml/badge.svg" class="img-fluid" alt="CI Status"></a> <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.10%2B-blue" class="img-fluid" alt="Python Version"></a> <a href="LICENSE"><img src="https://img.shields.io/github/license/JGIBristol/digiqual.png" class="img-fluid" alt="License"></a></p>
-<p>You can install <code>digiqual</code> directly from GitHub.</p>
-<section id="option-1-install-via-uv-recommended" class="level3">
-<h3 class="anchored" data-anchor-id="option-1-install-via-uv-recommended">Option 1: Install via uv (Recommended)</h3>
-<p>If you are managing a project with <code>uv</code>, add <code>digiqual</code> as a dependency:</p>
-<ul>
-<li>To install the latest stable release (v0.6.3):</li>
-</ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add <span class="st">"digiqual @ git+https://github.com/JGIBristol/digiqual.git@v0.6.3"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<ul>
-<li>To install the latest development version (main branch):</li>
-</ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add <span class="st">"digiqual @ git+https://github.com/JGIBristol/digiqual.git"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>If you just want to install it into a virtual environment without modifying a project file (e.g., for a quick script), use pip interface:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> pip install <span class="st">"git+https://github.com/JGIBristol/digiqual.git@v0.6.3"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="option-2-install-via-standard-pip" class="level3">
-<h3 class="anchored" data-anchor-id="option-2-install-via-standard-pip">Option 2: Install via standard pip</h3>
-<p>To install the latest stable release (v0.6.3):</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="st">"git+https://github.com/JGIBristol/digiqual.git@v0.6.3"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>To install the latest development version:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="st">"git+https://github.com/JGIBristol/digiqual.git"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<hr>
-</section>
-</section>
-<section id="references" class="level2">
-<h2 class="anchored" data-anchor-id="references">References</h2>
-<p>This package implements methods described in:</p>
-<p><strong>Malkiel, N., Croxford, A. J., &amp; Wilcox, P. D. (2025).</strong> A generalized method for the reliability assessment of safety–critical inspection. Proceedings of the Royal Society A, 481: 20240654. https://doi.org/10.1098/rspa.2024.0654</p>
+<p>DigiQual offers two ways to work: the <strong>Functional Approach</strong> (great for specific tasks) and the <strong>Class-Based Approach</strong> (recommended for full study management).</p>
+<section id="option-2-class-based-approach-streamlined" class="level2">
+<h2 class="anchored" data-anchor-id="option-2-class-based-approach-streamlined">Option 2: Class-Based Approach (Streamlined)</h2>
+<p>Use the <code>SimulationStudy</code> manager to handle the entire lifecycle: storage, diagnostics, and active refinement. This allows you to automatically fix issues in your design.</p>
+<p>In this example, we will intentionally feed the study “bad” data (with a large gap) to see how it identifies and fixes the problem.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> digiqual <span class="im">as</span> dq</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> digiqual.plotting <span class="im">as</span> plot</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Define the Physics ---</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># We use a lambda or function to ensure we apply the SAME physics later</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> apply_physics(df):</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. Base Signal: Quadratic trend (2*Length + 0.5*Length^2)</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. Angle Penalty: Misalignment (-0.1*Angle) reduces signal</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    signal <span class="op">=</span> <span class="fl">10.0</span> <span class="op">+</span> (<span class="fl">2.0</span> <span class="op">*</span> df[<span class="st">'Length'</span>]) <span class="op">+</span> (<span class="fl">0.5</span> <span class="op">*</span> df[<span class="st">'Length'</span>]<span class="op">**</span><span class="dv">2</span>) <span class="op">-</span> (<span class="fl">0.1</span> <span class="op">*</span> np.<span class="bu">abs</span>(df[<span class="st">'Angle'</span>]))</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. Heteroscedastic Noise: Higher roughness = More scatter</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    noise_scale <span class="op">=</span> <span class="fl">0.5</span> <span class="op">+</span> (<span class="fl">1.5</span> <span class="op">*</span> df[<span class="st">'Roughness'</span>])</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    noise <span class="op">=</span> np.random.normal(loc<span class="op">=</span><span class="dv">0</span>, scale<span class="op">=</span>noise_scale, size<span class="op">=</span><span class="bu">len</span>(df))</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> signal <span class="op">+</span> noise</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Create Flawed Data (Gap between 3mm and 7mm) ---</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>df1 <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Length'</span>: np.random.uniform(<span class="fl">0.1</span>, <span class="fl">3.0</span>, <span class="dv">20</span>),</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Angle'</span>: np.random.uniform(<span class="op">-</span><span class="dv">10</span>, <span class="dv">10</span>, <span class="dv">20</span>),</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Roughness'</span>: np.random.uniform(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="dv">20</span>)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>df2 <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Length'</span>: np.random.uniform(<span class="fl">7.0</span>, <span class="fl">10.0</span>, <span class="dv">20</span>),</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Angle'</span>: np.random.uniform(<span class="op">-</span><span class="dv">10</span>, <span class="dv">10</span>, <span class="dv">20</span>),</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Roughness'</span>: np.random.uniform(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="dv">20</span>)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.concat([df1, df2], ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Signal'</span>] <span class="op">=</span> apply_physics(df)</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Initialize Study ---</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>study <span class="op">=</span> dq.SimulationStudy(</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    input_cols<span class="op">=</span>[<span class="st">"Length"</span>, <span class="st">"Angle"</span>, <span class="st">"Roughness"</span>],</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    outcome_col<span class="op">=</span><span class="st">"Signal"</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>study.add_data(df)</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Diagnose &amp; Adapt ---</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="co"># Check health (Will fail "Input Coverage")</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(study.diagnose())</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate active learning samples (20 points to fill the gap)</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>new_samples <span class="op">=</span> study.refine(n_points<span class="op">=</span><span class="dv">20</span>)</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> new_samples.empty:</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Generated </span><span class="sc">{</span><span class="bu">len</span>(new_samples)<span class="sc">}</span><span class="ss"> new samples to fix data issues."</span>)</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Apply the exact same physics model to the new points</span></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>    new_samples[<span class="st">'Signal'</span>] <span class="op">=</span> apply_physics(new_samples)</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Add back to study</span></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>    study.add_data(new_samples)</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Refinement Complete. Re-running diagnostics..."</span>)</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(study.diagnose())</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Running the PoD Analysis ---</span></span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a><span class="co"># Run the full reliability pipeline in a single call. This fits the models, determines the distribution, and runs the bootstrap.</span></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="co"># Run Analysis (Threshold = 18 dB)</span></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> study.pod(poi_col<span class="op">=</span><span class="st">"Length"</span>, threshold<span class="op">=</span><span class="fl">18.0</span>)</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Selected Degree: </span><span class="sc">{</span>results[<span class="st">'mean_model'</span>]<span class="sc">.</span>best_degree_<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a><span class="co"># Plotting</span></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>fig, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">14</span>, <span class="dv">6</span>))</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot Signal Model (Physics)</span></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>local_std <span class="op">=</span> dq.pod.predict_local_std(</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>    results[<span class="st">'X'</span>], results[<span class="st">'residuals'</span>], results[<span class="st">'X_eval'</span>], results[<span class="st">'bandwidth'</span>]</span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>plot.plot_signal_model(</span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a>    X<span class="op">=</span>results[<span class="st">'X'</span>],</span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span>results[<span class="st">'y'</span>],</span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>    X_eval<span class="op">=</span>results[<span class="st">'X_eval'</span>],</span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>    mean_curve<span class="op">=</span>results[<span class="st">'curves'</span>][<span class="st">'mean_response'</span>],</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>    threshold<span class="op">=</span>results[<span class="st">'threshold'</span>],</span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>    local_std<span class="op">=</span>local_std,</span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>ax1</span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot PoD Curve (Reliability)</span></span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a>plot.plot_pod_curve(</span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a>    X_eval<span class="op">=</span>results[<span class="st">'X_eval'</span>],</span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>    pod_curve<span class="op">=</span>results[<span class="st">'curves'</span>][<span class="st">'pod'</span>],</span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a>    ci_lower<span class="op">=</span>results[<span class="st">'curves'</span>][<span class="st">'ci_lower'</span>],</span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>    ci_upper<span class="op">=</span>results[<span class="st">'curves'</span>][<span class="st">'ci_upper'</span>],</span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>    target_pod<span class="op">=</span><span class="fl">0.90</span>,</span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>ax2</span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 </section>
@@ -733,4 +730,4 @@ window.Quarto = {
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/quick_start_oop.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

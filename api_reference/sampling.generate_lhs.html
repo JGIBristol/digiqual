@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>digiqual – digiqual Docs</title>
+<title>sampling.generate_lhs – digiqual Docs</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -58,24 +58,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-355c415dd6b9922ddaf04a2341011fe1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-355c415dd6b9922ddaf04a2341011fe1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -104,35 +104,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
 
 </head>
 
@@ -145,7 +116,9 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Home</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">
+      digiqual Docs
+      </li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -160,7 +133,7 @@ window.Quarto = {
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
-      <a href="./">digiqual Docs</a> 
+      <a href="../">digiqual Docs</a> 
     </div>
       </div>
         <div class="mt-2 flex-shrink-0 align-items-center">
@@ -172,7 +145,7 @@ window.Quarto = {
     <ul class="list-unstyled mt-1">
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./index.html" class="sidebar-item-text sidebar-link active">
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Home</span></a>
   </div>
 </li>
@@ -187,13 +160,13 @@ window.Quarto = {
       <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./docs/quick_start_function.html" class="sidebar-item-text sidebar-link">
+  <a href="../docs/quick_start_function.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Functional Approach</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./docs/quick_start_oop.html" class="sidebar-item-text sidebar-link">
+  <a href="../docs/quick_start_oop.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Class-Based Approach</span></a>
   </div>
 </li>
@@ -201,7 +174,7 @@ window.Quarto = {
   </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./api_reference/index.html" class="sidebar-item-text sidebar-link">
+  <a href="../api_reference/index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Reference</span></a>
   </div>
 </li>
@@ -215,114 +188,23 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#core-features" id="toc-core-features" class="nav-link active" data-scroll-target="#core-features">Core Features</a>
-  <ul class="collapse">
-  <li><a href="#experimental-design" id="toc-experimental-design" class="nav-link" data-scroll-target="#experimental-design">1. Experimental Design</a></li>
-  <li><a href="#data-validation-diagnostics" id="toc-data-validation-diagnostics" class="nav-link" data-scroll-target="#data-validation-diagnostics">2. Data Validation &amp; Diagnostics</a></li>
-  <li><a href="#adaptive-refinement-active-learning" id="toc-adaptive-refinement-active-learning" class="nav-link" data-scroll-target="#adaptive-refinement-active-learning">3. Adaptive Refinement (Active Learning)</a></li>
-  <li><a href="#generalized-reliability-analysis" id="toc-generalized-reliability-analysis" class="nav-link" data-scroll-target="#generalized-reliability-analysis">4. Generalized Reliability Analysis</a></li>
-  </ul></li>
-  <li><a href="#installation" id="toc-installation" class="nav-link" data-scroll-target="#installation">Installation</a>
-  <ul class="collapse">
-  <li><a href="#option-1-install-via-uv-recommended" id="toc-option-1-install-via-uv-recommended" class="nav-link" data-scroll-target="#option-1-install-via-uv-recommended">Option 1: Install via uv (Recommended)</a></li>
-  <li><a href="#option-2-install-via-standard-pip" id="toc-option-2-install-via-standard-pip" class="nav-link" data-scroll-target="#option-2-install-via-standard-pip">Option 2: Install via standard pip</a></li>
-  </ul></li>
-  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  <li><a href="#digiqual.sampling.generate_lhs" id="toc-digiqual.sampling.generate_lhs" class="nav-link active" data-scroll-target="#digiqual.sampling.generate_lhs">sampling.generate_lhs</a></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/sampling.generate_lhs.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
-
-<header id="title-block-header" class="quarto-title-block default">
-<div class="quarto-title">
-<h1 class="title">digiqual</h1>
-<p class="subtitle lead">Statistical Toolkit for Reliability Assessment in NDT</p>
-</div>
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
 
 
 
-<div class="quarto-title-meta">
 
-    
-  
-    
-  </div>
-  
-
-
-</header>
-
-
-<p><code>digiqual</code> is a Python library designed for Non-Destructive Evaluation (NDE) engineers. It provides a robust statistical framework for performing Model-Assisted Probability of Detection (MAPOD) studies and reliability assessments.</p>
-<p>The package is built to implement the Generalised <span class="math inline">\(\hat{a}\)</span>-versus-<span class="math inline">\(a\)</span> Method, allowing users to assess inspection reliability even when traditional assumptions (linearity, constant variance, Gaussian noise) are not met.</p>
-<section id="core-features" class="level2">
-<h2 class="anchored" data-anchor-id="core-features">Core Features</h2>
-<section id="experimental-design" class="level3">
-<h3 class="anchored" data-anchor-id="experimental-design">1. Experimental Design</h3>
-<p>Before running expensive Finite Element (FE) simulations, <code>digiqual</code> helps you design your experiment efficiently.</p>
-<ul>
-<li><strong>Latin Hypercube Sampling (LHS):</strong> Generate space-filling experimental designs to cover your deterministic parameter space (e.g., defect size) and stochastic nuisance parameters (e.g., roughness, orientation).</li>
-<li><strong>Scale &amp; Bound:</strong> Automatically scale samples to your specific variable bounds.</li>
-</ul>
-</section>
-<section id="data-validation-diagnostics" class="level3">
-<h3 class="anchored" data-anchor-id="data-validation-diagnostics">2. Data Validation &amp; Diagnostics</h3>
-<p>Ensure your simulation outputs are statistically valid before processing.</p>
-<ul>
-<li><strong>Sanity Checks:</strong> Detects overlap between variables, type errors, and insufficient sample sizes.</li>
-<li><strong>Sufficiency Diagnostics:</strong> rigorous statistical tests to flag issues like “Input Coverage Gaps” or “Model Instability” before you trust the results.</li>
-</ul>
-</section>
-<section id="adaptive-refinement-active-learning" class="level3">
-<h3 class="anchored" data-anchor-id="adaptive-refinement-active-learning">3. Adaptive Refinement (Active Learning)</h3>
-<p><code>digiqual</code> closes the loop between analysis and design. Instead of guessing where to run more simulations, use the <code>refine()</code> method to:</p>
-<ul>
-<li><strong>Fill Gaps:</strong> Automatically detect and target empty regions in your input space.</li>
-<li><strong>Reduce Uncertainty:</strong> Use bootstrap committees to find regions of high model variance and suggest new points exactly where the model is “confused”.</li>
-</ul>
-</section>
-<section id="generalized-reliability-analysis" class="level3">
-<h3 class="anchored" data-anchor-id="generalized-reliability-analysis">4. Generalized Reliability Analysis</h3>
-<p>The package includes a full statistical engine for calculating Probability of Detection (PoD) curves.</p>
-<ul>
-<li><strong>Relaxed Assumptions:</strong> Moves beyond the rigid constraints of the classical <span class="math inline">\(\hat{a}\)</span>-versus-<span class="math inline">\(a\)</span> method by handling non-linear signal responses and heteroscedastic noise.</li>
-<li><strong>Robust Statistics:</strong> Automatically selects the best polynomial degree and error distribution (e.g., Normal, Gumbel, Logistic) based on data fit (AIC).</li>
-<li><strong>Uncertainty Quantification:</strong> Uses bootstrap resampling to generate robust confidence bounds and <span class="math inline">\(a_{90/95}\)</span> estimates.</li>
-</ul>
-</section>
-</section>
-<section id="installation" class="level2">
-<h2 class="anchored" data-anchor-id="installation">Installation</h2>
-<p><a href="https://github.com/JGIBristol/digiqual/actions"><img src="https://github.com/JGIBristol/digiqual/actions/workflows/ci_cd.yml/badge.svg" class="img-fluid" alt="CI Status"></a> <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.10%2B-blue" class="img-fluid" alt="Python Version"></a> <a href="LICENSE"><img src="https://img.shields.io/github/license/JGIBristol/digiqual.png" class="img-fluid" alt="License"></a></p>
-<p>You can install <code>digiqual</code> directly from GitHub.</p>
-<section id="option-1-install-via-uv-recommended" class="level3">
-<h3 class="anchored" data-anchor-id="option-1-install-via-uv-recommended">Option 1: Install via uv (Recommended)</h3>
-<p>If you are managing a project with <code>uv</code>, add <code>digiqual</code> as a dependency:</p>
-<ul>
-<li>To install the latest stable release (v0.6.3):</li>
-</ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add <span class="st">"digiqual @ git+https://github.com/JGIBristol/digiqual.git@v0.6.3"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<ul>
-<li>To install the latest development version (main branch):</li>
-</ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add <span class="st">"digiqual @ git+https://github.com/JGIBristol/digiqual.git"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>If you just want to install it into a virtual environment without modifying a project file (e.g., for a quick script), use pip interface:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> pip install <span class="st">"git+https://github.com/JGIBristol/digiqual.git@v0.6.3"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="option-2-install-via-standard-pip" class="level3">
-<h3 class="anchored" data-anchor-id="option-2-install-via-standard-pip">Option 2: Install via standard pip</h3>
-<p>To install the latest stable release (v0.6.3):</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="st">"git+https://github.com/JGIBristol/digiqual.git@v0.6.3"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>To install the latest development version:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="st">"git+https://github.com/JGIBristol/digiqual.git"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<hr>
-</section>
-</section>
-<section id="references" class="level2">
-<h2 class="anchored" data-anchor-id="references">References</h2>
-<p>This package implements methods described in:</p>
-<p><strong>Malkiel, N., Croxford, A. J., &amp; Wilcox, P. D. (2025).</strong> A generalized method for the reliability assessment of safety–critical inspection. Proceedings of the Royal Society A, 481: 20240654. https://doi.org/10.1098/rspa.2024.0654</p>
+<section id="digiqual.sampling.generate_lhs" class="level1">
+<h1>sampling.generate_lhs</h1>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>sampling.generate_lhs(n, vars_df, seed<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Generates a Latin Hypercube Sample and scales it to the provided variable bounds.</p>
+<p>Args: n (int): The total number of samples to generate. vars_df (pd.DataFrame): A dataframe defining the input variables. Must contain columns: <code>'Name'</code>, <code>'Min'</code>, <code>'Max'</code>. seed (int, optional): Sets the random seed for reproducibility. Defaults to None.</p>
+<p>Returns: pd.DataFrame: A dataframe containing the scaled simulation parameters, where column names correspond to <code>vars_df['Name']</code>. Returns an empty DataFrame if <code>vars_df</code> is empty.</p>
+<p>Raises: ValueError: If required columns are missing, types are incorrect, or Min &gt;= Max.</p>
 
 
 </section>
@@ -733,4 +615,4 @@ window.Quarto = {
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/sampling.generate_lhs.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
