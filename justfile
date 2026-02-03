@@ -67,7 +67,7 @@ bump part="patch": check
     uv lock
 
     # 3. Commit
-    git add pyproject.toml uv.lock README.md docs/index.md src/digiqual/__init__.py
+    git add pyproject.toml uv.lock README.md index.qmd src/digiqual/__init__.py
     git commit -m "gh-action: bump version to v$version"
     git push origin HEAD
 
