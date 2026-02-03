@@ -77,7 +77,7 @@ quartodoc:
 
   sections:
     # 1. CORE MANAGER
-    - title: Core Workflow
+    - title: SimulationStudy Class
       desc: "The central engine for managing reliability studies."
       contents:
         - name: core.SimulationStudy

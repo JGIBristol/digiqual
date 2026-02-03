@@ -135,10 +135,10 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 
 # Plot Physics (Signal vs Size)
 local_std = pod.predict_local_std(X, residuals, X_eval, bandwidth)
-plot.plot_signal_model(X, y, X_eval, mean_curve, threshold, local_std=local_std, ax=ax1)
+plot.plot_signal_model(X, y, X_eval, mean_curve, threshold, local_std=local_std, ax=ax1, poi_name="Length")
 
 # Plot Reliability (PoD vs Size)
-plot.plot_pod_curve(X_eval, pod_curve, lower_ci, upper_ci, ax=ax2)
+plot.plot_pod_curve(X_eval, pod_curve, lower_ci, upper_ci, ax=ax2, poi_name="Length")
 
 plt.show()
 ```
