@@ -58,13 +58,15 @@ jobs:
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
 
-      # 2. Install Python & Dependencies (including quartodoc)
+      # 2. Install Python & Dependencies
       - name: Install Python and Dependencies
         uses: astral-sh/setup-uv@v1
       - run: |
           uv python install 3.11
           uv venv
-          uv pip install ".[dev]" quartodoc  # Add quartodoc here!
+          uv pip install ".[dev]" quartodoc
+          # ADD THIS LINE BELOW:
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> $GITHUB_PATH
 
       # 3. Generate the API Reference (.qmd files)
       - name: Build API Docs
