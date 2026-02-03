@@ -1,0 +1,56 @@
+/*-- scss:defaults --*/
+$primary:       #2c3e50;   // Dark Navy
+$secondary:     #34495e;   // Lighter Slate
+$success:       #27ae60;   // Green
+$info:          #2980b9;   // Blue
+$body-bg:       #f9fafb;   // Soft Cool Grey Background
+$body-color:    #1f2937;   // Dark Grey Text
+
+/*-- scss:rules --*/
+
+// --- TYPOGRAPHY ---
+h1, h2, h3, h4, h5, h6 {
+  color: $primary;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+h1.title {
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+}
+
+// --- CODE BLOCKS (Standard Clean Style) ---
+// No experimental width hacks. Just a clean card look.
+pre.sourceCode {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+// --- NAVBAR CENTERING ---
+// Keeps the title locked to the center of the screen
+@media (min-width: 992px) {
+  .navbar-brand {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-right: 0 !important;
+    font-weight: 800;
+    z-index: 10;
+  }
+}
+
+.navbar-nav {
+  z-index: 5;
+}
+
+// --- SIDEBAR ADJUSTMENT ---
+// Simple tweak to prevent overlap on large screens
+@media (min-width: 1400px) {
+  .sidebar.sidebar-navigation {
+     margin-left: -20px;
+  }
+}

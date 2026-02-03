@@ -3,10 +3,6 @@ title: "Class-Based Approach"
 description: "A streamlined guide using the SimulationStudy manager."
 ---
 
-DigiQual offers two ways to work: the **Functional Approach** (great for specific tasks) and the **Class-Based Approach** (recommended for full study management).
-
-## The SimulationStudy Manager
-
 Use the `SimulationStudy` manager to handle the entire lifecycle: storage, diagnostics, and active refinement. This allows you to automatically fix issues in your design.
 
 In this example, we will **intentionally feed the study "bad" data** (with a large gap in the input space) to demonstrate how the active learning module identifies and fixes the problem.

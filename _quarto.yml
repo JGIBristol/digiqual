@@ -8,32 +8,56 @@ project:
     - "!materials/"
 
 website:
-  title: "digiqual Docs"
+  title: "digiqual"
   repo-url: https://github.com/JGIBristol/digiqual
   repo-actions: [edit, issue]
 
-  # Navigation
+  # --- TOP BANNER ---
+  # Purely for Branding (Title) and External Links (GitHub)
+  navbar:
+    background: primary
+    foreground: light
+    search: true
+
+    # Right: GitHub & Version
+    right:
+      - icon: github
+        href: https://github.com/JGIBristol/digiqual
+        aria-label: GitHub
+
+  # --- SIDE NAVIGATION ---
+  # Handles all internal links and Search
   sidebar:
     style: "floating"
-    search: true
     contents:
+      # 1. Home
       - text: "Home"
         file: index.qmd
+
+      # 2. Quick Start (Collapsible)
       - section: "Quick Start"
         contents:
           - text: "Functional Approach"
             file: docs/quick_start_function.qmd
           - text: "Class-Based Approach"
             file: docs/quick_start_oop.qmd
-      - text: "Reference"
+
+      # 3. API Reference (Top-level Link)
+      - text: "API Reference"
         file: api_reference/index.qmd
 
 format:
   html:
-    theme: cosmo
+    theme: [cosmo, custom.scss]
     toc: true
     page-layout: article
     code-copy: true
+
+    # --- AESTHETICS ---
+    # Modern, clean typography and colors (overrides Cosmo defaults)
+    mainfont: "Inter, system-ui, -apple-system, sans-serif"
+    fontcolor: "#212529"          # Softer black for text
+    backgroundcolor: "#f9fafb"    # Soft cool grey background (Not bright white)
 
 # --- QUARTODOC CONFIG ---
 quartodoc:

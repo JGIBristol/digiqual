@@ -2,16 +2,12 @@
 title: "Function-Based Approach"
 description: "A quick-start guide to using the digiqual functions."
 ---
+
 ```{python}
 #| output: False
 #| echo: False
 from IPython.display import display, Markdown
 ```
-
-
-DigiQual offers two ways to work: the **Functional Approach** (great for specific tasks) and the **Class-Based Approach** (recommended for full study management).
-
-## Functional Approach (Manual Control)
 
 In this scenario, we generate a high-quality Latin Hypercube design. We will see that the active learning module confirms the design is sufficient and requires no further sampling.
 
@@ -37,7 +33,6 @@ vars_df = pd.DataFrame(
 df = generate_lhs(n=1000, seed=123, vars_df=vars_df)
 df.head()
 ```
-
 
 ### Validating Simulation Data
 
@@ -71,6 +66,7 @@ display(Markdown(f"**Dropped rows:** {len(df_removed)}"))
 ```
 
 ### Checking Sample Sufficiency
+
 We have validated data so now we want to check if we have enough samples to produce an accurate PoD Curve.
 
 ```{python}
@@ -85,6 +81,7 @@ ss
 ```
 
 ### Adaptive Refinement Check
+
 We now run the targeted sampler. Because `generate_lhs` provides good coverage by default, we expect the adaptive module to return an empty result, confirming no more work is needed.
 
 ```{python}
@@ -99,6 +96,7 @@ new_samples = generate_targeted_samples(
 ```
 
 ### Running Generalised PoD Analysis
+
 Finally, we generate the Probability of Detection curve. This pipeline automatically handles non-linear physics and heteroscedastic noise.
 
 ```{python}

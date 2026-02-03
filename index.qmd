@@ -1,7 +1,6 @@
 ---
 title: "digiqual"
 subtitle: "Statistical Toolkit for Reliability Assessment in NDT"
-page-layout: article  # Forces the centered "paper" layout
 ---
 
 `digiqual` is a Python library designed for Non-Destructive Evaluation (NDE) engineers. It provides a robust statistical framework for performing Model-Assisted Probability of Detection (MAPOD) studies and reliability assessments.
