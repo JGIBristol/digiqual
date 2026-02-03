@@ -25,9 +25,10 @@ docs-preview:
     uv run quarto preview index.qmd
 
 # Manually pushes to the gh-pages branch without a CI logjam
-docs-publish:
+docs-publish: clean
     uv run quartodoc build
     uv run quarto publish gh-pages --no-prompt
+    clean
 
 # --- VERSIONING ---
 
