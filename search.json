@@ -44,7 +44,7 @@
     "href": "docs/quick_start_function.html",
     "title": "Function-Based Approach",
     "section": "",
-    "text": "In this scenario, we generate a high-quality Latin Hypercube design. We will see that the active learning module confirms the design is sufficient and requires no further sampling.\n\nGenerating an Experimental Design\nCreate a Latin Hypercube design for a simulation study involving defect size (\\(a\\)), angle (\\(\\theta\\)) and roughness (\\(\\sigma_{R}\\)).\n\nimport pandas as pd\nimport numpy as np\nfrom digiqual.sampling import generate_lhs\n\n# Define your variables and bounds\nvars_df = pd.DataFrame(\n    [\n        {\"Name\": \"Length\", \"Min\": 0.1, \"Max\": 10},\n        {\"Name\": \"Angle\", \"Min\": -90, \"Max\": 90},\n        {\"Name\": \"Roughness\", \"Min\": 0, \"Max\": 1},\n    ]\n)\n\n# Generate 1000 samples\ndf = generate_lhs(n=1000, seed=123, vars_df=vars_df)\ndf.head()\n\n\n\n\n\n\n\nName\nLength\nAngle\nRoughness\n\n\n\n\n0\n0.835745\n-41.409688\n0.147780\n\n\n1\n1.632675\n-40.711663\n0.392188\n\n\n2\n0.566059\n-50.989783\n0.265180\n\n\n3\n1.338590\n61.647665\n0.858755\n\n\n4\n9.635440\n-27.038477\n0.469259\n\n\n\n\n\n\n\n\n\nValidating Simulation Data\nOnce you have your simulation results, ensure they are ready for PoD analysis.\n\nfrom digiqual.diagnostics import validate_simulation\n\ndef apply_physics(df):\n    # 1. Base Signal: Quadratic trend (2*Length + 0.5*Length^2)\n    # 2. Angle Penalty: Misalignment (-0.1*Angle) reduces signal\n    signal = 10.0 + (2.0 * df['Length']) + (0.5 * df['Length']**2) - (0.1 * np.abs(df['Angle']))\n\n    # 3. Heteroscedastic Noise: Higher roughness = More scatter\n    noise_scale = 0.5 + (1.5 * df['Roughness'])\n    noise = np.random.normal(loc=0, scale=noise_scale, size=len(df))\n\n    return signal + noise\n\n# Create a fake signal output column with some noise\ndf['Signal'] = apply_physics(df)\n\ndf_clean, df_removed = validate_simulation(\n    df=df,\n    input_cols=[\"Length\", \"Angle\", \"Roughness\"],\n    outcome_col=\"Signal\"\n)\n\ndisplay(Markdown(f\"**Valid rows:** {len(df_clean)}\"))\ndisplay(Markdown(f\"**Dropped rows:** {len(df_removed)}\"))\n\nValid rows: 1000\n\n\nDropped rows: 0\n\n\n\n\nChecking Sample Sufficiency\nWe have validated data so now we want to check if we have enough samples to produce an accurate PoD Curve.\n\nfrom digiqual.diagnostics import sample_sufficiency\n\nss = sample_sufficiency(\n    df=df_clean,\n    input_cols=[\"Length\", \"Angle\", \"Roughness\"],\n    outcome_col=\"Signal\"\n)\nss\n\n\n\n\n\n\n\n\nTest\nVariable\nMetric\nValue\nPass\n\n\n\n\n0\nInput Coverage\nLength\nMax Gap Ratio\n0.0019\nTrue\n\n\n1\nInput Coverage\nAngle\nMax Gap Ratio\n0.0020\nTrue\n\n\n2\nInput Coverage\nRoughness\nMax Gap Ratio\n0.0020\nTrue\n\n\n3\nModel Fit (CV)\nSignal\nMean R2 Score\n0.9945\nTrue\n\n\n4\nBootstrap Convergence\nSignal\nRelative CI Width\n0.0130\nTrue\n\n\n\n\n\n\n\n\n\nAdaptive Refinement Check\nWe now run the targeted sampler. Because generate_lhs provides good coverage by default, we expect the adaptive module to return an empty result, confirming no more work is needed.\n\nfrom digiqual.adaptive import generate_targeted_samples\n\nnew_samples = generate_targeted_samples(\n    df=df_clean,\n    input_cols=[\"Length\", \"Angle\",\"Roughness\"],\n    outcome_col=\"Signal\",\n    n_new_per_fix=5\n)\n\nAll diagnostic checks passed. No new samples needed.\n\n\n\n\nRunning Generalised PoD Analysis\nFinally, we generate the Probability of Detection curve. This pipeline automatically handles non-linear physics and heteroscedastic noise.\n\nimport matplotlib.pyplot as plt\nimport digiqual.pod as pod\nimport digiqual.plotting as plot\n\n# Prepare vectors (X = Crack Size, y = Signal)\nX = df_clean['Length'].values\ny = df_clean['Signal'].values\nthreshold = 18.0  # Detection threshold (e.g., 3.0 dB)\n\n# A. Fit Robust Mean Model (Polynomial)\nmean_model = pod.fit_robust_mean_model(X, y)\n\n# B. Fit Variance Model (Kernel Smoothing)\nresiduals, bandwidth, X_eval = pod.fit_variance_model(X, y, mean_model)\n\n# C. Infer Error Distribution (AIC Selection)\ndist_name, dist_params = pod.infer_best_distribution(residuals, X, bandwidth)\n\n# D. Compute PoD Curve & Confidence Intervals\npod_curve, mean_curve = pod.compute_pod_curve(\n    X_eval, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold\n)\n\nlower_ci, upper_ci = pod.bootstrap_pod_ci(\n    X, y, X_eval, threshold, mean_model.best_degree_, bandwidth, (dist_name, dist_params)\n)\n\n# E. Plotting\nfig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))\n\n# Plot Physics (Signal vs Size)\nlocal_std = pod.predict_local_std(X, residuals, X_eval, bandwidth)\nplot.plot_signal_model(X, y, X_eval, mean_curve, threshold, local_std=local_std, ax=ax1)\n\n# Plot Reliability (PoD vs Size)\nplot.plot_pod_curve(X_eval, pod_curve, lower_ci, upper_ci, ax=ax2)\n\nplt.show()\n\n\n\n\n\n\n\nFigure 1: Generalized PoD Analysis Results",
+    "text": "In this scenario, we generate a high-quality Latin Hypercube design. We will see that the active learning module confirms the design is sufficient and requires no further sampling.\n\nGenerating an Experimental Design\nCreate a Latin Hypercube design for a simulation study involving defect size (\\(a\\)), angle (\\(\\theta\\)) and roughness (\\(\\sigma_{R}\\)).\n\nimport pandas as pd\nimport numpy as np\nfrom digiqual.sampling import generate_lhs\n\n# Define your variables and bounds\nvars_df = pd.DataFrame(\n    [\n        {\"Name\": \"Length\", \"Min\": 0.1, \"Max\": 10},\n        {\"Name\": \"Angle\", \"Min\": -90, \"Max\": 90},\n        {\"Name\": \"Roughness\", \"Min\": 0, \"Max\": 1},\n    ]\n)\n\n# Generate 1000 samples\ndf = generate_lhs(n=1000, seed=123, vars_df=vars_df)\ndf.head()\n\n\n\n\n\n\n\nName\nLength\nAngle\nRoughness\n\n\n\n\n0\n0.835745\n-41.409688\n0.147780\n\n\n1\n1.632675\n-40.711663\n0.392188\n\n\n2\n0.566059\n-50.989783\n0.265180\n\n\n3\n1.338590\n61.647665\n0.858755\n\n\n4\n9.635440\n-27.038477\n0.469259\n\n\n\n\n\n\n\n\n\nValidating Simulation Data\nOnce you have your simulation results, ensure they are ready for PoD analysis.\n\nfrom digiqual.diagnostics import validate_simulation\n\ndef apply_physics(df):\n    # 1. Base Signal: Quadratic trend (2*Length + 0.5*Length^2)\n    # 2. Angle Penalty: Misalignment (-0.1*Angle) reduces signal\n    signal = 10.0 + (2.0 * df['Length']) + (0.5 * df['Length']**2) - (0.1 * np.abs(df['Angle']))\n\n    # 3. Heteroscedastic Noise: Higher roughness = More scatter\n    noise_scale = 0.5 + (1.5 * df['Roughness'])\n    noise = np.random.normal(loc=0, scale=noise_scale, size=len(df))\n\n    return signal + noise\n\n# Create a fake signal output column with some noise\ndf['Signal'] = apply_physics(df)\n\ndf_clean, df_removed = validate_simulation(\n    df=df,\n    input_cols=[\"Length\", \"Angle\", \"Roughness\"],\n    outcome_col=\"Signal\"\n)\n\ndisplay(Markdown(f\"**Valid rows:** {len(df_clean)}\"))\ndisplay(Markdown(f\"**Dropped rows:** {len(df_removed)}\"))\n\nValid rows: 1000\n\n\nDropped rows: 0\n\n\n\n\nChecking Sample Sufficiency\nWe have validated data so now we want to check if we have enough samples to produce an accurate PoD Curve.\n\nfrom digiqual.diagnostics import sample_sufficiency\n\nss = sample_sufficiency(\n    df=df_clean,\n    input_cols=[\"Length\", \"Angle\", \"Roughness\"],\n    outcome_col=\"Signal\"\n)\nss\n\n\n\n\n\n\n\n\nTest\nVariable\nMetric\nValue\nPass\n\n\n\n\n0\nInput Coverage\nLength\nMax Gap Ratio\n0.0019\nTrue\n\n\n1\nInput Coverage\nAngle\nMax Gap Ratio\n0.0020\nTrue\n\n\n2\nInput Coverage\nRoughness\nMax Gap Ratio\n0.0020\nTrue\n\n\n3\nModel Fit (CV)\nSignal\nMean R2 Score\n0.9946\nTrue\n\n\n4\nBootstrap Convergence\nSignal\nRelative CI Width\n0.0137\nTrue\n\n\n\n\n\n\n\n\n\nAdaptive Refinement Check\nWe now run the targeted sampler. Because generate_lhs provides good coverage by default, we expect the adaptive module to return an empty result, confirming no more work is needed.\n\nfrom digiqual.adaptive import generate_targeted_samples\n\nnew_samples = generate_targeted_samples(\n    df=df_clean,\n    input_cols=[\"Length\", \"Angle\",\"Roughness\"],\n    outcome_col=\"Signal\",\n    n_new_per_fix=5\n)\n\nAll diagnostic checks passed. No new samples needed.\n\n\n\n\nRunning Generalised PoD Analysis\nFinally, we generate the Probability of Detection curve. This pipeline automatically handles non-linear physics and heteroscedastic noise.\n\nimport matplotlib.pyplot as plt\nimport digiqual.pod as pod\nimport digiqual.plotting as plot\n\n# Prepare vectors (X = Crack Size, y = Signal)\nX = df_clean['Length'].values\ny = df_clean['Signal'].values\nthreshold = 18.0  # Detection threshold (e.g., 3.0 dB)\n\n# A. Fit Robust Mean Model (Polynomial)\nmean_model = pod.fit_robust_mean_model(X, y)\n\n# B. Fit Variance Model (Kernel Smoothing)\nresiduals, bandwidth, X_eval = pod.fit_variance_model(X, y, mean_model)\n\n# C. Infer Error Distribution (AIC Selection)\ndist_name, dist_params = pod.infer_best_distribution(residuals, X, bandwidth)\n\n# D. Compute PoD Curve & Confidence Intervals\npod_curve, mean_curve = pod.compute_pod_curve(\n    X_eval, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold\n)\n\nlower_ci, upper_ci = pod.bootstrap_pod_ci(\n    X, y, X_eval, threshold, mean_model.best_degree_, bandwidth, (dist_name, dist_params)\n)\n\n# E. Plotting\nfig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))\n\n# Plot Physics (Signal vs Size)\nlocal_std = pod.predict_local_std(X, residuals, X_eval, bandwidth)\nplot.plot_signal_model(X, y, X_eval, mean_curve, threshold, local_std=local_std, ax=ax1)\n\n# Plot Reliability (PoD vs Size)\nplot.plot_pod_curve(X_eval, pod_curve, lower_ci, upper_ci, ax=ax2)\n\nplt.show()\n\n\n\n\n\n\n\nFigure 1: Generalized PoD Analysis Results",
     "crumbs": [
       "Quick Start",
       "Functional Approach"
@@ -55,97 +55,384 @@
     "href": "api_reference/pod.predict_local_std.html",
     "title": "pod.predict_local_std",
     "section": "",
-    "text": "pod.predict_local_std\npod.predict_local_std(X, residuals, X_eval, bandwidth)\nEstimates the local standard deviation using Gaussian Kernel Smoothing.\nThis implements a Nadaraya-Watson estimator specifically for the squared residuals to model how noise varies across the input domain (heteroscedasticity).\nArgs: X (np.ndarray): The source locations (original data inputs). residuals (np.ndarray): The residuals observed at X. X_eval (np.ndarray): The target locations to estimate variance at. bandwidth (float): The width of the Gaussian kernel (sigma).\nReturns: np.ndarray: An array of standard deviation estimates corresponding to X_eval."
+    "text": "predict_local_std(X, residuals, X_eval, bandwidth)\nEstimates the local standard deviation using Gaussian Kernel Smoothing.\nThis implements a Nadaraya-Watson estimator specifically for the squared residuals to model how noise varies across the input domain (heteroscedasticity).\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nX\nnp.ndarray\nThe source locations (original data inputs).\nrequired\n\n\nresiduals\nnp.ndarray\nThe residuals observed at X.\nrequired\n\n\nX_eval\nnp.ndarray\nThe target locations to estimate variance at.\nrequired\n\n\nbandwidth\nfloat\nThe width of the Gaussian kernel (sigma).\nrequired\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nnp.ndarray\nnp.ndarray: An array of standard deviation estimates corresponding to X_eval.",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Prediction & Statistics",
+      "pod.predict_local_std"
+    ]
+  },
+  {
+    "objectID": "api_reference/pod.predict_local_std.html#parameters",
+    "href": "api_reference/pod.predict_local_std.html#parameters",
+    "title": "pod.predict_local_std",
+    "section": "",
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\nX\nnp.ndarray\nThe source locations (original data inputs).\nrequired\n\n\nresiduals\nnp.ndarray\nThe residuals observed at X.\nrequired\n\n\nX_eval\nnp.ndarray\nThe target locations to estimate variance at.\nrequired\n\n\nbandwidth\nfloat\nThe width of the Gaussian kernel (sigma).\nrequired",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Prediction & Statistics",
+      "pod.predict_local_std"
+    ]
+  },
+  {
+    "objectID": "api_reference/pod.predict_local_std.html#returns",
+    "href": "api_reference/pod.predict_local_std.html#returns",
+    "title": "pod.predict_local_std",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\n\nnp.ndarray\nnp.ndarray: An array of standard deviation estimates corresponding to X_eval.",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Prediction & Statistics",
+      "pod.predict_local_std"
+    ]
   },
   {
     "objectID": "api_reference/pod.fit_variance_model.html",
     "href": "api_reference/pod.fit_variance_model.html",
     "title": "pod.fit_variance_model",
     "section": "",
-    "text": "pod.fit_variance_model\npod.fit_variance_model(X, y, mean_model, bandwidth_ratio=0.1, n_eval_points=100)\nCalculates residuals and prepares the grid for variance estimation.\nThis acts as the setup phase for the heteroscedasticity model. It computes the raw residuals from the mean model and defines the smoothing bandwidth.\nArgs: X (np.ndarray): The original input data. y (np.ndarray): The original outcome data. mean_model (Any): The fitted sklearn pipeline from fit_robust_mean_model. bandwidth_ratio (float, optional): The kernel smoothing window size as a fraction of the data range (X_max - X_min). Defaults to 0.1. n_eval_points (int, optional): Number of points in the evaluation grid. Defaults to 100.\nReturns: Tuple[np.ndarray, float, np.ndarray]: - residuals: Raw differences between y and the mean model prediction. - bandwidth: The calculated smoothing window size (absolute units). - X_eval: A linearly spaced grid over the X domain for plotting/evaluation."
+    "text": "fit_variance_model(X, y, mean_model, bandwidth_ratio=0.1, n_eval_points=100)\nCalculates residuals and prepares the grid for variance estimation.\nThis acts as the setup phase for the heteroscedasticity model. It computes the raw residuals from the mean model and defines the smoothing bandwidth.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nX\nnp.ndarray\nThe original input data.\nrequired\n\n\ny\nnp.ndarray\nThe original outcome data.\nrequired\n\n\nmean_model\nAny\nThe fitted sklearn pipeline from fit_robust_mean_model.\nrequired\n\n\nbandwidth_ratio\nfloat\nThe kernel smoothing window size as a fraction of the data range (X_max - X_min). Defaults to 0.1.\n0.1\n\n\nn_eval_points\nint\nNumber of points in the evaluation grid. Defaults to 100.\n100\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nTuple[np.ndarray, float, np.ndarray]\nTuple[np.ndarray, float, np.ndarray]: - residuals: Raw differences between y and the mean model prediction. - bandwidth: The calculated smoothing window size (absolute units). - X_eval: A linearly spaced grid over the X domain for plotting/evaluation.",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Model Fitting",
+      "pod.fit_variance_model"
+    ]
+  },
+  {
+    "objectID": "api_reference/pod.fit_variance_model.html#parameters",
+    "href": "api_reference/pod.fit_variance_model.html#parameters",
+    "title": "pod.fit_variance_model",
+    "section": "",
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\nX\nnp.ndarray\nThe original input data.\nrequired\n\n\ny\nnp.ndarray\nThe original outcome data.\nrequired\n\n\nmean_model\nAny\nThe fitted sklearn pipeline from fit_robust_mean_model.\nrequired\n\n\nbandwidth_ratio\nfloat\nThe kernel smoothing window size as a fraction of the data range (X_max - X_min). Defaults to 0.1.\n0.1\n\n\nn_eval_points\nint\nNumber of points in the evaluation grid. Defaults to 100.\n100",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Model Fitting",
+      "pod.fit_variance_model"
+    ]
+  },
+  {
+    "objectID": "api_reference/pod.fit_variance_model.html#returns",
+    "href": "api_reference/pod.fit_variance_model.html#returns",
+    "title": "pod.fit_variance_model",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\n\nTuple[np.ndarray, float, np.ndarray]\nTuple[np.ndarray, float, np.ndarray]: - residuals: Raw differences between y and the mean model prediction. - bandwidth: The calculated smoothing window size (absolute units). - X_eval: A linearly spaced grid over the X domain for plotting/evaluation.",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Model Fitting",
+      "pod.fit_variance_model"
+    ]
   },
   {
     "objectID": "api_reference/pod.compute_pod_curve.html",
     "href": "api_reference/pod.compute_pod_curve.html",
     "title": "pod.compute_pod_curve",
     "section": "",
-    "text": "pod.compute_pod_curve\npod.compute_pod_curve(\n    X_eval,\n    mean_model,\n    X,\n    residuals,\n    bandwidth,\n    dist_info,\n    threshold,\n)\nCalculates the Probability of Detection (PoD) curve.\nCombines the Mean Model, Variance Model, and Error Distribution to compute the probability that the signal exceeds the threshold at every point in X_eval.\nArgs: X_eval (np.ndarray): The grid points to calculate PoD for. mean_model (Any): The fitted sklearn mean response model. X (np.ndarray): Original input data (needed for variance prediction). residuals (np.ndarray): Original residuals (needed for variance prediction). bandwidth (float): Smoothing bandwidth. dist_info (Tuple[str, Tuple]): The (name, params) of the error distribution. threshold (float): The detection threshold value.\nReturns: Tuple[np.ndarray, np.ndarray]: - pod_curve: Array of probabilities [0, 1] for each point in X_eval. - mean_curve: Array of mean signal response values for X_eval."
+    "text": "compute_pod_curve(\n    X_eval,\n    mean_model,\n    X,\n    residuals,\n    bandwidth,\n    dist_info,\n    threshold,\n)\nCalculates the Probability of Detection (PoD) curve.\nCombines the Mean Model, Variance Model, and Error Distribution to compute the probability that the signal exceeds the threshold at every point in X_eval.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nX_eval\nnp.ndarray\nThe grid points to calculate PoD for.\nrequired\n\n\nmean_model\nAny\nThe fitted sklearn mean response model.\nrequired\n\n\nX\nnp.ndarray\nOriginal input data (needed for variance prediction).\nrequired\n\n\nresiduals\nnp.ndarray\nOriginal residuals (needed for variance prediction).\nrequired\n\n\nbandwidth\nfloat\nSmoothing bandwidth.\nrequired\n\n\ndist_info\nTuple[str, Tuple]\nThe (name, params) of the error distribution.\nrequired\n\n\nthreshold\nfloat\nThe detection threshold value.\nrequired\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nTuple[np.ndarray, np.ndarray]\nTuple[np.ndarray, np.ndarray]: - pod_curve: Array of probabilities [0, 1] for each point in X_eval. - mean_curve: Array of mean signal response values for X_eval.",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Prediction & Statistics",
+      "pod.compute_pod_curve"
+    ]
+  },
+  {
+    "objectID": "api_reference/pod.compute_pod_curve.html#parameters",
+    "href": "api_reference/pod.compute_pod_curve.html#parameters",
+    "title": "pod.compute_pod_curve",
+    "section": "",
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\nX_eval\nnp.ndarray\nThe grid points to calculate PoD for.\nrequired\n\n\nmean_model\nAny\nThe fitted sklearn mean response model.\nrequired\n\n\nX\nnp.ndarray\nOriginal input data (needed for variance prediction).\nrequired\n\n\nresiduals\nnp.ndarray\nOriginal residuals (needed for variance prediction).\nrequired\n\n\nbandwidth\nfloat\nSmoothing bandwidth.\nrequired\n\n\ndist_info\nTuple[str, Tuple]\nThe (name, params) of the error distribution.\nrequired\n\n\nthreshold\nfloat\nThe detection threshold value.\nrequired",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Prediction & Statistics",
+      "pod.compute_pod_curve"
+    ]
+  },
+  {
+    "objectID": "api_reference/pod.compute_pod_curve.html#returns",
+    "href": "api_reference/pod.compute_pod_curve.html#returns",
+    "title": "pod.compute_pod_curve",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\n\nTuple[np.ndarray, np.ndarray]\nTuple[np.ndarray, np.ndarray]: - pod_curve: Array of probabilities [0, 1] for each point in X_eval. - mean_curve: Array of mean signal response values for X_eval.",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Prediction & Statistics",
+      "pod.compute_pod_curve"
+    ]
   },
   {
     "objectID": "api_reference/plotting.plot_signal_model.html",
     "href": "api_reference/plotting.plot_signal_model.html",
     "title": "plotting.plot_signal_model",
     "section": "",
-    "text": "plotting.plot_signal_model\nplotting.plot_signal_model(\n    X,\n    y,\n    X_eval,\n    mean_curve,\n    threshold,\n    local_std=None,\n    ax=None,\n)\nDiagnostic Plot 1: Signal vs Parameter of Interest (The Physics).\nVisualizes the raw simulation data, the fitted mean model, and the detection threshold. Equivalent to Figure 6/12 in the Generalized Method paper.\nArgs: X: The raw PoI. y: The raw signal responses. X_eval: The grid of points used for the curves. mean_curve: The predicted mean response at X_eval. threshold: The detection threshold (horizontal line). local_std: (Optional) The predicted standard deviation at X_eval. If provided, adds 95% prediction bounds to show noise structure. ax: (Optional) Matplotlib axes to plot on. Creates new if None."
+    "text": "plot_signal_model(X, y, X_eval, mean_curve, threshold, local_std=None, ax=None)\nDiagnostic Plot 1: Signal vs Parameter of Interest (The Physics).\nVisualizes the raw simulation data, the fitted mean model, and the detection threshold. Equivalent to Figure 6/12 in the Generalized Method paper.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nX\nnp.ndarray\nThe raw PoI.\nrequired\n\n\ny\nnp.ndarray\nThe raw signal responses.\nrequired\n\n\nX_eval\nnp.ndarray\nThe grid of points used for the curves.\nrequired\n\n\nmean_curve\nnp.ndarray\nThe predicted mean response at X_eval.\nrequired\n\n\nthreshold\nfloat\nThe detection threshold (horizontal line).\nrequired\n\n\nlocal_std\nOptional[np.ndarray]\n(Optional) The predicted standard deviation at X_eval. If provided, adds 95% prediction bounds to show noise structure.\nNone\n\n\nax\nOptional[plt.Axes]\n(Optional) Matplotlib axes to plot on. Creates new if None.\nNone",
+    "crumbs": [
+      "API Reference",
+      "Plotting",
+      "plotting.plot_signal_model"
+    ]
+  },
+  {
+    "objectID": "api_reference/plotting.plot_signal_model.html#parameters",
+    "href": "api_reference/plotting.plot_signal_model.html#parameters",
+    "title": "plotting.plot_signal_model",
+    "section": "",
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\nX\nnp.ndarray\nThe raw PoI.\nrequired\n\n\ny\nnp.ndarray\nThe raw signal responses.\nrequired\n\n\nX_eval\nnp.ndarray\nThe grid of points used for the curves.\nrequired\n\n\nmean_curve\nnp.ndarray\nThe predicted mean response at X_eval.\nrequired\n\n\nthreshold\nfloat\nThe detection threshold (horizontal line).\nrequired\n\n\nlocal_std\nOptional[np.ndarray]\n(Optional) The predicted standard deviation at X_eval. If provided, adds 95% prediction bounds to show noise structure.\nNone\n\n\nax\nOptional[plt.Axes]\n(Optional) Matplotlib axes to plot on. Creates new if None.\nNone",
+    "crumbs": [
+      "API Reference",
+      "Plotting",
+      "plotting.plot_signal_model"
+    ]
   },
   {
     "objectID": "api_reference/index.html",
     "href": "api_reference/index.html",
-    "title": "Function reference",
+    "title": "API Overview",
     "section": "",
-    "text": "Workflow management and data structures.\n\n\n\ncore.SimulationStudy\nA workflow manager for simulation reliability assessment.\n\n\n\n\n\n\nExperimental design and Latin Hypercube Sampling.\n\n\n\nsampling.generate_lhs\nGenerates a Latin Hypercube Sample and scales it to the provided variable bounds.\n\n\n\n\n\n\nStatistical checks for sample sufficiency and validity.\n\n\n\ndiagnostics.validate_simulation\nValidates simulation data, coercing to numeric and removing invalid rows.\n\n\ndiagnostics.sample_sufficiency\nPerforms statistical tests on sampling sufficiency.\n\n\ndiagnostics.ValidationError\nRaised when simulation data fails validation checks.\n\n\n\n\n\n\nActive learning algorithms for targeted sampling.\n\n\n\nadaptive.generate_targeted_samples\nActive Learning Engine: Generates new samples based on diagnostic failures.\n\n\n\n\n\n\nStatistical engine for reliability analysis.\n\n\n\npod.fit_robust_mean_model\nFits a polynomial regression model, automatically selecting the optimal degree.\n\n\npod.fit_variance_model\nCalculates residuals and prepares the grid for variance estimation.\n\n\npod.predict_local_std\nEstimates the local standard deviation using Gaussian Kernel Smoothing.\n\n\npod.infer_best_distribution\nSelects the best statistical distribution for the standardized residuals using AIC.\n\n\npod.compute_pod_curve\nCalculates the Probability of Detection (PoD) curve.\n\n\npod.bootstrap_pod_ci\nEstimates 95% Confidence Bounds for the PoD curve via Bootstrapping.\n\n\n\n\n\n\nVisualization utilities for models and curves.\n\n\n\nplotting.plot_signal_model\nDiagnostic Plot 1: Signal vs Parameter of Interest (The Physics).\n\n\nplotting.plot_pod_curve\nResult Plot 2: Probability of Detection (The Reliability).",
+    "text": "The central engine for managing reliability studies.\n\n\n\ncore.SimulationStudy\nA workflow manager for simulation reliability assessment.\n\n\n\n\n\n\nTools for generating space-filling experimental designs.\n\n\n\nsampling.generate_lhs\nGenerates a Latin Hypercube Sample and scales it to the provided variable bounds.\n\n\n\n\n\n\nStatistical checks to ensure simulation validity.\n\n\n\ndiagnostics.validate_simulation\nValidates simulation data, coercing to numeric and removing invalid rows.\n\n\ndiagnostics.sample_sufficiency\nPerforms statistical tests on sampling sufficiency.\n\n\ndiagnostics.ValidationError\nRaised when simulation data fails validation checks.\n\n\n\n\n\n\nActive learning algorithms for closing the design loop.\n\n\n\nadaptive.generate_targeted_samples\nActive Learning Engine: Generates new samples based on diagnostic failures.\n\n\n\n\n\n\nThe statistical engine for reliability assessment.\n\n\nFunctions to fit trends and variance models.\n\n\n\npod.fit_robust_mean_model\nFits a polynomial regression model, automatically selecting the optimal degree.\n\n\npod.fit_variance_model\nCalculates residuals and prepares the grid for variance estimation.\n\n\npod.infer_best_distribution\nSelects the best statistical distribution for the standardized residuals using AIC.\n\n\n\n\n\n\nFunctions to compute curves and confidence intervals.\n\n\n\npod.predict_local_std\nEstimates the local standard deviation using Gaussian Kernel Smoothing.\n\n\npod.compute_pod_curve\nCalculates the Probability of Detection (PoD) curve.\n\n\npod.bootstrap_pod_ci\nEstimates 95% Confidence Bounds for the PoD curve via Bootstrapping.\n\n\n\n\n\n\n\nVisualization utilities for inspection results.\n\n\n\nplotting.plot_signal_model\nDiagnostic Plot 1: Signal vs Parameter of Interest (The Physics).\n\n\nplotting.plot_pod_curve\nResult Plot 2: Probability of Detection (The Reliability).",
     "crumbs": [
-      "API Reference"
+      "API Reference",
+      "API Overview"
     ]
   },
   {
-    "objectID": "api_reference/index.html#core",
-    "href": "api_reference/index.html#core",
-    "title": "Function reference",
+    "objectID": "api_reference/index.html#core-workflow",
+    "href": "api_reference/index.html#core-workflow",
+    "title": "API Overview",
     "section": "",
-    "text": "Workflow management and data structures.\n\n\n\ncore.SimulationStudy\nA workflow manager for simulation reliability assessment.",
+    "text": "The central engine for managing reliability studies.\n\n\n\ncore.SimulationStudy\nA workflow manager for simulation reliability assessment.",
     "crumbs": [
-      "API Reference"
+      "API Reference",
+      "API Overview"
     ]
   },
   {
     "objectID": "api_reference/index.html#sampling",
     "href": "api_reference/index.html#sampling",
-    "title": "Function reference",
+    "title": "API Overview",
     "section": "",
-    "text": "Experimental design and Latin Hypercube Sampling.\n\n\n\nsampling.generate_lhs\nGenerates a Latin Hypercube Sample and scales it to the provided variable bounds.",
+    "text": "Tools for generating space-filling experimental designs.\n\n\n\nsampling.generate_lhs\nGenerates a Latin Hypercube Sample and scales it to the provided variable bounds.",
     "crumbs": [
-      "API Reference"
+      "API Reference",
+      "API Overview"
     ]
   },
   {
     "objectID": "api_reference/index.html#diagnostics",
     "href": "api_reference/index.html#diagnostics",
-    "title": "Function reference",
+    "title": "API Overview",
     "section": "",
-    "text": "Statistical checks for sample sufficiency and validity.\n\n\n\ndiagnostics.validate_simulation\nValidates simulation data, coercing to numeric and removing invalid rows.\n\n\ndiagnostics.sample_sufficiency\nPerforms statistical tests on sampling sufficiency.\n\n\ndiagnostics.ValidationError\nRaised when simulation data fails validation checks.",
+    "text": "Statistical checks to ensure simulation validity.\n\n\n\ndiagnostics.validate_simulation\nValidates simulation data, coercing to numeric and removing invalid rows.\n\n\ndiagnostics.sample_sufficiency\nPerforms statistical tests on sampling sufficiency.\n\n\ndiagnostics.ValidationError\nRaised when simulation data fails validation checks.",
     "crumbs": [
-      "API Reference"
+      "API Reference",
+      "API Overview"
     ]
   },
   {
-    "objectID": "api_reference/index.html#adaptive",
-    "href": "api_reference/index.html#adaptive",
-    "title": "Function reference",
+    "objectID": "api_reference/index.html#adaptive-learning",
+    "href": "api_reference/index.html#adaptive-learning",
+    "title": "API Overview",
     "section": "",
-    "text": "Active learning algorithms for targeted sampling.\n\n\n\nadaptive.generate_targeted_samples\nActive Learning Engine: Generates new samples based on diagnostic failures.",
+    "text": "Active learning algorithms for closing the design loop.\n\n\n\nadaptive.generate_targeted_samples\nActive Learning Engine: Generates new samples based on diagnostic failures.",
     "crumbs": [
-      "API Reference"
+      "API Reference",
+      "API Overview"
     ]
   },
   {
-    "objectID": "api_reference/index.html#pod-probability-of-detection",
-    "href": "api_reference/index.html#pod-probability-of-detection",
-    "title": "Function reference",
+    "objectID": "api_reference/index.html#probability-of-detection-pod",
+    "href": "api_reference/index.html#probability-of-detection-pod",
+    "title": "API Overview",
     "section": "",
-    "text": "Statistical engine for reliability analysis.\n\n\n\npod.fit_robust_mean_model\nFits a polynomial regression model, automatically selecting the optimal degree.\n\n\npod.fit_variance_model\nCalculates residuals and prepares the grid for variance estimation.\n\n\npod.predict_local_std\nEstimates the local standard deviation using Gaussian Kernel Smoothing.\n\n\npod.infer_best_distribution\nSelects the best statistical distribution for the standardized residuals using AIC.\n\n\npod.compute_pod_curve\nCalculates the Probability of Detection (PoD) curve.\n\n\npod.bootstrap_pod_ci\nEstimates 95% Confidence Bounds for the PoD curve via Bootstrapping.",
+    "text": "The statistical engine for reliability assessment.\n\n\nFunctions to fit trends and variance models.\n\n\n\npod.fit_robust_mean_model\nFits a polynomial regression model, automatically selecting the optimal degree.\n\n\npod.fit_variance_model\nCalculates residuals and prepares the grid for variance estimation.\n\n\npod.infer_best_distribution\nSelects the best statistical distribution for the standardized residuals using AIC.\n\n\n\n\n\n\nFunctions to compute curves and confidence intervals.\n\n\n\npod.predict_local_std\nEstimates the local standard deviation using Gaussian Kernel Smoothing.\n\n\npod.compute_pod_curve\nCalculates the Probability of Detection (PoD) curve.\n\n\npod.bootstrap_pod_ci\nEstimates 95% Confidence Bounds for the PoD curve via Bootstrapping.",
     "crumbs": [
-      "API Reference"
+      "API Reference",
+      "API Overview"
     ]
   },
   {
     "objectID": "api_reference/index.html#plotting",
     "href": "api_reference/index.html#plotting",
-    "title": "Function reference",
+    "title": "API Overview",
     "section": "",
-    "text": "Visualization utilities for models and curves.\n\n\n\nplotting.plot_signal_model\nDiagnostic Plot 1: Signal vs Parameter of Interest (The Physics).\n\n\nplotting.plot_pod_curve\nResult Plot 2: Probability of Detection (The Reliability).",
+    "text": "Visualization utilities for inspection results.\n\n\n\nplotting.plot_signal_model\nDiagnostic Plot 1: Signal vs Parameter of Interest (The Physics).\n\n\nplotting.plot_pod_curve\nResult Plot 2: Probability of Detection (The Reliability).",
     "crumbs": [
-      "API Reference"
+      "API Reference",
+      "API Overview"
+    ]
+  },
+  {
+    "objectID": "api_reference/digiqual.core.SimulationStudy.refine.html",
+    "href": "api_reference/digiqual.core.SimulationStudy.refine.html",
+    "title": "refine",
+    "section": "",
+    "text": "refine(n_points=10)\nIdentifies gaps in the design space and suggests new simulation points.\nUses an Active Learning approach based on self.clean_data. If no clean data exists, it triggers self.validate().\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nn_points\nint\nNumber of new samples to suggest per failed region.\n10\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A table of suggested input coordinates for the next iteration of simulations. Does not modify internal data."
+  },
+  {
+    "objectID": "api_reference/digiqual.core.SimulationStudy.refine.html#parameters",
+    "href": "api_reference/digiqual.core.SimulationStudy.refine.html#parameters",
+    "title": "refine",
+    "section": "",
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\nn_points\nint\nNumber of new samples to suggest per failed region.\n10"
+  },
+  {
+    "objectID": "api_reference/digiqual.core.SimulationStudy.refine.html#returns",
+    "href": "api_reference/digiqual.core.SimulationStudy.refine.html#returns",
+    "title": "refine",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A table of suggested input coordinates for the next iteration of simulations. Does not modify internal data."
+  },
+  {
+    "objectID": "api_reference/digiqual.core.SimulationStudy.diagnose.html",
+    "href": "api_reference/digiqual.core.SimulationStudy.diagnose.html",
+    "title": "diagnose",
+    "section": "",
+    "text": "diagnose()\nRuns statistical diagnostics to evaluate if the current sample size is sufficient.\nIf self.clean_data is empty, this method will automatically attempt to run self.validate() before proceeding.\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A summary of diagnostic metrics. Also updates the internal self.sufficiency_results attribute."
+  },
+  {
+    "objectID": "api_reference/digiqual.core.SimulationStudy.diagnose.html#returns",
+    "href": "api_reference/digiqual.core.SimulationStudy.diagnose.html#returns",
+    "title": "diagnose",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A summary of diagnostic metrics. Also updates the internal self.sufficiency_results attribute."
+  },
+  {
+    "objectID": "api_reference/diagnostics.validate_simulation.html",
+    "href": "api_reference/diagnostics.validate_simulation.html",
+    "title": "diagnostics.validate_simulation",
+    "section": "",
+    "text": "validate_simulation(df, input_cols, outcome_col)\nValidates simulation data, coercing to numeric and removing invalid rows.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nThe raw dataframe containing input columns and the outcome column.\nrequired\n\n\ninput_cols\nList[str]\nList of input variable names.\nrequired\n\n\noutcome_col\nstr\nName of the outcome variable.\nrequired\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nTuple[pd.DataFrame, pd.DataFrame]\n* df_clean: The validated, numeric dataframe ready for analysis. * df_removed: A dataframe containing the rows that were dropped.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nValidationError\nIf columns are missing, types are wrong, or too few valid rows remain.",
+    "crumbs": [
+      "API Reference",
+      "Diagnostics",
+      "diagnostics.validate_simulation"
+    ]
+  },
+  {
+    "objectID": "api_reference/diagnostics.validate_simulation.html#parameters",
+    "href": "api_reference/diagnostics.validate_simulation.html#parameters",
+    "title": "diagnostics.validate_simulation",
+    "section": "",
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nThe raw dataframe containing input columns and the outcome column.\nrequired\n\n\ninput_cols\nList[str]\nList of input variable names.\nrequired\n\n\noutcome_col\nstr\nName of the outcome variable.\nrequired",
+    "crumbs": [
+      "API Reference",
+      "Diagnostics",
+      "diagnostics.validate_simulation"
+    ]
+  },
+  {
+    "objectID": "api_reference/diagnostics.validate_simulation.html#returns",
+    "href": "api_reference/diagnostics.validate_simulation.html#returns",
+    "title": "diagnostics.validate_simulation",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\n\nTuple[pd.DataFrame, pd.DataFrame]\n* df_clean: The validated, numeric dataframe ready for analysis. * df_removed: A dataframe containing the rows that were dropped.",
+    "crumbs": [
+      "API Reference",
+      "Diagnostics",
+      "diagnostics.validate_simulation"
+    ]
+  },
+  {
+    "objectID": "api_reference/diagnostics.validate_simulation.html#raises",
+    "href": "api_reference/diagnostics.validate_simulation.html#raises",
+    "title": "diagnostics.validate_simulation",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\n\nValidationError\nIf columns are missing, types are wrong, or too few valid rows remain.",
+    "crumbs": [
+      "API Reference",
+      "Diagnostics",
+      "diagnostics.validate_simulation"
+    ]
+  },
+  {
+    "objectID": "api_reference/diagnostics.ValidationError.html",
+    "href": "api_reference/diagnostics.ValidationError.html",
+    "title": "diagnostics.ValidationError",
+    "section": "",
+    "text": "diagnostics.ValidationError\nValidationError()\nRaised when simulation data fails validation checks.",
+    "crumbs": [
+      "API Reference",
+      "Diagnostics",
+      "diagnostics.ValidationError"
+    ]
+  },
+  {
+    "objectID": "api_reference/adaptive.generate_targeted_samples.html",
+    "href": "api_reference/adaptive.generate_targeted_samples.html",
+    "title": "adaptive.generate_targeted_samples",
+    "section": "",
+    "text": "generate_targeted_samples(df, input_cols, outcome_col, n_new_per_fix=10)\nActive Learning Engine: Generates new samples based on diagnostic failures.\nIt consumes the results table from sample_sufficiency. - If Input Coverage fails -&gt; Triggers _fill_gaps (Exploration). - If Model Fit or Bootstrap fails -&gt; Triggers _sample_uncertainty (Exploitation).\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nCurrent simulation data.\nrequired\n\n\ninput_cols\nList[str]\nInput variable names.\nrequired\n\n\noutcome_col\nstr\nOutcome variable name.\nrequired\n\n\nn_new_per_fix\nint\nNumber of samples to generate per detected issue.\n10\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A dataframe of recommended new simulation parameters.",
+    "crumbs": [
+      "API Reference",
+      "Adaptive Learning",
+      "adaptive.generate_targeted_samples"
+    ]
+  },
+  {
+    "objectID": "api_reference/adaptive.generate_targeted_samples.html#parameters",
+    "href": "api_reference/adaptive.generate_targeted_samples.html#parameters",
+    "title": "adaptive.generate_targeted_samples",
+    "section": "",
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nCurrent simulation data.\nrequired\n\n\ninput_cols\nList[str]\nInput variable names.\nrequired\n\n\noutcome_col\nstr\nOutcome variable name.\nrequired\n\n\nn_new_per_fix\nint\nNumber of samples to generate per detected issue.\n10",
+    "crumbs": [
+      "API Reference",
+      "Adaptive Learning",
+      "adaptive.generate_targeted_samples"
+    ]
+  },
+  {
+    "objectID": "api_reference/adaptive.generate_targeted_samples.html#returns",
+    "href": "api_reference/adaptive.generate_targeted_samples.html#returns",
+    "title": "adaptive.generate_targeted_samples",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A dataframe of recommended new simulation parameters.",
+    "crumbs": [
+      "API Reference",
+      "Adaptive Learning",
+      "adaptive.generate_targeted_samples"
+    ]
+  },
+  {
+    "objectID": "api_reference/core.SimulationStudy.html",
+    "href": "api_reference/core.SimulationStudy.html",
+    "title": "core.SimulationStudy",
+    "section": "",
+    "text": "SimulationStudy(input_cols, outcome_col)\nA workflow manager for simulation reliability assessment.\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\ninputs\nList[str]\nList of input variable names.\n\n\noutcome\nstr\nName of the outcome variable.\n\n\ndata\npd.DataFrame\nThe raw simulation data.\n\n\nclean_data\npd.DataFrame\nData that has passed validation.\n\n\nsufficiency_results\npd.DataFrame\nThe latest diagnostic results.\n\n\npod_results\nDict\nResults from the latest PoD analysis.\n\n\n\n\n\n\n\n\n\nName\nDescription\n\n\n\n\nadd_data\nIngests raw simulation data and updates the internal data state.\n\n\ndiagnose\nRuns statistical diagnostics to evaluate if the current sample size is sufficient.\n\n\npod\nRuns the full ‘Generalized â vs a’ pipeline.\n\n\nrefine\nIdentifies gaps in the design space and suggests new simulation points.\n\n\nvalidate\nCleans and validates the raw data stored in self.data.",
+    "crumbs": [
+      "API Reference",
+      "Core Workflow",
+      "core.SimulationStudy"
+    ]
+  },
+  {
+    "objectID": "api_reference/core.SimulationStudy.html#attributes",
+    "href": "api_reference/core.SimulationStudy.html#attributes",
+    "title": "core.SimulationStudy",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\ninputs\nList[str]\nList of input variable names.\n\n\noutcome\nstr\nName of the outcome variable.\n\n\ndata\npd.DataFrame\nThe raw simulation data.\n\n\nclean_data\npd.DataFrame\nData that has passed validation.\n\n\nsufficiency_results\npd.DataFrame\nThe latest diagnostic results.\n\n\npod_results\nDict\nResults from the latest PoD analysis.",
+    "crumbs": [
+      "API Reference",
+      "Core Workflow",
+      "core.SimulationStudy"
+    ]
+  },
+  {
+    "objectID": "api_reference/core.SimulationStudy.html#methods",
+    "href": "api_reference/core.SimulationStudy.html#methods",
+    "title": "core.SimulationStudy",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nadd_data\nIngests raw simulation data and updates the internal data state.\n\n\ndiagnose\nRuns statistical diagnostics to evaluate if the current sample size is sufficient.\n\n\npod\nRuns the full ‘Generalized â vs a’ pipeline.\n\n\nrefine\nIdentifies gaps in the design space and suggests new simulation points.\n\n\nvalidate\nCleans and validates the raw data stored in self.data.",
+    "crumbs": [
+      "API Reference",
+      "Core Workflow",
+      "core.SimulationStudy"
     ]
   },
   {
@@ -153,84 +440,300 @@
     "href": "api_reference/diagnostics.sample_sufficiency.html",
     "title": "diagnostics.sample_sufficiency",
     "section": "",
-    "text": "diagnostics.sample_sufficiency\ndiagnostics.sample_sufficiency(df, input_cols, outcome_col)\nPerforms statistical tests on sampling sufficiency.\nRuns 3 checks: 1. Input Space Coverage (Gaps) 2. Model Fit Stability (CV Score) 3. Bootstrap Convergence (CI Width)\nArgs: df (pd.DataFrame): The simulation data. Will be validated via validate_simulation internally. input_cols (List[str]): List of input variable names. outcome_col (str): Name of the outcome variable.\nReturns: pd.DataFrame: A table containing pass/fail metrics for each test."
+    "text": "sample_sufficiency(df, input_cols, outcome_col)\nPerforms statistical tests on sampling sufficiency.\n\n\n\nInput Space Coverage (Gaps)\nModel Fit Stability (CV Score)\nBootstrap Convergence (CI Width)\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nThe simulation data. Will be validated via validate_simulation internally.\nrequired\n\n\ninput_cols\nList[str]\nList of input variable names.\nrequired\n\n\noutcome_col\nstr\nName of the outcome variable.\nrequired\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A table containing pass/fail metrics for each test.",
+    "crumbs": [
+      "API Reference",
+      "Diagnostics",
+      "diagnostics.sample_sufficiency"
+    ]
   },
   {
-    "objectID": "api_reference/core.SimulationStudy.html",
-    "href": "api_reference/core.SimulationStudy.html",
-    "title": "core.SimulationStudy",
+    "objectID": "api_reference/diagnostics.sample_sufficiency.html#runs-3-checks",
+    "href": "api_reference/diagnostics.sample_sufficiency.html#runs-3-checks",
+    "title": "diagnostics.sample_sufficiency",
     "section": "",
-    "text": "core.SimulationStudy(input_cols, outcome_col)\nA workflow manager for simulation reliability assessment.\nAttributes: inputs (List[str]): List of input variable names. outcome (str): Name of the outcome variable. data (pd.DataFrame): The raw simulation data. clean_data (pd.DataFrame): Data that has passed validation. sufficiency_results (pd.DataFrame): The latest diagnostic results. pod_results (Dict): Results from the latest PoD analysis.\n\n\n\n\n\nName\nDescription\n\n\n\n\nadd_data\nIngests raw simulation data and updates the internal data state.\n\n\ndiagnose\nRuns statistical diagnostics to evaluate if the current sample size is sufficient.\n\n\npod\nRuns the full ‘Generalized â vs a’ pipeline.\n\n\nrefine\nIdentifies gaps in the design space and suggests new simulation points.\n\n\nvalidate\nCleans and validates the raw data stored in self.data.\n\n\n\n\n\ncore.SimulationStudy.add_data(df)\nIngests raw simulation data and updates the internal data state.\nThis method appends the provided DataFrame to self.data. Because this changes the underlying dataset, all downstream results (clean_data, sufficiency_results, and pod_results) are reset to empty states.\nArgs: df (pd.DataFrame): The DataFrame to ingest. It should contain the columns specified in self.inputs and self.outcome.\nReturns: None: Updates the internal self.data attribute in place.\n\n\n\ncore.SimulationStudy.diagnose()\nRuns statistical diagnostics to evaluate if the current sample size is sufficient.\nIf self.clean_data is empty, this method will automatically attempt to run self.validate() before proceeding.\nReturns: pd.DataFrame: A summary of diagnostic metrics. Also updates the internal self.sufficiency_results attribute.\n\n\n\ncore.SimulationStudy.pod(poi_col, threshold, bandwidth_ratio=0.1, n_boot=1000)\nRuns the full ‘Generalized â vs a’ pipeline.\n\nFits Robust Mean Model (Polynomial Selection).\nFits Variance Model (Kernel Smoothing).\nInfers Statistical Distribution (AIC Selection).\nCalculates PoD Curve.\nCalculates 95% Confidence Bounds (Bootstrap).\n\nArgs: poi_col (str): The ‘Parameter of Interest’ column name (e.g., ‘Crack Length’). Must be one of the input columns. threshold (float): The detection threshold (e.g., 4.0 dB). bandwidth_ratio (float): Smoothing window size as a fraction of data range (Default 0.1). n_boot (int): Number of bootstrap iterations for confidence bounds (Default 1000).\nReturns: Dict: A dictionary containing all curves and models needed for plotting/reporting.\n\n\n\ncore.SimulationStudy.refine(n_points=10)\nIdentifies gaps in the design space and suggests new simulation points.\nUses an Active Learning approach based on self.clean_data. If no clean data exists, it triggers self.validate().\nArgs: n_points (int): Number of new samples to suggest per failed region.\nReturns: pd.DataFrame: A table of suggested input coordinates for the next iteration of simulations. Does not modify internal data.\n\n\n\ncore.SimulationStudy.validate()\nCleans and validates the raw data stored in self.data.\nThis method filters the raw data based on project-specific rules. It populates self.clean_data with valid rows and self.removed_data with invalid ones.\nSide Effects: Updates self.clean_data and self.removed_data. Resets self.clean_data to empty if validation fails critically."
+    "text": "Input Space Coverage (Gaps)\nModel Fit Stability (CV Score)\nBootstrap Convergence (CI Width)",
+    "crumbs": [
+      "API Reference",
+      "Diagnostics",
+      "diagnostics.sample_sufficiency"
+    ]
   },
   {
-    "objectID": "api_reference/core.SimulationStudy.html#methods",
-    "href": "api_reference/core.SimulationStudy.html#methods",
-    "title": "core.SimulationStudy",
+    "objectID": "api_reference/diagnostics.sample_sufficiency.html#parameters",
+    "href": "api_reference/diagnostics.sample_sufficiency.html#parameters",
+    "title": "diagnostics.sample_sufficiency",
     "section": "",
-    "text": "Name\nDescription\n\n\n\n\nadd_data\nIngests raw simulation data and updates the internal data state.\n\n\ndiagnose\nRuns statistical diagnostics to evaluate if the current sample size is sufficient.\n\n\npod\nRuns the full ‘Generalized â vs a’ pipeline.\n\n\nrefine\nIdentifies gaps in the design space and suggests new simulation points.\n\n\nvalidate\nCleans and validates the raw data stored in self.data.\n\n\n\n\n\ncore.SimulationStudy.add_data(df)\nIngests raw simulation data and updates the internal data state.\nThis method appends the provided DataFrame to self.data. Because this changes the underlying dataset, all downstream results (clean_data, sufficiency_results, and pod_results) are reset to empty states.\nArgs: df (pd.DataFrame): The DataFrame to ingest. It should contain the columns specified in self.inputs and self.outcome.\nReturns: None: Updates the internal self.data attribute in place.\n\n\n\ncore.SimulationStudy.diagnose()\nRuns statistical diagnostics to evaluate if the current sample size is sufficient.\nIf self.clean_data is empty, this method will automatically attempt to run self.validate() before proceeding.\nReturns: pd.DataFrame: A summary of diagnostic metrics. Also updates the internal self.sufficiency_results attribute.\n\n\n\ncore.SimulationStudy.pod(poi_col, threshold, bandwidth_ratio=0.1, n_boot=1000)\nRuns the full ‘Generalized â vs a’ pipeline.\n\nFits Robust Mean Model (Polynomial Selection).\nFits Variance Model (Kernel Smoothing).\nInfers Statistical Distribution (AIC Selection).\nCalculates PoD Curve.\nCalculates 95% Confidence Bounds (Bootstrap).\n\nArgs: poi_col (str): The ‘Parameter of Interest’ column name (e.g., ‘Crack Length’). Must be one of the input columns. threshold (float): The detection threshold (e.g., 4.0 dB). bandwidth_ratio (float): Smoothing window size as a fraction of data range (Default 0.1). n_boot (int): Number of bootstrap iterations for confidence bounds (Default 1000).\nReturns: Dict: A dictionary containing all curves and models needed for plotting/reporting.\n\n\n\ncore.SimulationStudy.refine(n_points=10)\nIdentifies gaps in the design space and suggests new simulation points.\nUses an Active Learning approach based on self.clean_data. If no clean data exists, it triggers self.validate().\nArgs: n_points (int): Number of new samples to suggest per failed region.\nReturns: pd.DataFrame: A table of suggested input coordinates for the next iteration of simulations. Does not modify internal data.\n\n\n\ncore.SimulationStudy.validate()\nCleans and validates the raw data stored in self.data.\nThis method filters the raw data based on project-specific rules. It populates self.clean_data with valid rows and self.removed_data with invalid ones.\nSide Effects: Updates self.clean_data and self.removed_data. Resets self.clean_data to empty if validation fails critically."
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nThe simulation data. Will be validated via validate_simulation internally.\nrequired\n\n\ninput_cols\nList[str]\nList of input variable names.\nrequired\n\n\noutcome_col\nstr\nName of the outcome variable.\nrequired",
+    "crumbs": [
+      "API Reference",
+      "Diagnostics",
+      "diagnostics.sample_sufficiency"
+    ]
   },
   {
-    "objectID": "api_reference/adaptive.generate_targeted_samples.html",
-    "href": "api_reference/adaptive.generate_targeted_samples.html",
-    "title": "adaptive.generate_targeted_samples",
+    "objectID": "api_reference/diagnostics.sample_sufficiency.html#returns",
+    "href": "api_reference/diagnostics.sample_sufficiency.html#returns",
+    "title": "diagnostics.sample_sufficiency",
     "section": "",
-    "text": "adaptive.generate_targeted_samples\nadaptive.generate_targeted_samples(\n    df,\n    input_cols,\n    outcome_col,\n    n_new_per_fix=10,\n)\nActive Learning Engine: Generates new samples based on diagnostic failures.\nIt consumes the results table from sample_sufficiency. - If Input Coverage fails -&gt; Triggers _fill_gaps (Exploration). - If Model Fit or Bootstrap fails -&gt; Triggers _sample_uncertainty (Exploitation).\nArgs: df (pd.DataFrame): Current simulation data. input_cols (List[str]): Input variable names. outcome_col (str): Outcome variable name. n_new_per_fix (int): Number of samples to generate per detected issue.\nReturns: pd.DataFrame: A dataframe of recommended new simulation parameters."
+    "text": "Name\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A table containing pass/fail metrics for each test.",
+    "crumbs": [
+      "API Reference",
+      "Diagnostics",
+      "diagnostics.sample_sufficiency"
+    ]
   },
   {
-    "objectID": "api_reference/diagnostics.ValidationError.html",
-    "href": "api_reference/diagnostics.ValidationError.html",
-    "title": "diagnostics.ValidationError",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.add_data.html",
+    "href": "api_reference/digiqual.core.SimulationStudy.add_data.html",
+    "title": "add_data",
     "section": "",
-    "text": "diagnostics.ValidationError\ndiagnostics.ValidationError()\nRaised when simulation data fails validation checks."
+    "text": "add_data(df)\nIngests raw simulation data and updates the internal data state.\nThis method appends the provided DataFrame to self.data. Because this changes the underlying dataset, all downstream results (clean_data, sufficiency_results, and pod_results) are reset to empty states.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nThe DataFrame to ingest. It should contain the columns specified in self.inputs and self.outcome.\nrequired\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\nNone\nNone\nUpdates the internal self.data attribute in place."
   },
   {
-    "objectID": "api_reference/diagnostics.validate_simulation.html",
-    "href": "api_reference/diagnostics.validate_simulation.html",
-    "title": "diagnostics.validate_simulation",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.add_data.html#parameters",
+    "href": "api_reference/digiqual.core.SimulationStudy.add_data.html#parameters",
+    "title": "add_data",
     "section": "",
-    "text": "diagnostics.validate_simulation\ndiagnostics.validate_simulation(df, input_cols, outcome_col)\nValidates simulation data, coercing to numeric and removing invalid rows.\nArgs: df (pd.DataFrame): The raw dataframe containing input columns and the outcome column. input_cols (List[str]): List of input variable names. outcome_col (str): Name of the outcome variable.\nReturns: (Tuple[pd.DataFrame, pd.DataFrame]): * df_clean: The validated, numeric dataframe ready for analysis. * df_removed: A dataframe containing the rows that were dropped.\nRaises: ValidationError: If columns are missing, types are wrong, or too few valid rows remain."
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nThe DataFrame to ingest. It should contain the columns specified in self.inputs and self.outcome.\nrequired"
+  },
+  {
+    "objectID": "api_reference/digiqual.core.SimulationStudy.add_data.html#returns",
+    "href": "api_reference/digiqual.core.SimulationStudy.add_data.html#returns",
+    "title": "add_data",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\nNone\nNone\nUpdates the internal self.data attribute in place."
+  },
+  {
+    "objectID": "api_reference/digiqual.core.SimulationStudy.pod.html",
+    "href": "api_reference/digiqual.core.SimulationStudy.pod.html",
+    "title": "pod",
+    "section": "",
+    "text": "pod(poi_col, threshold, bandwidth_ratio=0.1, n_boot=1000)\nRuns the full ‘Generalized â vs a’ pipeline.\n\nFits Robust Mean Model (Polynomial Selection).\nFits Variance Model (Kernel Smoothing).\nInfers Statistical Distribution (AIC Selection).\nCalculates PoD Curve.\nCalculates 95% Confidence Bounds (Bootstrap).\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\npoi_col\nstr\nThe ‘Parameter of Interest’ column name (e.g., ‘Crack Length’). Must be one of the input columns.\nrequired\n\n\nthreshold\nfloat\nThe detection threshold (e.g., 4.0 dB).\nrequired\n\n\nbandwidth_ratio\nfloat\nSmoothing window size as a fraction of data range (Default 0.1).\n0.1\n\n\nn_boot\nint\nNumber of bootstrap iterations for confidence bounds (Default 1000).\n1000\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\nDict\nDict[str, Any]\nA dictionary containing all curves and models needed for plotting/reporting."
+  },
+  {
+    "objectID": "api_reference/digiqual.core.SimulationStudy.pod.html#parameters",
+    "href": "api_reference/digiqual.core.SimulationStudy.pod.html#parameters",
+    "title": "pod",
+    "section": "",
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\npoi_col\nstr\nThe ‘Parameter of Interest’ column name (e.g., ‘Crack Length’). Must be one of the input columns.\nrequired\n\n\nthreshold\nfloat\nThe detection threshold (e.g., 4.0 dB).\nrequired\n\n\nbandwidth_ratio\nfloat\nSmoothing window size as a fraction of data range (Default 0.1).\n0.1\n\n\nn_boot\nint\nNumber of bootstrap iterations for confidence bounds (Default 1000).\n1000"
+  },
+  {
+    "objectID": "api_reference/digiqual.core.SimulationStudy.pod.html#returns",
+    "href": "api_reference/digiqual.core.SimulationStudy.pod.html#returns",
+    "title": "pod",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\nDict\nDict[str, Any]\nA dictionary containing all curves and models needed for plotting/reporting."
+  },
+  {
+    "objectID": "api_reference/digiqual.core.SimulationStudy.validate.html",
+    "href": "api_reference/digiqual.core.SimulationStudy.validate.html",
+    "title": "validate",
+    "section": "",
+    "text": "validate()\nCleans and validates the raw data stored in self.data.\nThis method filters the raw data based on project-specific rules. It populates self.clean_data with valid rows and self.removed_data with invalid ones.\n\n\nUpdates self.clean_data and self.removed_data. Resets self.clean_data to empty if validation fails critically."
+  },
+  {
+    "objectID": "api_reference/digiqual.core.SimulationStudy.validate.html#side-effects",
+    "href": "api_reference/digiqual.core.SimulationStudy.validate.html#side-effects",
+    "title": "validate",
+    "section": "",
+    "text": "Updates self.clean_data and self.removed_data. Resets self.clean_data to empty if validation fails critically."
   },
   {
     "objectID": "api_reference/plotting.plot_pod_curve.html",
     "href": "api_reference/plotting.plot_pod_curve.html",
     "title": "plotting.plot_pod_curve",
     "section": "",
-    "text": "plotting.plot_pod_curve\nplotting.plot_pod_curve(\n    X_eval,\n    pod_curve,\n    ci_lower=None,\n    ci_upper=None,\n    target_pod=0.9,\n    ax=None,\n)\nResult Plot 2: Probability of Detection (The Reliability).\nVisualizes the PoD curve with Bootstrap Confidence Intervals. Equivalent to Figure 11 in the Generalized Method paper.\nArgs: X_eval: The grid of points used for the curves. pod_curve: The main PoD estimate (0.0 to 1.0). ci_lower: (Optional) The lower 95% confidence bound. ci_upper: (Optional) The upper 95% confidence bound. target_pod: The target reliability level (usually 0.90) to mark on the plot. ax: (Optional) Matplotlib axes to plot on."
+    "text": "plot_pod_curve(\n    X_eval,\n    pod_curve,\n    ci_lower=None,\n    ci_upper=None,\n    target_pod=0.9,\n    ax=None,\n)\nResult Plot 2: Probability of Detection (The Reliability).\nVisualizes the PoD curve with Bootstrap Confidence Intervals. Equivalent to Figure 11 in the Generalized Method paper.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nX_eval\nnp.ndarray\nThe grid of points used for the curves.\nrequired\n\n\npod_curve\nnp.ndarray\nThe main PoD estimate (0.0 to 1.0).\nrequired\n\n\nci_lower\nOptional[np.ndarray]\n(Optional) The lower 95% confidence bound.\nNone\n\n\nci_upper\nOptional[np.ndarray]\n(Optional) The upper 95% confidence bound.\nNone\n\n\ntarget_pod\nfloat\nThe target reliability level (usually 0.90) to mark on the plot.\n0.9\n\n\nax\nOptional[plt.Axes]\n(Optional) Matplotlib axes to plot on.\nNone",
+    "crumbs": [
+      "API Reference",
+      "Plotting",
+      "plotting.plot_pod_curve"
+    ]
+  },
+  {
+    "objectID": "api_reference/plotting.plot_pod_curve.html#parameters",
+    "href": "api_reference/plotting.plot_pod_curve.html#parameters",
+    "title": "plotting.plot_pod_curve",
+    "section": "",
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\nX_eval\nnp.ndarray\nThe grid of points used for the curves.\nrequired\n\n\npod_curve\nnp.ndarray\nThe main PoD estimate (0.0 to 1.0).\nrequired\n\n\nci_lower\nOptional[np.ndarray]\n(Optional) The lower 95% confidence bound.\nNone\n\n\nci_upper\nOptional[np.ndarray]\n(Optional) The upper 95% confidence bound.\nNone\n\n\ntarget_pod\nfloat\nThe target reliability level (usually 0.90) to mark on the plot.\n0.9\n\n\nax\nOptional[plt.Axes]\n(Optional) Matplotlib axes to plot on.\nNone",
+    "crumbs": [
+      "API Reference",
+      "Plotting",
+      "plotting.plot_pod_curve"
+    ]
   },
   {
     "objectID": "api_reference/pod.bootstrap_pod_ci.html",
     "href": "api_reference/pod.bootstrap_pod_ci.html",
     "title": "pod.bootstrap_pod_ci",
     "section": "",
-    "text": "pod.bootstrap_pod_ci\npod.bootstrap_pod_ci(\n    X,\n    y,\n    X_eval,\n    threshold,\n    degree,\n    bandwidth,\n    dist_info,\n    n_boot=1000,\n)\nEstimates 95% Confidence Bounds for the PoD curve via Bootstrapping.\nThis function resamples the original data with replacement n_boot times. For each resample, it refits the Mean Model, recalculates residuals, and generates a new PoD curve.\nArgs: X (np.ndarray): Original input data. y (np.ndarray): Original outcome data. X_eval (np.ndarray): Grid points for evaluation. threshold (float): Detection threshold. degree (int): Polynomial degree (fixed from the original best fit). bandwidth (float): Smoothing bandwidth (fixed from original). dist_info (Tuple[str, Tuple]): Error distribution (fixed from original). n_boot (int, optional): Number of bootstrap iterations. Defaults to 1000.\nReturns: Tuple[np.ndarray, np.ndarray]: - lower_ci: The 2.5th percentile PoD curve (Lower 95% Bound). - upper_ci: The 97.5th percentile PoD curve (Upper 95% Bound)."
+    "text": "bootstrap_pod_ci(\n    X,\n    y,\n    X_eval,\n    threshold,\n    degree,\n    bandwidth,\n    dist_info,\n    n_boot=1000,\n)\nEstimates 95% Confidence Bounds for the PoD curve via Bootstrapping.\nThis function resamples the original data with replacement n_boot times. For each resample, it refits the Mean Model, recalculates residuals, and generates a new PoD curve.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nX\nnp.ndarray\nOriginal input data.\nrequired\n\n\ny\nnp.ndarray\nOriginal outcome data.\nrequired\n\n\nX_eval\nnp.ndarray\nGrid points for evaluation.\nrequired\n\n\nthreshold\nfloat\nDetection threshold.\nrequired\n\n\ndegree\nint\nPolynomial degree (fixed from the original best fit).\nrequired\n\n\nbandwidth\nfloat\nSmoothing bandwidth (fixed from original).\nrequired\n\n\ndist_info\nTuple[str, Tuple]\nError distribution (fixed from original).\nrequired\n\n\nn_boot\nint\nNumber of bootstrap iterations. Defaults to 1000.\n1000\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nTuple[np.ndarray, np.ndarray]\nTuple[np.ndarray, np.ndarray]: - lower_ci: The 2.5th percentile PoD curve (Lower 95% Bound). - upper_ci: The 97.5th percentile PoD curve (Upper 95% Bound).",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Prediction & Statistics",
+      "pod.bootstrap_pod_ci"
+    ]
+  },
+  {
+    "objectID": "api_reference/pod.bootstrap_pod_ci.html#parameters",
+    "href": "api_reference/pod.bootstrap_pod_ci.html#parameters",
+    "title": "pod.bootstrap_pod_ci",
+    "section": "",
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\nX\nnp.ndarray\nOriginal input data.\nrequired\n\n\ny\nnp.ndarray\nOriginal outcome data.\nrequired\n\n\nX_eval\nnp.ndarray\nGrid points for evaluation.\nrequired\n\n\nthreshold\nfloat\nDetection threshold.\nrequired\n\n\ndegree\nint\nPolynomial degree (fixed from the original best fit).\nrequired\n\n\nbandwidth\nfloat\nSmoothing bandwidth (fixed from original).\nrequired\n\n\ndist_info\nTuple[str, Tuple]\nError distribution (fixed from original).\nrequired\n\n\nn_boot\nint\nNumber of bootstrap iterations. Defaults to 1000.\n1000",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Prediction & Statistics",
+      "pod.bootstrap_pod_ci"
+    ]
+  },
+  {
+    "objectID": "api_reference/pod.bootstrap_pod_ci.html#returns",
+    "href": "api_reference/pod.bootstrap_pod_ci.html#returns",
+    "title": "pod.bootstrap_pod_ci",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\n\nTuple[np.ndarray, np.ndarray]\nTuple[np.ndarray, np.ndarray]: - lower_ci: The 2.5th percentile PoD curve (Lower 95% Bound). - upper_ci: The 97.5th percentile PoD curve (Upper 95% Bound).",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Prediction & Statistics",
+      "pod.bootstrap_pod_ci"
+    ]
   },
   {
     "objectID": "api_reference/pod.fit_robust_mean_model.html",
     "href": "api_reference/pod.fit_robust_mean_model.html",
     "title": "pod.fit_robust_mean_model",
     "section": "",
-    "text": "pod.fit_robust_mean_model\npod.fit_robust_mean_model(X, y, max_degree=10, n_folds=10, plot_cv=False)\nFits a polynomial regression model, automatically selecting the optimal degree.\nThis function performs k-fold Cross Validation (CV) to find the polynomial degree that minimizes the Mean Squared Error (MSE), balancing bias and variance.\nArgs: X (np.ndarray): 1D array of input variable values (e.g., flaw size). y (np.ndarray): 1D array of outcome values (e.g., signal response). max_degree (int, optional): The maximum polynomial degree to test. Defaults to 10. n_folds (int, optional): Number of folds for Cross Validation. Defaults to 10. plot_cv (bool, optional): If True, generates a plot of CV Score vs Degree. Defaults to False.\nReturns: sklearn.pipeline.Pipeline: A fitted pipeline containing PolynomialFeatures and LinearRegression. The pipeline object has an added attribute best_degree_ indicating the selected integer degree."
+    "text": "fit_robust_mean_model(X, y, max_degree=10, n_folds=10, plot_cv=False)\nFits a polynomial regression model, automatically selecting the optimal degree.\nThis function performs k-fold Cross Validation (CV) to find the polynomial degree that minimizes the Mean Squared Error (MSE), balancing bias and variance.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nX\nnp.ndarray\n1D array of input variable values (e.g., flaw size).\nrequired\n\n\ny\nnp.ndarray\n1D array of outcome values (e.g., signal response).\nrequired\n\n\nmax_degree\nint\nThe maximum polynomial degree to test. Defaults to 10.\n10\n\n\nn_folds\nint\nNumber of folds for Cross Validation. Defaults to 10.\n10\n\n\nplot_cv\nbool\nIf True, generates a plot of CV Score vs Degree. Defaults to False.\nFalse\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nAny\nsklearn.pipeline.Pipeline: A fitted pipeline containing PolynomialFeatures\n\n\n\nAny\nand LinearRegression. The pipeline object has an added attribute\n\n\n\nAny\nbest_degree_ indicating the selected integer degree.",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Model Fitting",
+      "pod.fit_robust_mean_model"
+    ]
+  },
+  {
+    "objectID": "api_reference/pod.fit_robust_mean_model.html#parameters",
+    "href": "api_reference/pod.fit_robust_mean_model.html#parameters",
+    "title": "pod.fit_robust_mean_model",
+    "section": "",
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\nX\nnp.ndarray\n1D array of input variable values (e.g., flaw size).\nrequired\n\n\ny\nnp.ndarray\n1D array of outcome values (e.g., signal response).\nrequired\n\n\nmax_degree\nint\nThe maximum polynomial degree to test. Defaults to 10.\n10\n\n\nn_folds\nint\nNumber of folds for Cross Validation. Defaults to 10.\n10\n\n\nplot_cv\nbool\nIf True, generates a plot of CV Score vs Degree. Defaults to False.\nFalse",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Model Fitting",
+      "pod.fit_robust_mean_model"
+    ]
+  },
+  {
+    "objectID": "api_reference/pod.fit_robust_mean_model.html#returns",
+    "href": "api_reference/pod.fit_robust_mean_model.html#returns",
+    "title": "pod.fit_robust_mean_model",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\n\nAny\nsklearn.pipeline.Pipeline: A fitted pipeline containing PolynomialFeatures\n\n\n\nAny\nand LinearRegression. The pipeline object has an added attribute\n\n\n\nAny\nbest_degree_ indicating the selected integer degree.",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Model Fitting",
+      "pod.fit_robust_mean_model"
+    ]
   },
   {
     "objectID": "api_reference/pod.infer_best_distribution.html",
     "href": "api_reference/pod.infer_best_distribution.html",
     "title": "pod.infer_best_distribution",
     "section": "",
-    "text": "pod.infer_best_distribution\npod.infer_best_distribution(residuals, X, bandwidth)\nSelects the best statistical distribution for the standardized residuals using AIC.\nThis function normalizes residuals by their local standard deviation (Z-scores) and tests them against a suite of candidate distributions (Normal, Gumbel, Logistic, Laplace, t-Student).\nArgs: residuals (np.ndarray): Raw residuals from the mean model. X (np.ndarray): Input locations for the residuals. bandwidth (float): Bandwidth used for local standardization.\nReturns: Tuple[str, Tuple]: - best_name: The SciPy name of the best-fitting distribution (e.g., ‘norm’). - best_params: The fitted parameters for that distribution (e.g., loc, scale)."
+    "text": "infer_best_distribution(residuals, X, bandwidth)\nSelects the best statistical distribution for the standardized residuals using AIC.\nThis function normalizes residuals by their local standard deviation (Z-scores) and tests them against a suite of candidate distributions (Normal, Gumbel, Logistic, Laplace, t-Student).\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nresiduals\nnp.ndarray\nRaw residuals from the mean model.\nrequired\n\n\nX\nnp.ndarray\nInput locations for the residuals.\nrequired\n\n\nbandwidth\nfloat\nBandwidth used for local standardization.\nrequired\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nTuple[str, Tuple]\nTuple[str, Tuple]: - best_name: The SciPy name of the best-fitting distribution (e.g., ‘norm’). - best_params: The fitted parameters for that distribution (e.g., loc, scale).",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Model Fitting",
+      "pod.infer_best_distribution"
+    ]
+  },
+  {
+    "objectID": "api_reference/pod.infer_best_distribution.html#parameters",
+    "href": "api_reference/pod.infer_best_distribution.html#parameters",
+    "title": "pod.infer_best_distribution",
+    "section": "",
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\nresiduals\nnp.ndarray\nRaw residuals from the mean model.\nrequired\n\n\nX\nnp.ndarray\nInput locations for the residuals.\nrequired\n\n\nbandwidth\nfloat\nBandwidth used for local standardization.\nrequired",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Model Fitting",
+      "pod.infer_best_distribution"
+    ]
+  },
+  {
+    "objectID": "api_reference/pod.infer_best_distribution.html#returns",
+    "href": "api_reference/pod.infer_best_distribution.html#returns",
+    "title": "pod.infer_best_distribution",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\n\nTuple[str, Tuple]\nTuple[str, Tuple]: - best_name: The SciPy name of the best-fitting distribution (e.g., ‘norm’). - best_params: The fitted parameters for that distribution (e.g., loc, scale).",
+    "crumbs": [
+      "API Reference",
+      "Probability of Detection (PoD)",
+      "Model Fitting",
+      "pod.infer_best_distribution"
+    ]
   },
   {
     "objectID": "api_reference/sampling.generate_lhs.html",
     "href": "api_reference/sampling.generate_lhs.html",
     "title": "sampling.generate_lhs",
     "section": "",
-    "text": "sampling.generate_lhs\nsampling.generate_lhs(n, vars_df, seed=None)\nGenerates a Latin Hypercube Sample and scales it to the provided variable bounds.\nArgs: n (int): The total number of samples to generate. vars_df (pd.DataFrame): A dataframe defining the input variables. Must contain columns: 'Name', 'Min', 'Max'. seed (int, optional): Sets the random seed for reproducibility. Defaults to None.\nReturns: pd.DataFrame: A dataframe containing the scaled simulation parameters, where column names correspond to vars_df['Name']. Returns an empty DataFrame if vars_df is empty.\nRaises: ValueError: If required columns are missing, types are incorrect, or Min &gt;= Max."
+    "text": "generate_lhs(n, vars_df, seed=None)\nGenerates a Latin Hypercube Sample and scales it to the provided variable bounds.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nn\nint\nThe total number of samples to generate.\nrequired\n\n\nvars_df\npd.DataFrame\nA dataframe defining the input variables. Must contain columns: 'Name', 'Min', 'Max'.\nrequired\n\n\nseed\nint\nSets the random seed for reproducibility. Defaults to None.\nNone\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A dataframe containing the scaled simulation parameters, where column names correspond to vars_df['Name']. Returns an empty DataFrame if vars_df is empty.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nValueError\nIf required columns are missing, types are incorrect, or Min &gt;= Max.",
+    "crumbs": [
+      "API Reference",
+      "Sampling",
+      "sampling.generate_lhs"
+    ]
+  },
+  {
+    "objectID": "api_reference/sampling.generate_lhs.html#parameters",
+    "href": "api_reference/sampling.generate_lhs.html#parameters",
+    "title": "sampling.generate_lhs",
+    "section": "",
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\nn\nint\nThe total number of samples to generate.\nrequired\n\n\nvars_df\npd.DataFrame\nA dataframe defining the input variables. Must contain columns: 'Name', 'Min', 'Max'.\nrequired\n\n\nseed\nint\nSets the random seed for reproducibility. Defaults to None.\nNone",
+    "crumbs": [
+      "API Reference",
+      "Sampling",
+      "sampling.generate_lhs"
+    ]
+  },
+  {
+    "objectID": "api_reference/sampling.generate_lhs.html#returns",
+    "href": "api_reference/sampling.generate_lhs.html#returns",
+    "title": "sampling.generate_lhs",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A dataframe containing the scaled simulation parameters, where column names correspond to vars_df['Name']. Returns an empty DataFrame if vars_df is empty.",
+    "crumbs": [
+      "API Reference",
+      "Sampling",
+      "sampling.generate_lhs"
+    ]
+  },
+  {
+    "objectID": "api_reference/sampling.generate_lhs.html#raises",
+    "href": "api_reference/sampling.generate_lhs.html#raises",
+    "title": "sampling.generate_lhs",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\n\nValueError\nIf required columns are missing, types are incorrect, or Min &gt;= Max.",
+    "crumbs": [
+      "API Reference",
+      "Sampling",
+      "sampling.generate_lhs"
+    ]
   },
   {
     "objectID": "docs/quick_start_oop.html",
     "href": "docs/quick_start_oop.html",
     "title": "Class-Based Approach",
     "section": "",
-    "text": "Use the SimulationStudy manager to handle the entire lifecycle: storage, diagnostics, and active refinement. This allows you to automatically fix issues in your design.\nIn this example, we will intentionally feed the study “bad” data (with a large gap in the input space) to demonstrate how the active learning module identifies and fixes the problem.\n\n1. Setup & “Flawed” Data Generation\nFirst, we define our physics simulation and create a dataset with a deliberate gap (missing data between 3mm and 7mm).\n\nimport numpy as np\nimport pandas as pd\nimport digiqual as dq\nimport matplotlib.pyplot as plt\nfrom IPython.display import display, Markdown\n\n# --- Define the Physics ---\ndef apply_physics(df):\n    \"\"\"Simulates a signal with quadratic trends and heteroscedastic noise.\"\"\"\n    # 1. Base Signal: Quadratic trend (2*L + 0.5*L^2)\n    # 2. Angle Penalty: Misalignment (-0.1*Angle) reduces signal\n    signal = 10.0 + (2.0 * df['Length']) + (0.5 * df['Length']**2) - (0.1 * np.abs(df['Angle']))\n\n    # 3. Heteroscedastic Noise: Higher roughness = More scatter\n    noise_scale = 0.5 + (1.5 * df['Roughness'])\n    noise = np.random.normal(loc=0, scale=noise_scale, size=len(df))\n\n    return signal + noise\n\n# --- Create Flawed Data (Gap between 3mm and 7mm) ---\ndf1 = pd.DataFrame({\n    'Length': np.random.uniform(0.1, 3.0, 20),\n    'Angle': np.random.uniform(-10, 10, 20),\n    'Roughness': np.random.uniform(0, 0.5, 20)\n})\n\ndf2 = pd.DataFrame({\n    'Length': np.random.uniform(7.0, 10.0, 20),\n    'Angle': np.random.uniform(-10, 10, 20),\n    'Roughness': np.random.uniform(0, 0.5, 20)\n})\n\n# Combine and Initialize Study\ndf_initial = pd.concat([df1, df2], ignore_index=True)\ndf_initial['Signal'] = apply_physics(df_initial)\n\nstudy = dq.SimulationStudy(\n    input_cols=[\"Length\", \"Angle\", \"Roughness\"],\n    outcome_col=\"Signal\"\n)\nstudy.add_data(df_initial)\n\nData updated. Total rows: 40\n\n\n\n\n2. Diagnosis (Detecting the Issue)\nWe now ask the study manager to diagnose the health of our experiment. We expect it to flag the Input Coverage test because of the gap we created.\n\nstudy.diagnose()\n\nRunning validation...\nValidation passed. 40 valid rows ready.\nChecking sample sufficiency...\n\n\n\n\n\n\n\n\n\nTest\nVariable\nMetric\nValue\nPass\n\n\n\n\n0\nInput Coverage\nLength\nMax Gap Ratio\n0.4459\nFalse\n\n\n1\nInput Coverage\nAngle\nMax Gap Ratio\n0.1428\nTrue\n\n\n2\nInput Coverage\nRoughness\nMax Gap Ratio\n0.1334\nTrue\n\n\n3\nModel Fit (CV)\nSignal\nMean R2 Score\n0.9934\nTrue\n\n\n4\nBootstrap Convergence\nSignal\nRelative CI Width\n0.1637\nFalse\n\n\n\n\n\n\n\n\n\n3. Adaptive Refinement (The Fix)\nInstead of manually guessing where to add points, we use refine(). The study manager automatically detects the gap and generates targeted samples to fill it.\n\n# Generate active learning samples (20 points to fill the gap)\nnew_samples = study.refine(n_points=20)\n\nif not new_samples.empty:\n    display(Markdown(f\"**Action:** Generated `{len(new_samples)}` new samples to fix data issues.\"))\n\n    # Apply the exact same physics model to the new points\n    new_samples['Signal'] = apply_physics(new_samples)\n\n    # Add back to study\n    study.add_data(new_samples)\n\n    display(Markdown(\"**Result:** Refinement complete. New data merged.\"))\n\nDiagnostics flagged issues. Initiating Active Learning...\n -&gt; Strategy: Exploration (Filling gaps in Length)\n -&gt; Strategy: Exploitation (Targeting high uncertainty regions)\n\n\nAction: Generated 40 new samples to fix data issues.\n\n\nData updated. Total rows: 80\n\n\nResult: Refinement complete. New data merged.\n\n\nNow we verify that the issue is resolved:\n\n# Re-run diagnostics to confirm the green light\nstudy.diagnose()\n\nRunning validation...\nValidation passed. 80 valid rows ready.\nChecking sample sufficiency...\n\n\n\n\n\n\n\n\n\nTest\nVariable\nMetric\nValue\nPass\n\n\n\n\n0\nInput Coverage\nLength\nMax Gap Ratio\n0.0436\nTrue\n\n\n1\nInput Coverage\nAngle\nMax Gap Ratio\n0.0468\nTrue\n\n\n2\nInput Coverage\nRoughness\nMax Gap Ratio\n0.0425\nTrue\n\n\n3\nModel Fit (CV)\nSignal\nMean R2 Score\n0.9958\nTrue\n\n\n4\nBootstrap Convergence\nSignal\nRelative CI Width\n0.0396\nTrue\n\n\n\n\n\n\n\n\n\n4. Full Reliability Analysis\nWith a validated dataset, we can now run the complete PoD pipeline. The pod() method handles model fitting, distribution selection, and bootstrapping in a single call.\n\nimport digiqual.plotting as plot\n\n# Run Analysis (Threshold = 18 dB)\nresults = study.pod(poi_col=\"Length\", threshold=18.0)\n\n# Create Plots\nfig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))\n\n# Plot Signal Model (Physics)\nlocal_std = dq.pod.predict_local_std(\n    results['X'], results['residuals'], results['X_eval'], results['bandwidth']\n)\n\nplot.plot_signal_model(\n    X=results['X'],\n    y=results['y'],\n    X_eval=results['X_eval'],\n    mean_curve=results['curves']['mean_response'],\n    threshold=results['threshold'],\n    local_std=local_std,\n    ax=ax1\n)\n\n# Plot PoD Curve (Reliability)\nplot.plot_pod_curve(\n    X_eval=results['X_eval'],\n    pod_curve=results['curves']['pod'],\n    ci_lower=results['curves']['ci_lower'],\n    ci_upper=results['curves']['ci_upper'],\n    target_pod=0.90,\n    ax=ax2\n)\n\nplt.show()\n\n--- Starting Reliability Analysis (PoI: Length) ---\n1. Selecting Mean Model (Cross-Validation)...\n   -&gt; Selected Polynomial Degree: 2\n2. Fitting Variance Model (Kernel Smoothing)...\n   -&gt; Smoothing Bandwidth: 0.9331\n3. Inferring Error Distribution (AIC)...\n   -&gt; Selected Distribution: norm\n4. Computing PoD Curve...\n5. Running Bootstrap (1000 iterations)...\n--- Analysis Complete ---\n\n\n\n\n\n\n\n\nFigure 1: Automated Generalized PoD Analysis",
+    "text": "Use the SimulationStudy manager to handle the entire lifecycle: storage, diagnostics, and active refinement. This allows you to automatically fix issues in your design.\nIn this example, we will intentionally feed the study “bad” data (with a large gap in the input space) to demonstrate how the active learning module identifies and fixes the problem.\n\n1. Setup & “Flawed” Data Generation\nFirst, we define our physics simulation and create a dataset with a deliberate gap (missing data between 3mm and 7mm).\n\nimport numpy as np\nimport pandas as pd\nimport digiqual as dq\nimport matplotlib.pyplot as plt\nfrom IPython.display import display, Markdown\n\n# --- Define the Physics ---\ndef apply_physics(df):\n    \"\"\"Simulates a signal with quadratic trends and heteroscedastic noise.\"\"\"\n    # 1. Base Signal: Quadratic trend (2*L + 0.5*L^2)\n    # 2. Angle Penalty: Misalignment (-0.1*Angle) reduces signal\n    signal = 10.0 + (2.0 * df['Length']) + (0.5 * df['Length']**2) - (0.1 * np.abs(df['Angle']))\n\n    # 3. Heteroscedastic Noise: Higher roughness = More scatter\n    noise_scale = 0.5 + (1.5 * df['Roughness'])\n    noise = np.random.normal(loc=0, scale=noise_scale, size=len(df))\n\n    return signal + noise\n\n# --- Create Flawed Data (Gap between 3mm and 7mm) ---\ndf1 = pd.DataFrame({\n    'Length': np.random.uniform(0.1, 3.0, 20),\n    'Angle': np.random.uniform(-10, 10, 20),\n    'Roughness': np.random.uniform(0, 0.5, 20)\n})\n\ndf2 = pd.DataFrame({\n    'Length': np.random.uniform(7.0, 10.0, 20),\n    'Angle': np.random.uniform(-10, 10, 20),\n    'Roughness': np.random.uniform(0, 0.5, 20)\n})\n\n# Combine and Initialize Study\ndf_initial = pd.concat([df1, df2], ignore_index=True)\ndf_initial['Signal'] = apply_physics(df_initial)\n\nstudy = dq.SimulationStudy(\n    input_cols=[\"Length\", \"Angle\", \"Roughness\"],\n    outcome_col=\"Signal\"\n)\nstudy.add_data(df_initial)\n\nData updated. Total rows: 40\n\n\n\n\n2. Diagnosis (Detecting the Issue)\nWe now ask the study manager to diagnose the health of our experiment. We expect it to flag the Input Coverage test because of the gap we created.\n\nstudy.diagnose()\n\nRunning validation...\nValidation passed. 40 valid rows ready.\nChecking sample sufficiency...\n\n\n\n\n\n\n\n\n\nTest\nVariable\nMetric\nValue\nPass\n\n\n\n\n0\nInput Coverage\nLength\nMax Gap Ratio\n0.4258\nFalse\n\n\n1\nInput Coverage\nAngle\nMax Gap Ratio\n0.0956\nTrue\n\n\n2\nInput Coverage\nRoughness\nMax Gap Ratio\n0.1003\nTrue\n\n\n3\nModel Fit (CV)\nSignal\nMean R2 Score\n0.9965\nTrue\n\n\n4\nBootstrap Convergence\nSignal\nRelative CI Width\n0.1612\nFalse\n\n\n\n\n\n\n\n\n\n3. Adaptive Refinement (The Fix)\nInstead of manually guessing where to add points, we use refine(). The study manager automatically detects the gap and generates targeted samples to fill it.\n\n# Generate active learning samples (20 points to fill the gap)\nnew_samples = study.refine(n_points=20)\n\nif not new_samples.empty:\n    display(Markdown(f\"**Action:** Generated `{len(new_samples)}` new samples to fix data issues.\"))\n\n    # Apply the exact same physics model to the new points\n    new_samples['Signal'] = apply_physics(new_samples)\n\n    # Add back to study\n    study.add_data(new_samples)\n\n    display(Markdown(\"**Result:** Refinement complete. New data merged.\"))\n\nDiagnostics flagged issues. Initiating Active Learning...\n -&gt; Strategy: Exploration (Filling gaps in Length)\n -&gt; Strategy: Exploitation (Targeting high uncertainty regions)\n\n\nAction: Generated 40 new samples to fix data issues.\n\n\nData updated. Total rows: 80\n\n\nResult: Refinement complete. New data merged.\n\n\nNow we verify that the issue is resolved:\n\n# Re-run diagnostics to confirm the green light\nstudy.diagnose()\n\nRunning validation...\nValidation passed. 80 valid rows ready.\nChecking sample sufficiency...\n\n\n\n\n\n\n\n\n\nTest\nVariable\nMetric\nValue\nPass\n\n\n\n\n0\nInput Coverage\nLength\nMax Gap Ratio\n0.0666\nTrue\n\n\n1\nInput Coverage\nAngle\nMax Gap Ratio\n0.0666\nTrue\n\n\n2\nInput Coverage\nRoughness\nMax Gap Ratio\n0.0709\nTrue\n\n\n3\nModel Fit (CV)\nSignal\nMean R2 Score\n0.9974\nTrue\n\n\n4\nBootstrap Convergence\nSignal\nRelative CI Width\n0.0279\nTrue\n\n\n\n\n\n\n\n\n\n4. Full Reliability Analysis\nWith a validated dataset, we can now run the complete PoD pipeline. The pod() method handles model fitting, distribution selection, and bootstrapping in a single call.\n\nimport digiqual.plotting as plot\n\n# Run Analysis (Threshold = 18 dB)\nresults = study.pod(poi_col=\"Length\", threshold=18.0)\n\n# Create Plots\nfig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))\n\n# Plot Signal Model (Physics)\nlocal_std = dq.pod.predict_local_std(\n    results['X'], results['residuals'], results['X_eval'], results['bandwidth']\n)\n\nplot.plot_signal_model(\n    X=results['X'],\n    y=results['y'],\n    X_eval=results['X_eval'],\n    mean_curve=results['curves']['mean_response'],\n    threshold=results['threshold'],\n    local_std=local_std,\n    ax=ax1\n)\n\n# Plot PoD Curve (Reliability)\nplot.plot_pod_curve(\n    X_eval=results['X_eval'],\n    pod_curve=results['curves']['pod'],\n    ci_lower=results['curves']['ci_lower'],\n    ci_upper=results['curves']['ci_upper'],\n    target_pod=0.90,\n    ax=ax2\n)\n\nplt.show()\n\n--- Starting Reliability Analysis (PoI: Length) ---\n1. Selecting Mean Model (Cross-Validation)...\n   -&gt; Selected Polynomial Degree: 2\n2. Fitting Variance Model (Kernel Smoothing)...\n   -&gt; Smoothing Bandwidth: 0.9688\n3. Inferring Error Distribution (AIC)...\n   -&gt; Selected Distribution: norm\n4. Computing PoD Curve...\n5. Running Bootstrap (1000 iterations)...\n--- Analysis Complete ---\n\n\n\n\n\n\n\n\nFigure 1: Automated Generalized PoD Analysis",
     "crumbs": [
       "Quick Start",
       "Class-Based Approach"
