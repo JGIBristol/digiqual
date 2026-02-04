@@ -20,12 +20,12 @@ build: clean
 
 # --- DOCUMENTATION ---
 # Preview Website
-docs-preview:
+preview:
     uv run quartodoc build
     uv run quarto preview index.qmd
 
 # Manually pushes to the gh-pages branch without a CI logjam
-docs-publish: clean
+publish: clean
     uv run quartodoc build
     uv run quarto publish gh-pages --no-prompt
     clean

@@ -1,5 +1,5 @@
 /*-- scss:defaults --*/
-$primary:       #2c3e50;   // Dark Navy
+$primary:       #305b87ff;   // Dark Navy
 $secondary:     #34495e;   // Lighter Slate
 $success:       #27ae60;   // Green
 $info:          #2980b9;   // Blue
@@ -51,33 +51,6 @@ pre.sourceCode {
 // Simple tweak to prevent overlap on large screens
 @media (min-width: 1400px) {
   .sidebar.sidebar-navigation {
-     margin-left: -20px;
+    margin-left: -20px;
   }
-}
-
-/*-- scss:rules --*/
-
-/* 1. Turn the Parameter List into a Grid (Table-like) */
-.doc-definition-items {
-  display: grid;
-  grid-template-columns: max-content 1fr; /* col 1: auto-width, col 2: remaining space */
-  gap: 0.5rem 1.5rem;                     /* Spacing between columns */
-  align-items: baseline;
-  margin-bottom: 1.5rem;
-}
-
-/* 2. Style the Parameter Name (Left Column) */
-.doc-definition-items dt {
-  grid-column: 1;
-  font-weight: 600;
-  color: $primary;   /* Uses your navy color */
-  margin-top: 0;
-}
-
-/* 3. Style the Description (Right Column) */
-.doc-definition-items dd {
-  grid-column: 2;
-  margin-left: 0;
-  margin-bottom: 0.5rem;
-  color: $body-color;
 }
