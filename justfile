@@ -28,7 +28,7 @@ preview:
 publish: clean
     uv run quartodoc build
     uv run quarto publish gh-pages --no-prompt
-    clean
+    just clean
 
 # --- VERSIONING ---
 
