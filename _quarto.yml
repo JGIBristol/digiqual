@@ -56,13 +56,11 @@ quartodoc:
       # A. Your Manual Links (Moved here)
       - text: "Home"
         href: index.qmd
+      - text: "Installation"
+        href: docs/install.qmd
 
-      - section: "Quick Start"
-        contents:
-          - text: "Functional Approach"
-            href: docs/qs/function.qmd
-          - text: "Class-Based Approach"
-            href: docs/qs/oop.qmd
+      - text: "Quick Start"
+        href: docs/qs/oop.qmd
 
       # B. The API Injection Point
       # This placeholder tells quartodoc: "Put the generated API tree here"
