@@ -14,9 +14,10 @@ First, we define our physics simulation and create a dataset with a deliberate g
 ```{python}
 import numpy as np
 import pandas as pd
-import digiqual as dq
 import matplotlib.pyplot as plt
 from IPython.display import display, Markdown
+
+from digiqual import SimulationStudy
 
 # --- Define the Physics ---
 def apply_physics(df):
@@ -48,7 +49,7 @@ df2 = pd.DataFrame({
 df_initial = pd.concat([df1, df2], ignore_index=True)
 df_initial['Signal'] = apply_physics(df_initial)
 
-study = dq.SimulationStudy(
+study = SimulationStudy(
     input_cols=["Length", "Angle", "Roughness"],
     outcome_col="Signal"
 )
