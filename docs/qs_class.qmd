@@ -1,5 +1,5 @@
 ---
-title: "Class-Based Approach"
+title: "SimulationStudy Class"
 description: "A streamlined guide using the SimulationStudy manager."
 ---
 
@@ -81,18 +81,12 @@ Instead of manually guessing where to add points, we use refine(). The study man
 new_samples = study.refine(n_points=20)
 
 if not new_samples.empty:
-    display(Markdown(f"**Action:** Generated `{len(new_samples)}`
-    new samples to fix data issues."))
-
     # Apply the exact same physics model to the new points
     new_samples['Signal'] = apply_physics(new_samples)
 
     # Add back to study
     study.add_data(new_samples)
 
-    display(Markdown(
-        "**Result:** Refinement complete. New data merged.")
-        )
 ```
 
 Now we verify that the issue is resolved:
