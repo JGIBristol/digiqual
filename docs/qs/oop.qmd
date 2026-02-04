@@ -24,7 +24,12 @@ def apply_physics(df):
     """Simulates a signal with quadratic trends and heteroscedastic noise."""
     # 1. Base Signal: Quadratic trend (2*L + 0.5*L^2)
     # 2. Angle Penalty: Misalignment (-0.1*Angle) reduces signal
-    signal = 10.0 + (2.0 * df['Length']) + (0.5 * df['Length']**2) - (0.1 * np.abs(df['Angle']))
+    signal = (
+        10.0 +
+        (2.0 * df['Length']) +
+        (0.5 * df['Length']**2) -
+        (0.1 * np.abs(df['Angle']))
+        )
 
     # 3. Heteroscedastic Noise: Higher roughness = More scatter
     noise_scale = 0.5 + (1.5 * df['Roughness'])
@@ -76,7 +81,8 @@ Instead of manually guessing where to add points, we use refine(). The study man
 new_samples = study.refine(n_points=20)
 
 if not new_samples.empty:
-    display(Markdown(f"**Action:** Generated `{len(new_samples)}` new samples to fix data issues."))
+    display(Markdown(f"**Action:** Generated `{len(new_samples)}`
+    new samples to fix data issues."))
 
     # Apply the exact same physics model to the new points
     new_samples['Signal'] = apply_physics(new_samples)
@@ -84,7 +90,9 @@ if not new_samples.empty:
     # Add back to study
     study.add_data(new_samples)
 
-    display(Markdown("**Result:** Refinement complete. New data merged."))
+    display(Markdown(
+        "**Result:** Refinement complete. New data merged.")
+        )
 ```
 
 Now we verify that the issue is resolved:
