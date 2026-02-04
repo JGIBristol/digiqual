@@ -20,7 +20,7 @@ build: clean
 
 # --- DOCUMENTATION ---
 # Preview Website
-preview:
+preview: clean
     uv run quartodoc build
     uv run quarto preview index.qmd
 

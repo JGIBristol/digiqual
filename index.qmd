@@ -39,7 +39,6 @@ The package includes a full statistical engine for calculating Probability of De
 -   **Robust Statistics:** Automatically selects the best polynomial degree and error distribution (e.g., Normal, Gumbel, Logistic) based on data fit (AIC).
 -   **Uncertainty Quantification:** Uses bootstrap resampling to generate robust confidence bounds and $a_{90/95}$ estimates.
 
-------------------------------------------------------------------------
 
 ## References
 

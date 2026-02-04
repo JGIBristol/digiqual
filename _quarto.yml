@@ -13,8 +13,6 @@ website:
   repo-actions: [edit, issue]
   page-navigation: true
 
-
-  # --- TOP BANNER ---
   navbar:
     background: primary
     foreground: light
@@ -24,106 +22,78 @@ website:
         href: https://github.com/JGIBristol/digiqual
         aria-label: GitHub
 
-metadata-files:
-    - _sidebar.yml
+# --- 1. YOUR MANUAL SIDEBAR ---
+  sidebar:
+    style: floating
+    collapse-level: 1
+    search: true
+    contents:
+      # A. Top Level Docs
+      - text: "Home"
+        href: index.qmd
+      - text: "Installation"
+        href: docs/install.qmd
+      - text: "Quick Start"
+        href: docs/qs_class.qmd
+      - text: "All Functions"
+        href: api_reference/index.qmd
+
 
 format:
   html:
     theme: [cosmo, custom.scss]
     toc: true
-    page-layout: full
+    page-layout: article
     code-copy: true
     mainfont: "Inter, system-ui, -apple-system, sans-serif"
     fontcolor: "#212529"
     backgroundcolor: "#f9fafb"
 
-# --- QUARTODOC CONFIG ---
+# --- 2. QUARTODOC CONFIG ---
 quartodoc:
   package: digiqual
   dir: api_reference
   parser: google
   title: "All Functions"
 
-# NEW SIDEBAR CONFIGURATION
-  # This generates the Master Sidebar file in the root
-  sidebar:
-    file: _sidebar.yml      # Save to Root (important for path links)
-    style: floating         # Keep your floating style
-    id: ""
-    search: true
-    collapse-level: 1
-    contents:
-      # A. Your Manual Links (Moved here)
-      - text: "Home"
-        href: index.qmd
-      - text: "Installation"
-        href: docs/install.qmd
-
-      - text: "Quick Start"
-        href: docs/qs/oop.qmd
-
-      # B. The API Injection Point
-      # This placeholder tells quartodoc: "Put the generated API tree here"
-      - section: "API Reference"
-        contents:
-          - "{{ contents }}"
-
   # Global Options
   options:
     dynamic: true
     signature_name: short
 
+  # --- 3. PAGE GENERATION ---
+  # This builds the content for "api_reference/index.qmd"
   sections:
-    # 1. CORE MANAGER
-    - title: SimulationStudy Class
-      desc: "The central engine for managing reliability studies."
+    # SECTION A: THE STANDARD USER
+    - title: "Standard Workflow"
+      desc: "The core class for managing reliability studies."
       contents:
         - name: core.SimulationStudy
           children: separate
 
-    # 2. EXPERIMENTAL DESIGN
-    - title: Sampling
-      desc: "Tools for generating space-filling experimental designs."
+    # SECTION B: THE POWER USER
+    - title: "Functional API"
+      desc: "Standalone tools for Sampling, Diagnostics, PoD, and Plotting."
       contents:
+        # -- Sampling --
         - sampling.generate_lhs
 
-    # 3. DIAGNOSTICS
-    - title: Diagnostics
-      desc: "Statistical checks to ensure simulation validity."
-      contents:
+        # -- Diagnostics --
         - diagnostics.validate_simulation
         - diagnostics.sample_sufficiency
         - diagnostics.ValidationError
 
-    # 4. ADAPTIVE REFINEMENT
-    - title: Adaptive Learning
-      desc: "Active learning algorithms for closing the design loop."
-      contents:
+        # -- Adaptive --
         - adaptive.generate_targeted_samples
 
-    # 5. POD ANALYSIS - Unified Main Section
-    - title: Probability of Detection (PoD)
-      desc: "The statistical engine for reliability assessment."
-
-    # 5a. Sub-section: Fitting
-    - subtitle: "Model Fitting"  # Added this to match the style of Part B
-      desc: "Functions to fit trends and variance models."
-      contents:
+        # -- PoD Analysis --
         - pod.fit_robust_mean_model
         - pod.fit_variance_model
         - pod.infer_best_distribution
-
-    # 5b. Sub-section: Prediction
-    - subtitle: "Prediction & Statistics"
-      desc: "Functions to compute curves and confidence intervals."
-      contents:
         - pod.predict_local_std
         - pod.compute_pod_curve
         - pod.bootstrap_pod_ci
 
-    # 6. VISUALIZATION
-    - title: Plotting
-      desc: "Visualization utilities for inspection results."
-      contents:
+        # -- Plotting --
         - plotting.plot_signal_model
         - plotting.plot_pod_curve
