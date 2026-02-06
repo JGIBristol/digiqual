@@ -1,5 +1,8 @@
 import pandas as pd
 from typing import List, Dict, Any
+import subprocess
+import os
+
 
 from .diagnostics import validate_simulation, sample_sufficiency, ValidationError
 from .adaptive import generate_targeted_samples
@@ -310,14 +313,72 @@ class SimulationStudy:
 
         # Handle Saving
         if save_path:
-            self.plots["signal_model"].savefig(f"{save_path}_signal.png")
-            self.plots["pod_curve"].savefig(f"{save_path}_pod.png")
+            # We must get the .figure attribute from the axes to save
+            self.plots["signal_model"].get_figure().savefig(f"{save_path}_signal.png")
+            self.plots["pod_curve"].get_figure().savefig(f"{save_path}_pod.png")
             print(f"Plots saved to {save_path}_*.png")
 
         # Handle Display
         if show:
-            try:
-                self.plots["signal_model"].show()
-                self.plots["pod_curve"].show()
-            except AttributeError:
-                pass
+            import matplotlib.pyplot as plt
+            plt.show()
+
+    def evaluate_batch(
+        self,
+        samples: pd.DataFrame,
+        command_template: str,
+        input_path: str = "sim_input.csv",
+        output_path: str = "sim_output.csv"
+    ) -> pd.DataFrame:
+        """
+        Runs an external simulation engine on the provided samples and ingests results.
+
+        Workflow:
+        1. Saves `samples` to `input_path` (CSV).
+        2. Executes the shell command provided in `command_template`.
+        3. Reads the results from `output_path`.
+        4. Calls `self.add_data()` and `self.diagnose()`.
+
+        Args:
+            samples (pd.DataFrame): The new design points (from self.refine()).
+            command_template (str): The CLI command to run. Use {input} and {output}
+                as placeholders if your command needs dynamic filenames.
+            input_path (str): Where to write the temporary input CSV.
+            output_path (str): Where to expect the simulation result CSV.
+
+        Returns:
+            pd.DataFrame: The new diagnostic results (from self.diagnose()).
+        """
+        print(f"--- Starting External Simulation Loop ({len(samples)} points) ---")
+
+        # 1. Export Inputs
+        # We only write the input columns needed by the sim
+        samples[self.inputs].to_csv(input_path, index=False)
+        print(f"1. Inputs written to: {input_path}")
+
+        # 2. Format the Command
+        # If your command string has placeholders like '{input}', fill them in.
+        # Otherwise, just use the raw string.
+        cmd = command_template.format(input=input_path, output=output_path)
+
+        # 3. Execute Simulation (Blocking Call)
+        print(f"2. Executing: {cmd}")
+        try:
+            # shell=True allows using complex commands, check=True raises error on failure
+            subprocess.run(cmd, shell=True, check=True)
+            print("   -> Execution complete.")
+        except subprocess.CalledProcessError as e:
+            print(f"   -> Simulation FAILED (Exit Code {e.returncode}).")
+            return pd.DataFrame()
+
+        # 4. Ingest Results
+        if not os.path.exists(output_path):
+            print(f"Error: Output file '{output_path}' was not created by the simulation.")
+            return pd.DataFrame()
+
+        print(f"3. Reading results from: {output_path}")
+        new_results = pd.read_csv(output_path)
+
+        # 5. Update Cycle
+        self.add_data(new_results)
+        return self.diagnose()
