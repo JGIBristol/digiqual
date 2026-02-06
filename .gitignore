@@ -28,3 +28,5 @@ htmlcov/
 # --- Project Data & Outputs ---
 materials
 /.quarto/
+
+**/*.quarto_ipynb
