@@ -39,15 +39,15 @@ def apply_physics(df):
 
 # --- Create Flawed Data (Gap between 3mm and 7mm) ---
 df1 = pd.DataFrame({
-    'Length': np.random.uniform(0.1, 3.0, 20),
-    'Angle': np.random.uniform(-10, 10, 20),
-    'Roughness': np.random.uniform(0, 0.5, 20)
+    'Length': np.random.uniform(0.1, 3.0, 40),
+    'Angle': np.random.uniform(-10, 10, 40),
+    'Roughness': np.random.uniform(0, 0.5, 40)
 })
 
 df2 = pd.DataFrame({
-    'Length': np.random.uniform(7.0, 10.0, 20),
-    'Angle': np.random.uniform(-10, 10, 20),
-    'Roughness': np.random.uniform(0, 0.5, 20)
+    'Length': np.random.uniform(7.0, 10.0, 40),
+    'Angle': np.random.uniform(-10, 10, 40),
+    'Roughness': np.random.uniform(0, 0.5, 40)
 })
 
 # Combine and Initialize Study
@@ -170,8 +170,13 @@ study = SimulationStudy(
 )
 study.add_data(df)
 
+study.validate()
+
 study.diagnose()
+
 study.refine()
+
 _ = study.pod(poi_col="Length", threshold=15)
+
 study.visualise()
 ```
