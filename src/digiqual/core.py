@@ -87,7 +87,7 @@ class SimulationStudy:
             self.removed_data = removed
             print(f"Validation passed. {len(clean)} valid rows ready.")
             if not removed.empty:
-                print(f"Warning: {len(removed)} invalid rows were dropped.")
+                print(f"Warning: {len(removed)} invalid rows were dropped. See .removed_data for dropped rows")
         except ValidationError as e:
             print(f"Validation FAILED: {e}")
             self.clean_data = pd.DataFrame()
@@ -249,7 +249,20 @@ class SimulationStudy:
     #### Visualise Results ####
     def visualise(self, show: bool = True, save_path: str = None) -> None:
         """
-        Generates, stores, and displays standard diagnostic plots.
+        Generates, stores, and optionally displays standard diagnostic plots.
+
+        This method creates the 'Signal Model' (physics view) and 'PoD Curve'
+        (reliability view) figures based on the analysis in `self.pod_results`.
+
+        Args:
+            show (bool): If True, displays the plots immediately. Default is True.
+            save_path (str, optional): If provided, saves the figures to this
+                base path (appending '_signal.png' and '_pod.png').
+
+        Side Effects:
+            Updates `self.plots` with the generated figure objects.
+            Displays plots to the active output if `show=True`.
+            Writes files to disk if `save_path` is provided.
         """
         if not self.pod_results:
             print("No PoD results found. Please run .pod() first.")
@@ -257,8 +270,6 @@ class SimulationStudy:
 
         res = self.pod_results
 
-        # EXTRACT THE COLUMN NAME AUTOMATICALLY
-        # We default to a generic name just in case, but 'poi_col' should be there.
         poi_label = res.get("poi_col", "Parameter of Interest")
 
 
