@@ -42,7 +42,7 @@ class SimulationStudy:
     #### Adding Data ####
     def add_data(self, df: pd.DataFrame) -> None:
         """
-        Ingests raw simulation data and updates the internal data state.
+        Ingests raw simulation data, filtering for relevant columns only, and updates the internal data state.
 
         This method appends the provided DataFrame to `self.data`. Because this
         changes the underlying dataset, all downstream results (clean_data,
@@ -55,17 +55,26 @@ class SimulationStudy:
         Returns:
             None: Updates the internal `self.data` attribute in place.
         """
+        required_cols = self.inputs + [self.outcome]
+
+        missing = [c for c in required_cols if c not in df.columns]
+        if missing:
+            raise ValueError(f"New data is missing required columns: {missing}")
+
+        df_subset = df[required_cols].copy()
+
         if self.data.empty:
-            self.data = df.copy()
+            self.data = df_subset
         else:
-            self.data = pd.concat([self.data, df], ignore_index=True)
+            self.data = pd.concat([self.data, df_subset], ignore_index=True)
+
         print(f"Data updated. Total rows: {len(self.data)}")
 
-        # RESET State: Data changed, so previous valid/diagnostic data is stale
+        # RESET State
         self.clean_data = pd.DataFrame()
         self.sufficiency_results = pd.DataFrame()
         self.pod_results = {}
-        self.plots = {}  # <--- NEW: Reset plots so they match the new data
+        self.plots = {}
 
     #### Validating self.data ####
     def validate(self) -> None:
