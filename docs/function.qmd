@@ -30,7 +30,7 @@ vars_df = pd.DataFrame(
 )
 
 # Generate 1000 samples
-df = generate_lhs(n=1000, seed=123, vars_df=vars_df)
+df = generate_lhs(n=1000, seed=123, ranges=vars_df)
 df.head()
 ```
 
