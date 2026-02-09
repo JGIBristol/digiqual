@@ -35,6 +35,8 @@ website:
         href: docs/install.qmd
       - text: "Quick Start"
         href: docs/qs_class.qmd
+      - text: "Automation & Engines"
+        href: docs/optimisation.qmd
       - text: "All Functions"
         href: api_reference/index.qmd
 

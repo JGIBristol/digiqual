@@ -39,7 +39,11 @@ bump part="patch":
 
 # --- UTILS ---
 
+# Clears the terminal screen for a fresh start
+cls:
+    @clear
+
 # Removes all generated artifacts to keep the workspace pristine
 clean:
-    rm -rf dist/ _site/ api_reference/ .pytest_cache/ .ruff_cache/ .quarto objects.json _sidebar.yml
+    rm -rf dist/ _site/ api_reference/ .pytest_cache/ .ruff_cache/ .quarto objects.json _sidebar.yml docs/*.csv
     find . -type d -name "__pycache__" -exec rm -rf {} +
