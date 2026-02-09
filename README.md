@@ -61,10 +61,11 @@ Ensure your simulation outputs are statistically valid before processing.
 
 ### 3. Adaptive Refinement (Active Learning)
 
-`digiqual` closes the loop between analysis and design. Instead of guessing where to run more simulations, use the `refine()` method to:
+`digiqual` closes the loop between analysis and design.
 
-- **Fill Gaps:** Automatically detect and target empty regions in your input space.
-- **Reduce Uncertainty:** Use bootstrap committees to find regions of high model variance and suggest new points exactly where the model is "confused".
+- Smart Refinement: Use `refine()` to identify specific weaknesses in your data. It uses bootstrap committees to find regions of high uncertainty and suggests new points exactly where the model is "confused".
+
+- Automated Workflows: Use the `optimise()` method to run a fully automated "Active Learning" loop. It generates an initial design, executes your external solver, checks diagnostics, and iteratively refines the model until statistical requirements are met.
 
 ### 4. Generalised Reliability Analysis
 
@@ -102,7 +103,7 @@ uv run pytest
 To preview the documentation site locally:
 
 ``` bash
-uv run mkdocs serve
+uv run quarto preview
 ```
 
 ## References
