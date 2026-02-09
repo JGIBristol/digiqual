@@ -20,7 +20,7 @@ api_reference/
 objects.json
 _sidebar.yml
 
-docs/*.csv
+**/*.csv
 
 # --- Testing & Code Quality ---
 .pytest_cache/

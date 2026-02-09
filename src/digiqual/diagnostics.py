@@ -33,6 +33,23 @@ def validate_simulation(
 
     Raises:
         ValidationError: If columns are missing, types are wrong, or too few valid rows remain.
+
+    Examples
+    --------
+    ```python
+    import pandas as pd
+    # Create dirty data (includes text and negative values)
+    df = pd.DataFrame({
+        'Length': [1.0, 'BadValue', 5.0],
+        'Signal': [0.5, 0.8, -1.2]
+    })
+
+    # Validate
+    clean, removed = validate_simulation(df, ['Length'], 'Signal')
+    print(f"Clean rows: {len(clean)}")
+    print(f"Removed rows: {len(removed)}")
+    ```
+
     """
     if not isinstance(df, pd.DataFrame) or df.empty:
         raise ValidationError("Input is not a valid pandas DataFrame or is empty.")
@@ -167,6 +184,20 @@ def sample_sufficiency(
 
     Returns:
         pd.DataFrame: A table containing pass/fail metrics for each test.
+
+    Examples
+    --------
+    ```python
+    # Run diagnostics on a cleaned dataframe
+    report = sample_sufficiency(clean_df, ['Length'], 'Signal')
+
+    # Check which tests passed
+    print(report[['Test', 'Pass']])
+    #                     Test   Pass
+    # 0         Input Coverage   True
+    # 1         Model Fit (CV)   True
+    # 2  Bootstrap Convergence  False
+    ```
     """
     # 1. Validate simulation data
     df_clean, df_removed = validate_simulation(df, input_cols, outcome_col)

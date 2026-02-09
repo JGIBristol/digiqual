@@ -19,12 +19,16 @@ class SimulationStudy:
         pod_results (Dict): Results from the latest PoD analysis.
         plots (Dict): Stores the latest generated figures.
 
-    Example:
-        >>> from digiqual.core import SimulationStudy
-        >>> study = SimulationStudy(
-        ...     input_cols=['Length', 'Angle'],
-        ...     outcome_col='Signal'
-        ... )
+    Examples
+    --------
+    ```python
+    from digiqual.core import SimulationStudy
+    study = SimulationStudy(
+        input_cols=['Length', 'Angle'],
+        outcome_col='Signal'
+    )
+    ```
+
     """
 
     #### Initialisation ####
@@ -58,15 +62,17 @@ class SimulationStudy:
         Raises:
             ValueError: If the new data is missing any required input or outcome columns.
 
-        Example:
-            >>> import pandas as pd
-            >>> df = pd.DataFrame({
-            ...     'Length': [1.0, 2.5, 5.0],
-            ...     'Angle': [0, 15, -10],
-            ...     'Signal': [0.5, 0.8, 1.2]
-            ... })
-            >>> study.add_data(df)
-            Data updated. Total rows: 3
+        Examples
+        --------
+        ```python
+        import pandas as pd
+        df = pd.DataFrame({
+            'Length': [1.0, 2.5, 5.0],
+            'Angle': [0, 15, -10],
+            'Signal': [0.5, 0.8, 1.2]
+        })
+        study.add_data(df)
+        ```
         """
         required_cols = self.inputs + [self.outcome]
 
@@ -97,12 +103,13 @@ class SimulationStudy:
         Populates `self.clean_data` with valid rows and `self.removed_data`
         with invalid ones (e.g., NaNs, negative signals, wrong types).
 
-        Example:
-            >>> study.validate()
-            Running validation...
-            Validation passed. 50 valid rows ready.
-            >>> print(len(study.clean_data))
-            50
+        Examples
+        --------
+        ```python
+        study.validate()
+        # Output: Running validation...
+        # Output: Validation passed. 50 valid rows ready.
+        ```
         """
         print("Running validation...")
         try:
@@ -126,13 +133,13 @@ class SimulationStudy:
         Returns:
             pd.DataFrame: A summary of diagnostic metrics.
 
-        Example:
-            >>> report = study.diagnose()
-            >>> print(report[['Test', 'Pass']])
-                            Test   Pass
-            0        Input Coverage   True
-            1        Model Fit (CV)   True
-            2  Bootstrap Convergence  False
+        Examples
+        --------
+        ```python
+        report = study.diagnose()
+        print(report[['Test', 'Pass']])
+        ```
+
         """
         if self.clean_data.empty:
             if self.data.empty:
@@ -162,16 +169,15 @@ class SimulationStudy:
         Returns:
             pd.DataFrame: A DataFrame of recommended new input coordinates.
 
-        Example:
-            >>> # If diagnostics fail, ask for 10 new points to fix it
-            >>> new_samples = study.refine(n_points=10)
-            Diagnostics flagged issues. Initiating Active Learning...
-            -> Strategy: Exploration (Filling gaps in Length)
-            >>> print(new_samples.head())
-            Length  Angle      Refinement_Reason
-            0     3.2    5.0           Gap in Length
-            1     3.8   -2.0           Gap in Length
+        Examples
+        --------
+        ```python
+        # If diagnostics fail, ask for 10 new points to fix it
+        new_samples = study.refine(n_points=10)
+        print(new_samples.head())
+        ```
         """
+
         if self.clean_data.empty:
             print("No clean data available. Running validation...")
             self.validate()
@@ -211,14 +217,37 @@ class SimulationStudy:
             input_file (str): Temp input filename.
             output_file (str): Temp output filename.
 
-        Example:
-            >>> ranges = {"Length": (0, 10), "Angle": (-45, 45)}
-            >>> cmd = "python my_solver.py {input} {output}"
-            >>> study.optimise(command=cmd, ranges=ranges, max_iter=3)
-            === STARTING ADAPTIVE OPTIMIZATION ===
-            --- Iteration 0: Generating Initial Design (20 points) ---
-            ...
-            >>> study.visualise()
+        Examples
+        --------
+        ```python
+        # 1. Define the variable ranges
+        ranges = {"Length": (0, 10), "Angle": (-45, 45)}
+
+        study = SimulationStudy(input_cols=["Length", "Angle"], outcome_col="Signal")
+
+        # 2. Define a "solver" command.
+        # We use 'python -c' to simulate an external tool (like Ansys/Abaqus)
+        # that reads {input}, does math, and saves to {output}.
+        cmd = (
+        "python -c "
+        "'import pandas as pd; "
+        'df=pd.read_csv("{input}"); '
+        'df["Signal"] = df["Length"]*2; '
+        'df.to_csv("{output}", index=False)'
+        "'"
+        )
+
+        # 3. Run the automated loop
+        study.optimise(
+        command=cmd,
+        ranges=ranges,
+        max_iter=3
+        )
+
+        # 4. View the results
+        _ = study.pod()
+        study.visualise()
+        ```
         """
         # 1. Delegate to the Agnostic Engine
         final_data = run_adaptive_search(
@@ -258,13 +287,12 @@ class SimulationStudy:
         Returns:
             Dict: Dictionary containing models, curves, and fit statistics.
 
-        Example:
-            >>> results = study.pod(poi_col="Length", threshold=0.5)
-            --- Starting Reliability Analysis (PoI: Length) ---
-            1. Selecting Mean Model...
-            ...
-            >>> print(results['dist_info'])
-            ('norm', (0.05, 0.12))
+        Examples
+        --------
+        ```python
+        results = study.pod(poi_col="Length", threshold=0.5)
+        print(results['dist_info'])
+        ```
         """
         # 0. Safety Checks
         if self.clean_data.empty:
@@ -342,12 +370,16 @@ class SimulationStudy:
             show (bool): If True, calls plt.show().
             save_path (str, optional): If provided, saves figures to disk (e.g., 'results/run1'). Appends '_signal.png' and '_pod.png'.
 
-        Example:
-            >>> # Display only
-            >>> study.visualise()
+        Examples
+        --------
+        ```python
+        # Display only
+        study.visualise()
 
-            >>> # Save to files 'my_plots_signal.png' and 'my_plots_pod.png'
-            >>> study.visualise(show=False, save_path='my_plots')
+        # Save to disk
+        study.visualise(show=False, save_path='my_plots')
+        ```
+
         """
         if not self.pod_results:
             print("No PoD results found. Please run .pod() first.")

@@ -33,6 +33,17 @@ def fit_robust_mean_model(
         sklearn.pipeline.Pipeline: A fitted pipeline containing `PolynomialFeatures`
         and `LinearRegression`. The pipeline object has an added attribute
         `best_degree_` indicating the selected integer degree.
+
+    Examples
+    --------
+    ```python
+    # Fit a model to find the best polynomial degree
+    model = fit_robust_mean_model(X, y, max_degree=5)
+    print(f"Optimal Degree: {model.best_degree_}")
+
+    # Use it to predict
+    y_pred = model.predict(X.reshape(-1, 1))
+    ```
     """
     X_2d = X.reshape(-1, 1)
     degrees = range(1, max_degree + 1)
@@ -226,6 +237,22 @@ def compute_pod_curve(
         Tuple[np.ndarray, np.ndarray]:
             - pod_curve: Array of probabilities [0, 1] for each point in X_eval.
             - mean_curve: Array of mean signal response values for X_eval.
+
+    Examples
+    --------
+    ```python
+    # Assuming we have fitted models (mean_model) and data (X, residuals)
+    # Calculate the PoD curve for a threshold of 0.5
+    pod, mean_resp = compute_pod_curve(
+        X_eval=np.linspace(0, 10, 100),
+        mean_model=mean_model,
+        X=X,
+        residuals=residuals,
+        bandwidth=1.5,
+        dist_info=('norm', (0, 1)),
+        threshold=0.5
+    )
+    ```
     """
     #
     dist_name, dist_params = dist_info
@@ -272,6 +299,19 @@ def bootstrap_pod_ci(
         Tuple[np.ndarray, np.ndarray]:
             - lower_ci: The 2.5th percentile PoD curve (Lower 95% Bound).
             - upper_ci: The 97.5th percentile PoD curve (Upper 95% Bound).
+
+    Examples
+    --------
+    ```python
+    # Generate 95% confidence bounds
+    lower, upper = bootstrap_pod_ci(
+        X, y, X_eval, threshold=0.5,
+        degree=2, bandwidth=1.5,
+        dist_info=('norm', (0, 1)),
+        n_boot=100
+    )
+    ```
+
     """
     n_samples = len(y)
     pod_matrix = np.zeros((n_boot, len(X_eval)))

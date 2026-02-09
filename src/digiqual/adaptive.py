@@ -127,15 +127,25 @@ def generate_targeted_samples(
     Returns:
         pd.DataFrame: New recommended samples.
 
-    Example:
-        >>> import pandas as pd
-        >>> df = pd.DataFrame({'Len': [0, 10], 'Sig': [1, 2]})
-        >>> # Gaps detected in 'Len' (0 to 10 is huge gap)
-        >>> new_pts = generate_targeted_samples(df, ['Len'], 'Sig', n_new_per_fix=2)
-        Diagnostics flagged issues. Initiating Active Learning...
-        -> Strategy: Exploration (Filling gaps in Len)
-        >>> print(len(new_pts))
-        2
+    Examples
+    --------
+    ```python
+    import pandas as pd
+    # 1. Setup data with a massive gap in 'Length' (0-1, then 9-10)
+    df = pd.DataFrame({'Length': [0.1, 0.9, 9.1, 9.9], 'Signal': [1, 1, 1, 1]})
+
+    # 2. Ask for new samples to fix the gap
+    new_pts = generate_targeted_samples(
+        df=df,
+        input_cols=['Length'],
+        outcome_col='Signal',
+        n_new_per_fix=2
+    )
+    print(new_pts)
+    #    Length Refinement_Reason
+    # 0     5.4      Gap in Length
+    # 1     3.2      Gap in Length
+    ```
     """
     # 1. SENSE: Run the diagnostics to get the status report
     report = sample_sufficiency(df, input_cols, outcome_col)
@@ -255,15 +265,34 @@ def run_adaptive_search(
     Returns:
         pd.DataFrame: Final dataset.
 
-    Example:
-        >>> cmd = "echo 'Len,Sig' > {output} && echo '1,2' >> {output}"
-        >>> ranges = {'Len': (0,10)}
-        >>> # Run 1 iteration of the loop
-        >>> df = run_adaptive_search(cmd, ['Len'], 'Sig', ranges, max_iter=1, n_start=5)
-        === STARTING ADAPTIVE OPTIMIZATION ===
-        ...
-        >>> print(len(df))
-        5
+    Examples
+    --------
+    ```python
+    # 1. Define bounds
+    ranges = {'Length': (0, 10), 'Angle': (-45, 45)}
+
+    # 2. Define a command that reads {input} and writes {output}
+    # (Here we use python -c to simulate a solver)
+    cmd = (
+    "python -c "
+    "'import pandas as pd; "
+    'df=pd.read_csv("{input}"); '
+    'df["Signal"] = df["Length"]*2; '
+    'df.to_csv("{output}", index=False)'
+    "'"
+    )
+
+    # 3. Run the loop (Init -> Run -> Check -> Refine)
+    final_df = run_adaptive_search(
+        command=cmd,
+        input_cols=['Length', 'Angle'],
+        outcome_col='Signal',
+        ranges=ranges,
+        max_iter=2,
+        n_start=5
+    )
+    print(len(final_df))
+    ```
     """
     print("\n=== STARTING ADAPTIVE OPTIMIZATION ===")
 
