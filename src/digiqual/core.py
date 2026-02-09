@@ -1,12 +1,10 @@
 import pandas as pd
-from typing import List, Dict, Any
-import subprocess
-import os
+from typing import List, Dict, Any, Tuple
 
 
 from .diagnostics import validate_simulation, sample_sufficiency, ValidationError
-from .adaptive import generate_targeted_samples
-from .plotting import plot_signal_model, plot_pod_curve  # <--- IMPORTED
+from .adaptive import generate_targeted_samples, run_adaptive_search
+from .plotting import plot_signal_model, plot_pod_curve
 from . import pod
 
 class SimulationStudy:
@@ -323,62 +321,35 @@ class SimulationStudy:
             import matplotlib.pyplot as plt
             plt.show()
 
-    def evaluate_batch(
+    def optimize(
         self,
-        samples: pd.DataFrame,
-        command_template: str,
-        input_path: str = "sim_input.csv",
-        output_path: str = "sim_output.csv"
-    ) -> pd.DataFrame:
+        command: str,
+        ranges: Dict[str, Tuple[float, float]],
+        n_start: int = 20,
+        n_step: int = 10,
+        max_iter: int = 5,
+        input_file: str = "sim_input.csv",
+        output_file: str = "sim_output.csv"
+    ) -> None:
         """
-        Runs an external simulation engine on the provided samples and ingests results.
-
-        Workflow:
-        1. Saves `samples` to `input_path` (CSV).
-        2. Executes the shell command provided in `command_template`.
-        3. Reads the results from `output_path`.
-        4. Calls `self.add_data()` and `self.diagnose()`.
-
-        Args:
-            samples (pd.DataFrame): The new design points (from self.refine()).
-            command_template (str): The CLI command to run. Use {input} and {output}
-                as placeholders if your command needs dynamic filenames.
-            input_path (str): Where to write the temporary input CSV.
-            output_path (str): Where to expect the simulation result CSV.
-
-        Returns:
-            pd.DataFrame: The new diagnostic results (from self.diagnose()).
+        Runs the Active Learning loop.
+        Connects the Class state to the agnostic 'run_adaptive_search' function.
         """
-        print(f"--- Starting External Simulation Loop ({len(samples)} points) ---")
+        # 1. Delegate to the Agnostic Engine
+        final_data = run_adaptive_search(
+            command=command,
+            input_cols=self.inputs,       # Pass List[str]
+            outcome_col=self.outcome,     # Pass str
+            ranges=ranges,
+            existing_data=self.data,      # Pass DataFrame (State)
+            n_start=n_start,
+            n_step=n_step,
+            max_iter=max_iter,
+            input_file=input_file,
+            output_file=output_file
+        )
 
-        # 1. Export Inputs
-        # We only write the input columns needed by the sim
-        samples[self.inputs].to_csv(input_path, index=False)
-        print(f"1. Inputs written to: {input_path}")
+        # 2. Update Class State with the result
 
-        # 2. Format the Command
-        # If your command string has placeholders like '{input}', fill them in.
-        # Otherwise, just use the raw string.
-        cmd = command_template.format(input=input_path, output=output_path)
-
-        # 3. Execute Simulation (Blocking Call)
-        print(f"2. Executing: {cmd}")
-        try:
-            # shell=True allows using complex commands, check=True raises error on failure
-            subprocess.run(cmd, shell=True, check=True)
-            print("   -> Execution complete.")
-        except subprocess.CalledProcessError as e:
-            print(f"   -> Simulation FAILED (Exit Code {e.returncode}).")
-            return pd.DataFrame()
-
-        # 4. Ingest Results
-        if not os.path.exists(output_path):
-            print(f"Error: Output file '{output_path}' was not created by the simulation.")
-            return pd.DataFrame()
-
-        print(f"3. Reading results from: {output_path}")
-        new_results = pd.read_csv(output_path)
-
-        # 5. Update Cycle
-        self.add_data(new_results)
-        return self.diagnose()
+        self.data = pd.DataFrame() # Clear old state to avoid duplication
+        self.add_data(final_data)
