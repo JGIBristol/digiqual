@@ -84,6 +84,7 @@ quartodoc:
         - diagnostics.ValidationError
 
         # -- Adaptive --
+        - adaptive.run_adaptive_search
         - adaptive.generate_targeted_samples
 
         # -- PoD Analysis --
