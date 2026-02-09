@@ -180,6 +180,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../docs/optimisation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Automation &amp; Engines</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../api_reference/index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">All Functions</span></a>
   </div>
@@ -278,25 +284,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.add_data.html#digiqual.core.SimulationStudy.add_data">add_data</a></td>
-<td>Ingests raw simulation data and updates the internal data state.</td>
+<td>Ingests raw simulation data, filtering for relevant columns only, and updates the internal data state.</td>
 </tr>
 <tr class="even">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.diagnose.html#digiqual.core.SimulationStudy.diagnose">diagnose</a></td>
 <td>Runs statistical diagnostics to evaluate if the current sample size is sufficient.</td>
 </tr>
 <tr class="odd">
+<td><a href="../api_reference/digiqual.core.SimulationStudy.optimise.html#digiqual.core.SimulationStudy.optimise">optimise</a></td>
+<td>Runs the Active Learning loop.</td>
+</tr>
+<tr class="even">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.pod.html#digiqual.core.SimulationStudy.pod">pod</a></td>
 <td>Runs the full ‘Generalized â vs a’ pipeline.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.refine.html#digiqual.core.SimulationStudy.refine">refine</a></td>
 <td>Identifies gaps in the design space and suggests new simulation points.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.validate.html#digiqual.core.SimulationStudy.validate">validate</a></td>
 <td>Cleans and validates the raw data stored in <code>self.data</code>.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.visualise.html#digiqual.core.SimulationStudy.visualise">visualise</a></td>
 <td>Generates, stores, and optionally displays standard diagnostic plots.</td>
 </tr>

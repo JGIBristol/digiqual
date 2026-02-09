@@ -180,6 +180,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../docs/optimisation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Automation &amp; Engines</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../api_reference/index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">All Functions</span></a>
   </div>
@@ -211,7 +217,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="digiqual.core.SimulationStudy.add_data" class="level1">
 <h1>add_data</h1>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>add_data(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Ingests raw simulation data and updates the internal data state.</p>
+<p>Ingests raw simulation data, filtering for relevant columns only, and updates the internal data state.</p>
 <p>This method appends the provided DataFrame to <code>self.data</code>. Because this changes the underlying dataset, all downstream results (clean_data, sufficiency_results, pod_results, and plots) are reset.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>

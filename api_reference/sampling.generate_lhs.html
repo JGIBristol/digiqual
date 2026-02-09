@@ -180,6 +180,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../docs/optimisation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Automation &amp; Engines</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../api_reference/index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">All Functions</span></a>
   </div>
@@ -211,16 +217,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="digiqual.sampling.generate_lhs" class="level1">
 <h1>sampling.generate_lhs</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>generate_lhs(n, vars_df, seed<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>generate_lhs(n, ranges, seed<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Generates a Latin Hypercube Sample and scales it to the provided variable bounds.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 7%">
-<col style="width: 10%">
-<col style="width: 72%">
-<col style="width: 9%">
+<col style="width: 4%">
+<col style="width: 14%">
+<col style="width: 75%">
+<col style="width: 6%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -238,9 +244,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><em>required</em></td>
 </tr>
 <tr class="even">
-<td>vars_df</td>
-<td>pd.DataFrame</td>
-<td>A dataframe defining the input variables. Must contain columns: <code>'Name'</code>, <code>'Min'</code>, <code>'Max'</code>.</td>
+<td>ranges</td>
+<td>Union[pd.DataFrame, Dict]</td>
+<td>Definition of input variables. - Dict Format: {‘Name’: (Min, Max), …} e.g.&nbsp;{‘Length’: (0, 10)} - DataFrame Format: Columns [‘Name’, ‘Min’, ‘Max’]</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
@@ -271,7 +277,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td></td>
 <td>pd.DataFrame</td>
-<td>pd.DataFrame: A dataframe containing the scaled simulation parameters, where column names correspond to <code>vars_df['Name']</code>. Returns an empty DataFrame if <code>vars_df</code> is empty.</td>
+<td>pd.DataFrame: A dataframe containing the scaled simulation parameters, where column names correspond to the keys in <code>ranges</code>. Returns an empty DataFrame if <code>ranges</code> is empty.</td>
 </tr>
 </tbody>
 </table>
@@ -296,6 +302,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td></td>
 <td>ValueError</td>
 <td>If required columns are missing, types are incorrect, or Min &gt;= Max.</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>TypeError</td>
+<td>If <code>ranges</code> is not a Dictionary or DataFrame.</td>
 </tr>
 </tbody>
 </table>

@@ -30,7 +30,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../docs/qs_class.html" rel="prev">
+<link href="../docs/optimisation.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
@@ -146,6 +146,12 @@ ul.task-list li input[type="checkbox"] {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../docs/optimisation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Automation &amp; Engines</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../api_reference/index.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">All Functions</span></a>
   </div>
@@ -210,38 +216,42 @@ ul.task-list li input[type="checkbox"] {
 <td>Raised when simulation data fails validation checks.</td>
 </tr>
 <tr class="odd">
+<td><a href="../api_reference/adaptive.run_adaptive_search.html#digiqual.adaptive.run_adaptive_search">adaptive.run_adaptive_search</a></td>
+<td>Orchestrates the Active Learning loop on raw DataFrames.</td>
+</tr>
+<tr class="even">
 <td><a href="../api_reference/adaptive.generate_targeted_samples.html#digiqual.adaptive.generate_targeted_samples">adaptive.generate_targeted_samples</a></td>
 <td>Active Learning Engine: Generates new samples based on diagnostic failures.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/pod.fit_robust_mean_model.html#digiqual.pod.fit_robust_mean_model">pod.fit_robust_mean_model</a></td>
 <td>Fits a polynomial regression model, automatically selecting the optimal degree.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/pod.fit_variance_model.html#digiqual.pod.fit_variance_model">pod.fit_variance_model</a></td>
 <td>Calculates residuals and prepares the grid for variance estimation.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/pod.infer_best_distribution.html#digiqual.pod.infer_best_distribution">pod.infer_best_distribution</a></td>
 <td>Selects the best statistical distribution for the standardized residuals using AIC.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/pod.predict_local_std.html#digiqual.pod.predict_local_std">pod.predict_local_std</a></td>
 <td>Estimates the local standard deviation using Gaussian Kernel Smoothing.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/pod.compute_pod_curve.html#digiqual.pod.compute_pod_curve">pod.compute_pod_curve</a></td>
 <td>Calculates the Probability of Detection (PoD) curve.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/pod.bootstrap_pod_ci.html#digiqual.pod.bootstrap_pod_ci">pod.bootstrap_pod_ci</a></td>
 <td>Estimates 95% Confidence Bounds for the PoD curve via Bootstrapping.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/plotting.plot_signal_model.html#digiqual.plotting.plot_signal_model">plotting.plot_signal_model</a></td>
 <td>Diagnostic Plot 1: Signal vs Parameter of Interest (The Physics).</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/plotting.plot_pod_curve.html#digiqual.plotting.plot_pod_curve">plotting.plot_pod_curve</a></td>
 <td>Result Plot 2: Probability of Detection (The Reliability).</td>
 </tr>
@@ -655,8 +665,8 @@ ul.task-list li input[type="checkbox"] {
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../docs/qs_class.html" class="pagination-link" aria-label="Quick Start">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Quick Start</span>
+      <a href="../docs/optimisation.html" class="pagination-link" aria-label="Automation &amp; Engines">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Automation &amp; Engines</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">

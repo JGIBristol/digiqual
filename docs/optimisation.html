@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>diagnostics.validate_simulation – digiqual</title>
+<title>optimisation – digiqual</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -65,6 +65,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
+<link href="../api_reference/index.html" rel="next">
+<link href="../docs/qs_class.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
@@ -140,7 +142,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/optimisation.html">Automation &amp; Engines</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -180,7 +182,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../docs/optimisation.html" class="sidebar-item-text sidebar-link">
+  <a href="../docs/optimisation.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Automation &amp; Engines</span></a>
   </div>
 </li>
@@ -200,111 +202,157 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.diagnostics.validate_simulation" id="toc-digiqual.diagnostics.validate_simulation" class="nav-link active" data-scroll-target="#digiqual.diagnostics.validate_simulation">diagnostics.validate_simulation</a>
+  <li><a href="#the-auto-pilot-workflow" id="toc-the-auto-pilot-workflow" class="nav-link active" data-scroll-target="#the-auto-pilot-workflow">The Auto-Pilot Workflow</a>
   <ul class="collapse">
-  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
-  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
-  <li><a href="#raises" id="toc-raises" class="nav-link" data-scroll-target="#raises">Raises</a></li>
+  <li><a href="#define-a-mock-solver" id="toc-define-a-mock-solver" class="nav-link" data-scroll-target="#define-a-mock-solver">1. Define a “Mock” Solver</a></li>
+  <li><a href="#configure-the-study" id="toc-configure-the-study" class="nav-link" data-scroll-target="#configure-the-study">2. Configure the Study</a></li>
+  <li><a href="#run-optimisation" id="toc-run-optimisation" class="nav-link" data-scroll-target="#run-optimisation">3. Run Optimisation</a></li>
+  <li><a href="#view-results" id="toc-view-results" class="nav-link" data-scroll-target="#view-results">4. View Results</a></li>
   </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/diagnostics.validate_simulation.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/optimisation.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Automated Optimisation</h1>
+</div>
 
 
 
+<div class="quarto-title-meta">
 
-<section id="digiqual.diagnostics.validate_simulation" class="level1">
-<h1>diagnostics.validate_simulation</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>validate_simulation(df, input_cols, outcome_col)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Validates simulation data, coercing to numeric and removing invalid rows.</p>
-<section id="parameters" class="level2 doc-section doc-section-parameters">
-<h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 12%">
-<col style="width: 13%">
-<col style="width: 63%">
-<col style="width: 11%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>df</td>
-<td>pd.DataFrame</td>
-<td>The raw dataframe containing input columns and the outcome column.</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>input_cols</td>
-<td>List[str]</td>
-<td>List of input variable names.</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>outcome_col</td>
-<td>str</td>
-<td>Name of the outcome variable.</td>
-<td><em>required</em></td>
-</tr>
-</tbody>
-</table>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>The <code>optimise</code> method allows you to run a complete “Active Learning” loop. DigiQual will generate an initial design, run your external solver, check the results, and automatically add new points where the model is weak.</p>
+<section id="the-auto-pilot-workflow" class="level2">
+<h2 class="anchored" data-anchor-id="the-auto-pilot-workflow">The Auto-Pilot Workflow</h2>
+<p>Instead of writing <code>for</code> loops yourself, you define the problem and let <code>digiqual</code> drive.</p>
+<section id="define-a-mock-solver" class="level3">
+<h3 class="anchored" data-anchor-id="define-a-mock-solver">1. Define a “Mock” Solver</h3>
+<p>For this tutorial, we will use a Python one-liner as our “solver”. In real life, this would be your <code>matlab</code>, <code>ansys</code>, or <code>abaqus</code> command.</p>
+<div id="bacb05d5" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># A simple physics model: Signal = Length * 2 + Noise</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># We use python -c to run this as if it were an external CLI tool.</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>SOLVER_CMD <span class="op">=</span> (</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"python -c "</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"'import pandas as pd, numpy as np; "</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">'df=pd.read_csv("</span><span class="sc">{input}</span><span class="st">"); '</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">'df["Signal"] = df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); '</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">'df.to_csv("</span><span class="sc">{output}</span><span class="st">", index=False)</span><span class="ch">\'</span><span class="st">'</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
 </section>
-<section id="returns" class="level2 doc-section doc-section-returns">
-<h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 4%">
-<col style="width: 20%">
-<col style="width: 75%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td>Tuple[pd.DataFrame, pd.DataFrame]</td>
-<td>* <code>df_clean</code>: The validated, numeric dataframe ready for analysis. * <code>df_removed</code>: A dataframe containing the rows that were dropped.</td>
-</tr>
-</tbody>
-</table>
+<section id="configure-the-study" class="level3">
+<h3 class="anchored" data-anchor-id="configure-the-study">2. Configure the Study</h3>
+<p>We define our input variables and the tange we want to explore.</p>
+<div id="dca01aaf" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.core <span class="im">import</span> SimulationStudy</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define inputs ranges</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>ranges <span class="op">=</span> {<span class="st">"Length"</span>: (<span class="fl">0.0</span>, <span class="fl">5.0</span>), <span class="st">"Angle"</span>: (<span class="op">-</span><span class="fl">45.0</span>, <span class="fl">45.0</span>)}</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>study <span class="op">=</span> SimulationStudy(input_cols<span class="op">=</span>[<span class="st">"Length"</span>, <span class="st">"Angle"</span>], outcome_col<span class="op">=</span><span class="st">"Signal"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
 </section>
-<section id="raises" class="level2 doc-section doc-section-raises">
-<h2 class="doc-section doc-section-raises anchored" data-anchor-id="raises">Raises</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 8%">
-<col style="width: 17%">
-<col style="width: 74%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td>ValidationError</td>
-<td>If columns are missing, types are wrong, or too few valid rows remain.</td>
-</tr>
-</tbody>
-</table>
+<section id="run-optimisation" class="level3">
+<h3 class="anchored" data-anchor-id="run-optimisation">3. Run Optimisation</h3>
+<p>This single command handles everything:</p>
+<ol type="1">
+<li><p>Generates 10 initial LHS points (because study.data is empty).</p></li>
+<li><p>Runs the solver.</p></li>
+<li><p>Checks diagnostics.</p></li>
+<li><p>If needed, generates 5 new points and repeats (up to 3 times).</p></li>
+</ol>
+<div id="03b5dc73" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.optimise(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    command<span class="op">=</span>SOLVER_CMD,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    ranges<span class="op">=</span>ranges,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    n_start<span class="op">=</span><span class="dv">15</span>,  <span class="co"># Initial batch size</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    n_step<span class="op">=</span><span class="dv">10</span>,  <span class="co"># Refinement batch size</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    max_iter<span class="op">=</span><span class="dv">3</span>,  <span class="co"># Safety limit</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== STARTING ADAPTIVE OPTIMIZATION ===
+--- Iteration 0: Generating Initial Design (15 points) ---
+   -&gt; Executing: python -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
+
+--- Iteration 1: Diagnostics Check ---
+&gt;&gt; Model invalid. Refining design...
+Diagnostics flagged issues. Initiating Active Learning...
+ -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
+--- Running Batch 1 (10 points) ---
+   -&gt; Executing: python -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
+
+--- Iteration 2: Diagnostics Check ---
+&gt;&gt; Model invalid. Refining design...
+Diagnostics flagged issues. Initiating Active Learning...
+ -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
+--- Running Batch 2 (10 points) ---
+   -&gt; Executing: python -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
+
+--- Iteration 3: Diagnostics Check ---
+&gt;&gt; Model invalid. Refining design...
+Diagnostics flagged issues. Initiating Active Learning...
+ -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
+--- Running Batch 3 (10 points) ---
+   -&gt; Executing: python -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
+
+&gt;&gt;&gt; WARNING: Max iterations (3) reached. &lt;&lt;&lt;
+Data updated. Total rows: 45</code></pre>
+</div>
+</div>
+</section>
+<section id="view-results" class="level3">
+<h3 class="anchored" data-anchor-id="view-results">4. View Results</h3>
+<p>Once the loop finishes, <code>study.data</code> contains all the valid simulation results.</p>
+<div id="4772f81c" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total Simulations Run: </span><span class="sc">{</span><span class="bu">len</span>(study.data)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>_ <span class="op">=</span> study.pod(poi_col<span class="op">=</span><span class="st">"Length"</span>, threshold<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>study.visualise()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Total Simulations Run: 45
+Running validation...
+Validation passed. 42 valid rows ready.
+Warning: 3 invalid rows were dropped. See .removed_data for dropped rows
+--- Starting Reliability Analysis (PoI: Length) ---
+1. Selecting Mean Model (Cross-Validation)...
+   -&gt; Selected Polynomial Degree: 4
+2. Fitting Variance Model (Kernel Smoothing)...
+   -&gt; Smoothing Bandwidth: 0.4613
+3. Inferring Error Distribution (AIC)...
+   -&gt; Selected Distribution: gumbel_l
+4. Computing PoD Curve...
+5. Running Bootstrap (1000 iterations)...
+--- Analysis Complete ---</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="optimisation_files/figure-html/cell-5-output-2.png" width="660" height="523" class="figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="optimisation_files/figure-html/cell-5-output-3.png" width="665" height="523" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
 
 
 </section>
@@ -711,9 +759,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
   });
   </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../docs/qs_class.html" class="pagination-link" aria-label="Quick Start">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Quick Start</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../api_reference/index.html" class="pagination-link" aria-label="All Functions">
+        <span class="nav-page-text">All Functions</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
 </div> <!-- /content -->
 
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/diagnostics.validate_simulation.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/optimisation.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
