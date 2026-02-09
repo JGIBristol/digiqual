@@ -140,7 +140,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">Display only</li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -203,13 +203,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#digiqual.core.SimulationStudy.visualise" id="toc-digiqual.core.SimulationStudy.visualise" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.visualise">visualise</a>
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
-  <li><a href="#side-effects" id="toc-side-effects" class="nav-link" data-scroll-target="#side-effects">Side Effects</a></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.visualise.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"><h1 id="display-only" class="title display-7">Display only</h1></header>
 
 
 
@@ -217,16 +217,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="digiqual.core.SimulationStudy.visualise" class="level1">
 <h1>visualise</h1>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>visualise(show<span class="op">=</span><span class="va">True</span>, save_path<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Generates, stores, and optionally displays standard diagnostic plots.</p>
-<p>This method creates the ‘Signal Model’ (physics view) and ‘PoD Curve’ (reliability view) figures based on the analysis in <code>self.pod_results</code>.</p>
+<p>Generates and displays diagnostic plots (Signal Model and PoD Curve).</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 9%">
+<col style="width: 8%">
 <col style="width: 6%">
-<col style="width: 75%">
-<col style="width: 9%">
+<col style="width: 76%">
+<col style="width: 8%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -240,21 +239,36 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td>show</td>
 <td>bool</td>
-<td>If True, displays the plots immediately. Default is True.</td>
+<td>If True, calls plt.show().</td>
 <td><code>True</code></td>
 </tr>
 <tr class="even">
 <td>save_path</td>
 <td>str</td>
-<td>If provided, saves the figures to this base path (appending ’_signal.png’ and ’_pod.png’).</td>
+<td>If provided, saves figures to disk (e.g., ‘results/run1’). Appends ’_signal.png’ and ’_pod.png’.</td>
 <td><code>None</code></td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="side-effects" class="level2 doc-section doc-section-side-effects">
-<h2 class="doc-section doc-section-side-effects anchored" data-anchor-id="side-effects">Side Effects</h2>
-<p>Updates <code>self.plots</code> with the generated figure objects. Displays plots to the active output if <code>show=True</code>. Writes files to disk if <code>save_path</code> is provided.</p>
+<section id="example" class="level2 doc-section doc-section-example">
+<h2 class="doc-section doc-section-example anchored" data-anchor-id="example">Example</h2>
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+
+<p>study.visualise()</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<h1 id="save-to-files-my_plots_signal.png-and-my_plots_pod.png">Save to files ‘my_plots_signal.png’ and ‘my_plots_pod.png’</h1>
+<p>study.visualise(show=False, save_path=‘my_plots’)</p>
+</blockquote>
+</blockquote>
+</blockquote>
 
 
 </section>

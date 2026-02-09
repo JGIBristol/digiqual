@@ -204,6 +204,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
   <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/adaptive.generate_targeted_samples.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -267,11 +268,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="returns" class="level2 doc-section doc-section-returns">
 <h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
 <table class="caption-top table">
-<colgroup>
-<col style="width: 8%">
-<col style="width: 15%">
-<col style="width: 75%">
-</colgroup>
 <thead>
 <tr class="header">
 <th>Name</th>
@@ -283,10 +279,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td></td>
 <td>pd.DataFrame</td>
-<td>pd.DataFrame: A dataframe of recommended new simulation parameters.</td>
+<td>pd.DataFrame: New recommended samples.</td>
 </tr>
 </tbody>
 </table>
+</section>
+<section id="example" class="level2 doc-section doc-section-example">
+<h2 class="doc-section doc-section-example anchored" data-anchor-id="example">Example</h2>
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<p>import pandas as pd df = pd.DataFrame({‘Len’: [0, 10], ‘Sig’: [1, 2]}) # Gaps detected in ‘Len’ (0 to 10 is huge gap) new_pts = generate_targeted_samples(df, [‘Len’], ‘Sig’, n_new_per_fix=2) Diagnostics flagged issues. Initiating Active Learning… -&gt; Strategy: Exploration (Filling gaps in Len) print(len(new_pts)) 2</p>
+</blockquote>
+</blockquote>
+</blockquote>
 
 
 </section>

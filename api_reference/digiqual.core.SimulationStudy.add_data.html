@@ -203,7 +203,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#digiqual.core.SimulationStudy.add_data" id="toc-digiqual.core.SimulationStudy.add_data" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.add_data">add_data</a>
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
-  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
+  <li><a href="#raises" id="toc-raises" class="nav-link" data-scroll-target="#raises">Raises</a></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.add_data.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -217,17 +218,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="digiqual.core.SimulationStudy.add_data" class="level1">
 <h1>add_data</h1>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>add_data(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Ingests raw simulation data, filtering for relevant columns only, and updates the internal data state.</p>
-<p>This method appends the provided DataFrame to <code>self.data</code>. Because this changes the underlying dataset, all downstream results (clean_data, sufficiency_results, pod_results, and plots) are reset.</p>
+<p>Ingests raw simulation data, filtering for relevant columns only.</p>
+<p>This method automatically strips away any columns in <code>df</code> that were not defined in <code>self.inputs</code> or <code>self.outcome</code> during initialization.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
-<colgroup>
-<col style="width: 5%">
-<col style="width: 10%">
-<col style="width: 75%">
-<col style="width: 8%">
-</colgroup>
 <thead>
 <tr class="header">
 <th>Name</th>
@@ -240,18 +235,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td>df</td>
 <td>pd.DataFrame</td>
-<td>The DataFrame to ingest. It should contain the columns specified in <code>self.inputs</code> and <code>self.outcome</code>.</td>
+<td>The DataFrame to ingest.</td>
 <td><em>required</em></td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="returns" class="level2 doc-section doc-section-returns">
-<h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
+<section id="raises" class="level2 doc-section doc-section-raises">
+<h2 class="doc-section doc-section-raises anchored" data-anchor-id="raises">Raises</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 11%">
-<col style="width: 11%">
+<col style="width: 9%">
+<col style="width: 13%">
 <col style="width: 77%">
 </colgroup>
 <thead>
@@ -263,12 +258,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td>None</td>
-<td>None</td>
-<td>Updates the internal <code>self.data</code> attribute in place.</td>
+<td></td>
+<td>ValueError</td>
+<td>If the new data is missing any required input or outcome columns.</td>
 </tr>
 </tbody>
 </table>
+</section>
+<section id="example" class="level2 doc-section doc-section-example">
+<h2 class="doc-section doc-section-example anchored" data-anchor-id="example">Example</h2>
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<p>import pandas as pd df = pd.DataFrame({ … ‘Length’: [1.0, 2.5, 5.0], … ‘Angle’: [0, 15, -10], … ‘Signal’: [0.5, 0.8, 1.2] … }) study.add_data(df) Data updated. Total rows: 3</p>
+</blockquote>
+</blockquote>
+</blockquote>
 
 
 </section>

@@ -203,6 +203,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#digiqual.core.SimulationStudy.diagnose" id="toc-digiqual.core.SimulationStudy.diagnose" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.diagnose">diagnose</a>
   <ul class="collapse">
   <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.diagnose.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -217,14 +218,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h1>diagnose</h1>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Runs statistical diagnostics to evaluate if the current sample size is sufficient.</p>
-<p>If <code>self.clean_data</code> is empty, this method will automatically attempt to run <code>self.validate()</code> before proceeding.</p>
+<p>Checks for Input Coverage (Gaps), Model Fit Stability, and Bootstrap Convergence.</p>
 <section id="returns" class="level2 doc-section doc-section-returns">
 <h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 5%">
-<col style="width: 10%">
-<col style="width: 83%">
+<col style="width: 11%">
+<col style="width: 20%">
+<col style="width: 68%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -237,10 +238,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td></td>
 <td>pd.DataFrame</td>
-<td>pd.DataFrame: A summary of diagnostic metrics. Also updates the internal <code>self.sufficiency_results</code> attribute.</td>
+<td>pd.DataFrame: A summary of diagnostic metrics.</td>
 </tr>
 </tbody>
 </table>
+</section>
+<section id="example" class="level2 doc-section doc-section-example">
+<h2 class="doc-section doc-section-example anchored" data-anchor-id="example">Example</h2>
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<p>report = study.diagnose() print(report[[‘Test’, ‘Pass’]]) Test Pass 0 Input Coverage True 1 Model Fit (CV) True 2 Bootstrap Convergence False</p>
+</blockquote>
+</blockquote>
+</blockquote>
 
 
 </section>

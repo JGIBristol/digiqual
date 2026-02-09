@@ -204,6 +204,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
   <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.pod.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -217,22 +218,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="digiqual.core.SimulationStudy.pod" class="level1">
 <h1>pod</h1>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pod(poi_col, threshold, bandwidth_ratio<span class="op">=</span><span class="fl">0.1</span>, n_boot<span class="op">=</span><span class="dv">1000</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Runs the full ‘Generalized â vs a’ pipeline.</p>
-<ol type="1">
-<li>Fits Robust Mean Model (Polynomial Selection).</li>
-<li>Fits Variance Model (Kernel Smoothing).</li>
-<li>Infers Statistical Distribution (AIC Selection).</li>
-<li>Calculates PoD Curve.</li>
-<li>Calculates 95% Confidence Bounds (Bootstrap).</li>
-</ol>
+<p>Runs the generalized Probability of Detection (PoD) analysis.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 12%">
-<col style="width: 5%">
-<col style="width: 72%">
-<col style="width: 8%">
+<col style="width: 19%">
+<col style="width: 9%">
+<col style="width: 57%">
+<col style="width: 13%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -246,25 +240,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td>poi_col</td>
 <td>str</td>
-<td>The ‘Parameter of Interest’ column name (e.g., ‘Crack Length’). Must be one of the input columns.</td>
+<td>The parameter of interest (e.g., ‘Crack Length’).</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>threshold</td>
 <td>float</td>
-<td>The detection threshold (e.g., 4.0 dB).</td>
+<td>The failure threshold (e.g., 4.0 dB).</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
 <td>bandwidth_ratio</td>
 <td>float</td>
-<td>Smoothing window size as a fraction of data range (Default 0.1).</td>
+<td>Smoothing bandwidth fraction (default 0.1).</td>
 <td><code>0.1</code></td>
 </tr>
 <tr class="even">
 <td>n_boot</td>
 <td>int</td>
-<td>Number of bootstrap iterations for confidence bounds (Default 1000).</td>
+<td>Bootstrap iterations for confidence bounds.</td>
 <td><code>1000</code></td>
 </tr>
 </tbody>
@@ -274,9 +268,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 7%">
-<col style="width: 17%">
-<col style="width: 75%">
+<col style="width: 9%">
+<col style="width: 21%">
+<col style="width: 69%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -289,10 +283,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td>Dict</td>
 <td>Dict[str, Any]</td>
-<td>A dictionary containing all curves and models needed for plotting/reporting.</td>
+<td>Dictionary containing models, curves, and fit statistics.</td>
 </tr>
 </tbody>
 </table>
+</section>
+<section id="example" class="level2 doc-section doc-section-example">
+<h2 class="doc-section doc-section-example anchored" data-anchor-id="example">Example</h2>
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<p>results = study.pod(poi_col=“Length”, threshold=0.5) — Starting Reliability Analysis (PoI: Length) — 1. Selecting Mean Model… … print(results[‘dist_info’]) (‘norm’, (0.05, 0.12))</p>
+</blockquote>
+</blockquote>
+</blockquote>
 
 
 </section>

@@ -202,7 +202,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#digiqual.core.SimulationStudy.validate" id="toc-digiqual.core.SimulationStudy.validate" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.validate">validate</a>
   <ul class="collapse">
-  <li><a href="#side-effects" id="toc-side-effects" class="nav-link" data-scroll-target="#side-effects">Side Effects</a></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.validate.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -217,10 +217,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h1>validate</h1>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>validate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Cleans and validates the raw data stored in <code>self.data</code>.</p>
-<p>This method filters the raw data based on project-specific rules. It populates <code>self.clean_data</code> with valid rows and <code>self.removed_data</code> with invalid ones.</p>
-<section id="side-effects" class="level2 doc-section doc-section-side-effects">
-<h2 class="doc-section doc-section-side-effects anchored" data-anchor-id="side-effects">Side Effects</h2>
-<p>Updates <code>self.clean_data</code> and <code>self.removed_data</code>. Resets <code>self.clean_data</code> to empty if validation fails critically.</p>
+<p>Populates <code>self.clean_data</code> with valid rows and <code>self.removed_data</code> with invalid ones (e.g., NaNs, negative signals, wrong types).</p>
+<section id="example" class="level2 doc-section doc-section-example">
+<h2 class="doc-section doc-section-example anchored" data-anchor-id="example">Example</h2>
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<p>study.validate() Running validation… Validation passed. 50 valid rows ready. print(len(study.clean_data)) 50</p>
+</blockquote>
+</blockquote>
+</blockquote>
 
 
 </section>

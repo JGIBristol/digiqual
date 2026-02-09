@@ -200,7 +200,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.core.SimulationStudy.optimise" id="toc-digiqual.core.SimulationStudy.optimise" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.optimise">optimise</a></li>
+  <li><a href="#digiqual.core.SimulationStudy.optimise" id="toc-digiqual.core.SimulationStudy.optimise" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.optimise">optimise</a>
+  <ul class="collapse">
+  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
+  </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.optimise.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -221,9 +225,82 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    input_file<span class="op">=</span><span class="st">'sim_input.csv'</span>,</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    output_file<span class="op">=</span><span class="st">'sim_output.csv'</span>,</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Runs the Active Learning loop. Connects the Class state to the agnostic ‘run_adaptive_search’ function.</p>
+<p>Runs the automated Active Learning loop (Initialize -&gt; Execute -&gt; Diagnose -&gt; Refine).</p>
+<section id="parameters" class="level2 doc-section doc-section-parameters">
+<h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 7%">
+<col style="width: 59%">
+<col style="width: 19%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>command</td>
+<td>str</td>
+<td>Solver command (e.g.&nbsp;“python solver.py {input} {output}”).</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>ranges</td>
+<td>Dict</td>
+<td>Input bounds, e.g.&nbsp;{“Length”: (0, 10)}.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>n_start</td>
+<td>int</td>
+<td>Initial sample size (only if data is empty).</td>
+<td><code>20</code></td>
+</tr>
+<tr class="even">
+<td>n_step</td>
+<td>int</td>
+<td>Batch size for refinement.</td>
+<td><code>10</code></td>
+</tr>
+<tr class="odd">
+<td>max_iter</td>
+<td>int</td>
+<td>Max refinement loops.</td>
+<td><code>5</code></td>
+</tr>
+<tr class="even">
+<td>input_file</td>
+<td>str</td>
+<td>Temp input filename.</td>
+<td><code>'sim_input.csv'</code></td>
+</tr>
+<tr class="odd">
+<td>output_file</td>
+<td>str</td>
+<td>Temp output filename.</td>
+<td><code>'sim_output.csv'</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="example" class="level2 doc-section doc-section-example">
+<h2 class="doc-section doc-section-example anchored" data-anchor-id="example">Example</h2>
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<p>ranges = {“Length”: (0, 10), “Angle”: (-45, 45)} cmd = “python my_solver.py {input} {output}” study.optimise(command=cmd, ranges=ranges, max_iter=3) === STARTING ADAPTIVE OPTIMIZATION === — Iteration 0: Generating Initial Design (20 points) — … study.visualise()</p>
+</blockquote>
+</blockquote>
+</blockquote>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

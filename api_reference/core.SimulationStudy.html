@@ -203,6 +203,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#digiqual.core.SimulationStudy" id="toc-digiqual.core.SimulationStudy" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy">core.SimulationStudy</a>
   <ul class="collapse">
   <li><a href="#attributes" id="toc-attributes" class="nav-link" data-scroll-target="#attributes">Attributes</a></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   <li><a href="#methods" id="toc-methods" class="nav-link" data-scroll-target="#methods">Methods</a></li>
   </ul></li>
   </ul>
@@ -222,9 +223,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="doc-section doc-section-attributes anchored" data-anchor-id="attributes">Attributes</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 19%">
-<col style="width: 12%">
-<col style="width: 67%">
+<col style="width: 28%">
+<col style="width: 18%">
+<col style="width: 52%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -267,10 +268,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td>plots</td>
 <td>Dict</td>
-<td>Stores the latest generated figures (keys: ‘signal_model’, ‘pod_curve’).</td>
+<td>Stores the latest generated figures.</td>
 </tr>
 </tbody>
 </table>
+</section>
+<section id="example" class="level2 doc-section doc-section-example">
+<h2 class="doc-section doc-section-example anchored" data-anchor-id="example">Example</h2>
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<p>from digiqual.core import SimulationStudy study = SimulationStudy( … input_cols=[‘Length’, ‘Angle’], … outcome_col=‘Signal’ … )</p>
+</blockquote>
+</blockquote>
+</blockquote>
 </section>
 <section id="methods" class="level2">
 <h2 class="anchored" data-anchor-id="methods">Methods</h2>
@@ -284,7 +295,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.add_data.html#digiqual.core.SimulationStudy.add_data">add_data</a></td>
-<td>Ingests raw simulation data, filtering for relevant columns only, and updates the internal data state.</td>
+<td>Ingests raw simulation data, filtering for relevant columns only.</td>
 </tr>
 <tr class="even">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.diagnose.html#digiqual.core.SimulationStudy.diagnose">diagnose</a></td>
@@ -292,15 +303,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="odd">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.optimise.html#digiqual.core.SimulationStudy.optimise">optimise</a></td>
-<td>Runs the Active Learning loop.</td>
+<td>Runs the automated Active Learning loop (Initialize -&gt; Execute -&gt; Diagnose -&gt; Refine).</td>
 </tr>
 <tr class="even">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.pod.html#digiqual.core.SimulationStudy.pod">pod</a></td>
-<td>Runs the full ‘Generalized â vs a’ pipeline.</td>
+<td>Runs the generalized Probability of Detection (PoD) analysis.</td>
 </tr>
 <tr class="odd">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.refine.html#digiqual.core.SimulationStudy.refine">refine</a></td>
-<td>Identifies gaps in the design space and suggests new simulation points.</td>
+<td>Identifies gaps or high-variance regions and suggests new simulation points.</td>
 </tr>
 <tr class="even">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.validate.html#digiqual.core.SimulationStudy.validate">validate</a></td>
@@ -308,7 +319,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="odd">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.visualise.html#digiqual.core.SimulationStudy.visualise">visualise</a></td>
-<td>Generates, stores, and optionally displays standard diagnostic plots.</td>
+<td>Generates and displays diagnostic plots (Signal Model and PoD Curve).</td>
 </tr>
 </tbody>
 </table>

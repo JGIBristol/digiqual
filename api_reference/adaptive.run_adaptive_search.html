@@ -202,7 +202,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#digiqual.adaptive.run_adaptive_search" id="toc-digiqual.adaptive.run_adaptive_search" class="nav-link active" data-scroll-target="#digiqual.adaptive.run_adaptive_search">adaptive.run_adaptive_search</a>
   <ul class="collapse">
+  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
   <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/adaptive.run_adaptive_search.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -228,14 +230,66 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    output_file<span class="op">=</span><span class="st">'sim_output.csv'</span>,</span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Orchestrates the Active Learning loop on raw DataFrames.</p>
+<section id="parameters" class="level2 doc-section doc-section-parameters">
+<h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>command</td>
+<td>str</td>
+<td>Solver command template.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>input_cols</td>
+<td>List[str]</td>
+<td>Input names.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>outcome_col</td>
+<td>str</td>
+<td>Outcome name.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>ranges</td>
+<td>Dict</td>
+<td>Input bounds.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>existing_data</td>
+<td>pd.DataFrame</td>
+<td>Start data.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="even">
+<td>n_start</td>
+<td>int</td>
+<td>Init batch size.</td>
+<td><code>20</code></td>
+</tr>
+<tr class="odd">
+<td>max_iter</td>
+<td>int</td>
+<td>Max loops.</td>
+<td><code>5</code></td>
+</tr>
+</tbody>
+</table>
+</section>
 <section id="returns" class="level2 doc-section doc-section-returns">
 <h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
 <table class="caption-top table">
-<colgroup>
-<col style="width: 9%">
-<col style="width: 16%">
-<col style="width: 74%">
-</colgroup>
 <thead>
 <tr class="header">
 <th>Name</th>
@@ -247,10 +301,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td></td>
 <td>pd.DataFrame</td>
-<td>pd.DataFrame: The final accumulated dataset (existing + new).</td>
+<td>pd.DataFrame: Final dataset.</td>
 </tr>
 </tbody>
 </table>
+</section>
+<section id="example" class="level2 doc-section doc-section-example">
+<h2 class="doc-section doc-section-example anchored" data-anchor-id="example">Example</h2>
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<p>cmd = “echo ‘Len,Sig’ &gt; {output} &amp;&amp; echo ‘1,2’ &gt;&gt; {output}” ranges = {‘Len’: (0,10)} # Run 1 iteration of the loop df = run_adaptive_search(cmd, [‘Len’], ‘Sig’, ranges, max_iter=1, n_start=5) === STARTING ADAPTIVE OPTIMIZATION === … print(len(df)) 5</p>
+</blockquote>
+</blockquote>
+</blockquote>
 
 
 </section>
