@@ -1,0 +1,68 @@
+# Automated Optimisation
+
+The `optimise` method allows you to run a complete "Active Learning" loop. DigiQual will generate an initial design, run your external solver, check the results, and automatically add new points where the model is weak.
+
+## The Auto-Pilot Workflow
+
+Instead of writing `for` loops yourself, you define the problem and let `digiqual` drive.
+
+### 1. Define a "Mock" Solver
+For this tutorial, we will use a Python one-liner as our "solver". In real life, this would be your `matlab`, `ansys`, or `abaqus` command.
+
+```{python}
+# A simple physics model: Signal = Length * 2 + Noise
+# We use python -c to run this as if it were an external CLI tool.
+SOLVER_CMD = (
+    "python -c "
+    "'import pandas as pd, numpy as np; "
+    'df=pd.read_csv("{input}"); '
+    'df["Signal"] = df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); '
+    'df.to_csv("{output}", index=False)\''
+)
+```
+
+### 2. Configure the Study
+
+We define our input variables and the tange we want to explore.
+
+```{python}
+from digiqual.core import SimulationStudy
+
+# Define inputs ranges
+ranges = {"Length": (0.0, 5.0), "Angle": (-45.0, 45.0)}
+
+# Initialize
+study = SimulationStudy(input_cols=["Length", "Angle"], outcome_col="Signal")
+```
+
+### 3. Run Optimisation
+
+This single command handles everything:
+
+1. Generates 10 initial LHS points (because study.data is empty).
+
+2. Runs the solver.
+
+3. Checks diagnostics.
+
+4. If needed, generates 5 new points and repeats (up to 3 times).
+
+```{python}
+study.optimise(
+    command=SOLVER_CMD,
+    ranges=ranges,
+    n_start=15,  # Initial batch size
+    n_step=10,  # Refinement batch size
+    max_iter=3,  # Safety limit
+)
+```
+
+### 4. View Results
+
+Once the loop finishes, `study.data` contains all the valid simulation results.
+
+```{python}
+print(f"Total Simulations Run: {len(study.data)}")
+_ = study.pod(poi_col="Length", threshold=10)
+study.visualise()
+```

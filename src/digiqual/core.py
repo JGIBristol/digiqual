@@ -321,7 +321,7 @@ class SimulationStudy:
             import matplotlib.pyplot as plt
             plt.show()
 
-    def optimize(
+    def optimise(
         self,
         command: str,
         ranges: Dict[str, Tuple[float, float]],

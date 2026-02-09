@@ -63,12 +63,12 @@ def test_add_data_missing_column(study):
     with pytest.raises(ValueError, match="missing required columns"):
         study.add_data(incomplete_df)
 
-# --- NEW TEST FOR OPTIMIZE ---
+# --- NEW TEST FOR optimise ---
 
 @patch("digiqual.core.run_adaptive_search")
-def test_optimize_delegation(mock_run_adaptive, study, clean_df):
+def test_optimise_delegation(mock_run_adaptive, study, clean_df):
     """
-    Test that study.optimize correctly delegates to run_adaptive_search
+    Test that study.optimise correctly delegates to run_adaptive_search
     and updates the study's data with the result.
     """
     # 1. Setup the mock to return a dummy dataframe
@@ -81,7 +81,7 @@ def test_optimize_delegation(mock_run_adaptive, study, clean_df):
     ranges = {"Length": (0, 10), "Angle": (-90, 90)}
 
     # 3. Call the method
-    study.optimize(
+    study.optimise(
         command=cmd,
         ranges=ranges,
         n_start=10,
