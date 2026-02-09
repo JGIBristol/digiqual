@@ -1,13 +1,17 @@
 import pandas as pd
 import numpy as np
-from typing import List
+from typing import List,Dict, Tuple, Optional
 from scipy.stats import qmc
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
 from sklearn.utils import resample
 
-from .diagnostics import sample_sufficiency
+from .diagnostics import sample_sufficiency, validate_simulation
+from .sampling import generate_lhs
+
+import subprocess
+import os
 
 
 #### Helper Functions for generate_targeted_samples()
@@ -179,3 +183,117 @@ def generate_targeted_samples(
         return pd.DataFrame()
 
     return pd.concat(new_samples_list, ignore_index=True)
+
+
+#### Batch Functionality ####
+# 1. INTERNAL HELPER: Execution Logistics
+def _execute_simulation(
+    samples: pd.DataFrame,
+    command_template: str,
+    input_cols: List[str],
+    input_path: str,
+    output_path: str
+) -> pd.DataFrame:
+    """
+    Internal helper: writes CSV, runs command, reads CSV.
+    Same implementation as before.
+    """
+    samples[input_cols].to_csv(input_path, index=False)
+    cmd = command_template.format(input=input_path, output=output_path)
+
+    print(f"   -> Executing: {cmd}")
+    try:
+        subprocess.run(cmd, shell=True, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"   -> Simulation FAILED (Exit Code {e.returncode}).")
+        return pd.DataFrame()
+
+    if not os.path.exists(output_path):
+        return pd.DataFrame()
+
+    try:
+        return pd.read_csv(output_path)
+    except Exception:
+        return pd.DataFrame()
+
+
+# 2. MAIN FUNCTION: The Agnostic Adaptive Loop
+def run_adaptive_search(
+    command: str,
+    input_cols: List[str],
+    outcome_col: str,
+    ranges: Dict[str, Tuple[float, float]],
+    existing_data: Optional[pd.DataFrame] = None,
+    n_start: int = 20,
+    n_step: int = 10,
+    max_iter: int = 5,
+    input_file: str = "sim_input.csv",
+    output_file: str = "sim_output.csv"
+) -> pd.DataFrame:
+    """
+    Orchestrates the Active Learning loop on raw DataFrames.
+
+    Returns:
+        pd.DataFrame: The final accumulated dataset (existing + new).
+    """
+    print("\n=== STARTING ADAPTIVE OPTIMIZATION ===")
+
+    # Initialize working dataset
+    current_data = existing_data.copy() if existing_data is not None else pd.DataFrame()
+
+    # --- STEP 1: INITIALIZATION ---
+    if current_data.empty:
+        print(f"--- Iteration 0: Generating Initial Design ({n_start} points) ---")
+
+        # 1. Generate Samples (Dict input)
+        initial_samples = generate_lhs(n_start, ranges)
+
+        # 2. Run Simulation
+        results = _execute_simulation(
+            initial_samples, command, input_cols, input_file, output_file
+        )
+        current_data = results
+    else:
+        print(f"--- Iteration 0: Resuming with {len(current_data)} existing points ---")
+
+    # --- STEP 2: REFINEMENT LOOP ---
+    for i in range(max_iter):
+        print(f"\n--- Iteration {i+1}: Diagnostics Check ---")
+
+        # A. Diagnose (Using pure functions from diagnostics.py)
+        # We must validate first to ensure clean data for metrics
+        clean_df, _ = validate_simulation(current_data, input_cols, outcome_col)
+
+        if clean_df.empty:
+            # Fallback if validation kills everything (rare)
+            diag = pd.DataFrame()
+        else:
+            diag = sample_sufficiency(clean_df, input_cols, outcome_col)
+
+        # B. Success?
+        if not diag.empty and diag['Pass'].all():
+            print(f"\n>>> CONVERGENCE REACHED at {len(current_data)} points! <<<")
+            return current_data
+
+        # C. Refine (Using pure function from adaptive.py)
+        print(">> Model invalid. Refining design...")
+        # Note: generate_targeted_samples is likely in this same file or imported
+        new_samples = generate_targeted_samples(
+            clean_df, input_cols, outcome_col, n_new_per_fix=n_step
+        )
+
+        if new_samples.empty:
+            print(">> Refinement algorithm converged.")
+            return current_data
+
+        # D. Execute
+        print(f"--- Running Batch {i+1} ({len(new_samples)} points) ---")
+        new_results = _execute_simulation(
+            new_samples, command, input_cols, input_file, output_file
+        )
+
+        # E. Accumulate
+        current_data = pd.concat([current_data, new_results], ignore_index=True)
+
+    print(f"\n>>> WARNING: Max iterations ({max_iter}) reached. <<<")
+    return current_data

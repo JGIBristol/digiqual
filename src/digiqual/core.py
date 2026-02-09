@@ -1,9 +1,10 @@
 import pandas as pd
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
+
 
 from .diagnostics import validate_simulation, sample_sufficiency, ValidationError
-from .adaptive import generate_targeted_samples
-from .plotting import plot_signal_model, plot_pod_curve  # <--- IMPORTED
+from .adaptive import generate_targeted_samples, run_adaptive_search
+from .plotting import plot_signal_model, plot_pod_curve
 from . import pod
 
 class SimulationStudy:
@@ -310,14 +311,45 @@ class SimulationStudy:
 
         # Handle Saving
         if save_path:
-            self.plots["signal_model"].savefig(f"{save_path}_signal.png")
-            self.plots["pod_curve"].savefig(f"{save_path}_pod.png")
+            # We must get the .figure attribute from the axes to save
+            self.plots["signal_model"].get_figure().savefig(f"{save_path}_signal.png")
+            self.plots["pod_curve"].get_figure().savefig(f"{save_path}_pod.png")
             print(f"Plots saved to {save_path}_*.png")
 
         # Handle Display
         if show:
-            try:
-                self.plots["signal_model"].show()
-                self.plots["pod_curve"].show()
-            except AttributeError:
-                pass
+            import matplotlib.pyplot as plt
+            plt.show()
+
+    def optimise(
+        self,
+        command: str,
+        ranges: Dict[str, Tuple[float, float]],
+        n_start: int = 20,
+        n_step: int = 10,
+        max_iter: int = 5,
+        input_file: str = "sim_input.csv",
+        output_file: str = "sim_output.csv"
+    ) -> None:
+        """
+        Runs the Active Learning loop.
+        Connects the Class state to the agnostic 'run_adaptive_search' function.
+        """
+        # 1. Delegate to the Agnostic Engine
+        final_data = run_adaptive_search(
+            command=command,
+            input_cols=self.inputs,       # Pass List[str]
+            outcome_col=self.outcome,     # Pass str
+            ranges=ranges,
+            existing_data=self.data,      # Pass DataFrame (State)
+            n_start=n_start,
+            n_step=n_step,
+            max_iter=max_iter,
+            input_file=input_file,
+            output_file=output_file
+        )
+
+        # 2. Update Class State with the result
+
+        self.data = pd.DataFrame() # Clear old state to avoid duplication
+        self.add_data(final_data)
