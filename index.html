@@ -199,7 +199,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#experimental-design" id="toc-experimental-design" class="nav-link" data-scroll-target="#experimental-design">1. Experimental Design</a></li>
   <li><a href="#data-validation-diagnostics" id="toc-data-validation-diagnostics" class="nav-link" data-scroll-target="#data-validation-diagnostics">2. Data Validation &amp; Diagnostics</a></li>
-  <li><a href="#adaptive-refinement-active-learning" id="toc-adaptive-refinement-active-learning" class="nav-link" data-scroll-target="#adaptive-refinement-active-learning">3. Adaptive Refinement (Active Learning)</a></li>
+  <li><a href="#adaptive-refinement-automated-optimisation" id="toc-adaptive-refinement-automated-optimisation" class="nav-link" data-scroll-target="#adaptive-refinement-automated-optimisation">3. Adaptive Refinement &amp; Automated Optimisation</a></li>
   <li><a href="#generalized-reliability-analysis" id="toc-generalized-reliability-analysis" class="nav-link" data-scroll-target="#generalized-reliability-analysis">4. Generalized Reliability Analysis</a></li>
   </ul></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
@@ -229,8 +229,7 @@ window.Quarto = {
 </header>
 
 
-<p><code>digiqual</code> is a Python library designed for Non-Destructive Evaluation (NDE) engineers. It provides a robust statistical framework for performing Model-Assisted Probability of Detection (MAPOD) studies and reliability assessments.</p>
-<p>The package is built to implement the Generalised <span class="math inline">\(\hat{a}\)</span>-versus-<span class="math inline">\(a\)</span> Method, allowing users to assess inspection reliability even when traditional assumptions (linearity, constant variance, Gaussian noise) are not met.</p>
+<p><code>digiqual</code> is a Python library designed for Non-Destructive Evaluation (NDE) engineers. It provides a robust statistical framework for performing Model-Assisted Probability of Detection (MAPOD) studies and reliability assessments. The package is built to implement the Generalised <span class="math inline">\(\hat{a}\)</span>-versus-<span class="math inline">\(a\)</span> Method, allowing users to assess inspection reliability even when traditional assumptions (linearity, constant variance, Gaussian noise) are not met.</p>
 <section id="core-features" class="level2">
 <h2 class="anchored" data-anchor-id="core-features">Core Features</h2>
 <section id="experimental-design" class="level3">
@@ -249,12 +248,12 @@ window.Quarto = {
 <li><strong>Sufficiency Diagnostics:</strong> rigorous statistical tests to flag issues like “Input Coverage Gaps” or “Model Instability” before you trust the results.</li>
 </ul>
 </section>
-<section id="adaptive-refinement-active-learning" class="level3">
-<h3 class="anchored" data-anchor-id="adaptive-refinement-active-learning">3. Adaptive Refinement (Active Learning)</h3>
-<p><code>digiqual</code> closes the loop between analysis and design. Instead of guessing where to run more simulations, use the <code>refine()</code> method to:</p>
+<section id="adaptive-refinement-automated-optimisation" class="level3">
+<h3 class="anchored" data-anchor-id="adaptive-refinement-automated-optimisation">3. Adaptive Refinement &amp; Automated Optimisation</h3>
+<p><code>digiqual</code> closes the loop between analysis and design.</p>
 <ul>
-<li><strong>Fill Gaps:</strong> Automatically detect and target empty regions in your input space.</li>
-<li><strong>Reduce Uncertainty:</strong> Use bootstrap committees to find regions of high model variance and suggest new points exactly where the model is “confused”.</li>
+<li><strong>Smart Refinement:</strong> Use <code>refine()</code> to identify specific weaknesses in your data. It uses bootstrap committees to find regions of high uncertainty and suggests new points exactly where the model is “confused”.</li>
+<li><strong>Automated Workflows:</strong> Use the <code>optimise()</code> method to run a fully automated “Active Learning” loop. It generates an initial design, executes your external solver, checks diagnostics, and iteratively refines the model until statistical requirements are met.</li>
 </ul>
 </section>
 <section id="generalized-reliability-analysis" class="level3">
