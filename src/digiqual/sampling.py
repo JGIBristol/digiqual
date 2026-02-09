@@ -25,6 +25,15 @@ def generate_lhs(
     Raises:
         ValueError: If required columns are missing, types are incorrect, or Min >= Max.
         TypeError: If `ranges` is not a Dictionary or DataFrame.
+
+    Example:
+        >>> ranges = {'Length': (0, 10), 'Angle': (0, 90)}
+        >>> df = generate_lhs(n=3, ranges=ranges, seed=42)
+        >>> print(df.round(2))
+            Length  Angle
+        0    3.75  85.54
+        1    9.51  13.56
+        2    7.32  54.17
     """
     # --- 1. NORMALIZE INPUT TO DATAFRAME ---
     if isinstance(ranges, dict):

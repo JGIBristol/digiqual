@@ -125,7 +125,17 @@ def generate_targeted_samples(
         n_new_per_fix (int): Number of samples to generate per detected issue.
 
     Returns:
-        pd.DataFrame: A dataframe of recommended new simulation parameters.
+        pd.DataFrame: New recommended samples.
+
+    Example:
+        >>> import pandas as pd
+        >>> df = pd.DataFrame({'Len': [0, 10], 'Sig': [1, 2]})
+        >>> # Gaps detected in 'Len' (0 to 10 is huge gap)
+        >>> new_pts = generate_targeted_samples(df, ['Len'], 'Sig', n_new_per_fix=2)
+        Diagnostics flagged issues. Initiating Active Learning...
+        -> Strategy: Exploration (Filling gaps in Len)
+        >>> print(len(new_pts))
+        2
     """
     # 1. SENSE: Run the diagnostics to get the status report
     report = sample_sufficiency(df, input_cols, outcome_col)
@@ -233,8 +243,27 @@ def run_adaptive_search(
     """
     Orchestrates the Active Learning loop on raw DataFrames.
 
+    Args:
+        command (str): Solver command template.
+        input_cols (List[str]): Input names.
+        outcome_col (str): Outcome name.
+        ranges (Dict): Input bounds.
+        existing_data (pd.DataFrame, optional): Start data.
+        n_start (int): Init batch size.
+        max_iter (int): Max loops.
+
     Returns:
-        pd.DataFrame: The final accumulated dataset (existing + new).
+        pd.DataFrame: Final dataset.
+
+    Example:
+        >>> cmd = "echo 'Len,Sig' > {output} && echo '1,2' >> {output}"
+        >>> ranges = {'Len': (0,10)}
+        >>> # Run 1 iteration of the loop
+        >>> df = run_adaptive_search(cmd, ['Len'], 'Sig', ranges, max_iter=1, n_start=5)
+        === STARTING ADAPTIVE OPTIMIZATION ===
+        ...
+        >>> print(len(df))
+        5
     """
     print("\n=== STARTING ADAPTIVE OPTIMIZATION ===")
 

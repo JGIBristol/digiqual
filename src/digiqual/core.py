@@ -1,7 +1,6 @@
 import pandas as pd
 from typing import List, Dict, Any, Tuple
 
-
 from .diagnostics import validate_simulation, sample_sufficiency, ValidationError
 from .adaptive import generate_targeted_samples, run_adaptive_search
 from .plotting import plot_signal_model, plot_pod_curve
@@ -18,7 +17,14 @@ class SimulationStudy:
         clean_data (pd.DataFrame): Data that has passed validation.
         sufficiency_results (pd.DataFrame): The latest diagnostic results.
         pod_results (Dict): Results from the latest PoD analysis.
-        plots (Dict): Stores the latest generated figures (keys: 'signal_model', 'pod_curve').
+        plots (Dict): Stores the latest generated figures.
+
+    Example:
+        >>> from digiqual.core import SimulationStudy
+        >>> study = SimulationStudy(
+        ...     input_cols=['Length', 'Angle'],
+        ...     outcome_col='Signal'
+        ... )
     """
 
     #### Initialisation ####
@@ -36,25 +42,31 @@ class SimulationStudy:
         self.removed_data: pd.DataFrame = pd.DataFrame()
         self.sufficiency_results: pd.DataFrame = pd.DataFrame()
         self.pod_results: Dict[str, Any] = {}
-
-        # NEW: A home for your figures
         self.plots: Dict[str, Any] = {}
 
     #### Adding Data ####
     def add_data(self, df: pd.DataFrame) -> None:
         """
-        Ingests raw simulation data, filtering for relevant columns only, and updates the internal data state.
+        Ingests raw simulation data, filtering for relevant columns only.
 
-        This method appends the provided DataFrame to `self.data`. Because this
-        changes the underlying dataset, all downstream results (clean_data,
-        sufficiency_results, pod_results, and plots) are reset.
+        This method automatically strips away any columns in `df` that were not
+        defined in `self.inputs` or `self.outcome` during initialization.
 
         Args:
-            df (pd.DataFrame): The DataFrame to ingest. It should contain
-                the columns specified in `self.inputs` and `self.outcome`.
+            df (pd.DataFrame): The DataFrame to ingest.
 
-        Returns:
-            None: Updates the internal `self.data` attribute in place.
+        Raises:
+            ValueError: If the new data is missing any required input or outcome columns.
+
+        Example:
+            >>> import pandas as pd
+            >>> df = pd.DataFrame({
+            ...     'Length': [1.0, 2.5, 5.0],
+            ...     'Angle': [0, 15, -10],
+            ...     'Signal': [0.5, 0.8, 1.2]
+            ... })
+            >>> study.add_data(df)
+            Data updated. Total rows: 3
         """
         required_cols = self.inputs + [self.outcome]
 
@@ -82,13 +94,15 @@ class SimulationStudy:
         """
         Cleans and validates the raw data stored in `self.data`.
 
-        This method filters the raw data based on project-specific rules. It
-        populates `self.clean_data` with valid rows and `self.removed_data`
-        with invalid ones.
+        Populates `self.clean_data` with valid rows and `self.removed_data`
+        with invalid ones (e.g., NaNs, negative signals, wrong types).
 
-        Side Effects:
-            Updates `self.clean_data` and `self.removed_data`.
-            Resets `self.clean_data` to empty if validation fails critically.
+        Example:
+            >>> study.validate()
+            Running validation...
+            Validation passed. 50 valid rows ready.
+            >>> print(len(study.clean_data))
+            50
         """
         print("Running validation...")
         try:
@@ -97,22 +111,28 @@ class SimulationStudy:
             self.removed_data = removed
             print(f"Validation passed. {len(clean)} valid rows ready.")
             if not removed.empty:
-                print(f"Warning: {len(removed)} invalid rows were dropped. See .removed_data for dropped rows")
+                print(f"Warning: {len(removed)} invalid rows were dropped. See .removed_data")
         except ValidationError as e:
             print(f"Validation FAILED: {e}")
             self.clean_data = pd.DataFrame()
 
-    #### Checking Sample Sufficiency of self.clean_data ####
+    #### Checking Sample Sufficiency ####
     def diagnose(self) -> pd.DataFrame:
         """
         Runs statistical diagnostics to evaluate if the current sample size is sufficient.
 
-        If `self.clean_data` is empty, this method will automatically attempt
-        to run `self.validate()` before proceeding.
+        Checks for Input Coverage (Gaps), Model Fit Stability, and Bootstrap Convergence.
 
         Returns:
-            pd.DataFrame: A summary of diagnostic metrics. Also updates
-                the internal `self.sufficiency_results` attribute.
+            pd.DataFrame: A summary of diagnostic metrics.
+
+        Example:
+            >>> report = study.diagnose()
+            >>> print(report[['Test', 'Pass']])
+                            Test   Pass
+            0        Input Coverage   True
+            1        Model Fit (CV)   True
+            2  Bootstrap Convergence  False
         """
         if self.clean_data.empty:
             if self.data.empty:
@@ -131,27 +151,32 @@ class SimulationStudy:
         )
         return self.sufficiency_results
 
-    #### Find new samples based on results in self.sufficiency_results and self.clean_data ####
+    #### Adaptive Refinement ####
     def refine(self, n_points: int = 10) -> pd.DataFrame:
         """
-        Identifies gaps in the design space and suggests new simulation points.
-
-        Uses an Active Learning approach based on `self.clean_data`. If no
-        clean data exists, it triggers `self.validate()`.
+        Identifies gaps or high-variance regions and suggests new simulation points.
 
         Args:
-            n_points (int): Number of new samples to suggest per failed region.
+            n_points (int): Number of new samples to suggest per detected issue.
 
         Returns:
-            pd.DataFrame: A table of suggested input coordinates for the next
-                iteration of simulations. Does not modify internal data.
+            pd.DataFrame: A DataFrame of recommended new input coordinates.
+
+        Example:
+            >>> # If diagnostics fail, ask for 10 new points to fix it
+            >>> new_samples = study.refine(n_points=10)
+            Diagnostics flagged issues. Initiating Active Learning...
+            -> Strategy: Exploration (Filling gaps in Length)
+            >>> print(new_samples.head())
+            Length  Angle      Refinement_Reason
+            0     3.2    5.0           Gap in Length
+            1     3.8   -2.0           Gap in Length
         """
         if self.clean_data.empty:
             print("No clean data available. Running validation...")
             self.validate()
 
             if self.clean_data.empty:
-                print("Cannot generate samples: No valid data found.")
                 return pd.DataFrame()
 
         new_samples = generate_targeted_samples(
@@ -163,7 +188,57 @@ class SimulationStudy:
 
         return new_samples
 
-    #### Perform Generalized PoD Analysis ####
+    #### Automated Optimisation ####
+    def optimise(
+        self,
+        command: str,
+        ranges: Dict[str, Tuple[float, float]],
+        n_start: int = 20,
+        n_step: int = 10,
+        max_iter: int = 5,
+        input_file: str = "sim_input.csv",
+        output_file: str = "sim_output.csv"
+    ) -> None:
+        """
+        Runs the automated Active Learning loop (Initialize -> Execute -> Diagnose -> Refine).
+
+        Args:
+            command (str): Solver command (e.g. "python solver.py {input} {output}").
+            ranges (Dict): Input bounds, e.g. {"Length": (0, 10)}.
+            n_start (int): Initial sample size (only if data is empty).
+            n_step (int): Batch size for refinement.
+            max_iter (int): Max refinement loops.
+            input_file (str): Temp input filename.
+            output_file (str): Temp output filename.
+
+        Example:
+            >>> ranges = {"Length": (0, 10), "Angle": (-45, 45)}
+            >>> cmd = "python my_solver.py {input} {output}"
+            >>> study.optimise(command=cmd, ranges=ranges, max_iter=3)
+            === STARTING ADAPTIVE OPTIMIZATION ===
+            --- Iteration 0: Generating Initial Design (20 points) ---
+            ...
+            >>> study.visualise()
+        """
+        # 1. Delegate to the Agnostic Engine
+        final_data = run_adaptive_search(
+            command=command,
+            input_cols=self.inputs,       # Pass List[str]
+            outcome_col=self.outcome,     # Pass str
+            ranges=ranges,
+            existing_data=self.data,      # Pass DataFrame (State)
+            n_start=n_start,
+            n_step=n_step,
+            max_iter=max_iter,
+            input_file=input_file,
+            output_file=output_file
+        )
+
+        # 2. Update Class State with the result
+        self.data = pd.DataFrame() # Clear old state to avoid duplication
+        self.add_data(final_data)
+
+    #### PoD Analysis ####
     def pod(
         self,
         poi_col: str,
@@ -172,22 +247,24 @@ class SimulationStudy:
         n_boot: int = 1000
     ) -> Dict[str, Any]:
         """
-        Runs the full 'Generalized â vs a' pipeline.
-
-        1. Fits Robust Mean Model (Polynomial Selection).
-        2. Fits Variance Model (Kernel Smoothing).
-        3. Infers Statistical Distribution (AIC Selection).
-        4. Calculates PoD Curve.
-        5. Calculates 95% Confidence Bounds (Bootstrap).
+        Runs the generalized Probability of Detection (PoD) analysis.
 
         Args:
-            poi_col (str): The 'Parameter of Interest' column name (e.g., 'Crack Length'). Must be one of the input columns.
-            threshold (float): The detection threshold (e.g., 4.0 dB).
-            bandwidth_ratio (float): Smoothing window size as a fraction of data range (Default 0.1).
-            n_boot (int): Number of bootstrap iterations for confidence bounds (Default 1000).
+            poi_col (str): The parameter of interest (e.g., 'Crack Length').
+            threshold (float): The failure threshold (e.g., 4.0 dB).
+            bandwidth_ratio (float): Smoothing bandwidth fraction (default 0.1).
+            n_boot (int): Bootstrap iterations for confidence bounds.
 
         Returns:
-            Dict: A dictionary containing all curves and models needed for plotting/reporting.
+            Dict: Dictionary containing models, curves, and fit statistics.
+
+        Example:
+            >>> results = study.pod(poi_col="Length", threshold=0.5)
+            --- Starting Reliability Analysis (PoI: Length) ---
+            1. Selecting Mean Model...
+            ...
+            >>> print(results['dist_info'])
+            ('norm', (0.05, 0.12))
         """
         # 0. Safety Checks
         if self.clean_data.empty:
@@ -259,36 +336,31 @@ class SimulationStudy:
     #### Visualise Results ####
     def visualise(self, show: bool = True, save_path: str = None) -> None:
         """
-        Generates, stores, and optionally displays standard diagnostic plots.
-
-        This method creates the 'Signal Model' (physics view) and 'PoD Curve'
-        (reliability view) figures based on the analysis in `self.pod_results`.
+        Generates and displays diagnostic plots (Signal Model and PoD Curve).
 
         Args:
-            show (bool): If True, displays the plots immediately. Default is True.
-            save_path (str, optional): If provided, saves the figures to this
-                base path (appending '_signal.png' and '_pod.png').
+            show (bool): If True, calls plt.show().
+            save_path (str, optional): If provided, saves figures to disk (e.g., 'results/run1'). Appends '_signal.png' and '_pod.png'.
 
-        Side Effects:
-            Updates `self.plots` with the generated figure objects.
-            Displays plots to the active output if `show=True`.
-            Writes files to disk if `save_path` is provided.
+        Example:
+            >>> # Display only
+            >>> study.visualise()
+
+            >>> # Save to files 'my_plots_signal.png' and 'my_plots_pod.png'
+            >>> study.visualise(show=False, save_path='my_plots')
         """
         if not self.pod_results:
             print("No PoD results found. Please run .pod() first.")
             return
 
         res = self.pod_results
-
         poi_label = res.get("poi_col", "Parameter of Interest")
 
-
-        # 0. Pre-calculate Local Std
         local_std = pod.predict_local_std(
             res["X"], res["residuals"], res["X_eval"], res["bandwidth"]
         )
 
-        # 1. Signal Model Plot (Physics View)
+        # 1. Signal Model Plot
         self.plots["signal_model"] = plot_signal_model(
             X=res["X"],
             y=res["y"],
@@ -299,7 +371,7 @@ class SimulationStudy:
             poi_name=poi_label
         )
 
-        # 2. PoD Curve Plot (Reliability View)
+        # 2. PoD Curve Plot
         self.plots["pod_curve"] = plot_pod_curve(
             X_eval=res["X_eval"],
             pod_curve=res["curves"]["pod"],
@@ -311,45 +383,14 @@ class SimulationStudy:
 
         # Handle Saving
         if save_path:
-            # We must get the .figure attribute from the axes to save
             self.plots["signal_model"].get_figure().savefig(f"{save_path}_signal.png")
             self.plots["pod_curve"].get_figure().savefig(f"{save_path}_pod.png")
             print(f"Plots saved to {save_path}_*.png")
 
         # Handle Display
         if show:
-            import matplotlib.pyplot as plt
-            plt.show()
-
-    def optimise(
-        self,
-        command: str,
-        ranges: Dict[str, Tuple[float, float]],
-        n_start: int = 20,
-        n_step: int = 10,
-        max_iter: int = 5,
-        input_file: str = "sim_input.csv",
-        output_file: str = "sim_output.csv"
-    ) -> None:
-        """
-        Runs the Active Learning loop.
-        Connects the Class state to the agnostic 'run_adaptive_search' function.
-        """
-        # 1. Delegate to the Agnostic Engine
-        final_data = run_adaptive_search(
-            command=command,
-            input_cols=self.inputs,       # Pass List[str]
-            outcome_col=self.outcome,     # Pass str
-            ranges=ranges,
-            existing_data=self.data,      # Pass DataFrame (State)
-            n_start=n_start,
-            n_step=n_step,
-            max_iter=max_iter,
-            input_file=input_file,
-            output_file=output_file
-        )
-
-        # 2. Update Class State with the result
-
-        self.data = pd.DataFrame() # Clear old state to avoid duplication
-        self.add_data(final_data)
+            try:
+                import matplotlib.pyplot as plt
+                plt.show()
+            except ImportError:
+                pass
