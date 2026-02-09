@@ -241,7 +241,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="define-a-mock-solver" class="level3">
 <h3 class="anchored" data-anchor-id="define-a-mock-solver">1. Define a “Mock” Solver</h3>
 <p>For this tutorial, we will use a Python one-liner as our “solver”. In real life, this would be your <code>matlab</code>, <code>ansys</code>, or <code>abaqus</code> command.</p>
-<div id="82c596d8" class="cell" data-execution_count="1">
+<div id="856bd32c" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># A simple physics model: Signal = Length * 2 + Noise</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># We use python -c to run this as if it were an external CLI tool.</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>SOLVER_CMD <span class="op">=</span> (</span>
@@ -256,7 +256,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="configure-the-study" class="level3">
 <h3 class="anchored" data-anchor-id="configure-the-study">2. Configure the Study</h3>
 <p>We define our input variables and the tange we want to explore.</p>
-<div id="cb6862f7" class="cell" data-execution_count="2">
+<div id="6e217f05" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.core <span class="im">import</span> SimulationStudy</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define inputs ranges</span></span>
@@ -275,7 +275,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><p>Checks diagnostics.</p></li>
 <li><p>If needed, generates 5 new points and repeats (up to 3 times).</p></li>
 </ol>
-<div id="de3ac36b" class="cell" data-execution_count="3">
+<div id="2ed2f490" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.optimise(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    command<span class="op">=</span>SOLVER_CMD,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    ranges<span class="op">=</span>ranges,</span>
@@ -318,22 +318,22 @@ Data updated. Total rows: 45</code></pre>
 <section id="view-results" class="level3">
 <h3 class="anchored" data-anchor-id="view-results">4. View Results</h3>
 <p>Once the loop finishes, <code>study.data</code> contains all the valid simulation results.</p>
-<div id="f215a4a2" class="cell" data-execution_count="4">
+<div id="e12334df" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total Simulations Run: </span><span class="sc">{</span><span class="bu">len</span>(study.data)<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>_ <span class="op">=</span> study.pod(poi_col<span class="op">=</span><span class="st">"Length"</span>, threshold<span class="op">=</span><span class="dv">10</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>study.visualise()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Total Simulations Run: 45
 Running validation...
-Validation passed. 39 valid rows ready.
-Warning: 6 invalid rows were dropped. See .removed_data
+Validation passed. 43 valid rows ready.
+Warning: 2 invalid rows were dropped. See .removed_data
 --- Starting Reliability Analysis (PoI: Length) ---
 1. Selecting Mean Model (Cross-Validation)...
    -&gt; Selected Polynomial Degree: 1
 2. Fitting Variance Model (Kernel Smoothing)...
-   -&gt; Smoothing Bandwidth: 0.4783
+   -&gt; Smoothing Bandwidth: 0.4248
 3. Inferring Error Distribution (AIC)...
-   -&gt; Selected Distribution: gumbel_r
+   -&gt; Selected Distribution: norm
 4. Computing PoD Curve...
 5. Running Bootstrap (1000 iterations)...
 --- Analysis Complete ---</code></pre>
@@ -341,14 +341,14 @@ Warning: 6 invalid rows were dropped. See .removed_data
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="optimisation_files/figure-html/cell-5-output-2.png" width="659" height="523" class="figure-img"></p>
+<p><img src="optimisation_files/figure-html/cell-5-output-2.png" width="660" height="523" class="figure-img"></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="optimisation_files/figure-html/cell-5-output-3.png" width="663" height="523" class="figure-img"></p>
+<p><img src="optimisation_files/figure-html/cell-5-output-3.png" width="664" height="523" class="figure-img"></p>
 </figure>
 </div>
 </div>
