@@ -10,10 +10,12 @@ Instead of writing `for` loops yourself, you define the problem and let `digiqua
 For this tutorial, we will use a Python one-liner as our "solver". In real life, this would be your `matlab`, `ansys`, or `abaqus` command.
 
 ```{python}
+import sys
+
 # A simple physics model: Signal = Length * 2 + Noise
 # We use python -c to run this as if it were an external CLI tool.
 SOLVER_CMD = (
-    "python -c "
+    f"{sys.executable} -c "
     "'import pandas as pd, numpy as np; "
     'df=pd.read_csv("{input}"); '
     'df["Signal"] = df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); '
@@ -52,8 +54,8 @@ study.optimise(
     command=SOLVER_CMD,
     ranges=ranges,
     n_start=15,  # Initial batch size
-    n_step=10,  # Refinement batch size
-    max_iter=3,  # Safety limit
+    n_step=5,  # Refinement batch size
+    max_iter=5,  # Safety limit
 )
 ```
 
@@ -63,6 +65,6 @@ Once the loop finishes, `study.data` contains all the valid simulation results.
 
 ```{python}
 print(f"Total Simulations Run: {len(study.data)}")
-_ = study.pod(poi_col="Length", threshold=10)
+_ = study.pod(poi_col="Length", threshold=4)
 study.visualise()
 ```
