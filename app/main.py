@@ -90,6 +90,9 @@ def main(page: ft.Page):
                 else:
                     ranges[entry["name"].value] = (v_min, v_max)
 
+        if len(ranges)==0:
+            has_error = True
+
         if has_error:
             print("Validation Failed - See Errors in Application")
         else:
