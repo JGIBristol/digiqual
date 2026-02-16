@@ -1,7 +1,8 @@
 from shiny import App, ui, render, reactive
-from faicons import icon_svg  # <--- NEW IMPORT
+from faicons import icon_svg
 import pandas as pd
 from digiqual.sampling import generate_lhs
+from digiqual import SimulationStudy
 import shinyswatch
 
 # UI Definition
@@ -91,24 +92,23 @@ app_ui = ui.page_navbar(
             ui.sidebar(
                 ui.input_file("upload_csv", "Upload CSV file", accept=[".csv"], multiple=False),
                 ui.hr(),
-                # -- NEW COLUMN SELECTORS --
+                # -- COLUMN SELECTORS --
                 ui.input_selectize("input_cols", "Select Input Variables", choices=[], multiple=True),
                 ui.input_selectize("outcome_col", "Select Outcome Variable", choices=[], multiple=False),
                 ui.hr(),
-                # --------------------------
+                # -- STATUS INDICATOR --
                 ui.output_ui("validation_status"),
-                ui.output_ui("download_corrected_ui", class_="mt-3")
             ),
             ui.card(
                 ui.card_header("Uploaded Data Preview"),
-                ui.output_data_frame("preview_uploaded"),
-                height="300px"
+                ui.output_data_frame("preview_uploaded")
             ),
             ui.card(
                 ui.card_header("Validation Report"),
-                ui.output_text_verbatim("validation_results"),
-                class_="font-monospace"
+                ui.output_data_frame("validation_results_table"),
             ),
+
+            ui.output_ui("remediation_ui")
         ),
         icon=icon_svg("check-double")
     ),
@@ -227,7 +227,7 @@ def server(input, output, session):
         except Exception as e:
             ui.notification_show(f"Generation Error: {str(e)}", type="error")
 
-    @output
+
     @render.ui
     def download_btn_container():
         if final_generated_df() is None:
@@ -245,11 +245,13 @@ def server(input, output, session):
     def on_param_change():
         final_generated_df.set(None)
 
-    # ==================== TAB 2: DATA VALIDATOR ====================
+# ==================== TAB 2: DATA VALIDATOR ====================
 
     uploaded_data = reactive.value(None)
-    validation_passed = reactive.value(True)
-    corrected_data = reactive.value(None)
+    validation_passed = reactive.value(False)
+    new_samples = reactive.value(None)
+
+    diagnostic_table = reactive.value(None)
 
     @reactive.effect
     def _():
@@ -257,7 +259,6 @@ def server(input, output, session):
         if file_info is None:
             uploaded_data.set(None)
             return
-
         try:
             df = pd.read_csv(file_info[0]["datapath"])
             uploaded_data.set(df)
@@ -265,103 +266,159 @@ def server(input, output, session):
             uploaded_data.set(None)
 
     @reactive.effect
-    def _():
-        """
-        Update column selectors when data is uploaded.
-        """
+    def update_column_selectors():
         df = uploaded_data()
         if df is None:
-            # Reset if no data
             ui.update_selectize("input_cols", choices=[])
             ui.update_selectize("outcome_col", choices=[])
             return
 
         cols = list(df.columns)
+        ui.update_selectize("input_cols", choices=cols, selected=cols[:-1] if len(cols) > 1 else cols)
+        ui.update_selectize("outcome_col", choices=cols, selected=cols[-1] if len(cols) > 0 else None)
 
-        # Smart defaults: Try to guess outcome if last column, otherwise empty
-        # Update Input Columns (Default: All except last)
-        ui.update_selectize(
-            "input_cols",
-            choices=cols,
-            selected=cols[:-1] if len(cols) > 1 else cols
-        )
+    @reactive.effect
+    @reactive.event(uploaded_data, input.input_cols, input.outcome_col)
+    def run_validation_diagnostics():
+        df = uploaded_data()
+        # Reset previous new samples if we change data/cols
+        new_samples.set(None)
 
-        # Update Outcome Column (Default: Last column)
-        ui.update_selectize(
-            "outcome_col",
-            choices=cols,
-            selected=cols[-1] if len(cols) > 0 else None
-        )
-
-        has_missing = df.isnull().any().any()
-        has_duplicates = df.duplicated().any()
-
-        if has_missing or has_duplicates:
+        if df is None or not input.input_cols() or not input.outcome_col():
             validation_passed.set(False)
-            corrected_df = df.copy().fillna(0).drop_duplicates()
-            corrected_data.set(corrected_df)
-        else:
-            validation_passed.set(True)
-            corrected_data.set(None)
+            diagnostic_table.set(None)
+            return
 
-    @output
+        # 1. Initialize Study
+        study = SimulationStudy(
+            input_cols=list(input.input_cols()),
+            outcome_col=input.outcome_col()
+        )
+        study.add_data(df)
+
+        # 2. Run Diagnostics
+        diag_df = study.diagnose()
+        if diag_df is None:
+            return
+
+        diagnostic_table.set(diag_df)
+
+        # 3. Check "Pass" column
+        try:
+            all_passed = diag_df["Pass"].astype(bool).all()
+            validation_passed.set(all_passed)
+        except KeyError:
+            validation_passed.set(False)
+
+    # --- OUTPUTS ---
+
     @render.data_frame
     def preview_uploaded():
         df = uploaded_data()
         if df is not None:
-            return render.DataGrid(df.head(20))
+            return render.DataGrid(df.round(3).head(5))
         return render.DataGrid(pd.DataFrame())
 
-    @output
     @render.ui
     def validation_status():
-        df = uploaded_data()
-        if df is None:
+        if uploaded_data() is None:
             return ui.div(ui.p("Upload a CSV to begin.", class_="text-muted fst-italic"))
 
         if validation_passed():
             return ui.div(
-                ui.h5(icon_svg("circle-check"), " Validation Passed", class_="text-success"), # <--- CHANGED
+                ui.h5(icon_svg("circle-check"), " Validation Passed"),
                 class_="alert alert-success mt-3"
             )
         else:
             return ui.div(
-                ui.h5(icon_svg("triangle-exclamation"), " Issues Detected", class_="text-danger"), # <--- CHANGED
-                ui.p("Missing values or duplicates found.", class_="small mb-0"),
+                ui.h5(icon_svg("triangle-exclamation"), " Issues Detected"),
+                ui.p("Coverage gaps found. See options below.", class_="small mb-0"),
                 class_="alert alert-danger mt-3"
             )
 
-    @output
-    @render.text
-    def validation_results():
+    @render.data_frame
+    def validation_results_table():
+        df = diagnostic_table()
+        if df is not None:
+            return render.DataGrid(df)
+        return None
+
+    # --- REMEDIATION SECTION ---
+
+    @render.ui
+    def remediation_ui():
+        """
+        Only appears if validation failed.
+        """
+        if validation_passed() or uploaded_data() is None:
+            return ui.div()
+
+        return ui.card(
+            ui.card_header("Remediation: Generate New Samples"),
+            ui.p("Your data has issues. Use the Refine tool to generate new samples specifically in the empty spaces."),
+
+            ui.layout_columns(
+                ui.input_numeric("n_new_samples", "Count", value=10, min=1),
+                ui.input_task_button("btn_refine", "Generate New Samples", icon=icon_svg("wand-magic-sparkles"), class_="btn-warning"),
+            ),
+            ui.output_ui("download_new_samples_ui"),
+            class_="border-warning mt-3"
+        )
+
+    @reactive.effect
+    @reactive.event(input.btn_refine)
+    def compute_new_samples():
+        """
+        Calls study.refine() to create NEW SAMPLES.
+        """
         df = uploaded_data()
         if df is None:
-            return "Waiting for file..."
+            return
 
-        results = []
-        results.append(f"Dimensions: {df.shape[0]} rows × {df.shape[1]} cols")
-        results.append("-" * 20)
-        results.append(f"Missing Values:  {df.isnull().sum().sum()}")
-        results.append(f"Duplicate Rows:  {df.duplicated().sum()}")
-        return "\n".join(results)
+        study = SimulationStudy(
+            input_cols=list(input.input_cols()),
+            outcome_col=input.outcome_col()
+        )
+        study.add_data(df)
 
-    @output
+        try:
+            # Generate the new samples
+            generated_df = study.refine(n_points=input.n_new_samples())
+
+            # Save to our renamed reactive value
+            new_samples.set(generated_df)
+
+            ui.notification_show(f"Success! Generated {len(generated_df)} new samples.", type="message")
+
+        except Exception as e:
+            ui.notification_show(f"Refinement Failed: {str(e)}", type="error")
+
     @render.ui
-    def download_corrected_ui():
-        if not validation_passed() and corrected_data() is not None:
-            return ui.download_button("download_corrected", "Download Corrected CSV", class_="btn-danger w-100", icon=icon_svg("file-csv")) # <--- CHANGED
+    def download_new_samples_ui():
+        if new_samples() is not None:
+            return ui.div(
+                ui.hr(),
+                ui.br(),
+                ui.download_button("download_new_samples_csv", "Download New Samples CSV", class_="btn-success w-100")
+            )
         return ui.div()
 
-    @render.download(filename="corrected_data.csv")
-    def download_corrected():
-        df = corrected_data()
+    @render.data_frame
+    def preview_new_samples():
+        df = new_samples()
+        if df is not None:
+            return render.DataGrid(df.round(3))
+        return None
+
+    @render.download(filename="new_samples.csv")
+    def download_new_samples_csv():
+        df = new_samples()
         if df is not None:
             yield df.to_csv(index=False)
 
 
-    # ==================== TAB 3: DATA ANALYZER ====================
+# ==================== TAB 3: DATA ANALYZER ====================
 
-    @output
     @render.ui
     def analysis_output():
         df = uploaded_data()
@@ -375,31 +432,29 @@ def server(input, output, session):
                 )
             )
 
-        analysis_df = corrected_data() if not validation_passed() else df
+        # FIXED: Removed reference to 'corrected_data()'
+        analysis_df = df
+
         numeric_cols = analysis_df.select_dtypes(include=['number']).columns
 
         if len(numeric_cols) == 0:
             return ui.p("No numeric columns found in the uploaded data.")
 
-        # Calculate summary statistics
-        summary_df = analysis_df[numeric_cols].describe().reset_index()
-        summary_df = summary_df.rename(columns={"index": "Statistic"})
-
         return ui.div(
             ui.h4("Summary Statistics", class_="mb-3"),
             ui.p(f"Analyzing {len(analysis_df)} rows and {len(numeric_cols)} numeric columns."),
-            # Render the summary table as a nice DataGrid
             ui.output_data_frame("summary_grid"),
         )
 
-    @output
     @render.data_frame
     def summary_grid():
         df = uploaded_data()
         if df is None:
             return None
 
-        analysis_df = corrected_data() if not validation_passed() else df
+        # FIXED: Removed reference to 'corrected_data()'
+        analysis_df = df
+
         numeric_cols = analysis_df.select_dtypes(include=['number']).columns
 
         if len(numeric_cols) == 0:
