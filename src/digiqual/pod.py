@@ -336,3 +336,24 @@ def bootstrap_pod_ci(
         pod_matrix[i, :] = pod_curve
 
     return np.percentile(pod_matrix, 2.5, axis=0), np.percentile(pod_matrix, 97.5, axis=0)
+
+
+def calculate_reliability_point(
+    X_eval: np.ndarray,
+    ci_lower: np.ndarray,
+    target_pod: float = 0.90
+) -> float:
+    """
+    Calculates the defect size (a90/95) where the Lower Confidence Bound
+    crosses the target reliability threshold (usually 0.90).
+
+    Returns:
+        float: The interpolated x-value, or np.nan if not reached.
+    """
+    # Check if the curve actually reaches the target
+    if np.max(ci_lower) < target_pod:
+        return np.nan
+
+    # Interpolate to find exact crossing point
+    # We swap args because we are solving for X given Y=0.90
+    return float(np.interp(target_pod, ci_lower, X_eval))

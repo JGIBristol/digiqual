@@ -1,6 +1,7 @@
 from shiny import App, ui, render, reactive
 from faicons import icon_svg
 import pandas as pd
+import numpy as np
 from digiqual.sampling import generate_lhs
 from digiqual import SimulationStudy
 import shinyswatch
@@ -419,51 +420,212 @@ def server(input, output, session):
 
 # ==================== TAB 3: DATA ANALYZER ====================
 
+    # --- SHARED CALCULATOR ---
+    @reactive.calc
+    def current_study():
+        """
+        Creates the study object for analysis.
+        Allows access even if validation failed, provided data exists.
+        """
+        if uploaded_data() is None:
+            return None
+
+        # Initialize study with current UI selections
+        study = SimulationStudy(
+            input_cols=list(input.input_cols()),
+            outcome_col=input.outcome_col()
+        )
+        study.add_data(uploaded_data())
+        return study
+
+    # --- REACTIVE VALUES ---
+    # Store scalar results for the table (e.g., a90/95, bandwidth)
+    pod_metrics = reactive.value(None)
+    # Store the full curve data for downloading
+    pod_export_data = reactive.value(None)
+    # Trigger to refresh plots when analysis runs
+    plot_trigger = reactive.value(0)
+
+
+    # --- MAIN UI ---
     @render.ui
     def analysis_output():
-        df = uploaded_data()
-
-        if df is None:
+        """
+        Renders the Analysis UI with conditional warnings.
+        """
+        # 1. Hard Lock: No Data
+        if uploaded_data() is None:
             return ui.div(
                 ui.div(
                     ui.h4("No Data Available", class_="text-muted"),
-                    ui.p("Please upload valid data in the Validator tab first."),
+                    ui.p("Please upload data in the 'Simulation Diagnostics' tab to begin."),
                     class_="text-center p-5 bg-light border rounded"
                 )
             )
 
-        # FIXED: Removed reference to 'corrected_data()'
-        analysis_df = df
+        # 2. Build UI Elements
+        ui_elements = []
 
-        numeric_cols = analysis_df.select_dtypes(include=['number']).columns
+        # -- Conditional Warning Banner --
+        if not validation_passed():
+            ui_elements.append(
+                ui.div(
+                    ui.h5(icon_svg("triangle-exclamation"), " Caution: Validation Issues Detected"),
+                    ui.p("The diagnostic tests found potential issues (e.g., coverage gaps). Results may be unreliable."),
+                    class_="alert alert-warning"
+                )
+            )
 
-        if len(numeric_cols) == 0:
-            return ui.p("No numeric columns found in the uploaded data.")
-
-        return ui.div(
-            ui.h4("Summary Statistics", class_="mb-3"),
-            ui.p(f"Analyzing {len(analysis_df)} rows and {len(numeric_cols)} numeric columns."),
-            ui.output_data_frame("summary_grid"),
+        # -- Input Controls --
+        inputs = list(input.input_cols())
+        ui_elements.append(
+            ui.card(
+                ui.card_header("Probability of Detection (PoD) Settings"),
+                ui.layout_columns(
+                    ui.input_select("pod_param", "Parameter of Interest", choices=inputs),
+                    ui.input_numeric("pod_threshold", "Threshold Value", value=5.0),
+                    ui.div(
+                        ui.input_task_button("btn_run_pod", "Run Analysis", class_="btn-primary w-100", icon=icon_svg("chart-line")),
+                        class_="pt-4"
+                    )
+                ),
+            )
         )
 
+        # -- Results Container --
+        ui_elements.append(ui.br())
+        ui_elements.append(ui.output_ui("pod_results_container"))
+
+        return ui.div(*ui_elements)
+
+
+    # --- ANALYSIS LOGIC ---
+    @reactive.effect
+    @reactive.event(input.btn_run_pod)
+    def compute_pod_analysis():
+        """
+        Runs .pod(), calculates a90/95, and triggers plotting.
+        """
+        study = current_study()
+        if study is None:
+            return
+
+        try:
+            # 1. Run the Analysis (Generates models and curves)
+            results = study.pod(
+                poi_col=input.pod_param(),
+                threshold=input.pod_threshold()
+            )
+
+            # 2. Calculate a90/95 (Interpolate)
+            val = results["a90_95"]
+            a9095_str = f"{val:.3f}" if not np.isnan(val) else "Not Reached"
+
+
+
+            # 3. Create Metrics Dictionary for the UI
+            metrics = {
+                "Parameter of Interest": results["poi_col"],
+                "Threshold": results["threshold"],
+                "a90/95": a9095_str,
+                "Model Degree": results["mean_model"].best_degree_,
+                "Smoothing Bandwidth": f"{results['bandwidth']:.4f}",
+            }
+            pod_metrics.set(metrics)
+
+            # 4. Prepare Data for Download
+            export_df = pd.DataFrame({
+                "x_defect_size": results["X_eval"],
+                "pod_mean": results["curves"]["pod"],
+                "ci_lower": results["curves"]["ci_lower"],
+                "ci_upper": results["curves"]["ci_upper"]
+            })
+            pod_export_data.set(export_df)
+
+            # 5. Generate Plots (Visualise draws them internally)
+            study.visualise(show=False)
+            plot_trigger.set(plot_trigger() + 1)
+
+        except Exception as e:
+            ui.notification_show(f"Analysis Failed: {str(e)}", type="error")
+
+
+    # --- RESULTS DISPLAY ---
+    @render.ui
+    def pod_results_container():
+        """
+        Renders the side-by-side plots and the metrics table.
+        """
+        if pod_metrics() is None:
+            return ui.div()
+
+        return ui.div(
+            # Row 1: Plots
+            ui.layout_columns(
+                ui.card(
+                    ui.card_header("Signal Model Fit"),
+                    ui.output_plot("plot_signal"),
+                    full_screen=True
+                ),
+                ui.card(
+                    ui.card_header("PoD Curve (95% CI)"),
+                    ui.output_plot("plot_curve"),
+                    full_screen=True
+                ),
+                col_widths=[6, 6]
+            ),
+            # Row 2: Table and Download Actions
+            ui.layout_columns(
+                ui.card(
+                    ui.card_header("Key Reliability Metrics"),
+                    ui.output_data_frame("pod_stats_table")
+                ),
+                ui.card(
+                    ui.card_header("Actions"),
+                    ui.div(
+                        ui.h5("Export Results"),
+                        ui.p("Download the full curve data (PoD, CI) for external reporting."),
+                        ui.download_button("download_pod_results", "Download Results CSV", class_="btn-success w-100")
+                    ),
+                    class_="d-flex align-items-center justify-content-center text-center h-100"
+                ),
+                col_widths=[8, 4]
+            )
+        )
+
+    @render.plot
+    def plot_signal():
+        _ = plot_trigger() # Dependency on button click
+        study = current_study()
+        if study and "signal_model" in study.plots:
+            return study.plots["signal_model"].get_figure()
+        return None
+
+    @render.plot
+    def plot_curve():
+        _ = plot_trigger() # Dependency on button click
+        study = current_study()
+        if study and "pod_curve" in study.plots:
+            return study.plots["pod_curve"].get_figure()
+        return None
+
     @render.data_frame
-    def summary_grid():
-        df = uploaded_data()
-        if df is None:
+    def pod_stats_table():
+        data = pod_metrics()
+        if data is None:
             return None
+        # Convert dictionary to DataFrame for display
+        df = pd.DataFrame(list(data.items()), columns=["Metric", "Value"])
+        return render.DataGrid(df, width="100%", filters=False)
 
-        # FIXED: Removed reference to 'corrected_data()'
-        analysis_df = df
-
-        numeric_cols = analysis_df.select_dtypes(include=['number']).columns
-
-        if len(numeric_cols) == 0:
-            return None
-
-        val = analysis_df[numeric_cols].describe().reset_index()
-        val = val.rename(columns={"index": "Statistic"})
-
-        return render.DataGrid(val.round(4), width="100%", filters=False)
+    @render.download(filename="pod_results.csv")
+    def download_pod_results():
+        """
+        Downloads the curve data.
+        """
+        df = pod_export_data()
+        if df is not None:
+            yield df.to_csv(index=False)
 
 # Create the app object
 app = App(app_ui, server)

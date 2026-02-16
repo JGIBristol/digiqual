@@ -128,21 +128,19 @@ def plot_pod_curve(
         )
         ax.plot(X_eval, ci_lower, color='orange', linestyle='--', linewidth=1)
 
-    # 3. Mark the a90/95 point (The "Qualifiable Size")
+    # 3. Mark the a90/95 point (UPDATED FOR PRECISION)
     if ci_lower is not None:
-        try:
-            # Find index where lower bound exceeds target (90%)
-            idx = np.where(ci_lower >= target_pod)[0][0]
-            a90_95 = X_eval[idx]
+        # Check if we actually reach the target reliability
+        if np.max(ci_lower) >= target_pod:
+            # INTERPOLATION: Finds the exact X where Y == target_pod
+            # This matches the logic used in the app.py table
+            a90_95 = np.interp(target_pod, ci_lower, X_eval)
 
             # Draw the marker lines
-            label_text = f"a90/95 = {a90_95:.2f}"
+            label_text = f"a90/95 = {a90_95:.3f}"
             ax.axvline(a90_95, color='green', linestyle='-.', label=label_text)
             ax.axhline(target_pod, color='green', linestyle=':', alpha=0.5)
             ax.scatter([a90_95], [target_pod], color='green', zorder=5)
-
-        except IndexError:
-            pass # Curve never reached target
 
     # Formatting
     ax.set_ylim(0, 1.05)

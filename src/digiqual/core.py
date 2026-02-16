@@ -339,10 +339,15 @@ class SimulationStudy:
             n_boot=n_boot
         )
 
-        # 7. Package Results
+        # 7.
+        a90_95 = pod.calculate_reliability_point(X_eval, lower_ci, target_pod=0.90)
+        print(f"   -> a90/95 Reliability Index: {a90_95:.3f}")
+
+        # 8. Package Results
         self.pod_results = {
             "poi_col": poi_col,
             "threshold": threshold,
+            "a90_95": a90_95,
             "X": X,
             "y": y,
             "X_eval": X_eval,
