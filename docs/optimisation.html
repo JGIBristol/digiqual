@@ -241,7 +241,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="define-a-mock-solver" class="level3">
 <h3 class="anchored" data-anchor-id="define-a-mock-solver">1. Define a “Mock” Solver</h3>
 <p>For this tutorial, we will use a Python one-liner as our “solver”. In real life, this would be your <code>matlab</code>, <code>ansys</code>, or <code>abaqus</code> command.</p>
-<div id="ed87a291" class="cell" data-execution_count="1">
+<div id="1aee0c26" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># A simple physics model: Signal = 5 + Length * 2 + Noise</span></span>
@@ -258,7 +258,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="configure-the-study" class="level3">
 <h3 class="anchored" data-anchor-id="configure-the-study">2. Configure the Study</h3>
 <p>We define our input variables and the tange we want to explore.</p>
-<div id="e4d4e965" class="cell" data-execution_count="2">
+<div id="70ad3bc9" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.core <span class="im">import</span> SimulationStudy</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define inputs ranges</span></span>
@@ -277,7 +277,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><p>Checks diagnostics.</p></li>
 <li><p>If needed, generates 20 new points and repeats (up to 5 times).</p></li>
 </ol>
-<div id="b44f98e8" class="cell" data-execution_count="3">
+<div id="ef517149" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.optimise(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    command<span class="op">=</span>SOLVER_CMD,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    ranges<span class="op">=</span>ranges,</span>
@@ -289,42 +289,42 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre><code>
 === STARTING ADAPTIVE OPTIMIZATION ===
 --- Iteration 0: Generating Initial Design (20 points) ---
-   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5+ df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
+   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5+ df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
 
 --- Iteration 1: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 1 (20 points) ---
-   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5+ df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
+   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5+ df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
 
 --- Iteration 2: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 2 (20 points) ---
-   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5+ df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
+   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5+ df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
 
 --- Iteration 3: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 3 (20 points) ---
-   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5+ df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
+   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5+ df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
 
 --- Iteration 4: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 4 (20 points) ---
-   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5+ df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
+   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5+ df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
 
 --- Iteration 5: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 5 (20 points) ---
-   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5+ df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
+   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5+ df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
 
 &gt;&gt;&gt; WARNING: Max iterations (5) reached. &lt;&lt;&lt;
 Data updated. Total rows: 120</code></pre>
@@ -334,7 +334,7 @@ Data updated. Total rows: 120</code></pre>
 <section id="view-results" class="level3">
 <h3 class="anchored" data-anchor-id="view-results">4. View Results</h3>
 <p>Once the loop finishes, <code>study.data</code> contains all the valid simulation results.</p>
-<div id="00cd5800" class="cell" data-execution_count="4">
+<div id="4e64bf2e" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total Simulations Run: </span><span class="sc">{</span><span class="bu">len</span>(study.data)<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>_ <span class="op">=</span> study.pod(poi_col<span class="op">=</span><span class="st">"Length"</span>, threshold<span class="op">=</span><span class="dv">8</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>study.visualise()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -346,11 +346,12 @@ Validation passed. 120 valid rows ready.
 1. Selecting Mean Model (Cross-Validation)...
    -&gt; Selected Polynomial Degree: 1
 2. Fitting Variance Model (Kernel Smoothing)...
-   -&gt; Smoothing Bandwidth: 0.4740
+   -&gt; Smoothing Bandwidth: 0.4988
 3. Inferring Error Distribution (AIC)...
    -&gt; Selected Distribution: norm
 4. Computing PoD Curve...
 5. Running Bootstrap (1000 iterations)...
+   -&gt; a90/95 Reliability Index: 2.043
 --- Analysis Complete ---</code></pre>
 </div>
 <div class="cell-output cell-output-display">
