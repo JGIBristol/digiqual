@@ -12,13 +12,13 @@ For this tutorial, we will use a Python one-liner as our "solver". In real life,
 ```{python}
 import sys
 
-# A simple physics model: Signal = Length * 2 + Noise
+# A simple physics model: Signal = 5 + Length * 2 + Noise
 # We use python -c to run this as if it were an external CLI tool.
 SOLVER_CMD = (
     f"{sys.executable} -c "
     "'import pandas as pd, numpy as np; "
     'df=pd.read_csv("{input}"); '
-    'df["Signal"] = df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); '
+    'df["Signal"] = 5+ df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); '
     'df.to_csv("{output}", index=False)\''
 )
 ```
@@ -41,20 +41,20 @@ study = SimulationStudy(input_cols=["Length", "Angle"], outcome_col="Signal")
 
 This single command handles everything:
 
-1. Generates 10 initial LHS points (because study.data is empty).
+1. Generates 20 initial LHS points (because study.data is empty).
 
 2. Runs the solver.
 
 3. Checks diagnostics.
 
-4. If needed, generates 5 new points and repeats (up to 3 times).
+4. If needed, generates 20 new points and repeats (up to 5 times).
 
 ```{python}
 study.optimise(
     command=SOLVER_CMD,
     ranges=ranges,
-    n_start=15,  # Initial batch size
-    n_step=5,  # Refinement batch size
+    n_start=20,  # Initial batch size
+    n_step=20,  # Refinement batch size
     max_iter=5,  # Safety limit
 )
 ```
@@ -65,6 +65,6 @@ Once the loop finishes, `study.data` contains all the valid simulation results.
 
 ```{python}
 print(f"Total Simulations Run: {len(study.data)}")
-_ = study.pod(poi_col="Length", threshold=4)
+_ = study.pod(poi_col="Length", threshold=8)
 study.visualise()
 ```

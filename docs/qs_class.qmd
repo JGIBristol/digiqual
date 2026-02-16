@@ -77,7 +77,7 @@ study.diagnose()
 
 ### 3. Adaptive Refinement (The Fix)
 
-Instead of manually guessing where to add points, we use refine(). The study manager automatically detects the gap and generates targeted samples to fill it.
+Instead of manually guessing where to add points, we use refine(). The study manager automatically detects the gap and generates targeted samples to fill it. In this example, we run the `apply_physics()` function, but in reality, users should feed the new samples dataframe into their simulation engine to calculate the outcome variable. Users can then add those results into the SimulationStudy class using the `add_data()` method.
 
 
 ```{python}
