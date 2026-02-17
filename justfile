@@ -13,9 +13,13 @@ sync:
 test:
     uv run pytest
 
+# Launches the app locally from the package source
+app:
+    uv run python -c "import digiqual; digiqual.dq_ui()"
+
 # --- BUILD ---
 # Cleans old artifacts then creates .whl and .tar.gz files
-build: clean
+build_package: clean
     # 1. Create the package storage folder
     mkdir -p package
     # 2. Run the standard uv build
@@ -27,11 +31,13 @@ build: clean
     # 4. Clean up the now-empty root dist folder so PyInstaller has a fresh start
     rm -rf dist
 
-app:
+# Cleans old artifacts then creates .app file
+build_app: clean
     uv run --extra dev pyinstaller --name "Digiqual" \
     --noconfirm \
     --windowed \
     --paths="src" \
+    --collect-all digiqual \
     --collect-all shiny \
     --collect-all faicons \
     --collect-all shinyswatch \
@@ -70,6 +76,7 @@ bump part="patch":
     python3 scripts/bump_version.py {{part}}
     uv lock
     @echo "Version updated locally. Now commit and push to main."
+
 
 # --- UTILS ---
 

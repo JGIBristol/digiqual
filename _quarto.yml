@@ -73,7 +73,13 @@ quartodoc:
         - name: core.SimulationStudy
           children: separate
 
-    # SECTION B: THE POWER USER
+    # SECTION B: THE DESKTOP APP
+    - title: "Graphical User Interface"
+      desc: "Launch the standalone DigiQual dashboard locally."
+      contents:
+        - dq_ui
+
+    # SECTION C: THE POWER USER
     - title: "Functional API"
       desc: "Standalone tools for Sampling, Diagnostics, PoD, and Plotting."
       contents:

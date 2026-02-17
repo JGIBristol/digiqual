@@ -1,0 +1,2 @@
+include src/digiqual/*.css
+include src/digiqual/*.csv

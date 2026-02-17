@@ -114,14 +114,15 @@ _ = study.pod(poi_col="Length", threshold=18.0)
 ```
 
 ```{python}
-#| label: fig-oop-results
-#| fig-cap: "Reliability Analysis Results"
-#| fig-subcap:
-#|   - "Signal Response Model (Physics)"
-#|   - "Probability of Detection Curve (Reliability)"
-#| layout-ncol: 2
+# | label: fig-oop-results
+# | fig-cap: "Reliability Analysis Results"
+# | fig-subcap:
+# |   - "Signal Response Model (Physics)"
+# |   - "Probability of Detection Curve (Reliability)"
+# | layout-ncol: 1
 # 2. Visualize Results
-# This automatically generates the Signal Model and PoD Curve plots
+# This automatically generates the Signal Model
+# and PoD Curve plots
 study.visualise()
 ```
 

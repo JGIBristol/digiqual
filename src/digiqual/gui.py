@@ -1,47 +1,131 @@
 from shiny import App, ui, render, reactive
+from pathlib import Path
 from faicons import icon_svg
 import pandas as pd
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
 from digiqual.sampling import generate_lhs
 from digiqual import SimulationStudy
 import shinyswatch
+
+
+css_path = Path(__file__).parent / "styles.css"
 
 # UI Definition
 app_ui = ui.page_navbar(
     ui.nav_panel(
         "Home",
+        # --- 1. HEADER (Text on Grey) ---
+        ui.div(
+            ui.h2("DigiQual", class_="fw-bold text-primary mb-1 text-center"),
+            ui.p("Statistical Toolkit for Reliability Assessment in NDT",
+                class_="lead text-muted mb-0 text-center"),
+            ui.hr(class_="my-4"),
+            class_="mb-4 mt-3"
+        ),
+
+        # --- 2. MAIN CONTENT GRID ---
         ui.layout_columns(
-            ui.card(
-                ui.h2("Welcome to DigiQual"),
-                ui.p("This application provides a workflow framework for MAPoD."),
-                ui.hr(),
-                ui.h4("Available Tools"),
-                ui.div(
+            # --- LEFT COLUMN: NESTED WORKFLOW ---
+            ui.div(
+                ui.h4("Workflow Modules", class_="mb-3 text-primary border-bottom pb-2"),
+
+                # Module 1: Design
+                ui.card(
+                    ui.card_header(
+                        ui.span(icon_svg("table"), " 1. Experimental Design", class_="fw-bold")
+                    ),
+                    ui.p("Design efficient experimental frameworks using Latin Hypercube Sampling (LHS).", class_="small"),
                     ui.tags.ul(
-                        ui.tags.li(
-                            ui.tags.strong("Sample Generator: "),
-                            "Design experimental frameworks using Latin Hypercube Sampling."
-                        ),
-                        ui.tags.li(
-                            ui.tags.strong("Simulation Diagnostics: "),
-                            "Upload datasets to check for integrity and sampling sufficiency."
-                        ),
-                        ui.tags.li(
-                            ui.tags.strong("PoD Analysis: "),
-                            "Construct Probability of Detection Curves."
-                        ),
-                        class_="lead fs-6"
-                    )
+                        ui.tags.li("Space-filling parameter generation.", class_="x-small"),
+                        ui.tags.li("Automatic scaling to variable bounds.", class_="x-small"),
+                        class_="text-muted mb-0"
+                    ),
+                    class_="mb-3 border-start border-4 border-primary shadow-sm"
                 ),
-                class_="p-4"
-            )
+
+                # Module 2: Diagnostics
+                ui.card(
+                    ui.card_header(
+                        ui.span(icon_svg("check-double"), " 2. Simulation Diagnostics", class_="fw-bold")
+                    ),
+                    ui.p("Validate dataset integrity and simulation outputs.", class_="small"),
+                    ui.tags.ul(
+                        ui.tags.li("Detect input coverage gaps and sanity checks.", class_="x-small"),
+                        ui.tags.li("Identify model instability or insufficient samples.", class_="x-small"),
+                        class_="text-muted mb-0"
+                    ),
+                    class_="mb-3 border-start border-4 border-warning shadow-sm"
+                ),
+
+                # Module 3: Analysis
+                ui.card(
+                    ui.card_header(
+                        ui.span(icon_svg("chart-line"), " 3. PoD Analysis", class_="fw-bold")
+                    ),
+                    ui.p("Construct Generalized Probability of Detection (PoD) curves.", class_="small"),
+                    ui.tags.ul(
+                        ui.tags.li("Robust statistics using the Generalized â-versus-a Method.", class_="x-small"),
+                        ui.tags.li("Uncertainty quantification with bootstrap resampling.", class_="x-small"),
+                        class_="text-muted mb-0"
+                    ),
+                    class_="mb-3 border-start border-4 border-success shadow-sm"
+                ),
+            ),
+
+            # --- RIGHT COLUMN: UNIFIED INFO ---
+            ui.div(
+                ui.h4("Project Information", class_="mb-3 text-primary border-bottom pb-2"),
+                ui.card(
+                    ui.div(
+                        # About Section
+                        ui.div(
+                            ui.tags.strong("Version: "), "0.9.0", ui.br(),
+                            ui.tags.strong("License: "), "MIT Open Source", ui.br(),
+                            ui.tags.strong("Author: "), "Josh Tyler", ui.br(),
+                            ui.tags.strong("Institution: "), "University of Bristol",
+                            class_="mb-3"
+                        ),
+                        ui.hr(),
+                        # Methodology
+                        ui.h6("Methodology Reference:", class_="fw-bold small"),
+                        ui.p(
+                            "Malkiel, N., Croxford, A. J., & Wilcox, P. D. (2025). ",
+                            ui.span("A generalized method for the reliability assessment of safety–critical inspection. ", class_="fst-italic"),
+                            "Proceedings of the Royal Society A.",
+                            class_="x-small text-muted mb-2"
+                        ),
+                        ui.a(
+                            "View Paper",
+                            href="https://doi.org/10.1098/rspa.2024.0654",
+                            target="_blank",
+                            class_="btn btn-sm btn-outline-secondary w-100 mb-3"
+                        ),
+                        ui.hr(),
+                        # Disclaimer
+                        ui.h6("Disclaimer:", class_="fw-bold small"),
+                        ui.p(
+                            "This software is provided 'as is', without warranty of any kind. ",
+                            "In no event shall the authors be liable for any claim or damages.",
+                            class_="x-small text-muted fst-italic mb-3"
+                        ),
+                        ui.hr(),
+                        # Support
+                        ui.p("Development supported by:", class_="x-small fw-bold text-center text-muted mb-2"),
+                        ui.div(
+                            ui.span("[ Funder Logo Placeholder ]", class_="text-muted small"),
+                            class_="bg-light border rounded p-2 text-center"
+                        ),
+                        class_="p-3"
+                    ),
+                    class_="shadow-sm"
+                )
+            ),
+            col_widths=[7, 5]
         ),
         icon=icon_svg("house")
     ),
     ui.nav_panel(
-        "Sample Generator",
+        "Experimental Design",
         ui.layout_columns(
             ui.div(
                 ui.card(
@@ -126,7 +210,8 @@ app_ui = ui.page_navbar(
     title="DigiQual",
     id="navbar",
     fillable=True,
-    theme=shinyswatch.theme.flatly()
+    theme=shinyswatch.theme.flatly(),
+    header=ui.include_css(css_path)
 )
 
 
@@ -583,9 +668,8 @@ def server(input, output, session):
                     ui.output_data_frame("pod_stats_table")
                 ),
                 ui.card(
-                    ui.card_header("Actions"),
+                    ui.card_header("Export Results"),
                     ui.div(
-                        ui.h5("Export Results"),
                         ui.p("Download the full curve data (PoD, CI) for external reporting."),
                         ui.download_button("download_pod_results", "Download Results CSV", class_="btn-success w-100")
                     ),
@@ -600,7 +684,7 @@ def server(input, output, session):
         _ = plot_trigger() # Dependency on button click
         study = current_study()
         if study and "signal_model" in study.plots:
-            return study.plots["signal_model"].get_figure()
+            return study.plots["signal_model"]
         return None
 
     @render.plot
@@ -608,7 +692,7 @@ def server(input, output, session):
         _ = plot_trigger() # Dependency on button click
         study = current_study()
         if study and "pod_curve" in study.plots:
-            return study.plots["pod_curve"].get_figure()
+            return study.plots["pod_curve"]
         return None
 
     @render.data_frame

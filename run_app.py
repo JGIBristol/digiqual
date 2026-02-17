@@ -4,7 +4,7 @@ import threading
 import socket
 import webview
 from shiny import run_app
-from app.app import app
+from digiqual.gui import app
 
 # --- 1. Set Working Directory ---
 if getattr(sys, 'frozen', False):

@@ -14,8 +14,6 @@ classifiers = [
 ]
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
-
-# Core statistical and data dependencies
 dependencies = [
     "numpy>=2.0.2",
     "pandas>=2.3.3",
@@ -24,22 +22,17 @@ dependencies = [
     "matplotlib>=3.9.4",
     "requests>=2.32.5",
     "statsmodels>=0.14.6",
+    "shiny>=1.5.1",
+    "shinyswatch",
+    "faicons",
+    "jinja2>=3.1.6",
 ]
 
 [build-system]
 requires = ["uv_build>=0.8.14,<0.9.0"]
 build-backend = "uv_build"
 
-
 [project.optional-dependencies]
-# Group for the Shiny-based desktop application
-gui = [
-    "jinja2>=3.1.6",
-    "shiny>=1.5.1",
-    "shinyswatch",
-    "faicons",
-]
-# Development and documentation tools
 dev = [
     "pytest>=8.4.2",
     "quartodoc",
