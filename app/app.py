@@ -2,6 +2,8 @@ from shiny import App, ui, render, reactive
 from faicons import icon_svg
 import pandas as pd
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 from digiqual.sampling import generate_lhs
 from digiqual import SimulationStudy
 import shinyswatch

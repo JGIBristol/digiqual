@@ -30,6 +30,7 @@ dependencies = [
 requires = ["uv_build>=0.8.14,<0.9.0"]
 build-backend = "uv_build"
 
+
 [project.optional-dependencies]
 # Group for the Shiny-based desktop application
 gui = [
@@ -44,4 +45,6 @@ dev = [
     "quartodoc",
     "jupyter",
     "nbformat",
+    "pyinstaller",
+    "pywebview"
 ]

@@ -20,6 +20,11 @@ api_reference/
 objects.json
 _sidebar.yml
 
+app/dist/
+app/*.spec
+
+package
+
 **/*.csv
 
 # --- Testing & Code Quality ---
