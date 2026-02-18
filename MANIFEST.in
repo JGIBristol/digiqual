@@ -1,2 +1,4 @@
-include src/digiqual/*.css
-include src/digiqual/*.csv
+graft app
+prune app/dist
+prune app/build
+global-exclude *.py[cod] __pycache__ .DS_Store

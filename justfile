@@ -13,9 +13,22 @@ sync:
 test:
     uv run pytest
 
-# Launches the app locally from the package source
-app:
-    uv run python -c "import digiqual; digiqual.dq_ui()"
+# Run the app in "Browser Mode" (Best for coding/debugging)
+app_dev:
+    cd app && uv run shiny run app.py --launch-browser
+
+# Run the app in "Desktop Mode" (Best for testing the .exe look)
+app_desktop:
+    cd app && uv run python run_app.py
+
+# --- VERSIONING ---
+
+bump part="patch":
+    python3 scripts/bump_version.py {{part}}
+    uv lock
+    @echo "Version updated locally. Now commit and push to main."
+
+
 
 # --- BUILD ---
 # Cleans old artifacts then creates .whl and .tar.gz files
@@ -32,31 +45,31 @@ build_package: clean
     rm -rf dist
 
 # Cleans old artifacts then creates .app file
+# Cleans old artifacts then creates .app file
 build_app: clean
-    uv run --extra dev pyinstaller --name "Digiqual" \
-    --noconfirm \
-    --windowed \
-    --paths="src" \
-    --collect-all digiqual \
-    --collect-all shiny \
-    --collect-all faicons \
-    --collect-all shinyswatch \
-    --collect-all htmltools \
-    --collect-all pywebview \
-    --hidden-import="uvicorn.loops.auto" \
-    --hidden-import="uvicorn.protocols.http.auto" \
-    --hidden-import="uvicorn.lifespan.on" \
-    --hidden-import="engineio.async_drivers.threading" \
-    run_app.py
-    # 2. Prepare the destination folder
-    mkdir -p app/dist
-    # 3. Clean destination (Delete old app so we don't merge/corrupt it)
-    rm -rf app/dist/Digiqual.app
-    # 4. Move the fresh App and Spec file
-    mv dist/Digiqual.app app/dist/
-    mv Digiqual.spec app/
-    # 5. Nuclear Cleanup (Remove the root build folders)
-    rm -rf dist build app/Digiqual.spec
+    # 1. Enter app folder AND run pyinstaller in one chain
+    # We use --directory to tell uv where to run
+    cd app && uv run pyinstaller --name "Digiqual" \
+        --noconfirm \
+        --windowed \
+        --collect-all digiqual \
+        --collect-all shiny \
+        --collect-all faicons \
+        --collect-all shinyswatch \
+        --collect-all htmltools \
+        --collect-all pywebview \
+        --hidden-import="uvicorn.loops.auto" \
+        --hidden-import="uvicorn.protocols.http.auto" \
+        --hidden-import="uvicorn.lifespan.on" \
+        --hidden-import="engineio.async_drivers.threading" \
+        run_app.py
+
+    # 2. Organize the output (PyInstaller creates dist/ inside app/ now)
+    # We just need to make sure the final .app is where you expect it
+    @echo "Build complete. App is located at app/dist/Digiqual.app"
+
+    # Optional: If you want to move the spec file to keep root clean
+    # mv app/Digiqual.spec app/dist/ 2>/dev/null || true
 
 # --- DOCUMENTATION ---
 # Preview Website
@@ -69,13 +82,6 @@ build_website: clean
     uv run quartodoc build
     uv run quarto publish gh-pages --no-prompt
     just clean
-
-# --- VERSIONING ---
-
-bump part="patch":
-    python3 scripts/bump_version.py {{part}}
-    uv lock
-    @echo "Version updated locally. Now commit and push to main."
 
 
 # --- UTILS ---

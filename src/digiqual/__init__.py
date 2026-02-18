@@ -1,37 +1,49 @@
 __version__ = "0.10.0"
 
+# Import core modules
 from .core import SimulationStudy
 from . import pod
 from . import diagnostics
 from . import adaptive
 from . import sampling
 from . import plotting
-from .gui import app as _shiny_app
 
-def dq_ui(port=8000, launch_browser=True):
-    """
-    Launch the DigiQual Graphical User Interface (GUI).
+def dq_ui():
+    import sys
+    import subprocess
+    from pathlib import Path
 
-    This function starts a local Shiny server and opens a windowed
-    application for experimental design, diagnostics, and PoD analysis.
+    # 1. Define possible locations
+    # Location A: Installed Package (e.g. site-packages/digiqual/app)
+    # Location B: Local Dev Repo (e.g. Documents/DigiQual/app)
 
-    Args
-    ----------
-    port : int, optional
-        The port on which to run the local server, by default 8000.
-    launch_browser : bool, optional
-        Whether to automatically open the app in the default web browser,
-        by default True.
-    """
-    from shiny import run_app
+    current_dir = Path(__file__).parent
 
-    # Ensure we use the package's internal path
-    print(f"🚀 Launching DigiQual UI on http://localhost:{port}")
-    run_app(_shiny_app, port=port, launch_browser=launch_browser)
+    possible_paths = [
+        current_dir / "app" / "run_app.py",         # Installed Location
+        current_dir.parent.parent / "app" / "run_app.py"  # Dev Location
+    ]
 
+    app_script = None
+    for p in possible_paths:
+        if p.exists():
+            app_script = p
+            break
+
+    if app_script is None:
+        print("❌ Critical Error: Could not find 'run_app.py'.")
+        print(f"   Searched in: {[str(p) for p in possible_paths]}")
+        return
+
+    print(f"🚀 Launching DigiQual GUI from: {app_script}")
+
+    # 2. Launch!
+    # Using sys.executable ensures we use the active environment
+    subprocess.Popen([sys.executable, str(app_script)], cwd=str(app_script.parent))
 
 __all__ = [
     "SimulationStudy",
+    "dq_ui",
     "pod",
     "diagnostics",
     "adaptive",

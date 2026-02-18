@@ -1,0 +1,22 @@
+[project]
+name = "digiqual-ui"
+version = "0.1.0"
+description = "GUI Client for DigiQual"
+requires-python = ">=3.10"
+dependencies = [
+    "shiny",
+    "shinyswatch",
+    "faicons",
+    "pywebview",
+    "matplotlib",
+    "digiqual",  # We will link this locally in the next step
+]
+
+[tool.uv.sources]
+# This is the magic line that links the app to your library
+digiqual = { path = "../", editable = true }
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.19.0",
+]

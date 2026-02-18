@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use('Agg')
+
 from shiny import App, ui, render, reactive
 from faicons import icon_svg
 import pandas as pd
