@@ -1,5 +1,4 @@
 from shiny import App, ui, render, reactive
-from pathlib import Path
 from faicons import icon_svg
 import pandas as pd
 import numpy as np
@@ -7,10 +6,86 @@ from digiqual.sampling import generate_lhs
 from digiqual import SimulationStudy
 import shinyswatch
 
+#### Define your CSS as a multi-line string ####
+app_css = """
+/* --- 1. CORE PALETTE (Modern Engineering) --- */
+:root {
+    --bs-primary: #0f3460;
+    --bs-primary-rgb: 15, 52, 96;
+    --bs-secondary: #536473;
+    --bs-secondary-rgb: 83, 100, 115;
+    --bs-success: #10b981;
+    --bs-success-rgb: 16, 185, 129;
+    --bs-warning: #f59e0b;
+    --bs-warning-rgb: 245, 158, 11;
+    --bs-danger: #e11d48;
+    --bs-danger-rgb: 225, 29, 72;
+    --bs-body-bg: #f3f4f6;
+    --bs-body-color: #1f2937;
+}
 
-css_path = Path(__file__).parent / "styles.css"
+/* --- 2. GLOBAL TYPOGRAPHY --- */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--bs-primary);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
 
-# UI Definition
+.navbar-brand {
+    font-weight: 800 !important;
+    letter-spacing: 0.05em;
+}
+
+/* --- 3. COMPONENT POLISH --- */
+.card {
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    background-color: #ffffff;
+}
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 600;
+    color: var(--bs-primary);
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.btn-primary {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: #ffffff;
+}
+.btn-primary:hover {
+    background-color: #162a45;
+}
+
+.btn-success, .btn-warning, .btn-danger {
+    color: #ffffff;
+}
+
+/* --- 4. ALERT FIXES --- */
+.alert h1, .alert h2, .alert h3, .alert h4, .alert h5, .alert h6 {
+    color: inherit;
+}
+
+/* --- 5. LAYOUT --- */
+.sidebar {
+    background-color: #ffffff;
+    border-right: 1px solid #e5e7eb;
+}
+
+@media (min-width: 1400px) {
+    .sidebar.sidebar-navigation {
+        margin-left: -20px;
+    }
+}
+"""
+
+#### UI Definition ####
 app_ui = ui.page_navbar(
     ui.nav_panel(
         "Home",
@@ -211,7 +286,7 @@ app_ui = ui.page_navbar(
     id="navbar",
     fillable=True,
     theme=shinyswatch.theme.flatly(),
-    header=ui.include_css(css_path)
+    header=ui.tags.style(app_css)  # <-- CHANGED: pass the string here
 )
 
 
