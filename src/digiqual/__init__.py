@@ -9,6 +9,9 @@ from . import sampling
 from . import plotting
 
 def dq_ui():
+    """
+    User Interface for DigiQual Shiny Application
+    """
     import sys
     import subprocess
     from pathlib import Path
