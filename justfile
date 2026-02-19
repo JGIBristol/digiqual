@@ -45,7 +45,6 @@ build_package: clean
     rm -rf dist
 
 # Cleans old artifacts then creates .app file
-# Cleans old artifacts then creates .app file
 build_app: clean
     # 1. Enter app folder AND run pyinstaller in one chain
     # We use --directory to tell uv where to run
