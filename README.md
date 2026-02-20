@@ -9,7 +9,7 @@
 
 ## Installation
 
-You can install `digiqual` directly from GitHub.
+You can install `digiqual` directly from PyPI.
 
 ### Option 1: Install via uv (Recommended)
 
@@ -17,9 +17,9 @@ If you are managing a project with `uv`, add `digiqual` as a dependency:
 ```bash
 # To install the latest stable release (v0.10.3):
 
-uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git@v0.10.3"
+uv add digiqual
 
-# To install the latest development version (main branch):
+# To install the latest development version (main branch from github):
 
 uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git"
 ```
@@ -27,7 +27,7 @@ uv add "digiqual @ git+https://github.com/JGIBristol/digiqual.git"
 If you just want to install it into a virtual environment without modifying a project file (e.g., for a quick script), use pip interface:
 
 ```bash
-uv pip install "git+https://github.com/JGIBristol/digiqual.git@v0.10.3"
+uv pip install digiqual
 ```
 
 ### Option 2: Install via standard pip
@@ -35,9 +35,9 @@ uv pip install "git+https://github.com/JGIBristol/digiqual.git@v0.10.3"
 To install the latest stable release (v0.10.3):
 
 ```bash
-pip install "git+https://github.com/JGIBristol/digiqual.git@v0.10.3"
+pip install digiqual
 ```
-To install the latest development version:
+To install the latest development version from github:
 
 ```bash
 pip install "git+https://github.com/JGIBristol/digiqual.git"

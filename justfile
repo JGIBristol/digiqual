@@ -70,6 +70,13 @@ build_app: clean
     # Optional: If you want to move the spec file to keep root clean
     # mv app/Digiqual.spec app/dist/ 2>/dev/null || true
 
+
+publish: clean
+    just build_package
+    # uv publish takes everything in your custom package/ directory
+    uv publish package/*
+
+
 # --- DOCUMENTATION ---
 # Preview Website
 preview: clean
