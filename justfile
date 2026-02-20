@@ -21,6 +21,9 @@ test_matrix:
         echo "========================================\n"; \
         uv run --python $ver --extra dev pytest || exit 1; \
     done
+    @echo "\n🧹 Cleaning up: Reverting .venv back to Python 3.11..."
+    uv sync --python 3.11 --extra dev
+    @echo "✅ All tests passed and development environment restored!"
 
 # Run the app in "Browser Mode" (Best for coding/debugging)
 app_dev:
@@ -79,9 +82,8 @@ build_app: clean
     # Optional: If you want to move the spec file to keep root clean
     # mv app/Digiqual.spec app/dist/ 2>/dev/null || true
 
-
+# Uploads the package to PyPI (bump version before)
 publish: clean
-    just build_package
     # uv publish takes everything in your custom package/ directory
     uv publish package/*
 
