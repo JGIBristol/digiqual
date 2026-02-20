@@ -66,7 +66,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
 <link href="../api_reference/index.html" rel="next">
-<link href="../docs/qs_class.html" rel="prev">
+<link href="../docs/gui.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
@@ -182,6 +182,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../docs/gui.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GUI - Shiny App</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../docs/optimisation.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Automation &amp; Engines</span></a>
   </div>
@@ -241,7 +247,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="define-a-mock-solver" class="level3">
 <h3 class="anchored" data-anchor-id="define-a-mock-solver">1. Define a “Mock” Solver</h3>
 <p>For this tutorial, we will use a Python one-liner as our “solver”. In real life, this would be your <code>matlab</code>, <code>ansys</code>, or <code>abaqus</code> command.</p>
-<div id="a6077408" class="cell" data-execution_count="1">
+<div id="75eb01ae" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># A simple physics model: Signal = 5 + Length * 2 + Noise</span></span>
@@ -258,7 +264,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="configure-the-study" class="level3">
 <h3 class="anchored" data-anchor-id="configure-the-study">2. Configure the Study</h3>
 <p>We define our input variables and the tange we want to explore.</p>
-<div id="e9d40b7a" class="cell" data-execution_count="2">
+<div id="86ef82cf" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.core <span class="im">import</span> SimulationStudy</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define inputs ranges</span></span>
@@ -277,7 +283,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><p>Checks diagnostics.</p></li>
 <li><p>If needed, generates 20 new points and repeats (up to 5 times).</p></li>
 </ol>
-<div id="79534ac5" class="cell" data-execution_count="3">
+<div id="b0c986ff" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.optimise(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    command<span class="op">=</span>SOLVER_CMD,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    ranges<span class="op">=</span>ranges,</span>
@@ -313,45 +319,33 @@ Diagnostics flagged issues. Initiating Active Learning...
    -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5+ df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
 
 --- Iteration 4: Diagnostics Check ---
-&gt;&gt; Model invalid. Refining design...
-Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
---- Running Batch 4 (20 points) ---
-   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5+ df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
 
---- Iteration 5: Diagnostics Check ---
-&gt;&gt; Model invalid. Refining design...
-Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
---- Running Batch 5 (20 points) ---
-   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5+ df["Length"] * 2.0 + np.random.normal(0, 1, len(df)); df.to_csv("sim_output.csv", index=False)'
-
-&gt;&gt;&gt; WARNING: Max iterations (5) reached. &lt;&lt;&lt;
-Data updated. Total rows: 120</code></pre>
+&gt;&gt;&gt; CONVERGENCE REACHED at 80 points! &lt;&lt;&lt;
+Data updated. Total rows: 80</code></pre>
 </div>
 </div>
 </section>
 <section id="view-results" class="level3">
 <h3 class="anchored" data-anchor-id="view-results">4. View Results</h3>
 <p>Once the loop finishes, <code>study.data</code> contains all the valid simulation results.</p>
-<div id="546ec89c" class="cell" data-execution_count="4">
+<div id="3d827587" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total Simulations Run: </span><span class="sc">{</span><span class="bu">len</span>(study.data)<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>_ <span class="op">=</span> study.pod(poi_col<span class="op">=</span><span class="st">"Length"</span>, threshold<span class="op">=</span><span class="dv">8</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>study.visualise()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Total Simulations Run: 120
+<pre><code>Total Simulations Run: 80
 Running validation...
-Validation passed. 120 valid rows ready.
+Validation passed. 80 valid rows ready.
 --- Starting Reliability Analysis (PoI: Length) ---
 1. Selecting Mean Model (Cross-Validation)...
-   -&gt; Selected Polynomial Degree: 2
+   -&gt; Selected Polynomial Degree: 1
 2. Fitting Variance Model (Kernel Smoothing)...
-   -&gt; Smoothing Bandwidth: 0.4928
+   -&gt; Smoothing Bandwidth: 0.4736
 3. Inferring Error Distribution (AIC)...
    -&gt; Selected Distribution: norm
 4. Computing PoD Curve...
 5. Running Bootstrap (1000 iterations)...
-   -&gt; a90/95 Reliability Index: 2.278
+   -&gt; a90/95 Reliability Index: 2.400
 --- Analysis Complete ---</code></pre>
 </div>
 <div class="cell-output cell-output-display">
@@ -777,8 +771,8 @@ Validation passed. 120 valid rows ready.
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../docs/qs_class.html" class="pagination-link" aria-label="Quick Start">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Quick Start</span>
+      <a href="../docs/gui.html" class="pagination-link" aria-label="GUI - Shiny App">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">GUI - Shiny App</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">

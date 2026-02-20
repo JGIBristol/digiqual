@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>diagnostics.validate_simulation – digiqual</title>
+<title>gui – digiqual</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -65,6 +65,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
+<link href="../docs/optimisation.html" rel="next">
+<link href="../docs/qs_class.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
@@ -140,7 +142,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui.html">GUI - Shiny App</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -180,7 +182,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../docs/gui.html" class="sidebar-item-text sidebar-link">
+  <a href="../docs/gui.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">GUI - Shiny App</span></a>
   </div>
 </li>
@@ -206,126 +208,76 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.diagnostics.validate_simulation" id="toc-digiqual.diagnostics.validate_simulation" class="nav-link active" data-scroll-target="#digiqual.diagnostics.validate_simulation">diagnostics.validate_simulation</a>
+  <li><a href="#how-to-access-the-app" id="toc-how-to-access-the-app" class="nav-link active" data-scroll-target="#how-to-access-the-app">1. How to Access the App</a></li>
+  <li><a href="#the-app-workflow" id="toc-the-app-workflow" class="nav-link" data-scroll-target="#the-app-workflow">2. The App Workflow</a>
   <ul class="collapse">
-  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
-  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
-  <li><a href="#raises" id="toc-raises" class="nav-link" data-scroll-target="#raises">Raises</a></li>
-  <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
+  <li><a href="#module-1-experimental-design" id="toc-module-1-experimental-design" class="nav-link" data-scroll-target="#module-1-experimental-design">Module 1: Experimental Design</a></li>
+  <li><a href="#module-2-simulation-diagnostics" id="toc-module-2-simulation-diagnostics" class="nav-link" data-scroll-target="#module-2-simulation-diagnostics">Module 2: Simulation Diagnostics</a></li>
+  <li><a href="#module-3-reliability-analysis" id="toc-module-3-reliability-analysis" class="nav-link" data-scroll-target="#module-3-reliability-analysis">Module 3: Reliability Analysis</a></li>
   </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/diagnostics.validate_simulation.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/gui.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Using the GUI</h1>
+</div>
 
 
 
+<div class="quarto-title-meta">
 
-<section id="digiqual.diagnostics.validate_simulation" class="level1">
-<h1>diagnostics.validate_simulation</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>validate_simulation(df, input_cols, outcome_col)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Validates simulation data, coercing to numeric and removing invalid rows.</p>
-<section id="parameters" class="level2 doc-section doc-section-parameters">
-<h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 12%">
-<col style="width: 13%">
-<col style="width: 63%">
-<col style="width: 11%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>df</td>
-<td>pd.DataFrame</td>
-<td>The raw dataframe containing input columns and the outcome column.</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>input_cols</td>
-<td>List[str]</td>
-<td>List of input variable names.</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>outcome_col</td>
-<td>str</td>
-<td>Name of the outcome variable.</td>
-<td><em>required</em></td>
-</tr>
-</tbody>
-</table>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>While the <code>SimulationStudy</code> class offers powerful programmatic control, sometimes you just need a clean visual interface to explore your data without writing scripts. The DigiQual App wraps the core statistical engine into a modern, user-friendly graphical interface, allowing you to run the entire lifecycle—from design to diagnostics to reliability analysis—directly in your browser.</p>
+<section id="how-to-access-the-app" class="level2">
+<h2 class="anchored" data-anchor-id="how-to-access-the-app">1. How to Access the App</h2>
+<p>Currently, the DigiQual app is bundled directly with the Python package. You can launch it locally from your terminal or Jupyter environment using the built-in UI function.</p>
+<div id="74a97bab" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Launch the local application</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual <span class="im">import</span> dq_ui</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>dq_ui()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>This will spin up a local server and automatically open the DigiQual dashboard in your default web browser.</p>
+<p><strong>Coming Soon: Standalone Executables</strong> We are actively developing standalone, double-click executables for both Windows and macOS. In the near future, you or your colleagues will be able to run the complete DigiQual toolkit as a standard desktop application, without needing to install Python, manage virtual environments, or touch a command line.</p>
 </section>
-<section id="returns" class="level2 doc-section doc-section-returns">
-<h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 4%">
-<col style="width: 20%">
-<col style="width: 75%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td>Tuple[pd.DataFrame, pd.DataFrame]</td>
-<td>* <code>df_clean</code>: The validated, numeric dataframe ready for analysis. * <code>df_removed</code>: A dataframe containing the rows that were dropped.</td>
-</tr>
-</tbody>
-</table>
+<section id="the-app-workflow" class="level2">
+<h2 class="anchored" data-anchor-id="the-app-workflow">2. The App Workflow</h2>
+<p>The app is divided into three main modules that mirror the programmatic workflow you are already familiar with.</p>
+<section id="module-1-experimental-design" class="level3">
+<h3 class="anchored" data-anchor-id="module-1-experimental-design">Module 1: Experimental Design</h3>
+<p>Instead of defining arrays or dictionaries in code, you can use the UI to visually define your experimental parameters.</p>
+<ul>
+<li><p>Define your input variables (e.g., Length, Angle) and their minimum/maximum ranges.</p></li>
+<li><p>Specify the number of initial samples you want.</p></li>
+<li><p>Click generate to instantly build a Latin Hypercube Sample (LHS) framework and download the CSV to feed into your external solver (like MATLAB or Abaqus).</p></li>
+</ul>
 </section>
-<section id="raises" class="level2 doc-section doc-section-raises">
-<h2 class="doc-section doc-section-raises anchored" data-anchor-id="raises">Raises</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 8%">
-<col style="width: 17%">
-<col style="width: 74%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td>ValidationError</td>
-<td>If columns are missing, types are wrong, or too few valid rows remain.</td>
-</tr>
-</tbody>
-</table>
+<section id="module-2-simulation-diagnostics" class="level3">
+<h3 class="anchored" data-anchor-id="module-2-simulation-diagnostics">Module 2: Simulation Diagnostics</h3>
+<p>Once your external physics solver has run, you can upload the resulting CSV back into the app. Use the dropdowns to assign your input columns and your outcome column (e.g., “Signal”). The app will automatically run health checks, such as testing for input coverage gaps.</p>
+<p><strong>Adaptive Refinement:</strong> If the app detects a deliberate gap or flawed data, it will flag an issue. Instead of manually guessing where to add points, the UI provides a remediation tool to automatically generate targeted samples to fill the gap. You can download these new points, run them through your solver, and upload the complete dataset.</p>
 </section>
-<section id="examples" class="level2 doc-section doc-section-examples">
-<h2 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Create dirty data (includes text and negative values)</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame({</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Length'</span>: [<span class="fl">1.0</span>, <span class="st">'BadValue'</span>, <span class="fl">5.0</span>],</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Signal'</span>: [<span class="fl">0.5</span>, <span class="fl">0.8</span>, <span class="op">-</span><span class="fl">1.2</span>]</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Validate</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>clean, removed <span class="op">=</span> validate_simulation(df, [<span class="st">'Length'</span>], <span class="st">'Signal'</span>)</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Clean rows: </span><span class="sc">{</span><span class="bu">len</span>(clean)<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Removed rows: </span><span class="sc">{</span><span class="bu">len</span>(removed)<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="module-3-reliability-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="module-3-reliability-analysis">Module 3: Reliability Analysis</h3>
+<p>With a validated dataset, you can construct your Probability of Detection (PoD) curves.</p>
+<ul>
+<li><p>Select your Parameter of Interest (e.g., “Length”) and set your critical threshold (e.g., 18.0).</p></li>
+<li><p>The app handles the model fitting and bootstrapping in the background.</p></li>
+<li><p>It automatically visualizes the results, displaying both the Signal Response Model (Physics) and the Probability of Detection Curve (Reliability) side-by-side.</p></li>
+</ul>
 
 
 </section>
@@ -732,9 +684,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
   });
   </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../docs/qs_class.html" class="pagination-link" aria-label="Quick Start">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Quick Start</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../docs/optimisation.html" class="pagination-link" aria-label="Automation &amp; Engines">
+        <span class="nav-page-text">Automation &amp; Engines</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
 </div> <!-- /content -->
 
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/diagnostics.validate_simulation.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/gui.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
