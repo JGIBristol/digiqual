@@ -9,7 +9,7 @@ from digiqual.sampling import generate_lhs
 from digiqual import SimulationStudy
 import shinyswatch
 
-#### Define your CSS as a multi-line string ####
+#### App CSS ####
 app_css = """
 /* --- 1. CORE PALETTE (Modern Engineering) --- */
 :root {
@@ -90,9 +90,10 @@ h1, h2, h3, h4, h5, h6 {
 
 #### UI Definition ####
 app_ui = ui.page_navbar(
+
+#### UI - Homepage ####
     ui.nav_panel(
         "Home",
-        # --- 1. HEADER (Text on Grey) ---
         ui.div(
             ui.h2("DigiQual", class_="fw-bold text-primary mb-1 text-center"),
             ui.p("Statistical Toolkit for Reliability Assessment in NDT",
@@ -101,9 +102,7 @@ app_ui = ui.page_navbar(
             class_="mb-4 mt-3"
         ),
 
-        # --- 2. MAIN CONTENT GRID ---
         ui.layout_columns(
-            # --- LEFT COLUMN: NESTED WORKFLOW ---
             ui.div(
                 ui.h4("Workflow Modules", class_="mb-3 text-primary border-bottom pb-2"),
 
@@ -150,7 +149,6 @@ app_ui = ui.page_navbar(
                 ),
             ),
 
-            # --- RIGHT COLUMN: UNIFIED INFO ---
             ui.div(
                 ui.h4("Project Information", class_="mb-3 text-primary border-bottom pb-2"),
                 ui.card(
@@ -202,6 +200,8 @@ app_ui = ui.page_navbar(
         ),
         icon=icon_svg("house")
     ),
+
+#### UI - Experimental Design (Tab 2) ####
     ui.nav_panel(
         "Experimental Design",
         ui.layout_columns(
@@ -257,6 +257,8 @@ app_ui = ui.page_navbar(
         icon=icon_svg("table")
     ),
 
+
+#### UI - Simulation Diagnostics (Tab 3) ####
     ui.nav_panel(
         "Simulation Diagnostics",
         ui.layout_columns(
@@ -296,7 +298,7 @@ app_ui = ui.page_navbar(
         icon=icon_svg("check-double")
     ),
 
-
+#### UI - PoD Analysis (Tab 4) ####
     ui.nav_panel(
         "PoD Analysis",
         ui.card(
@@ -312,10 +314,10 @@ app_ui = ui.page_navbar(
     header=ui.tags.style(app_css)  # <-- CHANGED: pass the string here
 )
 
-
+#### Server Definition ####
 def server(input, output, session):
 
-# ==================== TAB 1: DATA GENERATOR ====================
+#### Server - LHS generation (Tab 2) ####
 
     active_row_ids = reactive.Value([0])
     next_id = reactive.Value(1)
@@ -438,7 +440,7 @@ def server(input, output, session):
     def on_param_change():
         final_generated_df.set(None)
 
-# ==================== TAB 2: DATA VALIDATOR ====================
+#### Server - Diagnostics & Validation (Tab 3) ####
 
     uploaded_data = reactive.Value(None)
     validation_passed = reactive.Value(False)
@@ -457,7 +459,6 @@ def server(input, output, session):
         except Exception:
             uploaded_data.set(None)
 
-    # FIXED: Only triggers on file upload to set initial defaults
     @reactive.effect
     @reactive.event(uploaded_data)
     def initialize_column_selectors():
@@ -605,7 +606,7 @@ def server(input, output, session):
 
 
 
-# ==================== TAB 3: DATA ANALYZER ====================
+#### Server - PoD Generation (Tab 4) ####
 
     # --- SHARED CALCULATOR ---
     @reactive.calc
@@ -813,5 +814,5 @@ def server(input, output, session):
         if df is not None:
             yield df.to_csv(index=False)
 
-# Create the app object
+#### App ####
 app = App(app_ui, server)
