@@ -203,111 +203,93 @@ app_ui = ui.page_navbar(
         icon=icon_svg("house")
     ),
     ui.nav_panel(
-    "Experimental Design",
-    ui.p("Define your input variables and generate an initial Latin Hypercube Sample (LHS) framework.", class_="text-muted mt-2 mb-3"),
-
-    # --- STEP 1: VARIABLES (Grows dynamically without breaking layout) ---
-    ui.card(
-        ui.card_header("1. Experimental Design Variables"),
-        ui.div(
-            ui.layout_columns(
-                ui.tags.label("Variable Name", class_="fw-bold"),
-                ui.tags.label("Min Value", class_="fw-bold"),
-                ui.tags.label("Max Value", class_="fw-bold"),
-            ),
-            class_="mb-2 px-1"
-        ),
-        ui.div(id="variable_rows_container"),
-
-        ui.card_footer(
-            ui.div(
-                ui.input_action_button(
-                    "add_variable_btn",
-                    "Add Variable",
-                    icon=icon_svg("plus"),
-                    class_="btn-outline-secondary btn-sm"
-                ),
-                class_="d-flex justify-content-center"
-            ),
-            class_="bg-white border-0 pt-3"
-        )
-    ),
-
-    # --- STEP 2: HORIZONTAL CONTROL BAR ---
-    ui.card(
-        ui.card_header("2. Generation Settings"),
+        "Experimental Design",
         ui.layout_columns(
-            # Column 1: Number of Samples
-            ui.input_numeric("num_rows", "Number of samples", value=100, min=1),
-
-            # Column 2: Generate Button (Aligned to the bottom so it matches the input box)
-            ui.div(
-                ui.input_task_button(
-                    "generate_btn",
-                    "Generate Framework",
-                    class_="btn-primary w-100",
-                    icon=icon_svg("gears")
+            # --- LEFT: VARIABLE INPUTS (Symmetrical 6/12) ---
+            ui.card(
+                ui.card_header("Experimental Design Variables"),
+                ui.div(
+                    ui.layout_columns(
+                        ui.tags.label("Variable Name", class_="fw-bold"),
+                        ui.tags.label("Min Value", class_="fw-bold"),
+                        ui.tags.label("Max Value", class_="fw-bold"),
+                        ui.div(),
+                        col_widths=(4, 3, 3, 2)
+                    ),
+                    class_="mb-2 px-1"
                 ),
-                class_="d-flex align-items-end pb-3"
+                # This div allows the inputs to grow while keeping the button attached
+                ui.div(
+                    ui.div(id="variable_rows_container"),
+                    ui.div(
+                        ui.input_action_button(
+                            "add_variable_btn", "Add Variable",
+                            icon=icon_svg("plus"), class_="btn-outline-secondary btn-sm"
+                        ),
+                        class_="mt-3 d-flex justify-content-start"
+                    ),
+                ),
+                height="100%"
             ),
 
-            # Column 3: Download Button
+            # --- RIGHT: PREVIEW & SETTINGS (Symmetrical 6/12) ---
             ui.div(
-                ui.output_ui("download_btn_container", class_="w-100"),
-                class_="d-flex align-items-end pb-3"
+                ui.card(
+                    ui.card_header("Framework Preview"),
+                    ui.output_data_frame("preview_experimental_design"),
+                    full_screen=True,
+                ),
+                ui.card(
+                    ui.card_header("Generation Settings"),
+                    ui.div(
+                        ui.input_numeric("num_rows", "Number of samples", value=100, min=1, width="180px"),
+                        class_="d-flex justify-content-center mb-3"
+                    ),
+                    ui.input_task_button(
+                        "generate_btn", "Generate Framework",
+                        class_="btn-primary w-100", icon=icon_svg("gears")
+                    ),
+                    ui.output_ui("download_btn_container", class_="mt-3")
+                ),
+                class_="d-flex flex-column gap-3"
             ),
-
-            # Divide the card cleanly into thirds
-            col_widths=(4, 4, 4)
+            col_widths=(6, 6)
         ),
-        # A subtle background color makes this "Action Area" pop
-        class_="bg-light"
+        icon=icon_svg("table")
     ),
 
-    # --- STEP 3: PREVIEW TABLE ---
-    ui.card(
-        ui.card_header("3. Framework Preview"),
-        ui.output_data_frame("preview_experimental_design"),
-        full_screen=True
-    ),
-
-    icon=icon_svg("table")
-    ),
     ui.nav_panel(
-    "Simulation Diagnostics",
-    ui.layout_columns(
-        # --- LEFT COLUMN (1 Card) ---
-        ui.card(
-            ui.card_header("Diagnostic Configuration"),
-            ui.input_file("upload_csv", "Upload CSV file", accept=[".csv"], multiple=False),
-            ui.hr(),
-            # -- COLUMN SELECTORS --
-            ui.input_selectize("input_cols", "Select Input Variables", choices=[], multiple=True),
-            ui.input_selectize("outcome_col", "Select Outcome Variable", choices=[], multiple=False),
-            ui.hr(),
-            # -- STATUS INDICATOR --
-            ui.output_ui("validation_status"),
-        ),
-
-        # --- RIGHT COLUMN (Stacked Cards) ---
-        ui.div(
+        "Simulation Diagnostics",
+        ui.layout_columns(
+            # --- LEFT: CONFIGURATION (Symmetrical 6/12) ---
             ui.card(
-                ui.card_header("Uploaded Data Preview"),
-                ui.output_data_frame("preview_uploaded")
+                ui.card_header("Diagnostic Configuration"),
+                ui.input_file("upload_csv", "Upload CSV file", accept=[".csv"], multiple=False),
+                ui.hr(),
+                ui.input_selectize("input_cols", "Select Input Variables", choices=[], multiple=True),
+                ui.input_selectize("outcome_col", "Select Outcome Variable", choices=[], multiple=False),
+                ui.hr(),
+                ui.output_ui("validation_status"),
+                height="100%"
             ),
-            ui.card(
-                ui.card_header("Validation Report"),
-                ui.output_data_frame("validation_results_table"),
-            ),
-            # Remediation UI sits below the validation report
-            ui.output_ui("remediation_ui")
-        ),
 
-        # --- GRID WIDTHS ---
-        # 4 out of 12 columns for the left, 8 out of 12 for the right
-        col_widths=(4, 8)
-    ),
-    icon=icon_svg("check-double")
+            # --- RIGHT: PREVIEWS & REPORTS ---
+            ui.div(
+                ui.card(
+                    ui.card_header("Uploaded Data Preview"),
+                    ui.output_data_frame("preview_uploaded"),
+                ),
+                ui.card(
+                    ui.card_header("Validation Report"),
+                    ui.output_data_frame("validation_results_table"),
+                    full_screen=True
+                ),
+                ui.output_ui("remediation_ui"),
+                class_="d-flex flex-column gap-3"
+            ),
+            col_widths=(6, 6)
+        ),
+        icon=icon_svg("check-double")
     ),
     ui.nav_panel(
         "PoD Analysis",
@@ -329,113 +311,109 @@ def server(input, output, session):
 
   # ==================== TAB 1: DATA GENERATOR ====================
 
-    # Track the number of variable rows added
-    row_count = reactive.value(0)
-    # Store the successfully generated data here
-    final_generated_df = reactive.value(None)
+    active_row_ids = reactive.Value([0])
+    next_id = reactive.Value(1)
+    final_generated_df = reactive.Value(None)
 
-    def _add_row():
-        """Helper function to insert UI"""
-        current_count = row_count()
-        new_count = current_count + 1
-        row_count.set(new_count)
-        idx = current_count
-
+    def _add_row(idx):
+        """Helper function to insert UI and its specific removal effect"""
         ui.insert_ui(
             selector="#variable_rows_container",
             where="beforeEnd",
             ui=ui.div(
                 ui.layout_columns(
-                    ui.input_text(f"var_name_{idx}", label=None, placeholder="e.g. Length"),
+                    ui.input_text(f"var_name_{idx}", label=None, placeholder="Name"),
                     ui.input_numeric(f"var_min_{idx}", label=None, value=0),
                     ui.input_numeric(f"var_max_{idx}", label=None, value=10),
+                    ui.input_action_button(
+                        f"remove_{idx}", "Remove", icon=icon_svg("trash"),
+                        class_="btn-outline-danger btn-sm"
+                    ),
+                    col_widths=(4, 3, 3, 2)
                 ),
-                class_="mb-1"
+                id=f"row_container_{idx}",
+                class_="mb-2"
             )
         )
+
+        @reactive.effect
+        @reactive.event(input[f"remove_{idx}"])
+        def _():
+            # 1. Clear UI
+            ui.remove_ui(selector=f"#row_container_{idx}")
+            # 2. Update tracking list
+            current_ids = active_row_ids.get().copy()
+            if idx in current_ids:
+                current_ids.remove(idx)
+                active_row_ids.set(current_ids)
+            # 3. Clear existing generation
+            final_generated_df.set(None)
 
     @reactive.effect
     @reactive.event(input.add_variable_btn)
     def add_variable_handler():
-        _add_row()
-        final_generated_df.set(None)
+        new_id = next_id.get()
+        current_ids = active_row_ids.get().copy()
+        current_ids.append(new_id)
+        active_row_ids.set(current_ids)
+        next_id.set(new_id + 1)
+        _add_row(new_id)
 
     @reactive.effect
     def init_rows():
-        if row_count() == 0:
-            _add_row()
+        if next_id.get() == 1:
+            _add_row(0)
 
-    # 1. HANDLE GENERATION AND VALIDATION
     @reactive.effect
     @reactive.event(input.generate_btn)
     def generate_handler():
-        """Validates inputs and generates data to reactive value"""
-        # Clear previous results/buttons
         final_generated_df.set(None)
-
-        count = row_count()
         ranges = {}
         errors = []
 
-        # -- Validation Logic --
-        for i in range(count):
+        # LOOP OVER ACTIVE IDs ONLY
+        for i in active_row_ids.get():
             name_val = input[f"var_name_{i}"]()
             min_val = input[f"var_min_{i}"]()
             max_val = input[f"var_max_{i}"]()
 
-            # Logic Check: Was this row touched?
             if not name_val or str(name_val).strip() == "":
-                errors.append(f"Row {i+1}: Name is missing.")
+                errors.append("An active row is missing a variable name.")
                 continue
-
             if min_val is None or max_val is None:
-                errors.append(f"Row {i+1} ({name_val}): Missing min/max values.")
+                errors.append(f"Variable '{name_val}' is missing min/max values.")
                 continue
-
             if min_val >= max_val:
-                errors.append(f"Row {i+1} ({name_val}): Min ({min_val}) must be < Max ({max_val}).")
+                errors.append(f"Variable '{name_val}': Min must be less than Max.")
                 continue
-
             if name_val in ranges:
-                errors.append(f"Row {i+1}: Duplicate name '{name_val}'.")
+                errors.append(f"Duplicate variable name: '{name_val}'.")
                 continue
-
             ranges[name_val] = [min_val, max_val]
 
         if not ranges and not errors:
             errors.append("Please define at least one variable.")
 
-        # -- Failure Case --
         if errors:
-            ui.notification_show("Validation Failed", type="error")
-            m = ui.modal(
+            ui.modal_show(ui.modal(
                 ui.HTML("<ul><li>" + "</li><li>".join(errors) + "</li></ul>"),
-                title="Validation Errors",
-                easy_close=True
-            )
-            ui.modal_show(m)
+                title="Validation Errors", easy_close=True
+            ))
             return
 
-        # -- Success Case --
         try:
-            n = input.num_rows()
-            df = generate_lhs(n=n, ranges=ranges) # Make sure generate_lhs is imported/called correctly
+            df = generate_lhs(n=input.num_rows(), ranges=ranges)
             final_generated_df.set(df)
-            ui.notification_show("Success! Data ready for download.", type="message")
+            ui.notification_show("Success! Framework generated.", type="message")
         except Exception as e:
             ui.notification_show(f"Generation Error: {str(e)}", type="error")
 
-    # --- NEW: Render the Data Preview ---
     @render.data_frame
     def preview_experimental_design():
         df = final_generated_df()
-
-        # If no data is generated yet, return nothing to keep the card empty
-        if df is None:
-            return None
-
-        # Renders an interactive table with column filters
-        return render.DataGrid(df, selection_mode="none", filters=False, height ="250px")
+        if df is not None:
+            return render.DataGrid(df, selection_mode="none", filters=False, height="250px")
+        return None
 
     @render.ui
     def download_btn_container():
