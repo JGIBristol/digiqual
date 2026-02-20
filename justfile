@@ -27,7 +27,7 @@ test_matrix:
 
 # Run the app in "Browser Mode" (Best for coding/debugging)
 app_dev:
-    cd app && uv run shiny run app.py --launch-browser
+    cd app && uv run shiny run app.py
 
 # Run the app in "Desktop Mode" (Best for testing the .exe look)
 app_desktop:
@@ -45,15 +45,16 @@ bump part="patch":
 # --- BUILD ---
 # Cleans old artifacts then creates .whl and .tar.gz files
 build_package: clean
-    # 1. Create the package storage folder
+    # 1. Create the package storage folder (and ensure it is empty)
+    rm -rf package/
     mkdir -p package
     # 2. Run the standard uv build
     uv build
     # 3. Move the .whl and .tar.gz into the package folder
-    # We use -f to overwrite any older versions sitting there
-    mv -f dist/*.whl package/
-    mv -f dist/*.tar.gz package/
-    # 4. Clean up the now-empty root dist folder so PyInstaller has a fresh start
+    # These will now be the only files in 'package/'
+    mv dist/*.whl package/
+    mv dist/*.tar.gz package/
+    # 4. Clean up the now-empty root dist folder
     rm -rf dist
 
 # Cleans old artifacts then creates .app file
@@ -79,8 +80,6 @@ build_app: clean
     # We just need to make sure the final .app is where you expect it
     @echo "Build complete. App is located at app/dist/Digiqual.app"
 
-    # Optional: If you want to move the spec file to keep root clean
-    # mv app/Digiqual.spec app/dist/ 2>/dev/null || true
 
 # Uploads the package to PyPI (bump version before)
 publish_pypi: clean
