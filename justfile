@@ -83,7 +83,7 @@ build_app: clean
     # mv app/Digiqual.spec app/dist/ 2>/dev/null || true
 
 # Uploads the package to PyPI (bump version before)
-publish: clean
+publish_pypi: clean
     # uv publish takes everything in your custom package/ directory
     uv publish package/*
 
