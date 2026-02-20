@@ -13,6 +13,15 @@ sync:
 test:
     uv run pytest
 
+# Runs pytest across all supported Python versions (3.10 to 3.13)
+test_matrix:
+    @for ver in 3.11 3.12 3.13 3.14; do \
+        echo "\n🚀 ======================================"; \
+        echo "🧪 Testing with Python $ver..."; \
+        echo "========================================\n"; \
+        uv run --python $ver --extra dev pytest || exit 1; \
+    done
+
 # Run the app in "Browser Mode" (Best for coding/debugging)
 app_dev:
     cd app && uv run shiny run app.py --launch-browser
