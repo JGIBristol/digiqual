@@ -1,0 +1,51 @@
+# Using the GUI
+
+
+While the `SimulationStudy` class offers powerful programmatic control, sometimes you just need a clean visual interface to explore your data without writing scripts. The DigiQual App wraps the core statistical engine into a modern, user-friendly graphical interface, allowing you to run the entire lifecycle—from design to diagnostics to reliability analysis—directly in your browser.
+
+## 1. How to Access the App
+
+Currently, the DigiQual app is bundled directly with the Python package. You can launch it locally from your terminal or Jupyter environment using the built-in UI function.
+
+```{python}
+# | eval: false
+# Launch the local application
+from digiqual import dq_ui
+
+dq_ui()
+```
+
+This will spin up a local server and automatically open the DigiQual dashboard in your default web browser.
+
+**Coming Soon: Standalone Executables**
+We are actively developing standalone, double-click executables for both Windows and macOS. In the near future, you or your colleagues will be able to run the complete DigiQual toolkit as a standard desktop application, without needing to install Python, manage virtual environments, or touch a command line.
+
+## 2. The App Workflow
+
+The app is divided into three main modules that mirror the programmatic workflow you are already familiar with.
+
+### Module 1: Experimental Design
+
+Instead of defining arrays or dictionaries in code, you can use the UI to visually define your experimental parameters.
+
+- Define your input variables (e.g., Length, Angle) and their minimum/maximum ranges.
+
+- Specify the number of initial samples you want.
+
+- Click generate to instantly build a Latin Hypercube Sample (LHS) framework and download the CSV to feed into your external solver (like MATLAB or Abaqus).
+
+### Module 2: Simulation Diagnostics
+
+Once your external physics solver has run, you can upload the resulting CSV back into the app. Use the dropdowns to assign your input columns and your outcome column (e.g., "Signal"). The app will automatically run health checks, such as testing for input coverage gaps.
+
+**Adaptive Refinement:** If the app detects a deliberate gap or flawed data, it will flag an issue. Instead of manually guessing where to add points, the UI provides a remediation tool to automatically generate targeted samples to fill the gap. You can download these new points, run them through your solver, and upload the complete dataset.
+
+### Module 3: Reliability Analysis
+
+With a validated dataset, you can construct your Probability of Detection (PoD) curves.
+
+- Select your Parameter of Interest (e.g., "Length") and set your critical threshold (e.g., 18.0).
+
+- The app handles the model fitting and bootstrapping in the background.
+
+- It automatically visualizes the results, displaying both the Signal Response Model (Physics) and the Probability of Detection Curve (Reliability) side-by-side.
