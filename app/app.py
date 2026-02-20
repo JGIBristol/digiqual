@@ -260,33 +260,43 @@ app_ui = ui.page_navbar(
     ui.nav_panel(
         "Simulation Diagnostics",
         ui.layout_columns(
-            # --- LEFT: CONFIGURATION
+            # --- LEFT: CONFIGURATION ---
             ui.card(
                 ui.card_header("Diagnostic Configuration"),
                 ui.input_file("upload_csv", "Upload CSV file", accept=[".csv"], multiple=False),
                 ui.hr(),
                 ui.input_selectize("input_cols", "Select Input Variables", choices=[], multiple=True),
                 ui.input_selectize("outcome_col", "Select Outcome Variable", choices=[], multiple=False),
+
+                # Permanent Error Display for selection conflicts
+                ui.output_ui("selection_error_display"),
+
                 ui.hr(),
-                ui.output_ui("dynamic_preview_card"),
+                # This is the primary status alert (Success/Failure)
+                ui.output_ui("validation_status"),
                 height="100%"
             ),
 
             # --- RIGHT: PREVIEWS & REPORTS ---
             ui.div(
+                # Dynamic Preview (Hides when no data is present)
+                ui.output_ui("dynamic_preview_card"),
+
                 ui.card(
                     ui.card_header("Validation Report"),
-                    ui.output_ui("validation_status"),
                     ui.output_data_frame("validation_results_table"),
                     full_screen=True
                 ),
+                # Remediation logic is now anchored to the results
                 ui.output_ui("remediation_ui"),
                 class_="d-flex flex-column gap-3"
             ),
-            col_widths=(4, 8)
+            col_widths=(6, 6) # Symmetrical layout
         ),
         icon=icon_svg("check-double")
     ),
+
+
     ui.nav_panel(
         "PoD Analysis",
         ui.card(
@@ -430,11 +440,10 @@ def server(input, output, session):
 
 # ==================== TAB 2: DATA VALIDATOR ====================
 
-    uploaded_data = reactive.value(None)
-    validation_passed = reactive.value(False)
-    new_samples = reactive.value(None)
-
-    diagnostic_table = reactive.value(None)
+    uploaded_data = reactive.Value(None)
+    validation_passed = reactive.Value(False)
+    new_samples = reactive.Value(None)
+    diagnostic_table = reactive.Value(None)
 
     @reactive.effect
     def _():
@@ -448,8 +457,10 @@ def server(input, output, session):
         except Exception:
             uploaded_data.set(None)
 
+    # FIXED: Only triggers on file upload to set initial defaults
     @reactive.effect
-    def update_column_selectors():
+    @reactive.event(uploaded_data)
+    def initialize_column_selectors():
         df = uploaded_data()
         if df is None:
             ui.update_selectize("input_cols", choices=[])
@@ -457,68 +468,36 @@ def server(input, output, session):
             return
 
         cols = list(df.columns)
-        ui.update_selectize("input_cols", choices=cols, selected=cols[:-1] if len(cols) > 1 else cols)
-        ui.update_selectize("outcome_col", choices=cols, selected=cols[-1] if len(cols) > 0 else None)
+        if len(cols) > 0:
+            # Default to final column for outcome, everything else for inputs
+            default_outcome = cols[-1]
+            default_inputs = cols[:-1]
 
-    @reactive.effect
-    @reactive.event(uploaded_data, input.input_cols, input.outcome_col)
-    def run_validation_diagnostics():
-        df = uploaded_data()
-        # Reset previous new samples if we change data/cols
-        new_samples.set(None)
-
-        if df is None or not input.input_cols() or not input.outcome_col():
-            validation_passed.set(False)
-            diagnostic_table.set(None)
-            return
-
-        # 1. Initialize Study
-        study = SimulationStudy(
-            input_cols=list(input.input_cols()),
-            outcome_col=input.outcome_col()
-        )
-        study.add_data(df)
-
-        # 2. Run Diagnostics
-        diag_df = study.diagnose()
-        if diag_df is None:
-            return
-
-        diagnostic_table.set(diag_df)
-
-        # 3. Check "Pass" column
-        try:
-            all_passed = diag_df["Pass"].astype(bool).all()
-            validation_passed.set(all_passed)
-        except KeyError:
-            validation_passed.set(False)
-
-    # --- OUTPUTS ---
+            ui.update_selectize("input_cols", choices=cols, selected=default_inputs)
+            ui.update_selectize("outcome_col", choices=cols, selected=default_outcome)
 
     @render.ui
-    def dynamic_preview_card():
-        df = uploaded_data()
-        if df is None:
-            return None  # The H3 and the Card literally won't exist in the HTML
+    def selection_error_display():
+        """Displays a permanent red error if selections conflict."""
+        selected_inputs = list(input.input_cols())
+        selected_outcome = input.outcome_col()
 
-        return ui.div(
-            ui.h5("Uploaded Data Preview", class_="mt-3 mb-2"),
-            ui.output_data_frame("preview_uploaded_table")
-
-        )
-
-    @render.data_frame
-    def preview_uploaded_table():
-        df = uploaded_data()
-        if df is not None:
-            # Displays the preview without filters for a clean look
-            return render.DataGrid(df.round(3).head(5), selection_mode="none", filters=False)
+        if selected_outcome and selected_outcome in selected_inputs:
+            return ui.div(
+                ui.span(icon_svg("circle-xmark"), f" Error: '{selected_outcome}' cannot be both an input and an outcome."),
+                class_="text-danger small fw-bold mt-2"
+            )
         return None
 
     @render.ui
     def validation_status():
-        if uploaded_data() is None:
-            return ui.div(ui.p("Upload a CSV to begin.", class_="text-muted fst-italic"))
+        """Shows result status or prompt to configure."""
+        selected_inputs = list(input.input_cols())
+        selected_outcome = input.outcome_col()
+        conflict = selected_outcome in selected_inputs
+
+        if uploaded_data() is None or not selected_inputs or conflict:
+            return ui.div(ui.p("Configure selections to run diagnostics.", class_="text-muted fst-italic"))
 
         if validation_passed():
             return ui.div(
@@ -528,9 +507,62 @@ def server(input, output, session):
         else:
             return ui.div(
                 ui.h5(icon_svg("triangle-exclamation"), " Issues Detected"),
-                ui.p("See Remediation options to generate new samples", class_="small mb-0"),
+                ui.p("See Remediation options for next steps.", class_="small mb-0"),
                 class_="alert alert-danger mt-3"
             )
+
+    @reactive.effect
+    @reactive.event(uploaded_data, input.input_cols, input.outcome_col)
+    def run_validation_diagnostics():
+        df = uploaded_data()
+        new_samples.set(None)
+
+        selected_inputs = list(input.input_cols())
+        selected_outcome = input.outcome_col()
+
+        # Guard: Stop if data is missing, selections are empty, OR there is a conflict
+        if df is None or not selected_inputs or not selected_outcome or (selected_outcome in selected_inputs):
+            validation_passed.set(False)
+            diagnostic_table.set(None)
+            return
+
+        try:
+            study = SimulationStudy(input_cols=selected_inputs, outcome_col=selected_outcome)
+            study.add_data(df)
+            diag_df = study.diagnose()
+
+            if diag_df is None:
+                diagnostic_table.set(None)
+                return
+
+            diagnostic_table.set(diag_df)
+            all_passed = diag_df["Pass"].astype(bool).all()
+            validation_passed.set(all_passed)
+
+        except Exception as e:
+            validation_passed.set(False)
+            diagnostic_table.set(None)
+            print(f"Diagnostic Error: {e}")
+
+    # --- OUTPUTS ---
+
+    @render.ui
+    def dynamic_preview_card():
+        df = uploaded_data()
+        if df is None:
+            return None
+
+        return ui.card(
+            ui.card_header("Uploaded Data Preview"),
+            ui.output_data_frame("preview_uploaded_table")
+        )
+
+    @render.data_frame
+    def preview_uploaded_table():
+        df = uploaded_data()
+        if df is not None:
+            return render.DataGrid(df.round(3).head(5), selection_mode="none", filters=False)
+        return None
 
     @render.data_frame
     def validation_results_table():
@@ -539,78 +571,38 @@ def server(input, output, session):
             return render.DataGrid(df)
         return None
 
-    # --- REMEDIATION SECTION ---
 
     @render.ui
     def remediation_ui():
         """
-        Only appears if validation failed.
+        Only appears if diagnostics have been run AND they detected issues.
         """
-        if validation_passed() or uploaded_data() is None:
-            return ui.div()
+        # 1. Hide if no data or if diagnostics haven't run yet
+        if uploaded_data() is None or diagnostic_table() is None:
+            return None
 
+        # 2. Hide if there is currently a selection conflict
+        conflict = input.outcome_col() in list(input.input_cols())
+        if conflict:
+            return None
+
+        # 3. Hide if validation actually passed
+        if validation_passed():
+            return None
+
+        # 4. Show the Remediation card
         return ui.card(
             ui.card_header("Remediation: Generate New Samples"),
-            ui.p("Your data has issues. Use the Refine tool to generate new samples specifically in the empty spaces."),
+            ui.p("Your data has coverage issues. Use the Refine tool to generate new samples specifically in the empty spaces."),
 
             ui.layout_columns(
                 ui.input_numeric("n_new_samples", "Count", value=10, min=1),
                 ui.input_task_button("btn_refine", "Generate New Samples", icon=icon_svg("wand-magic-sparkles"), class_="btn-warning"),
             ),
             ui.output_ui("download_new_samples_ui"),
-            class_="border-warning mt-3"
+            class_="border-warning shadow-sm"
         )
 
-    @reactive.effect
-    @reactive.event(input.btn_refine)
-    def compute_new_samples():
-        """
-        Calls study.refine() to create NEW SAMPLES.
-        """
-        df = uploaded_data()
-        if df is None:
-            return
-
-        study = SimulationStudy(
-            input_cols=list(input.input_cols()),
-            outcome_col=input.outcome_col()
-        )
-        study.add_data(df)
-
-        try:
-            # Generate the new samples
-            generated_df = study.refine(n_points=input.n_new_samples())
-
-            # Save to our renamed reactive value
-            new_samples.set(generated_df)
-
-            ui.notification_show(f"Success! Generated {len(generated_df)} new samples.", type="message")
-
-        except Exception as e:
-            ui.notification_show(f"Refinement Failed: {str(e)}", type="error")
-
-    @render.ui
-    def download_new_samples_ui():
-        if new_samples() is not None:
-            return ui.div(
-                ui.hr(),
-                ui.br(),
-                ui.download_button("download_new_samples_csv", "Download New Samples CSV", class_="btn-success w-100")
-            )
-        return ui.div()
-
-    @render.data_frame
-    def preview_new_samples():
-        df = new_samples()
-        if df is not None:
-            return render.DataGrid(df.round(3))
-        return None
-
-    @render.download(filename="new_samples.csv")
-    def download_new_samples_csv():
-        df = new_samples()
-        if df is not None:
-            yield df.to_csv(index=False)
 
 
 # ==================== TAB 3: DATA ANALYZER ====================
