@@ -205,7 +205,7 @@ app_ui = ui.page_navbar(
     ui.nav_panel(
         "Experimental Design",
         ui.layout_columns(
-            # --- LEFT: VARIABLE INPUTS (Symmetrical 6/12) ---
+            # --- LEFT: VARIABLE INPUTS
             ui.card(
                 ui.card_header("Experimental Design Variables"),
                 ui.div(
@@ -218,7 +218,6 @@ app_ui = ui.page_navbar(
                     ),
                     class_="mb-2 px-1"
                 ),
-                # This div allows the inputs to grow while keeping the button attached
                 ui.div(
                     ui.div(id="variable_rows_container"),
                     ui.div(
@@ -232,7 +231,7 @@ app_ui = ui.page_navbar(
                 height="100%"
             ),
 
-            # --- RIGHT: PREVIEW & SETTINGS (Symmetrical 6/12) ---
+            # --- RIGHT: PREVIEW & SETTINGS
             ui.div(
                 ui.card(
                     ui.card_header("Framework Preview"),
@@ -261,7 +260,7 @@ app_ui = ui.page_navbar(
     ui.nav_panel(
         "Simulation Diagnostics",
         ui.layout_columns(
-            # --- LEFT: CONFIGURATION (Symmetrical 6/12) ---
+            # --- LEFT: CONFIGURATION
             ui.card(
                 ui.card_header("Diagnostic Configuration"),
                 ui.input_file("upload_csv", "Upload CSV file", accept=[".csv"], multiple=False),
@@ -269,25 +268,22 @@ app_ui = ui.page_navbar(
                 ui.input_selectize("input_cols", "Select Input Variables", choices=[], multiple=True),
                 ui.input_selectize("outcome_col", "Select Outcome Variable", choices=[], multiple=False),
                 ui.hr(),
-                ui.output_ui("validation_status"),
+                ui.output_ui("dynamic_preview_card"),
                 height="100%"
             ),
 
             # --- RIGHT: PREVIEWS & REPORTS ---
             ui.div(
                 ui.card(
-                    ui.card_header("Uploaded Data Preview"),
-                    ui.output_data_frame("preview_uploaded"),
-                ),
-                ui.card(
                     ui.card_header("Validation Report"),
+                    ui.output_ui("validation_status"),
                     ui.output_data_frame("validation_results_table"),
                     full_screen=True
                 ),
                 ui.output_ui("remediation_ui"),
                 class_="d-flex flex-column gap-3"
             ),
-            col_widths=(6, 6)
+            col_widths=(4, 8)
         ),
         icon=icon_svg("check-double")
     ),
@@ -309,7 +305,7 @@ app_ui = ui.page_navbar(
 
 def server(input, output, session):
 
-  # ==================== TAB 1: DATA GENERATOR ====================
+# ==================== TAB 1: DATA GENERATOR ====================
 
     active_row_ids = reactive.Value([0])
     next_id = reactive.Value(1)
@@ -499,12 +495,25 @@ def server(input, output, session):
 
     # --- OUTPUTS ---
 
+    @render.ui
+    def dynamic_preview_card():
+        df = uploaded_data()
+        if df is None:
+            return None  # The H3 and the Card literally won't exist in the HTML
+
+        return ui.div(
+            ui.h5("Uploaded Data Preview", class_="mt-3 mb-2"),
+            ui.output_data_frame("preview_uploaded_table")
+
+        )
+
     @render.data_frame
-    def preview_uploaded():
+    def preview_uploaded_table():
         df = uploaded_data()
         if df is not None:
-            return render.DataGrid(df.round(3).head(5))
-        return render.DataGrid(pd.DataFrame())
+            # Displays the preview without filters for a clean look
+            return render.DataGrid(df.round(3).head(5), selection_mode="none", filters=False)
+        return None
 
     @render.ui
     def validation_status():
@@ -519,7 +528,7 @@ def server(input, output, session):
         else:
             return ui.div(
                 ui.h5(icon_svg("triangle-exclamation"), " Issues Detected"),
-                ui.p("Coverage gaps found. See options below.", class_="small mb-0"),
+                ui.p("See Remediation options to generate new samples", class_="small mb-0"),
                 class_="alert alert-danger mt-3"
             )
 
