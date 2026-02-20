@@ -3,6 +3,7 @@ import os
 import threading
 import socket
 import webview
+from webview.menu import Menu, MenuAction, MenuSeparator
 from shiny import run_app
 from app import app
 
@@ -47,7 +48,31 @@ class DownloadApi:
             except Exception as e:
                 print(f"Error saving file: {e}")
 
-# --- 4. The JavaScript Injector ---
+# --- 4. Menu Bar Actions ---
+def show_about():
+    """Triggers an alert box with version info inside the app."""
+    if webview.windows:
+        webview.windows[0].evaluate_js(
+            'alert("DigiQual\\nVersion 0.10.4\\nStatistical Toolkit for Reliability Assessment in NDT");'
+        )
+
+def open_documentation():
+    """Opens the Quarto docs in the user's default web browser."""
+    if webview.windows:
+        webview.windows[0].evaluate_js(
+            'window.open("https://jgibristol.github.io/digiqual/", "_blank");'
+        )
+
+# Define the menu structure
+menu_items = [
+    Menu('Help', [
+        MenuAction('View Documentation', open_documentation),
+        MenuSeparator(),
+        MenuAction('About DigiQual', show_about)
+    ])
+]
+
+# --- 5. The JavaScript Injector ---
 def inject_js(window):
     script = """
     // Map Button IDs to Filenames
@@ -99,4 +124,5 @@ if __name__ == '__main__':
         js_api=api
     )
 
-    webview.start(func=inject_js, args=window, private_mode=False)
+    # Note: menu=menu_items is added here!
+    webview.start(func=inject_js, args=window, private_mode=False, menu=menu_items)
