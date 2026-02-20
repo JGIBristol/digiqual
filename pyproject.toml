@@ -12,6 +12,14 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
+
+[project.urls]
+Documentation = "https://jgibristol.github.io/digiqual/"
+Source = "https://github.com/JGIBristol/digiqual"
+
+
+
+
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
 dependencies = [
