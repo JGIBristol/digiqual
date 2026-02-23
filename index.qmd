@@ -30,7 +30,7 @@ Ensure your simulation outputs are statistically valid before processing.
 - **Smart Refinement:** Use `refine()` to identify specific weaknesses in your data. It uses bootstrap committees to find regions of high uncertainty and suggests new points exactly where the model is "confused".
 - **Automated Workflows:** Use the `optimise()` method to run a fully automated "Active Learning" loop. It generates an initial design, executes your external solver, checks diagnostics, and iteratively refines the model until statistical requirements are met.
 
-### 4. Generalized Reliability Analysis
+### 4. Generalised Reliability Analysis
 
 The package includes a full statistical engine for calculating Probability of Detection (PoD) curves.
 
