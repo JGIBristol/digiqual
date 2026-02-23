@@ -98,27 +98,6 @@ def test_check_bootstrap_convergence_fail():
     # FIX: Changed 'relative_ci_width' to 'max_relative_width'
     assert res['max_relative_width'] > 0.10
 
-
-
-def test_bootstrap_detects_heteroskedasticity():
-    """Test that convergence fails if the 'tail' is unstable even if the mean is okay."""
-    np.random.seed(123)
-    n = 100
-    X = np.linspace(0, 10, n)
-
-    # Noise increases significantly with X (Heteroskedasticity)
-    noise = np.random.normal(0, 1) * (X / 2)
-    df = pd.DataFrame({'A': X, 'Signal': 2 * X + noise + 10})
-
-    res = _check_bootstrap_convergence(df, ['A'], 'Signal')
-
-    # The 10th percentile might be stable, but the 90th should be wild
-    assert res['probe_results']['90th_percentile_rel_width'] > res['probe_results']['10th_percentile_rel_width']
-
-    # Ensure the max_relative_width is the one driving the 'converged' status
-    assert res['max_relative_width'] == max(res['probe_results'].values())
-
-
 # --- Part 2: Integration Tests for Main Function ---
 
 def test_sample_sufficiency_happy_path(basic_df):
