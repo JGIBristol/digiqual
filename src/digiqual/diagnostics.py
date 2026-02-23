@@ -129,37 +129,59 @@ def _check_model_fit(df: pd.DataFrame, input_cols: List[str], outcome_col: str) 
         "stable_fit": np.mean(scores) > 0.5
     }
 
-def _check_bootstrap_convergence(df: pd.DataFrame, input_cols: List[str], outcome_col: str) -> Dict:
+def _check_bootstrap_convergence(df: pd.DataFrame, input_cols: List[str], outcome_col: str,n_bootstraps: int = 100) -> Dict:
     """
-    Checks 'Convergence' using Bootstrap Resampling.
-    Calculates relative width of the Confidence Interval (CI) at the centroid.
-    [cite_start]Ref: [cite: 305, 817]
+    Checks Bootstrap Convergence across the feature distribution to
+    account for heteroskedasticity.
     """
-    n_bootstraps = 100
-    n_samples = len(df)
     X = df[input_cols].values
     y = df[outcome_col].values
+    n_samples = len(df)
 
-    test_point = np.median(X, axis=0).reshape(1, -1)
-    predictions = []
+    # 1. Define Probe Points: Median, 10th, and 90th percentiles
+    # to capture variance at the center and the 'tails'.
+    probe_points = np.percentile(X, [10, 50, 90], axis=0)
+
+    # Store predictions for all probe points: Shape (n_bootstraps, n_probes)
+    all_predictions = []
 
     for _ in range(n_bootstraps):
         X_res, y_res = resample(X, y, n_samples=n_samples)
+
+        # Polynomial degree 3 can be sensitive to outliers/heteroskedasticity
         model = make_pipeline(PolynomialFeatures(degree=3), LinearRegression())
         model.fit(X_res, y_res)
-        predictions.append(model.predict(test_point)[0])
 
-    predictions = np.array(predictions)
-    lower = np.percentile(predictions, 2.5)
-    upper = np.percentile(predictions, 97.5)
-    ci_width = upper - lower
-    relative_width = ci_width / np.abs(np.mean(predictions))
+        # Predict all probes at once
+        preds = model.predict(probe_points)
+        all_predictions.append(preds)
+
+    # Convert to array for easy indexing: (n_bootstraps, n_probes)
+    all_predictions = np.array(all_predictions)
+
+    # 2. Calculate CI metrics per probe point
+    lower = np.percentile(all_predictions, 2.5, axis=0)
+    upper = np.percentile(all_predictions, 97.5, axis=0)
+    means = np.abs(np.mean(all_predictions, axis=0))
+
+    ci_widths = upper - lower
+    relative_widths = ci_widths / means
+
+    # 3. Determine overall convergence
+    # We consider it converged only if the WORST relative width is < 0.20
+    max_relative_width = np.max(relative_widths)
+    is_converged = max_relative_width < 0.20
 
     return {
         "bootstrap_iterations": n_bootstraps,
-        "ci_width_at_centroid": round(ci_width, 4),
-        "relative_ci_width": round(relative_width, 4),
-        "converged": relative_width < 0.10
+        "mean_relative_width": round(np.mean(relative_widths), 4),
+        "max_relative_width": round(max_relative_width, 4),
+        "probe_results": {
+            "10th_percentile_rel_width": round(relative_widths[0], 4),
+            "50th_percentile_rel_width": round(relative_widths[1], 4),
+            "90th_percentile_rel_width": round(relative_widths[2], 4),
+        },
+        "converged": bool(is_converged)
     }
 
 #### Main Function: sample_sufficiency() ####
@@ -239,11 +261,13 @@ def sample_sufficiency(
     })
 
     # Bootstrap Results
+    # We use 'max_relative_width' to ensure we pass only if
+    # the model is stable across the entire range (handling heteroskedasticity).
     flat_results.append({
         "Test": "Bootstrap Convergence",
         "Variable": outcome_col,
-        "Metric": "Relative CI Width",
-        "Value": boot_res['relative_ci_width'],
+        "Metric": "Max Rel CI Width",
+        "Value": boot_res['max_relative_width'],
         "Pass": boot_res['converged']
     })
 

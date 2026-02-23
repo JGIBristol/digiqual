@@ -82,7 +82,7 @@ build_app: clean
 
 
 # Uploads the package to PyPI (bump version before)
-publish_pypi: clean
+build_pypi: clean
     # uv publish takes everything in your custom package/ directory
     uv publish package/*
 

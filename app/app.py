@@ -155,7 +155,7 @@ app_ui = ui.page_navbar(
                     ui.div(
                         # About Section
                         ui.div(
-                            ui.tags.strong("Version: "), "0.10.5", ui.br(),
+                            ui.tags.strong("Version: "), "0.10.6", ui.br(),
                             ui.tags.strong("License: "), "MIT Open Source", ui.br(),
                             ui.tags.strong("Author: "), "Josh Tyler", ui.br(),
                             ui.tags.strong("Institution: "), "University of Bristol",
