@@ -8,7 +8,8 @@ from digiqual.pod import (
     predict_local_std,
     infer_best_distribution,
     compute_pod_curve,
-    bootstrap_pod_ci
+    bootstrap_pod_ci,
+    plot_model_selection
 )
 import pandas as pd
 from digiqual.core import SimulationStudy
@@ -76,13 +77,18 @@ def test_fit_robust_mean_model_shapes(linear_data):
     assert len(preds) == 3
     assert isinstance(preds, np.ndarray)
 
-def test_fit_robust_mean_model_plotting(linear_data, monkeypatch):
-    """Test that plot_cv=True runs without crashing (mocking plt.show)."""
-    import matplotlib.pyplot as plt
-    monkeypatch.setattr(plt, 'show', lambda: None)
-
+def test_plot_model_selection(linear_data):
+    """Test that the standalone model selection plot generates a figure."""
     X, y = linear_data
-    fit_robust_mean_model(X, y, max_degree=3, plot_cv=True)
+    model = fit_robust_mean_model(X, y, max_degree=3)
+
+    # Test that the attribute was attached
+    assert hasattr(model, 'cv_scores_')
+
+    # Test that the plot generates successfully
+    fig = plot_model_selection(model.cv_scores_)
+    assert fig is not None
+    assert fig.axes # Checks that it actually contains plot axes
 
 # --- 2. VARIANCE MODEL TESTS (Kernel Smoothing) ---
 

@@ -78,7 +78,7 @@ def inject_js(window):
     // Map Button IDs to Filenames
     const filenameMap = {
         'download_lhs': 'experimental_design.csv',
-        'download_new_samples_csv': 'refinement_samples.csv',
+        'download_new_samples': 'refinement_samples.csv',
         'download_pod_results': 'pod_analysis_results.csv'
     };
 

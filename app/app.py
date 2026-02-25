@@ -477,6 +477,24 @@ def server(input, output, session):
             ui.update_selectize("input_cols", choices=cols, selected=default_inputs)
             ui.update_selectize("outcome_col", choices=cols, selected=default_outcome)
 
+    @reactive.effect
+    @reactive.event(input.btn_refine)
+    def handle_refinement():
+        study = current_study()
+        if study is None:
+            return
+
+        try:
+            # We assume your SimulationStudy has a refine method
+            # that targets the 'Length' gaps we discussed earlier
+            n_to_gen = input.n_new_samples()
+            refined_df = study.refine(n_points=n_to_gen) # Or your specific generation logic
+
+            new_samples.set(refined_df)
+            ui.notification_show(f"Generated {n_to_gen} targeted samples.", type="message")
+        except Exception as e:
+            ui.notification_show(f"Refinement failed: {e}", type="error")
+
     @render.ui
     def selection_error_display():
         """Displays a permanent red error if selections conflict."""
@@ -604,6 +622,29 @@ def server(input, output, session):
             class_="border-warning shadow-sm"
         )
 
+
+    @render.ui
+    def download_new_samples_ui():
+        # Only show the button if new_samples has been populated
+        if new_samples() is None:
+            return None
+
+        return ui.div(
+            ui.hr(),
+            ui.p("Success! Download your targeted samples below:", class_="small"),
+            ui.download_button(
+                "download_new_samples",
+                "Download Refined CSV",
+                class_="btn-success w-100",
+                icon=icon_svg("download")
+            )
+        )
+
+    @render.download(filename="remediation_samples.csv")
+    def download_new_samples():
+        df = new_samples()
+        if df is not None:
+            yield df.to_csv(index=False)
 
 
 #### Server - PoD Generation (Tab 4) ####
@@ -744,17 +785,24 @@ def server(input, output, session):
             ui.notification_show(f"Analysis Failed: {str(e)}", type="error")
 
 
-    # --- RESULTS DISPLAY ---
+# --- RESULTS DISPLAY ---
     @render.ui
     def pod_results_container():
         """
-        Renders the side-by-side plots and the metrics table.
+        Renders the model selection plot, side-by-side analysis plots, and the metrics table.
         """
         if pod_metrics() is None:
             return ui.div()
 
         return ui.div(
-            # Row 1: Plots
+            # Row 1: Model Selection Plot (Full Width)
+            ui.card(
+                ui.card_header("Model Selection (Bias-Variance Tradeoff)"),
+                ui.output_plot("plot_model_selection", height="400px"),
+                full_screen=True,
+                class_="mb-3"
+            ),
+            # Row 2: Signal Model and PoD Plots
             ui.layout_columns(
                 ui.card(
                     ui.card_header("Signal Model Fit"),
@@ -766,9 +814,10 @@ def server(input, output, session):
                     ui.output_plot("plot_curve"),
                     full_screen=True
                 ),
-                col_widths=[6, 6]
+                col_widths=[6, 6],
+                class_="mb-3"
             ),
-            # Row 2: Table and Download Actions
+            # Row 3: Table and Download Actions
             ui.layout_columns(
                 ui.card(
                     ui.card_header("Key Reliability Metrics"),
@@ -785,6 +834,14 @@ def server(input, output, session):
                 col_widths=[8, 4]
             )
         )
+
+    @render.plot
+    def plot_model_selection():
+        _ = plot_trigger() # Dependency on button click
+        study = current_study()
+        if study and "model_selection" in study.plots:
+            return study.plots["model_selection"]
+        return None
 
     @render.plot
     def plot_signal():

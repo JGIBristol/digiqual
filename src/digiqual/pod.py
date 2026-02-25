@@ -14,8 +14,7 @@ def fit_robust_mean_model(
     X: np.ndarray,
     y: np.ndarray,
     max_degree: int = 10,
-    n_folds: int = 10,
-    plot_cv: bool = False
+    n_folds: int = 10
 ) -> Any:
     """
     Fits regression models (Polynomials and Kriging) and selects the optimal one.
@@ -29,15 +28,12 @@ def fit_robust_mean_model(
         y (np.ndarray): 1D array of outcome values (e.g., signal response).
         max_degree (int, optional): The maximum polynomial degree to test. Defaults to 10.
         n_folds (int, optional): Number of folds for Cross Validation. Defaults to 10.
-        plot_cv (bool, optional): If True, generates a plot of CV Score vs Model.
-            Defaults to False.
 
     Returns:
-        Any: A fitted scikit-learn model (Pipeline for Polynomial, GaussianProcessRegressor
-        for Kriging). The object has two added attributes:
+        Any: A fitted scikit-learn model with the following added attributes:
         - `model_type_` (str): Either 'Polynomial' or 'Kriging'.
-        - `model_params_` (Any): The selected integer degree for polynomials, or the
-          fitted kernel for Kriging.
+        - `model_params_` (Any): The selected integer degree or the fitted kernel.
+        - `cv_scores_` (dict): The cross-validation MSE scores for all tested models.
     """
     X_2d = X.reshape(-1, 1)
     degrees = range(1, max_degree + 1)
@@ -63,23 +59,6 @@ def fit_robust_mean_model(
     best_model_info = min(cv_scores, key=cv_scores.get)
     best_type, best_params = best_model_info
 
-    if plot_cv:
-        import matplotlib.pyplot as plt
-        plt.figure(figsize=(8, 4))
-        poly_degrees = [k[1] for k in cv_scores.keys() if k[0] == 'Polynomial']
-        poly_scores = [cv_scores[k] for k in cv_scores.keys() if k[0] == 'Polynomial']
-        plt.plot(poly_degrees, poly_scores, marker='o', label='Polynomial MSE')
-
-        kriging_score = cv_scores[('Kriging', None)]
-        plt.axhline(kriging_score, color='orange', linestyle='-', label='Kriging MSE')
-
-        if best_type == 'Polynomial':
-            plt.axvline(best_params, color='r', linestyle='--', label=f'Best: Poly {best_params}')
-
-        plt.title('Model Selection: Bias-Variance Tradeoff')
-        plt.legend()
-        plt.show()
-
     # 4. Train final model
     if best_type == 'Polynomial':
         final_model = make_pipeline(PolynomialFeatures(degree=best_params), LinearRegression())
@@ -94,7 +73,98 @@ def fit_robust_mean_model(
 
     final_model.model_type_ = best_type
 
+    # NEW: Attach the scores so they can be plotted later!
+    final_model.cv_scores_ = cv_scores
+
     return final_model
+
+def plot_model_selection(cv_scores: dict) -> Any:
+    """
+    Generates a normalized bar chart of the Bias-Variance Tradeoff from CV scores,
+    alongside a sorted table of the exact MSE values in best-fit order.
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    # 1. Prepare the data for the bar chart
+    poly_keys = [k for k in cv_scores.keys() if k[0] == 'Polynomial']
+    poly_degrees = sorted([k[1] for k in poly_keys])
+
+    labels = []
+    mses = []
+
+    for d in poly_degrees:
+        labels.append(f"Poly {d}")
+        mses.append(cv_scores[('Polynomial', d)])
+
+    if ('Kriging', None) in cv_scores:
+        labels.append("Kriging")
+        mses.append(cv_scores[('Kriging', None)])
+
+    # Normalize by minimum error (matching the MATLAB paper implementation)
+    min_mse = min(mses)
+    normalized_mses = [m / min_mse for m in mses]
+
+    # 2. Prepare the data for the sorted table
+    # Sort dictionary by MSE ascending (lowest/best first)
+    sorted_scores = sorted(cv_scores.items(), key=lambda item: item[1])
+    table_data = []
+    for (m_type, m_param), score in sorted_scores:
+        name = f"Poly {m_param}" if m_type == 'Polynomial' else "Kriging"
+        # Format to 1 decimal place in scientific notation = 2 significant figures
+        val_str = f"{score:.1e}"
+        table_data.append([name, val_str])
+
+    # 3. Create the Figure and subplots (Bar chart on left, Table on right)
+    fig, (ax_plot, ax_table) = plt.subplots(
+        1, 2, figsize=(12, 5), gridspec_kw={'width_ratios': [2.5, 1]}
+    )
+
+    # --- Bar Chart (Left) ---
+    bars = ax_plot.bar(labels, normalized_mses, color='#1f77b4', edgecolor='black', alpha=0.8)
+
+    # Highlight the winning model in red
+    best_idx = np.argmin(mses)
+    bars[best_idx].set_color('crimson')
+    bars[best_idx].set_edgecolor('black')
+
+    # Add the reference line at 1.0
+    ax_plot.axhline(1.0, color='red', linestyle='-.', linewidth=1.5, label='Min Error')
+
+    ax_plot.set_title('Model Selection: Bias-Variance Tradeoff', fontweight='bold')
+    ax_plot.set_ylabel('Error / Min Error [-]')
+    ax_plot.grid(True, axis='y', linestyle=':', alpha=0.7)
+
+    # Rotate x-axis labels to prevent overlap
+    ax_plot.tick_params(axis='x', rotation=45)
+    ax_plot.legend()
+
+    # --- Table (Right) ---
+    ax_table.axis('off')
+    ax_table.set_title('MSE Values\n(Best Fit Order)', fontweight='bold', pad=10)
+
+    table = ax_table.table(
+        cellText=table_data,
+        colLabels=["Model", "MSE"],
+        loc='center',
+        cellLoc='center'
+    )
+
+    # Style the table
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1, 1.8) # Stretch vertically for better readability
+
+    # Bold the headers and highlight the winning row
+    for (row, col), cell in table.get_celld().items():
+        if row == 0:
+            cell.set_text_props(weight='bold')
+        if row == 1:
+            cell.set_facecolor('#ffcccc') # Light red background for the winner
+
+    fig.tight_layout()
+
+    return fig
 
 
 #### Variance Model - Kernel Smoothing ####

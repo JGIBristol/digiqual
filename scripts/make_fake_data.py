@@ -1,48 +1,42 @@
 import pandas as pd
 import numpy as np
 
-def generate_fake_data(filename="initial_data.csv", n=50):
-    """Generates a small dataset that might FAIL diagnostics (for testing the 'Fix' loop)."""
-    np.random.seed(42)
+def generate_fake_data(filename="app/initial_data.csv", n=25):
+    """Fails due to massive Gaps and Skewed Heteroskedasticity."""
+    # 1. Deliberate Gap (0-2 and 8-10)
+    lengths = np.concatenate([np.random.uniform(0, 2, 12), np.random.uniform(8, 10, 13)])
+    df = pd.DataFrame({
+        'Length': lengths,
+        'Angle': np.random.uniform(-45, 45, n)
+    })
 
-    # 1. Generate Inputs (Small N = likely gaps)
+    # 2. Monotonic Physics + Skewed Gamma Noise
+    # As Length increases, the 'scale' of the Gamma noise increases (Heteroskedasticity)
+    base_signal = 10.0 + 1.5 * df['Length'] + 0.2 * (df['Length']**2)
+
+    # Non-normal noise: Gamma distribution is always positive and skewed
+    noise_scale = 0.5 + (0.8 * df['Length'])
+    noise = np.random.gamma(shape=2.0, scale=noise_scale, size=n)
+
+    df['Signal'] = base_signal + noise
+    df.to_csv(filename, index=False)
+    print(f"✅ Created '{filename}' (N={n}). Should fail Gap and Bootstrap.")
+
+def updated_data(filename="app/sufficient_data.csv", n=1500):
+    """Passes because high N overcomes the skewed noise."""
     df = pd.DataFrame({
         'Length': np.random.uniform(0, 10, n),
         'Angle': np.random.uniform(-45, 45, n)
     })
 
-    # 2. Physics & Noise
-    base_signal = (df['Length'] * 2.0) - (0.1 * df['Angle'].abs())
-    noise_scale = 0.5 + (0.1 * df['Length'])
-    noise = np.random.normal(loc=0, scale=noise_scale, size=n)
+    base_signal = 10.0 + 1.5 * df['Length'] + 0.2 * (df['Length']**2)
+    noise_scale = 0.5 + (0.8 * df['Length'])
+    noise = np.random.gamma(shape=2.0, scale=noise_scale, size=n)
 
-    df['Signal'] = np.abs(base_signal + noise)
-
+    df['Signal'] = base_signal + noise
     df.to_csv(filename, index=False)
-    print(f"✅ Created '{filename}' with {n} rows (likely to have issues).")
-
-
-def updated_data(filename="sufficient_data.csv", n=200):
-    """Generates a large dataset that should PASS all diagnostics."""
-    np.random.seed(999) # Different seed
-
-    # 1. Generate Inputs (Large N = good coverage)
-    df = pd.DataFrame({
-        'Length': np.random.uniform(0, 10, n),
-        'Angle': np.random.uniform(-45, 45, n)
-    })
-
-    # 2. Physics & Noise
-    base_signal = (df['Length'] * 2.0) - (0.1 * df['Angle'].abs())
-    noise_scale = 0.5 + (0.1 * df['Length'])
-    noise = np.random.normal(loc=0, scale=noise_scale, size=n)
-
-    df['Signal'] = np.abs(base_signal + noise)
-
-    df.to_csv(filename, index=False)
-    print(f"✅ Created '{filename}' with {n} rows (should pass checks).")
+    print(f"✅ Created '{filename}' (N={n}). Should pass all tests.")
 
 if __name__ == "__main__":
-    # You can comment out the one you don't want, or run both
     generate_fake_data()
     updated_data()
