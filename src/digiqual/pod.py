@@ -5,8 +5,10 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score, KFold
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 
-#### Mean Model - Robust Polynomial Regression ####
+#### Mean Model - Robust Regression (Polynomial + Kriging) ####
 
 def fit_robust_mean_model(
     X: np.ndarray,
@@ -16,59 +18,81 @@ def fit_robust_mean_model(
     plot_cv: bool = False
 ) -> Any:
     """
-    Fits a polynomial regression model, automatically selecting the optimal degree.
+    Fits regression models (Polynomials and Kriging) and selects the optimal one.
 
-    This function performs k-fold Cross Validation (CV) to find the polynomial degree
-    that minimizes the Mean Squared Error (MSE), balancing bias and variance.
+    This function performs k-fold Cross Validation (CV) to find the model type
+    (Polynomial or Kriging) and parameters (e.g., degree) that minimize the
+    Mean Squared Error (MSE), balancing bias and variance.
 
     Args:
         X (np.ndarray): 1D array of input variable values (e.g., flaw size).
         y (np.ndarray): 1D array of outcome values (e.g., signal response).
         max_degree (int, optional): The maximum polynomial degree to test. Defaults to 10.
         n_folds (int, optional): Number of folds for Cross Validation. Defaults to 10.
-        plot_cv (bool, optional): If True, generates a plot of CV Score vs Degree.
+        plot_cv (bool, optional): If True, generates a plot of CV Score vs Model.
             Defaults to False.
 
     Returns:
-        sklearn.pipeline.Pipeline: A fitted pipeline containing `PolynomialFeatures`
-        and `LinearRegression`. The pipeline object has an added attribute
-        `best_degree_` indicating the selected integer degree.
-
-    Examples
-    --------
-    ```python
-    # Fit a model to find the best polynomial degree
-    model = fit_robust_mean_model(X, y, max_degree=5)
-    print(f"Optimal Degree: {model.best_degree_}")
-
-    # Use it to predict
-    y_pred = model.predict(X.reshape(-1, 1))
-    ```
+        Any: A fitted scikit-learn model (Pipeline for Polynomial, GaussianProcessRegressor
+        for Kriging). The object has two added attributes:
+        - `model_type_` (str): Either 'Polynomial' or 'Kriging'.
+        - `model_params_` (Any): The selected integer degree for polynomials, or the
+          fitted kernel for Kriging.
     """
     X_2d = X.reshape(-1, 1)
     degrees = range(1, max_degree + 1)
-    cv_scores = []
+    cv_scores = {}
 
     cv = KFold(n_splits=n_folds, shuffle=True, random_state=42)
 
+    # 1. Evaluate Polynomials
     for d in degrees:
         model = make_pipeline(PolynomialFeatures(degree=d), LinearRegression())
         scores = cross_val_score(model, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
-        cv_scores.append(-np.mean(scores))
+        cv_scores[('Polynomial', d)] = -np.mean(scores)
 
-    best_degree = degrees[np.argmin(cv_scores)]
+    # 2. Evaluate Kriging (Gaussian Process)
+    kernel = C(1.0, (1e-3, 1e3)) * RBF(1.0, (1e-2, 1e2))
+    gpr = GaussianProcessRegressor(
+        kernel=kernel, n_restarts_optimizer=5, alpha=np.var(y)*0.01, random_state=42
+    )
+    gpr_scores = cross_val_score(gpr, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
+    cv_scores[('Kriging', None)] = -np.mean(gpr_scores)
+
+    # 3. Find best overall model
+    best_model_info = min(cv_scores, key=cv_scores.get)
+    best_type, best_params = best_model_info
 
     if plot_cv:
         import matplotlib.pyplot as plt
         plt.figure(figsize=(8, 4))
-        plt.plot(degrees, cv_scores, marker='o')
-        plt.axvline(best_degree, color='r', linestyle='--', label=f'Best: {best_degree}')
+        poly_degrees = [k[1] for k in cv_scores.keys() if k[0] == 'Polynomial']
+        poly_scores = [cv_scores[k] for k in cv_scores.keys() if k[0] == 'Polynomial']
+        plt.plot(poly_degrees, poly_scores, marker='o', label='Polynomial MSE')
+
+        kriging_score = cv_scores[('Kriging', None)]
+        plt.axhline(kriging_score, color='orange', linestyle='-', label='Kriging MSE')
+
+        if best_type == 'Polynomial':
+            plt.axvline(best_params, color='r', linestyle='--', label=f'Best: Poly {best_params}')
+
         plt.title('Model Selection: Bias-Variance Tradeoff')
+        plt.legend()
         plt.show()
 
-    final_model = make_pipeline(PolynomialFeatures(degree=best_degree), LinearRegression())
-    final_model.fit(X_2d, y)
-    final_model.best_degree_ = best_degree
+    # 4. Train final model
+    if best_type == 'Polynomial':
+        final_model = make_pipeline(PolynomialFeatures(degree=best_params), LinearRegression())
+        final_model.fit(X_2d, y)
+        final_model.model_params_ = best_params
+    else:
+        final_model = GaussianProcessRegressor(
+            kernel=kernel, n_restarts_optimizer=10, alpha=np.var(y)*0.01, random_state=42
+        )
+        final_model.fit(X_2d, y)
+        final_model.model_params_ = final_model.kernel_
+
+    final_model.model_type_ = best_type
 
     return final_model
 
@@ -273,7 +297,8 @@ def bootstrap_pod_ci(
     y: np.ndarray,
     X_eval: np.ndarray,
     threshold: float,
-    degree: int,
+    model_type: str,
+    model_params: Any,
     bandwidth: float,
     dist_info: Tuple[str, Tuple],
     n_boot: int = 1000
@@ -282,17 +307,20 @@ def bootstrap_pod_ci(
     Estimates 95% Confidence Bounds for the PoD curve via Bootstrapping.
 
     This function resamples the original data with replacement `n_boot` times.
-    For each resample, it refits the Mean Model, recalculates residuals, and
-    generates a new PoD curve.
+    For each resample, it refits the Mean Model (dynamically rebuilding either
+    a Polynomial or Kriging model), recalculates residuals, and generates a new PoD curve.
+    If Kriging is selected, the optimizer is disabled during bootstrapping to remain
+    computationally tractable.
 
     Args:
         X (np.ndarray): Original input data.
         y (np.ndarray): Original outcome data.
         X_eval (np.ndarray): Grid points for evaluation.
         threshold (float): Detection threshold.
-        degree (int): Polynomial degree (fixed from the original best fit).
-        bandwidth (float): Smoothing bandwidth (fixed from original).
-        dist_info (Tuple[str, Tuple]): Error distribution (fixed from original).
+        model_type (str): The type of mean model ('Polynomial' or 'Kriging').
+        model_params (Any): Model parameters (integer degree for Poly, kernel for Kriging).
+        bandwidth (float): Smoothing bandwidth (fixed from original fit).
+        dist_info (Tuple[str, Tuple]): Error distribution (fixed from original fit).
         n_boot (int, optional): Number of bootstrap iterations. Defaults to 1000.
 
     Returns:
@@ -306,12 +334,10 @@ def bootstrap_pod_ci(
     # Generate 95% confidence bounds
     lower, upper = bootstrap_pod_ci(
         X, y, X_eval, threshold=0.5,
-        degree=2, bandwidth=1.5,
-        dist_info=('norm', (0, 1)),
-        n_boot=100
+        model_type='Polynomial', model_params=3,
+        bandwidth=1.5, dist_info=('norm', (0, 1)), n_boot=100
     )
     ```
-
     """
     n_samples = len(y)
     pod_matrix = np.zeros((n_boot, len(X_eval)))
@@ -321,8 +347,15 @@ def bootstrap_pod_ci(
         idx = np.random.choice(n_samples, n_samples, replace=True)
         X_res, y_res = X[idx], y[idx]
 
-        # Fit Mean
-        mean_model = make_pipeline(PolynomialFeatures(degree), LinearRegression())
+        # Conditionally Fit Mean Model based on winning type
+        if model_type == 'Polynomial':
+            mean_model = make_pipeline(PolynomialFeatures(model_params), LinearRegression())
+        elif model_type == 'Kriging':
+            # Use the already optimized kernel (model_params) and turn off optimizer
+            mean_model = GaussianProcessRegressor(
+                kernel=model_params, alpha=np.var(y_res)*0.01, optimizer=None
+            )
+
         mean_model.fit(X_res.reshape(-1, 1), y_res)
 
         # Residuals

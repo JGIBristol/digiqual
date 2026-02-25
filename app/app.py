@@ -709,19 +709,25 @@ def server(input, output, session):
             val = results["a90_95"]
             a9095_str = f"{val:.3f}" if not np.isnan(val) else "Not Reached"
 
+            # 3. Format the Mean Model string based on the new architecture
+            mean_model = results["mean_model"]
+            if mean_model.model_type_ == 'Polynomial':
+                model_str = f"Polynomial (Degree {mean_model.model_params_})"
+            else:
+                model_str = "Kriging (Gaussian Process)"
 
-
-            # 3. Create Metrics Dictionary for the UI
+            # 4. Create Metrics Dictionary for the UI
             metrics = {
                 "Parameter of Interest": results["poi_col"],
                 "Threshold": results["threshold"],
                 "a90/95": a9095_str,
-                "Model Degree": results["mean_model"].best_degree_,
+                "Mean Model": model_str,
                 "Smoothing Bandwidth": f"{results['bandwidth']:.4f}",
+                "Error Distribution": results["dist_info"][0].capitalize()
             }
             pod_metrics.set(metrics)
 
-            # 4. Prepare Data for Download
+            # 5. Prepare Data for Download
             export_df = pd.DataFrame({
                 "x_defect_size": results["X_eval"],
                 "pod_mean": results["curves"]["pod"],
@@ -730,7 +736,7 @@ def server(input, output, session):
             })
             pod_export_data.set(export_df)
 
-            # 5. Generate Plots (Visualise draws them internally)
+            # 6. Generate Plots (Visualise draws them internally)
             study.visualise(show=False)
             plot_trigger.set(plot_trigger() + 1)
 
