@@ -127,7 +127,7 @@ def plot_model_selection(cv_scores: dict) -> Any:
 
     # 3. Create the Figure and subplots (Bar chart on left, Table on right)
     fig, (ax_plot, ax_table) = plt.subplots(
-        1, 2, figsize=(12, 5),dpi=300, gridspec_kw={'width_ratios': [2.5, 1]}
+        1, 2, figsize=(9, 5), gridspec_kw={'width_ratios': [2.2, 1]}
     )
 
     # --- Bar Chart (Left) ---

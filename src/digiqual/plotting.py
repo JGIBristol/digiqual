@@ -43,7 +43,7 @@ def plot_signal_model(
     ```
     """
     if ax is None:
-        fig, ax = plt.subplots(figsize=(8, 6))
+        fig, ax = plt.subplots()
 
     # 1. Plot Raw Data (Simulations)
     ax.scatter(X, y, alpha=0.5, c='grey', s=20, label='Simulation Data')
@@ -67,7 +67,7 @@ def plot_signal_model(
         )
 
     # Formatting
-    ax.set_xlabel(poi_name)  # <--- DYNAMIC LABEL
+    ax.set_xlabel(poi_name)
     ax.set_ylabel("Signal Response")
     ax.set_title(f"Signal Response Model ({poi_name})")
     ax.legend(loc='lower right')
@@ -114,7 +114,7 @@ def plot_pod_curve(
 
     """
     if ax is None:
-        fig, ax = plt.subplots(figsize=(8, 6))
+        fig, ax = plt.subplots()
 
     # 1. Plot the Main PoD Curve
     ax.plot(X_eval, pod_curve, color='black', linewidth=2, label='PoD Estimate')

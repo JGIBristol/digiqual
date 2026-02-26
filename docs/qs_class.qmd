@@ -121,6 +121,8 @@ _ = study.pod(poi_col="Length", threshold=18.0)
 # |   - "Signal Response Model (Physics)"
 # |   - "Probability of Detection Curve (Reliability)"
 # | layout-ncol: 1
+
+
 # 2. Visualize Results
 study.visualise()
 ```
