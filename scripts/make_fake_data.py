@@ -22,7 +22,7 @@ def generate_fake_data(filename="app/initial_data.csv", n=25):
     df.to_csv(filename, index=False)
     print(f"✅ Created '{filename}' (N={n}). Should fail Gap and Bootstrap.")
 
-def updated_data(filename="app/sufficient_data.csv", n=1500):
+def updated_data(filename="app/sufficient_data.csv", n=250):
     """Passes because high N overcomes the skewed noise."""
     df = pd.DataFrame({
         'Length': np.random.uniform(0, 10, n),
