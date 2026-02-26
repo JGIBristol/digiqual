@@ -44,14 +44,22 @@ def fit_robust_mean_model(
     # 1. Evaluate Polynomials
     for d in degrees:
         model = make_pipeline(PolynomialFeatures(degree=d), LinearRegression())
+        # Use neg_mean_squared_error; we take the negative to get positive MSE
         scores = cross_val_score(model, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
         cv_scores[('Polynomial', d)] = -np.mean(scores)
 
     # 2. Evaluate Kriging (Gaussian Process)
-    kernel = C(1.0, (1e-3, 1e3)) * RBF(1.0, (1e-2, 1e2))
+    # INCREASED BOUNDS: Constant value up to 1e6 and RBF length scale up to 1e5
+    # This addresses the ConvergenceWarning
+    kernel = C(1.0, (1e-5, 1e6)) * RBF(1.0, (1e-3, 1e5))
+
     gpr = GaussianProcessRegressor(
-        kernel=kernel, n_restarts_optimizer=5, alpha=np.var(y)*0.01, random_state=42
+        kernel=kernel,
+        n_restarts_optimizer=10, # Increased for better global search
+        alpha=np.var(y) * 0.01,
+        random_state=42
     )
+
     gpr_scores = cross_val_score(gpr, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
     cv_scores[('Kriging', None)] = -np.mean(gpr_scores)
 
@@ -65,15 +73,17 @@ def fit_robust_mean_model(
         final_model.fit(X_2d, y)
         final_model.model_params_ = best_params
     else:
+        # Re-initialize with the same wide-bound kernel
         final_model = GaussianProcessRegressor(
-            kernel=kernel, n_restarts_optimizer=10, alpha=np.var(y)*0.01, random_state=42
+            kernel=kernel,
+            n_restarts_optimizer=15, # More restarts for the final fit
+            alpha=np.var(y) * 0.01,
+            random_state=42
         )
         final_model.fit(X_2d, y)
         final_model.model_params_ = final_model.kernel_
 
     final_model.model_type_ = best_type
-
-    # NEW: Attach the scores so they can be plotted later!
     final_model.cv_scores_ = cv_scores
 
     return final_model
@@ -117,7 +127,7 @@ def plot_model_selection(cv_scores: dict) -> Any:
 
     # 3. Create the Figure and subplots (Bar chart on left, Table on right)
     fig, (ax_plot, ax_table) = plt.subplots(
-        1, 2, figsize=(12, 5), gridspec_kw={'width_ratios': [2.5, 1]}
+        1, 2, figsize=(12, 5),dpi=300, gridspec_kw={'width_ratios': [2.5, 1]}
     )
 
     # --- Bar Chart (Left) ---
