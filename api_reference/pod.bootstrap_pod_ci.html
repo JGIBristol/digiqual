@@ -228,21 +228,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    y,</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    X_eval,</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    threshold,</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    degree,</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    bandwidth,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    dist_info,</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    n_boot<span class="op">=</span><span class="dv">1000</span>,</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    model_type,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    model_params,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    bandwidth,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    dist_info,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    n_boot<span class="op">=</span><span class="dv">1000</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Estimates 95% Confidence Bounds for the PoD curve via Bootstrapping.</p>
-<p>This function resamples the original data with replacement <code>n_boot</code> times. For each resample, it refits the Mean Model, recalculates residuals, and generates a new PoD curve.</p>
+<p>This function resamples the original data with replacement <code>n_boot</code> times. For each resample, it refits the Mean Model (dynamically rebuilding either a Polynomial or Kriging model), recalculates residuals, and generates a new PoD curve. If Kriging is selected, the optimizer is disabled during bootstrapping to remain computationally tractable.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 11%">
-<col style="width: 21%">
-<col style="width: 55%">
 <col style="width: 12%">
+<col style="width: 18%">
+<col style="width: 58%">
+<col style="width: 10%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -278,24 +279,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
-<td>degree</td>
-<td>int</td>
-<td>Polynomial degree (fixed from the original best fit).</td>
+<td>model_type</td>
+<td>str</td>
+<td>The type of mean model (‘Polynomial’ or ‘Kriging’).</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
-<td>bandwidth</td>
-<td>float</td>
-<td>Smoothing bandwidth (fixed from original).</td>
+<td>model_params</td>
+<td>Any</td>
+<td>Model parameters (integer degree for Poly, kernel for Kriging).</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
-<td>dist_info</td>
-<td>Tuple[str, Tuple]</td>
-<td>Error distribution (fixed from original).</td>
+<td>bandwidth</td>
+<td>float</td>
+<td>Smoothing bandwidth (fixed from original fit).</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
+<td>dist_info</td>
+<td>Tuple[str, Tuple]</td>
+<td>Error distribution (fixed from original fit).</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
 <td>n_boot</td>
 <td>int</td>
 <td>Number of bootstrap iterations. Defaults to 1000.</td>
@@ -333,10 +340,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate 95% confidence bounds</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>lower, upper <span class="op">=</span> bootstrap_pod_ci(</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    X, y, X_eval, threshold<span class="op">=</span><span class="fl">0.5</span>,</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    degree<span class="op">=</span><span class="dv">2</span>, bandwidth<span class="op">=</span><span class="fl">1.5</span>,</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    dist_info<span class="op">=</span>(<span class="st">'norm'</span>, (<span class="dv">0</span>, <span class="dv">1</span>)),</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    n_boot<span class="op">=</span><span class="dv">100</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    model_type<span class="op">=</span><span class="st">'Polynomial'</span>, model_params<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    bandwidth<span class="op">=</span><span class="fl">1.5</span>, dist_info<span class="op">=</span>(<span class="st">'norm'</span>, (<span class="dv">0</span>, <span class="dv">1</span>)), n_boot<span class="op">=</span><span class="dv">100</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 </section>

@@ -210,7 +210,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
   <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
-  <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/pod.fit_robust_mean_model.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -223,17 +222,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="digiqual.pod.fit_robust_mean_model" class="level1">
 <h1>pod.fit_robust_mean_model</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>fit_robust_mean_model(X, y, max_degree<span class="op">=</span><span class="dv">10</span>, n_folds<span class="op">=</span><span class="dv">10</span>, plot_cv<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Fits a polynomial regression model, automatically selecting the optimal degree.</p>
-<p>This function performs k-fold Cross Validation (CV) to find the polynomial degree that minimizes the Mean Squared Error (MSE), balancing bias and variance.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>fit_robust_mean_model(X, y, max_degree<span class="op">=</span><span class="dv">10</span>, n_folds<span class="op">=</span><span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Fits regression models (Polynomials and Kriging) and selects the optimal one.</p>
+<p>This function performs k-fold Cross Validation (CV) to find the model type (Polynomial or Kriging) and parameters (e.g., degree) that minimize the Mean Squared Error (MSE), balancing bias and variance.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 65%">
-<col style="width: 11%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 60%">
+<col style="width: 13%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -268,12 +267,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>Number of folds for Cross Validation. Defaults to 10.</td>
 <td><code>10</code></td>
 </tr>
-<tr class="odd">
-<td>plot_cv</td>
-<td>bool</td>
-<td>If True, generates a plot of CV Score vs Degree. Defaults to False.</td>
-<td><code>False</code></td>
-</tr>
 </tbody>
 </table>
 </section>
@@ -283,7 +276,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <colgroup>
 <col style="width: 8%">
 <col style="width: 8%">
-<col style="width: 82%">
+<col style="width: 83%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -294,31 +287,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td></td>
 <td>Any</td>
-<td>sklearn.pipeline.Pipeline: A fitted pipeline containing <code>PolynomialFeatures</code></td>
+<td>Any</td>
+<td>A fitted scikit-learn model with the following added attributes:</td>
 </tr>
 <tr class="even">
 <td></td>
 <td>Any</td>
-<td>and <code>LinearRegression</code>. The pipeline object has an added attribute</td>
+<td>- <code>model_type_</code> (str): Either ‘Polynomial’ or ‘Kriging’.</td>
 </tr>
 <tr class="odd">
 <td></td>
 <td>Any</td>
-<td><code>best_degree_</code> indicating the selected integer degree.</td>
+<td>- <code>model_params_</code> (Any): The selected integer degree or the fitted kernel.</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Any</td>
+<td>- <code>cv_scores_</code> (dict): The cross-validation MSE scores for all tested models.</td>
 </tr>
 </tbody>
 </table>
-</section>
-<section id="examples" class="level2 doc-section doc-section-examples">
-<h2 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit a model to find the best polynomial degree</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> fit_robust_mean_model(X, y, max_degree<span class="op">=</span><span class="dv">5</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Optimal Degree: </span><span class="sc">{</span>model<span class="sc">.</span>best_degree_<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Use it to predict</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>y_pred <span class="op">=</span> model.predict(X.reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 </section>
