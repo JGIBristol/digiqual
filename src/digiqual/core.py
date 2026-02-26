@@ -267,7 +267,7 @@ class SimulationStudy:
         self.data = pd.DataFrame() # Clear old state to avoid duplication
         self.add_data(final_data)
 
-    #### PoD Analysis ####
+#### PoD Analysis ####
     def pod(
         self,
         poi_col: str,
@@ -308,10 +308,13 @@ class SimulationStudy:
         X = self.clean_data[poi_col].values
         y = self.clean_data[self.outcome].values
 
-        # 2. Fit Mean Model (Robust Polynomial)
+        # 2. Fit Mean Model (Robust Regression)
         print("1. Selecting Mean Model (Cross-Validation)...")
         mean_model = pod.fit_robust_mean_model(X, y)
-        print(f"   -> Selected Polynomial Degree: {mean_model.best_degree_}")
+        if mean_model.model_type_ == 'Polynomial':
+            print(f"-> Selected Model: Polynomial (Degree {mean_model.model_params_})")
+        else:
+            print("-> Selected Model: Kriging (Gaussian Process)")
 
         # 3. Fit Variance Model & Generate Grid
         print("2. Fitting Variance Model (Kernel Smoothing)...")
@@ -335,7 +338,7 @@ class SimulationStudy:
         print(f"5. Running Bootstrap ({n_boot} iterations)...")
         lower_ci, upper_ci = pod.bootstrap_pod_ci(
             X, y, X_eval, threshold,
-            mean_model.best_degree_, bandwidth, (dist_name, dist_params),
+            mean_model.model_type_, mean_model.model_params_, bandwidth, (dist_name, dist_params),
             n_boot=n_boot
         )
 
@@ -397,6 +400,10 @@ class SimulationStudy:
             res["X"], res["residuals"], res["X_eval"], res["bandwidth"]
         )
 
+        # 0. Model Selection Plot (NEW)
+        if hasattr(res["mean_model"], "cv_scores_"):
+            self.plots["model_selection"] = pod.plot_model_selection(res["mean_model"].cv_scores_)
+
         # 1. Signal Model Plot
         self.plots["signal_model"] = plot_signal_model(
             X=res["X"],
@@ -420,6 +427,8 @@ class SimulationStudy:
 
         # Handle Saving
         if save_path:
+            if "model_selection" in self.plots:
+                self.plots["model_selection"].savefig(f"{save_path}_model_selection.png")
             self.plots["signal_model"].get_figure().savefig(f"{save_path}_signal.png")
             self.plots["pod_curve"].get_figure().savefig(f"{save_path}_pod.png")
             print(f"Plots saved to {save_path}_*.png")
