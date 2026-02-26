@@ -101,9 +101,11 @@ quartodoc:
         - pod.fit_robust_mean_model
         - pod.fit_variance_model
         - pod.infer_best_distribution
+        - pod.plot_model_selection
         - pod.predict_local_std
         - pod.compute_pod_curve
         - pod.bootstrap_pod_ci
+
 
         # -- Plotting --
         - plotting.plot_signal_model
