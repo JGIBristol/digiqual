@@ -1,6 +1,6 @@
 [project]
 name = "digiqual"
-version = "0.12.0"
+version = "0.12.1"
 description = "Statistical Toolkit for Reliability Assessment in NDT"
 authors = [
   {name = "Josh Tyler", email = "josh.tyler@bristol.ac.uk"}
@@ -50,3 +50,6 @@ dev = [
 [project.urls]
 Documentation = "https://jgibristol.github.io/digiqual/"
 Source = "https://github.com/JGIBristol/digiqual"
+
+[project.gui-scripts]
+digiqual = "digiqual:dq_ui"
