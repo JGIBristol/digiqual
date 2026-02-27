@@ -41,7 +41,7 @@ def test_validate_explicit(study, clean_df):
     dirty_row = pd.DataFrame({'Length': [1], 'Angle': [0], 'Signal': [-5]})
     mixed_df = pd.concat([clean_df, dirty_row], ignore_index=True)
     study.add_data(mixed_df)
-    study.validate()
+    study._validate()
     assert len(study.clean_data) == 20
     assert len(study.removed_data) == 1
 

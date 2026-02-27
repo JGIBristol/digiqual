@@ -13,7 +13,7 @@ sync:
 test:
     uv run pytest
 
-# Runs pytest across all supported Python versions (3.10 to 3.13)
+# Runs pytest across all supported Python versions (3.11 to 3.14)
 test_matrix:
     @for ver in 3.11 3.12 3.13 3.14; do \
         echo "\n🚀 ======================================"; \

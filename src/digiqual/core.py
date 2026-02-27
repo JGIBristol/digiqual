@@ -96,7 +96,7 @@ class SimulationStudy:
         self.plots = {}
 
     #### Validating self.data ####
-    def validate(self) -> None:
+    def _validate(self) -> None:
         """
         Cleans and validates the raw data stored in `self.data`.
 
@@ -106,7 +106,7 @@ class SimulationStudy:
         Examples
         --------
         ```python
-        study.validate()
+        study._validate()
         # Output: Running validation...
         # Output: Validation passed. 50 valid rows ready.
         ```
@@ -146,7 +146,7 @@ class SimulationStudy:
                 print("No data found. Please run add_data() first.")
                 return pd.DataFrame()
 
-            self.validate()
+            self._validate()
 
             if self.clean_data.empty:
                 print("Cannot run diagnostics because validation failed.")
@@ -180,7 +180,7 @@ class SimulationStudy:
 
         if self.clean_data.empty:
             print("No clean data available. Running validation...")
-            self.validate()
+            self._validate()
 
             if self.clean_data.empty:
                 return pd.DataFrame()
@@ -296,7 +296,7 @@ class SimulationStudy:
         """
         # 0. Safety Checks
         if self.clean_data.empty:
-            self.validate()
+            self._validate()
             if self.clean_data.empty:
                 raise ValueError("Cannot run PoD analysis: No valid data available.")
 
