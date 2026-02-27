@@ -108,5 +108,17 @@ cls: clean
 
 # Removes all generated artifacts to keep the workspace pristine
 clean:
-    rm -rf _site/ api_reference/ .pytest_cache/ .ruff_cache/ .quarto objects.json _sidebar.yml docs/*.csv **/*.spec
+    rm -rf _site/ api_reference/ .pytest_cache/ .ruff_cache/ .quarto objects.json _sidebar.yml docs/*.csv **/*.spec *.csv
     find . -type d -name "__pycache__" -exec rm -rf {} +
+
+
+# --- COMBO ---
+
+patch: clean
+    just test_matrix
+    just bump
+    just build_package
+    just build_app
+    just build_website
+    just build_pypi
+    just cls

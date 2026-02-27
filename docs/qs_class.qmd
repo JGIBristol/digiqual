@@ -176,8 +176,6 @@ study = SimulationStudy(
 )
 study.add_data(df)
 
-study.validate()
-
 study.diagnose()
 
 study.refine()
