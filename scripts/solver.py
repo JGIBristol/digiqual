@@ -26,10 +26,20 @@ def run_simulation(input_path, output_path):
 
     df['Signal'] = np.abs(signal + noise)
 
+    # --- THE TRAP: Create a "Danger Zone" to trigger the Graveyard ---
+    # If Length > 8 and Angle > 30, the "part breaks" and returns no signal.
+    danger_mask = (df['Length'] > 8.0) & (df['Angle'] > 30.0)
+    df.loc[danger_mask, 'Signal'] = None
+
+    failed_count = danger_mask.sum()
+
     # 3. Write Outputs
     try:
         df.to_csv(output_path, index=False)
-        print(f"Solver: Successfully processed {len(df)} rows.")
+        if failed_count > 0:
+            print(f"Solver: Processed {len(df)} rows ({failed_count} crashed in the danger zone).")
+        else:
+            print(f"Solver: Successfully processed {len(df)} rows.")
     except Exception as e:
         print(f"Solver Error: Could not write {output_path}. {e}")
         sys.exit(1)

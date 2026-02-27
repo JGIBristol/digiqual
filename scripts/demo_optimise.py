@@ -26,6 +26,9 @@ def main():
         outcome_col="Signal"
     )
 
+    print("\n[!] NOTE: The mock solver is rigged to fail if Length > 8.0 AND Angle > 30.0.")
+    print("    Watch the console output to see the Graveyard actively block these regions!")
+
     print("\n--- 3. Running optimise() ---")
     study.optimise(
         command=solver_cmd,
@@ -36,7 +39,7 @@ def main():
     )
 
     print("\n--- 4. Results ---")
-    print(f"Final Dataset Size: {len(study.data)} rows")
+    print(f"Final Dataset Size: {len(study.data)} valid rows")
 
     print("\n--- 5. Visualisation ---")
     try:
