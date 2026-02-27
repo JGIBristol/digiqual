@@ -290,7 +290,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="define-a-mock-solver">1. Define a “Mock” Solver</h3>
 <p>For this tutorial, we will use a Python one-liner as our “solver” instead of a complex physics engine. We use <code>python -c</code> to run this as if it were an external Command Line Interface (CLI) tool.</p>
 <p>Notice how the <code>SOLVER_CMD</code> utilises the <code>{input}</code> and <code>{output}</code> placeholders.</p>
-<div id="aa56459d" class="cell" data-execution_count="1">
+<div id="5a05d9ca" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># A complex, non-linear physics model to trigger multiple optimisation loops</span></span>
@@ -306,7 +306,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="configure-the-study" class="level3">
 <h3 class="anchored" data-anchor-id="configure-the-study">2. Configure the Study</h3>
 <p>We define our input variables and the ranges we want to explore.</p>
-<div id="34bc9fc4" class="cell" data-execution_count="2">
+<div id="a65edb94" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.core <span class="im">import</span> SimulationStudy</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define inputs ranges</span></span>
@@ -325,7 +325,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Checks diagnostics to see if the data is sufficient.</li>
 <li>If needed, generates up to 10 new points targeting weak areas and repeats (up to 5 times).</li>
 </ol>
-<div id="cc01f2e6" class="cell" data-execution_count="3">
+<div id="a52c993b" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.optimise(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    command<span class="op">=</span>SOLVER_CMD,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    ranges<span class="op">=</span>ranges,</span>
@@ -347,16 +347,10 @@ Diagnostics flagged issues. Initiating Active Learning...
    -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5 + df["Length"] ** 3 + (df["Length"] * np.random.normal(0, 1, len(df))); df.to_csv("sim_output.csv", index=False)'
 
 --- Iteration 2: Diagnostics Check ---
-&gt;&gt; Model invalid. Refining design...
-Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
---- Running Batch 2 (10 points) ---
-   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5 + df["Length"] ** 3 + (df["Length"] * np.random.normal(0, 1, len(df))); df.to_csv("sim_output.csv", index=False)'
 
---- Iteration 3: Diagnostics Check ---
-
-&gt;&gt;&gt; CONVERGENCE REACHED at 40 points! &lt;&lt;&lt;
-Data updated. Total rows: 40</code></pre>
+&gt;&gt;&gt; CONVERGENCE REACHED! &lt;&lt;&lt;
+Final Report: 30 successful runs (out of 30 attempts). Graveyard contains 0 points.
+Data updated. Total rows: 30</code></pre>
 </div>
 </div>
 </section>
@@ -371,19 +365,19 @@ Data updated. Total rows: 40</code></pre>
 <div aria-describedby="fig-optimisation-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="quarto-layout-row">
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<pre><code>Total Simulations Run: 40
+<pre><code>Total Simulations Run: 30
 Running validation...
-Validation passed. 40 valid rows ready.
+Validation passed. 30 valid rows ready.
 --- Starting Reliability Analysis (PoI: Length) ---
 1. Selecting Mean Model (Cross-Validation)...
 -&gt; Selected Model: Polynomial (Degree 3)
 2. Fitting Variance Model (Kernel Smoothing)...
-   -&gt; Smoothing Bandwidth: 0.4812
+   -&gt; Smoothing Bandwidth: 0.4722
 3. Inferring Error Distribution (AIC)...
    -&gt; Selected Distribution: norm
 4. Computing PoD Curve...
 5. Running Bootstrap (1000 iterations)...
-   -&gt; a90/95 Reliability Index: 2.732
+   -&gt; a90/95 Reliability Index: 2.680
 --- Analysis Complete ---</code></pre>
 </div>
 </div>
@@ -453,7 +447,7 @@ Figure&nbsp;1: Reliability Analysis Results
 <h3 class="anchored" data-anchor-id="example-a-connecting-a-custom-python-model">Example A: Connecting a Custom Python Model</h3>
 <p>Imagine you have an existing Python file (<code>beam_model.py</code>) that contains a complex physics function. You want DigiQual to optimise it.</p>
 <p><strong>1. The Existing Physics Solver (<code>beam_model.py</code>)</strong> This is your actual engineering code. It doesn’t know anything about CSVs or DigiQual.</p>
-<div id="6ab60766" class="cell" data-execution_count="5">
+<div id="28b4a511" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># beam_model.py</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> simulate_beam(length, angle):</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""A complex, proprietary physics calculation."""</span></span>
@@ -462,7 +456,7 @@ Figure&nbsp;1: Reliability Analysis Results
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> signal_strength</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p><strong>2. The Wrapper Script (<code>python_wrapper.py</code>)</strong> This script acts as the bridge. It reads the CSV from the command line arguments, loops through the data to run the solver, and saves the result.</p>
-<div id="5140399a" class="cell" data-execution_count="6">
+<div id="3c134b73" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># python_wrapper.py</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -491,7 +485,7 @@ Figure&nbsp;1: Reliability Analysis Results
 <span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>    main()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p><strong>3. The DigiQual Command</strong> In your main optimisation script, you define the <code>SOLVER_CMD</code> to call the Python wrapper, passing the placeholders as arguments.</p>
-<div id="d912487a" class="cell" data-execution_count="7">
+<div id="ef202836" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># In your main study script</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>SOLVER_CMD <span class="op">=</span> <span class="st">"python python_wrapper.py </span><span class="sc">{input}</span><span class="st"> </span><span class="sc">{output}</span><span class="st">"</span></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># study.optimise(command=SOLVER_CMD, ...)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -532,7 +526,7 @@ Figure&nbsp;1: Reliability Analysis Results
 <span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    <span class="va">exit</span><span class="op">;</span></span>
 <span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>3. The DigiQual Command</strong> We construct a command that launches MATLAB without the graphical interface (<code>-batch</code>), tells it to run our wrapper, and safely injects the <code>{input}</code> and <code>{output}</code> paths as strings.</p>
-<div id="ca930a50" class="cell" data-execution_count="8">
+<div id="c8ee0bf4" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># In your main study script</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>SOLVER_CMD <span class="op">=</span> <span class="st">"matlab -batch </span><span class="ch">\"</span><span class="st">matlab_wrapper('</span><span class="sc">{input}</span><span class="st">', '</span><span class="sc">{output}</span><span class="st">')</span><span class="ch">\"</span><span class="st">"</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co"># study.optimise(command=SOLVER_CMD, ...)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>

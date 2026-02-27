@@ -223,7 +223,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="digiqual.adaptive.generate_targeted_samples" class="level1">
 <h1>adaptive.generate_targeted_samples</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>generate_targeted_samples(df, input_cols, outcome_col, n_new_per_fix<span class="op">=</span><span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>generate_targeted_samples(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    df,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    input_cols,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    outcome_col,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    n_new_per_fix<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    failed_data<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    distance_threshold<span class="op">=</span><span class="fl">0.05</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Active Learning Engine: Generates new samples based on diagnostic failures.</p>
 <p>It consumes the results table from <code>sample_sufficiency</code>. - If <code>Input Coverage</code> fails -&gt; Triggers <code>_fill_gaps</code> (Exploration). - If <code>Model Fit</code> or <code>Bootstrap</code> fails -&gt; Triggers <code>_sample_uncertainty</code> (Exploitation).</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
@@ -231,9 +238,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <table class="caption-top table">
 <colgroup>
 <col style="width: 16%">
-<col style="width: 15%">
-<col style="width: 55%">
-<col style="width: 13%">
+<col style="width: 21%">
+<col style="width: 51%">
+<col style="width: 10%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -267,6 +274,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>int</td>
 <td>Number of samples to generate per detected issue.</td>
 <td><code>10</code></td>
+</tr>
+<tr class="odd">
+<td>failed_data</td>
+<td>Optional[pd.DataFrame]</td>
+<td>Graveyard of inputs that crashed the solver.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="even">
+<td>distance_threshold</td>
+<td>float</td>
+<td>Minimum normalized distance to maintain from failed points.</td>
+<td><code>0.05</code></td>
 </tr>
 </tbody>
 </table>

@@ -64,7 +64,7 @@
     "href": "docs/optimisation.html#the-auto-pilot-workflow",
     "title": "Automated Optimisation",
     "section": "The Auto-Pilot Workflow",
-    "text": "The Auto-Pilot Workflow\nLet’s walk through setting up a complete optimisation loop.\n\n1. Define a “Mock” Solver\nFor this tutorial, we will use a Python one-liner as our “solver” instead of a complex physics engine. We use python -c to run this as if it were an external Command Line Interface (CLI) tool.\nNotice how the SOLVER_CMD utilises the {input} and {output} placeholders.\n\nimport sys\n\n# A complex, non-linear physics model to trigger multiple optimisation loops\nSOLVER_CMD = (\n    f\"{sys.executable} -c \"\n    \"'import pandas as pd, numpy as np; \"\n    'df=pd.read_csv(\"{input}\"); '\n    'df[\"Signal\"] = 5 + df[\"Length\"] ** 3 + (df[\"Length\"] * np.random.normal(0, 1, len(df))); '\n    'df.to_csv(\"{output}\", index=False)\\''\n)\n\n\n\n2. Configure the Study\nWe define our input variables and the ranges we want to explore.\n\nfrom digiqual.core import SimulationStudy\n\n# Define inputs ranges\nranges = {\"Length\": (0.0, 5.0), \"Angle\": (-45.0, 45.0)}\n\n# Initialise\nstudy = SimulationStudy(input_cols=[\"Length\", \"Angle\"], outcome_col=\"Signal\")\n\n\n\n3. Run Optimisation\nThis single command handles the entire Active Learning loop:\n\nGenerates 20 initial LHS points (because study.data is currently empty).\nRuns the solver command, passing the temporary input and output file paths.\nChecks diagnostics to see if the data is sufficient.\nIf needed, generates up to 10 new points targeting weak areas and repeats (up to 5 times).\n\n\nstudy.optimise(\n    command=SOLVER_CMD,\n    ranges=ranges,\n    n_start=20,  # Initial batch size\n    n_step=10,  # Refinement batch size\n    max_iter=5,  # Safety limit for the loop\n)\n\n\n=== STARTING ADAPTIVE OPTIMIZATION ===\n--- Iteration 0: Generating Initial Design (20 points) ---\n   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv(\"sim_input.csv\"); df[\"Signal\"] = 5 + df[\"Length\"] ** 3 + (df[\"Length\"] * np.random.normal(0, 1, len(df))); df.to_csv(\"sim_output.csv\", index=False)'\n\n--- Iteration 1: Diagnostics Check ---\n&gt;&gt; Model invalid. Refining design...\nDiagnostics flagged issues. Initiating Active Learning...\n -&gt; Strategy: Exploitation (Targeting high uncertainty regions)\n--- Running Batch 1 (10 points) ---\n   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv(\"sim_input.csv\"); df[\"Signal\"] = 5 + df[\"Length\"] ** 3 + (df[\"Length\"] * np.random.normal(0, 1, len(df))); df.to_csv(\"sim_output.csv\", index=False)'\n\n--- Iteration 2: Diagnostics Check ---\n&gt;&gt; Model invalid. Refining design...\nDiagnostics flagged issues. Initiating Active Learning...\n -&gt; Strategy: Exploitation (Targeting high uncertainty regions)\n--- Running Batch 2 (10 points) ---\n   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv(\"sim_input.csv\"); df[\"Signal\"] = 5 + df[\"Length\"] ** 3 + (df[\"Length\"] * np.random.normal(0, 1, len(df))); df.to_csv(\"sim_output.csv\", index=False)'\n\n--- Iteration 3: Diagnostics Check ---\n\n&gt;&gt;&gt; CONVERGENCE REACHED at 40 points! &lt;&lt;&lt;\nData updated. Total rows: 40\n\n\n\n\n4. View Results\nOnce the loop finishes, study.data contains all the valid simulation results accumulated across all refinement iterations.\nprint(f\"Total Simulations Run: {len(study.data)}\")\n_ = study.pod(poi_col=\"Length\", threshold=20)\nstudy.visualise()\n\n\n\n\n\nTotal Simulations Run: 40\nRunning validation...\nValidation passed. 40 valid rows ready.\n--- Starting Reliability Analysis (PoI: Length) ---\n1. Selecting Mean Model (Cross-Validation)...\n-&gt; Selected Model: Polynomial (Degree 3)\n2. Fitting Variance Model (Kernel Smoothing)...\n   -&gt; Smoothing Bandwidth: 0.4812\n3. Inferring Error Distribution (AIC)...\n   -&gt; Selected Distribution: norm\n4. Computing PoD Curve...\n5. Running Bootstrap (1000 iterations)...\n   -&gt; a90/95 Reliability Index: 2.732\n--- Analysis Complete ---\n\n\n\n\n\n\n\n\n\n\n(a) Best Fitting Model (Statistics)\n\n\n\n\n\n\n\n\n\n\n\n\n\n(b) Signal Response Model (Physics)\n\n\n\n\n\n\n\n\n\n\n\n\n\n(c) Probability of Detection Curve (Reliability)\n\n\n\n\n\n\n\nFigure 1: Reliability Analysis Results",
+    "text": "The Auto-Pilot Workflow\nLet’s walk through setting up a complete optimisation loop.\n\n1. Define a “Mock” Solver\nFor this tutorial, we will use a Python one-liner as our “solver” instead of a complex physics engine. We use python -c to run this as if it were an external Command Line Interface (CLI) tool.\nNotice how the SOLVER_CMD utilises the {input} and {output} placeholders.\n\nimport sys\n\n# A complex, non-linear physics model to trigger multiple optimisation loops\nSOLVER_CMD = (\n    f\"{sys.executable} -c \"\n    \"'import pandas as pd, numpy as np; \"\n    'df=pd.read_csv(\"{input}\"); '\n    'df[\"Signal\"] = 5 + df[\"Length\"] ** 3 + (df[\"Length\"] * np.random.normal(0, 1, len(df))); '\n    'df.to_csv(\"{output}\", index=False)\\''\n)\n\n\n\n2. Configure the Study\nWe define our input variables and the ranges we want to explore.\n\nfrom digiqual.core import SimulationStudy\n\n# Define inputs ranges\nranges = {\"Length\": (0.0, 5.0), \"Angle\": (-45.0, 45.0)}\n\n# Initialise\nstudy = SimulationStudy(input_cols=[\"Length\", \"Angle\"], outcome_col=\"Signal\")\n\n\n\n3. Run Optimisation\nThis single command handles the entire Active Learning loop:\n\nGenerates 20 initial LHS points (because study.data is currently empty).\nRuns the solver command, passing the temporary input and output file paths.\nChecks diagnostics to see if the data is sufficient.\nIf needed, generates up to 10 new points targeting weak areas and repeats (up to 5 times).\n\n\nstudy.optimise(\n    command=SOLVER_CMD,\n    ranges=ranges,\n    n_start=20,  # Initial batch size\n    n_step=10,  # Refinement batch size\n    max_iter=5,  # Safety limit for the loop\n)\n\n\n=== STARTING ADAPTIVE OPTIMIZATION ===\n--- Iteration 0: Generating Initial Design (20 points) ---\n   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv(\"sim_input.csv\"); df[\"Signal\"] = 5 + df[\"Length\"] ** 3 + (df[\"Length\"] * np.random.normal(0, 1, len(df))); df.to_csv(\"sim_output.csv\", index=False)'\n\n--- Iteration 1: Diagnostics Check ---\n&gt;&gt; Model invalid. Refining design...\nDiagnostics flagged issues. Initiating Active Learning...\n -&gt; Strategy: Exploitation (Targeting high uncertainty regions)\n--- Running Batch 1 (10 points) ---\n   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv(\"sim_input.csv\"); df[\"Signal\"] = 5 + df[\"Length\"] ** 3 + (df[\"Length\"] * np.random.normal(0, 1, len(df))); df.to_csv(\"sim_output.csv\", index=False)'\n\n--- Iteration 2: Diagnostics Check ---\n\n&gt;&gt;&gt; CONVERGENCE REACHED! &lt;&lt;&lt;\nFinal Report: 30 successful runs (out of 30 attempts). Graveyard contains 0 points.\nData updated. Total rows: 30\n\n\n\n\n4. View Results\nOnce the loop finishes, study.data contains all the valid simulation results accumulated across all refinement iterations.\nprint(f\"Total Simulations Run: {len(study.data)}\")\n_ = study.pod(poi_col=\"Length\", threshold=20)\nstudy.visualise()\n\n\n\n\n\nTotal Simulations Run: 30\nRunning validation...\nValidation passed. 30 valid rows ready.\n--- Starting Reliability Analysis (PoI: Length) ---\n1. Selecting Mean Model (Cross-Validation)...\n-&gt; Selected Model: Polynomial (Degree 3)\n2. Fitting Variance Model (Kernel Smoothing)...\n   -&gt; Smoothing Bandwidth: 0.4722\n3. Inferring Error Distribution (AIC)...\n   -&gt; Selected Distribution: norm\n4. Computing PoD Curve...\n5. Running Bootstrap (1000 iterations)...\n   -&gt; a90/95 Reliability Index: 2.680\n--- Analysis Complete ---\n\n\n\n\n\n\n\n\n\n\n(a) Best Fitting Model (Statistics)\n\n\n\n\n\n\n\n\n\n\n\n\n\n(b) Signal Response Model (Physics)\n\n\n\n\n\n\n\n\n\n\n\n\n\n(c) Probability of Detection Curve (Reliability)\n\n\n\n\n\n\n\nFigure 1: Reliability Analysis Results",
     "crumbs": [
       "Automation & Engines"
     ]
@@ -229,67 +229,200 @@
     "text": "dq_ui\ndq_ui()\nUser Interface for DigiQual Shiny Application"
   },
   {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.validate.html",
-    "href": "api_reference/digiqual.core.SimulationStudy.validate.html",
-    "title": "validate",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.refine.html",
+    "href": "api_reference/digiqual.core.SimulationStudy.refine.html",
+    "title": "refine",
     "section": "",
-    "text": "validate()\nCleans and validates the raw data stored in self.data.\nPopulates self.clean_data with valid rows and self.removed_data with invalid ones (e.g., NaNs, negative signals, wrong types).\n\n\nstudy.validate()\n# Output: Running validation...\n# Output: Validation passed. 50 valid rows ready."
+    "text": "refine(n_points=10)\nIdentifies gaps or high-variance regions and suggests new simulation points.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nn_points\nint\nNumber of new samples to suggest per detected issue.\n10\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A DataFrame of recommended new input coordinates.\n\n\n\n\n\n\n# If diagnostics fail, ask for 10 new points to fix it\nnew_samples = study.refine(n_points=10)\nprint(new_samples.head())"
   },
   {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.validate.html#examples",
-    "href": "api_reference/digiqual.core.SimulationStudy.validate.html#examples",
-    "title": "validate",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.refine.html#parameters",
+    "href": "api_reference/digiqual.core.SimulationStudy.refine.html#parameters",
+    "title": "refine",
     "section": "",
-    "text": "study.validate()\n# Output: Running validation...\n# Output: Validation passed. 50 valid rows ready."
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\nn_points\nint\nNumber of new samples to suggest per detected issue.\n10"
   },
   {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.pod.html",
-    "href": "api_reference/digiqual.core.SimulationStudy.pod.html",
-    "title": "pod",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.refine.html#returns",
+    "href": "api_reference/digiqual.core.SimulationStudy.refine.html#returns",
+    "title": "refine",
     "section": "",
-    "text": "pod(poi_col, threshold, bandwidth_ratio=0.1, n_boot=1000)\nRuns the generalized Probability of Detection (PoD) analysis.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\npoi_col\nstr\nThe parameter of interest (e.g., ‘Crack Length’).\nrequired\n\n\nthreshold\nfloat\nThe failure threshold (e.g., 4.0 dB).\nrequired\n\n\nbandwidth_ratio\nfloat\nSmoothing bandwidth fraction (default 0.1).\n0.1\n\n\nn_boot\nint\nBootstrap iterations for confidence bounds.\n1000\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\nDict\nDict[str, Any]\nDictionary containing models, curves, and fit statistics.\n\n\n\n\n\n\nresults = study.pod(poi_col=\"Length\", threshold=0.5)\nprint(results['dist_info'])"
+    "text": "Name\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A DataFrame of recommended new input coordinates."
   },
   {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.pod.html#parameters",
-    "href": "api_reference/digiqual.core.SimulationStudy.pod.html#parameters",
-    "title": "pod",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.refine.html#examples",
+    "href": "api_reference/digiqual.core.SimulationStudy.refine.html#examples",
+    "title": "refine",
     "section": "",
-    "text": "Name\nType\nDescription\nDefault\n\n\n\n\npoi_col\nstr\nThe parameter of interest (e.g., ‘Crack Length’).\nrequired\n\n\nthreshold\nfloat\nThe failure threshold (e.g., 4.0 dB).\nrequired\n\n\nbandwidth_ratio\nfloat\nSmoothing bandwidth fraction (default 0.1).\n0.1\n\n\nn_boot\nint\nBootstrap iterations for confidence bounds.\n1000"
+    "text": "# If diagnostics fail, ask for 10 new points to fix it\nnew_samples = study.refine(n_points=10)\nprint(new_samples.head())"
   },
   {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.pod.html#returns",
-    "href": "api_reference/digiqual.core.SimulationStudy.pod.html#returns",
-    "title": "pod",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.optimise.html",
+    "href": "api_reference/digiqual.core.SimulationStudy.optimise.html",
+    "title": "optimise",
     "section": "",
-    "text": "Name\nType\nDescription\n\n\n\n\nDict\nDict[str, Any]\nDictionary containing models, curves, and fit statistics."
+    "text": "optimise(\n    command,\n    ranges,\n    n_start=20,\n    n_step=10,\n    max_iter=5,\n    input_file='sim_input.csv',\n    output_file='sim_output.csv',\n)\nRuns the automated Active Learning loop (Initialize -&gt; Execute -&gt; Diagnose -&gt; Refine).\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ncommand\nstr\nSolver command (e.g. “python solver.py {input} {output}”).\nrequired\n\n\nranges\nDict\nInput bounds, e.g. {“Length”: (0, 10)}.\nrequired\n\n\nn_start\nint\nInitial sample size (only if data is empty).\n20\n\n\nn_step\nint\nBatch size for refinement.\n10\n\n\nmax_iter\nint\nMax refinement loops.\n5\n\n\ninput_file\nstr\nTemp input filename.\n'sim_input.csv'\n\n\noutput_file\nstr\nTemp output filename.\n'sim_output.csv'\n\n\n\n\n\n\n# 1. Define the variable ranges\nranges = {\"Length\": (0, 10), \"Angle\": (-45, 45)}\n\nstudy = SimulationStudy(input_cols=[\"Length\", \"Angle\"], outcome_col=\"Signal\")\n\n# 2. Define a \"solver\" command.\n# We use 'python -c' to simulate an external tool (like Ansys/Abaqus)\n# that reads {input}, does math, and saves to {output}.\ncmd = (\n\"python -c \"\n\"'import pandas as pd; \"\n'df=pd.read_csv(\"{input}\"); '\n'df[\"Signal\"] = df[\"Length\"]*2; '\n'df.to_csv(\"{output}\", index=False)'\n\"'\"\n)\n\n# 3. Run the automated loop\nstudy.optimise(\ncommand=cmd,\nranges=ranges,\nmax_iter=3\n)\n\n# 4. View the results\n_ = study.pod()\nstudy.visualise()"
   },
   {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.pod.html#examples",
-    "href": "api_reference/digiqual.core.SimulationStudy.pod.html#examples",
-    "title": "pod",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.optimise.html#parameters",
+    "href": "api_reference/digiqual.core.SimulationStudy.optimise.html#parameters",
+    "title": "optimise",
     "section": "",
-    "text": "results = study.pod(poi_col=\"Length\", threshold=0.5)\nprint(results['dist_info'])"
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\ncommand\nstr\nSolver command (e.g. “python solver.py {input} {output}”).\nrequired\n\n\nranges\nDict\nInput bounds, e.g. {“Length”: (0, 10)}.\nrequired\n\n\nn_start\nint\nInitial sample size (only if data is empty).\n20\n\n\nn_step\nint\nBatch size for refinement.\n10\n\n\nmax_iter\nint\nMax refinement loops.\n5\n\n\ninput_file\nstr\nTemp input filename.\n'sim_input.csv'\n\n\noutput_file\nstr\nTemp output filename.\n'sim_output.csv'"
   },
   {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.diagnose.html",
-    "href": "api_reference/digiqual.core.SimulationStudy.diagnose.html",
-    "title": "diagnose",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.optimise.html#examples",
+    "href": "api_reference/digiqual.core.SimulationStudy.optimise.html#examples",
+    "title": "optimise",
     "section": "",
-    "text": "diagnose()\nRuns statistical diagnostics to evaluate if the current sample size is sufficient.\nChecks for Input Coverage (Gaps), Model Fit Stability, and Bootstrap Convergence.\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A summary of diagnostic metrics.\n\n\n\n\n\n\nreport = study.diagnose()\nprint(report[['Test', 'Pass']])"
+    "text": "# 1. Define the variable ranges\nranges = {\"Length\": (0, 10), \"Angle\": (-45, 45)}\n\nstudy = SimulationStudy(input_cols=[\"Length\", \"Angle\"], outcome_col=\"Signal\")\n\n# 2. Define a \"solver\" command.\n# We use 'python -c' to simulate an external tool (like Ansys/Abaqus)\n# that reads {input}, does math, and saves to {output}.\ncmd = (\n\"python -c \"\n\"'import pandas as pd; \"\n'df=pd.read_csv(\"{input}\"); '\n'df[\"Signal\"] = df[\"Length\"]*2; '\n'df.to_csv(\"{output}\", index=False)'\n\"'\"\n)\n\n# 3. Run the automated loop\nstudy.optimise(\ncommand=cmd,\nranges=ranges,\nmax_iter=3\n)\n\n# 4. View the results\n_ = study.pod()\nstudy.visualise()"
   },
   {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.diagnose.html#returns",
-    "href": "api_reference/digiqual.core.SimulationStudy.diagnose.html#returns",
-    "title": "diagnose",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.add_data.html",
+    "href": "api_reference/digiqual.core.SimulationStudy.add_data.html",
+    "title": "add_data",
     "section": "",
-    "text": "Name\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A summary of diagnostic metrics."
+    "text": "add_data(df)\nIngests raw simulation data, filtering for relevant columns only.\nThis method automatically strips away any columns in df that were not defined in self.inputs or self.outcome during initialization.\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nThe DataFrame to ingest.\nrequired\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nValueError\nIf the new data is missing any required input or outcome columns.\n\n\n\n\n\n\nimport pandas as pd\ndf = pd.DataFrame({\n    'Length': [1.0, 2.5, 5.0],\n    'Angle': [0, 15, -10],\n    'Signal': [0.5, 0.8, 1.2]\n})\nstudy.add_data(df)"
   },
   {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.diagnose.html#examples",
-    "href": "api_reference/digiqual.core.SimulationStudy.diagnose.html#examples",
-    "title": "diagnose",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.add_data.html#parameters",
+    "href": "api_reference/digiqual.core.SimulationStudy.add_data.html#parameters",
+    "title": "add_data",
     "section": "",
-    "text": "report = study.diagnose()\nprint(report[['Test', 'Pass']])"
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nThe DataFrame to ingest.\nrequired"
+  },
+  {
+    "objectID": "api_reference/digiqual.core.SimulationStudy.add_data.html#raises",
+    "href": "api_reference/digiqual.core.SimulationStudy.add_data.html#raises",
+    "title": "add_data",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\n\nValueError\nIf the new data is missing any required input or outcome columns."
+  },
+  {
+    "objectID": "api_reference/digiqual.core.SimulationStudy.add_data.html#examples",
+    "href": "api_reference/digiqual.core.SimulationStudy.add_data.html#examples",
+    "title": "add_data",
+    "section": "",
+    "text": "import pandas as pd\ndf = pd.DataFrame({\n    'Length': [1.0, 2.5, 5.0],\n    'Angle': [0, 15, -10],\n    'Signal': [0.5, 0.8, 1.2]\n})\nstudy.add_data(df)"
+  },
+  {
+    "objectID": "api_reference/diagnostics.sample_sufficiency.html",
+    "href": "api_reference/diagnostics.sample_sufficiency.html",
+    "title": "diagnostics.sample_sufficiency",
+    "section": "",
+    "text": "sample_sufficiency(df, input_cols, outcome_col)\nPerforms statistical tests on sampling sufficiency.\n\n\n\nInput Space Coverage (Gaps)\nModel Fit Stability (CV Score)\nBootstrap Convergence (Coefficient of Variation)\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nThe simulation data. Will be validated via validate_simulation internally.\nrequired\n\n\ninput_cols\nList[str]\nList of input variable names.\nrequired\n\n\noutcome_col\nstr\nName of the outcome variable.\nrequired\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A table containing pass/fail metrics for each test, including the threshold values evaluated against."
+  },
+  {
+    "objectID": "api_reference/diagnostics.sample_sufficiency.html#runs-3-checks",
+    "href": "api_reference/diagnostics.sample_sufficiency.html#runs-3-checks",
+    "title": "diagnostics.sample_sufficiency",
+    "section": "",
+    "text": "Input Space Coverage (Gaps)\nModel Fit Stability (CV Score)\nBootstrap Convergence (Coefficient of Variation)"
+  },
+  {
+    "objectID": "api_reference/diagnostics.sample_sufficiency.html#parameters",
+    "href": "api_reference/diagnostics.sample_sufficiency.html#parameters",
+    "title": "diagnostics.sample_sufficiency",
+    "section": "",
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nThe simulation data. Will be validated via validate_simulation internally.\nrequired\n\n\ninput_cols\nList[str]\nList of input variable names.\nrequired\n\n\noutcome_col\nstr\nName of the outcome variable.\nrequired"
+  },
+  {
+    "objectID": "api_reference/diagnostics.sample_sufficiency.html#returns",
+    "href": "api_reference/diagnostics.sample_sufficiency.html#returns",
+    "title": "diagnostics.sample_sufficiency",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A table containing pass/fail metrics for each test, including the threshold values evaluated against."
+  },
+  {
+    "objectID": "api_reference/core.SimulationStudy.html",
+    "href": "api_reference/core.SimulationStudy.html",
+    "title": "core.SimulationStudy",
+    "section": "",
+    "text": "SimulationStudy(input_cols, outcome_col)\nA workflow manager for simulation reliability assessment.\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\ninputs\nList[str]\nList of input variable names.\n\n\noutcome\nstr\nName of the outcome variable.\n\n\ndata\npd.DataFrame\nThe raw simulation data.\n\n\nclean_data\npd.DataFrame\nData that has passed validation.\n\n\nsufficiency_results\npd.DataFrame\nThe latest diagnostic results.\n\n\npod_results\nDict\nResults from the latest PoD analysis.\n\n\nplots\nDict\nStores the latest generated figures.\n\n\n\n\n\n\nfrom digiqual.core import SimulationStudy\nstudy = SimulationStudy(\n    input_cols=['Length', 'Angle'],\n    outcome_col='Signal'\n)\n\n\n\n\n\n\nName\nDescription\n\n\n\n\nadd_data\nIngests raw simulation data, filtering for relevant columns only.\n\n\ndiagnose\nRuns statistical diagnostics to evaluate if the current sample size is sufficient.\n\n\noptimise\nRuns the automated Active Learning loop (Initialize -&gt; Execute -&gt; Diagnose -&gt; Refine).\n\n\npod\nRuns the generalized Probability of Detection (PoD) analysis.\n\n\nrefine\nIdentifies gaps or high-variance regions and suggests new simulation points.\n\n\nvisualise\nGenerates and displays diagnostic plots (Signal Model and PoD Curve)."
+  },
+  {
+    "objectID": "api_reference/core.SimulationStudy.html#attributes",
+    "href": "api_reference/core.SimulationStudy.html#attributes",
+    "title": "core.SimulationStudy",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\ninputs\nList[str]\nList of input variable names.\n\n\noutcome\nstr\nName of the outcome variable.\n\n\ndata\npd.DataFrame\nThe raw simulation data.\n\n\nclean_data\npd.DataFrame\nData that has passed validation.\n\n\nsufficiency_results\npd.DataFrame\nThe latest diagnostic results.\n\n\npod_results\nDict\nResults from the latest PoD analysis.\n\n\nplots\nDict\nStores the latest generated figures."
+  },
+  {
+    "objectID": "api_reference/core.SimulationStudy.html#examples",
+    "href": "api_reference/core.SimulationStudy.html#examples",
+    "title": "core.SimulationStudy",
+    "section": "",
+    "text": "from digiqual.core import SimulationStudy\nstudy = SimulationStudy(\n    input_cols=['Length', 'Angle'],\n    outcome_col='Signal'\n)"
+  },
+  {
+    "objectID": "api_reference/core.SimulationStudy.html#methods",
+    "href": "api_reference/core.SimulationStudy.html#methods",
+    "title": "core.SimulationStudy",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nadd_data\nIngests raw simulation data, filtering for relevant columns only.\n\n\ndiagnose\nRuns statistical diagnostics to evaluate if the current sample size is sufficient.\n\n\noptimise\nRuns the automated Active Learning loop (Initialize -&gt; Execute -&gt; Diagnose -&gt; Refine).\n\n\npod\nRuns the generalized Probability of Detection (PoD) analysis.\n\n\nrefine\nIdentifies gaps or high-variance regions and suggests new simulation points.\n\n\nvisualise\nGenerates and displays diagnostic plots (Signal Model and PoD Curve)."
+  },
+  {
+    "objectID": "api_reference/adaptive.generate_targeted_samples.html",
+    "href": "api_reference/adaptive.generate_targeted_samples.html",
+    "title": "adaptive.generate_targeted_samples",
+    "section": "",
+    "text": "generate_targeted_samples(\n    df,\n    input_cols,\n    outcome_col,\n    n_new_per_fix=10,\n    failed_data=None,\n    distance_threshold=0.05,\n)\nActive Learning Engine: Generates new samples based on diagnostic failures.\nIt consumes the results table from sample_sufficiency. - If Input Coverage fails -&gt; Triggers _fill_gaps (Exploration). - If Model Fit or Bootstrap fails -&gt; Triggers _sample_uncertainty (Exploitation).\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nCurrent simulation data.\nrequired\n\n\ninput_cols\nList[str]\nInput variable names.\nrequired\n\n\noutcome_col\nstr\nOutcome variable name.\nrequired\n\n\nn_new_per_fix\nint\nNumber of samples to generate per detected issue.\n10\n\n\nfailed_data\nOptional[pd.DataFrame]\nGraveyard of inputs that crashed the solver.\nNone\n\n\ndistance_threshold\nfloat\nMinimum normalized distance to maintain from failed points.\n0.05\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: New recommended samples.\n\n\n\n\n\n\nimport pandas as pd\n# 1. Setup data with a massive gap in 'Length' (0-1, then 9-10)\ndf = pd.DataFrame({'Length': [0.1, 0.9, 9.1, 9.9], 'Signal': [1, 1, 1, 1]})\n\n# 2. Ask for new samples to fix the gap\nnew_pts = generate_targeted_samples(\n    df=df,\n    input_cols=['Length'],\n    outcome_col='Signal',\n    n_new_per_fix=2\n)\nprint(new_pts)\n#    Length Refinement_Reason\n# 0     5.4      Gap in Length\n# 1     3.2      Gap in Length"
+  },
+  {
+    "objectID": "api_reference/adaptive.generate_targeted_samples.html#parameters",
+    "href": "api_reference/adaptive.generate_targeted_samples.html#parameters",
+    "title": "adaptive.generate_targeted_samples",
+    "section": "",
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nCurrent simulation data.\nrequired\n\n\ninput_cols\nList[str]\nInput variable names.\nrequired\n\n\noutcome_col\nstr\nOutcome variable name.\nrequired\n\n\nn_new_per_fix\nint\nNumber of samples to generate per detected issue.\n10\n\n\nfailed_data\nOptional[pd.DataFrame]\nGraveyard of inputs that crashed the solver.\nNone\n\n\ndistance_threshold\nfloat\nMinimum normalized distance to maintain from failed points.\n0.05"
+  },
+  {
+    "objectID": "api_reference/adaptive.generate_targeted_samples.html#returns",
+    "href": "api_reference/adaptive.generate_targeted_samples.html#returns",
+    "title": "adaptive.generate_targeted_samples",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: New recommended samples."
+  },
+  {
+    "objectID": "api_reference/adaptive.generate_targeted_samples.html#examples",
+    "href": "api_reference/adaptive.generate_targeted_samples.html#examples",
+    "title": "adaptive.generate_targeted_samples",
+    "section": "",
+    "text": "import pandas as pd\n# 1. Setup data with a massive gap in 'Length' (0-1, then 9-10)\ndf = pd.DataFrame({'Length': [0.1, 0.9, 9.1, 9.9], 'Signal': [1, 1, 1, 1]})\n\n# 2. Ask for new samples to fix the gap\nnew_pts = generate_targeted_samples(\n    df=df,\n    input_cols=['Length'],\n    outcome_col='Signal',\n    n_new_per_fix=2\n)\nprint(new_pts)\n#    Length Refinement_Reason\n# 0     5.4      Gap in Length\n# 1     3.2      Gap in Length"
+  },
+  {
+    "objectID": "api_reference/adaptive.run_adaptive_search.html",
+    "href": "api_reference/adaptive.run_adaptive_search.html",
+    "title": "adaptive.run_adaptive_search",
+    "section": "",
+    "text": "run_adaptive_search(\n    command,\n    input_cols,\n    outcome_col,\n    ranges,\n    existing_data=None,\n    n_start=20,\n    n_step=10,\n    max_iter=5,\n    input_file='sim_input.csv',\n    output_file='sim_output.csv',\n)\nOrchestrates the Active Learning loop on raw DataFrames.\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ncommand\nstr\nSolver command template.\nrequired\n\n\ninput_cols\nList[str]\nInput names.\nrequired\n\n\noutcome_col\nstr\nOutcome name.\nrequired\n\n\nranges\nDict\nInput bounds.\nrequired\n\n\nexisting_data\npd.DataFrame\nStart data.\nNone\n\n\nn_start\nint\nInit batch size.\n20\n\n\nmax_iter\nint\nMax loops.\n5\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: Final dataset.\n\n\n\n\n\n\n# 1. Define bounds\nranges = {'Length': (0, 10), 'Angle': (-45, 45)}\n\n# 2. Define a command that reads {input} and writes {output}\n# (Here we use python -c to simulate a solver)\ncmd = (\n\"python -c \"\n\"'import pandas as pd; \"\n'df=pd.read_csv(\"{input}\"); '\n'df[\"Signal\"] = df[\"Length\"]*2; '\n'df.to_csv(\"{output}\", index=False)'\n\"'\"\n)\n\n# 3. Run the loop (Init -&gt; Run -&gt; Check -&gt; Refine)\nfinal_df = run_adaptive_search(\n    command=cmd,\n    input_cols=['Length', 'Angle'],\n    outcome_col='Signal',\n    ranges=ranges,\n    max_iter=2,\n    n_start=5\n)\nprint(len(final_df))"
+  },
+  {
+    "objectID": "api_reference/adaptive.run_adaptive_search.html#parameters",
+    "href": "api_reference/adaptive.run_adaptive_search.html#parameters",
+    "title": "adaptive.run_adaptive_search",
+    "section": "",
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\ncommand\nstr\nSolver command template.\nrequired\n\n\ninput_cols\nList[str]\nInput names.\nrequired\n\n\noutcome_col\nstr\nOutcome name.\nrequired\n\n\nranges\nDict\nInput bounds.\nrequired\n\n\nexisting_data\npd.DataFrame\nStart data.\nNone\n\n\nn_start\nint\nInit batch size.\n20\n\n\nmax_iter\nint\nMax loops.\n5"
+  },
+  {
+    "objectID": "api_reference/adaptive.run_adaptive_search.html#returns",
+    "href": "api_reference/adaptive.run_adaptive_search.html#returns",
+    "title": "adaptive.run_adaptive_search",
+    "section": "",
+    "text": "Name\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: Final dataset."
+  },
+  {
+    "objectID": "api_reference/adaptive.run_adaptive_search.html#examples",
+    "href": "api_reference/adaptive.run_adaptive_search.html#examples",
+    "title": "adaptive.run_adaptive_search",
+    "section": "",
+    "text": "# 1. Define bounds\nranges = {'Length': (0, 10), 'Angle': (-45, 45)}\n\n# 2. Define a command that reads {input} and writes {output}\n# (Here we use python -c to simulate a solver)\ncmd = (\n\"python -c \"\n\"'import pandas as pd; \"\n'df=pd.read_csv(\"{input}\"); '\n'df[\"Signal\"] = df[\"Length\"]*2; '\n'df.to_csv(\"{output}\", index=False)'\n\"'\"\n)\n\n# 3. Run the loop (Init -&gt; Run -&gt; Check -&gt; Refine)\nfinal_df = run_adaptive_search(\n    command=cmd,\n    input_cols=['Length', 'Angle'],\n    outcome_col='Signal',\n    ranges=ranges,\n    max_iter=2,\n    n_start=5\n)\nprint(len(final_df))"
+  },
+  {
+    "objectID": "api_reference/diagnostics.ValidationError.html",
+    "href": "api_reference/diagnostics.ValidationError.html",
+    "title": "diagnostics.ValidationError",
+    "section": "",
+    "text": "diagnostics.ValidationError\nValidationError()\nRaised when simulation data fails validation checks."
   },
   {
     "objectID": "api_reference/diagnostics.validate_simulation.html",
@@ -327,200 +460,53 @@
     "text": "import pandas as pd\n# Create dirty data (includes text and negative values)\ndf = pd.DataFrame({\n    'Length': [1.0, 'BadValue', 5.0],\n    'Signal': [0.5, 0.8, -1.2]\n})\n\n# Validate\nclean, removed = validate_simulation(df, ['Length'], 'Signal')\nprint(f\"Clean rows: {len(clean)}\")\nprint(f\"Removed rows: {len(removed)}\")"
   },
   {
-    "objectID": "api_reference/diagnostics.ValidationError.html",
-    "href": "api_reference/diagnostics.ValidationError.html",
-    "title": "diagnostics.ValidationError",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.diagnose.html",
+    "href": "api_reference/digiqual.core.SimulationStudy.diagnose.html",
+    "title": "diagnose",
     "section": "",
-    "text": "diagnostics.ValidationError\nValidationError()\nRaised when simulation data fails validation checks."
+    "text": "diagnose()\nRuns statistical diagnostics to evaluate if the current sample size is sufficient.\nChecks for Input Coverage (Gaps), Model Fit Stability, and Bootstrap Convergence.\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A summary of diagnostic metrics.\n\n\n\n\n\n\nreport = study.diagnose()\nprint(report[['Test', 'Pass']])"
   },
   {
-    "objectID": "api_reference/adaptive.run_adaptive_search.html",
-    "href": "api_reference/adaptive.run_adaptive_search.html",
-    "title": "adaptive.run_adaptive_search",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.diagnose.html#returns",
+    "href": "api_reference/digiqual.core.SimulationStudy.diagnose.html#returns",
+    "title": "diagnose",
     "section": "",
-    "text": "run_adaptive_search(\n    command,\n    input_cols,\n    outcome_col,\n    ranges,\n    existing_data=None,\n    n_start=20,\n    n_step=10,\n    max_iter=5,\n    input_file='sim_input.csv',\n    output_file='sim_output.csv',\n)\nOrchestrates the Active Learning loop on raw DataFrames.\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ncommand\nstr\nSolver command template.\nrequired\n\n\ninput_cols\nList[str]\nInput names.\nrequired\n\n\noutcome_col\nstr\nOutcome name.\nrequired\n\n\nranges\nDict\nInput bounds.\nrequired\n\n\nexisting_data\npd.DataFrame\nStart data.\nNone\n\n\nn_start\nint\nInit batch size.\n20\n\n\nmax_iter\nint\nMax loops.\n5\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: Final dataset.\n\n\n\n\n\n\n# 1. Define bounds\nranges = {'Length': (0, 10), 'Angle': (-45, 45)}\n\n# 2. Define a command that reads {input} and writes {output}\n# (Here we use python -c to simulate a solver)\ncmd = (\n\"python -c \"\n\"'import pandas as pd; \"\n'df=pd.read_csv(\"{input}\"); '\n'df[\"Signal\"] = df[\"Length\"]*2; '\n'df.to_csv(\"{output}\", index=False)'\n\"'\"\n)\n\n# 3. Run the loop (Init -&gt; Run -&gt; Check -&gt; Refine)\nfinal_df = run_adaptive_search(\n    command=cmd,\n    input_cols=['Length', 'Angle'],\n    outcome_col='Signal',\n    ranges=ranges,\n    max_iter=2,\n    n_start=5\n)\nprint(len(final_df))"
+    "text": "Name\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A summary of diagnostic metrics."
   },
   {
-    "objectID": "api_reference/adaptive.run_adaptive_search.html#parameters",
-    "href": "api_reference/adaptive.run_adaptive_search.html#parameters",
-    "title": "adaptive.run_adaptive_search",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.diagnose.html#examples",
+    "href": "api_reference/digiqual.core.SimulationStudy.diagnose.html#examples",
+    "title": "diagnose",
     "section": "",
-    "text": "Name\nType\nDescription\nDefault\n\n\n\n\ncommand\nstr\nSolver command template.\nrequired\n\n\ninput_cols\nList[str]\nInput names.\nrequired\n\n\noutcome_col\nstr\nOutcome name.\nrequired\n\n\nranges\nDict\nInput bounds.\nrequired\n\n\nexisting_data\npd.DataFrame\nStart data.\nNone\n\n\nn_start\nint\nInit batch size.\n20\n\n\nmax_iter\nint\nMax loops.\n5"
+    "text": "report = study.diagnose()\nprint(report[['Test', 'Pass']])"
   },
   {
-    "objectID": "api_reference/adaptive.run_adaptive_search.html#returns",
-    "href": "api_reference/adaptive.run_adaptive_search.html#returns",
-    "title": "adaptive.run_adaptive_search",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.pod.html",
+    "href": "api_reference/digiqual.core.SimulationStudy.pod.html",
+    "title": "pod",
     "section": "",
-    "text": "Name\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: Final dataset."
+    "text": "pod(poi_col, threshold, bandwidth_ratio=0.1, n_boot=1000)\nRuns the generalized Probability of Detection (PoD) analysis.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\npoi_col\nstr\nThe parameter of interest (e.g., ‘Crack Length’).\nrequired\n\n\nthreshold\nfloat\nThe failure threshold (e.g., 4.0 dB).\nrequired\n\n\nbandwidth_ratio\nfloat\nSmoothing bandwidth fraction (default 0.1).\n0.1\n\n\nn_boot\nint\nBootstrap iterations for confidence bounds.\n1000\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\nDict\nDict[str, Any]\nDictionary containing models, curves, and fit statistics.\n\n\n\n\n\n\nresults = study.pod(poi_col=\"Length\", threshold=0.5)\nprint(results['dist_info'])"
   },
   {
-    "objectID": "api_reference/adaptive.run_adaptive_search.html#examples",
-    "href": "api_reference/adaptive.run_adaptive_search.html#examples",
-    "title": "adaptive.run_adaptive_search",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.pod.html#parameters",
+    "href": "api_reference/digiqual.core.SimulationStudy.pod.html#parameters",
+    "title": "pod",
     "section": "",
-    "text": "# 1. Define bounds\nranges = {'Length': (0, 10), 'Angle': (-45, 45)}\n\n# 2. Define a command that reads {input} and writes {output}\n# (Here we use python -c to simulate a solver)\ncmd = (\n\"python -c \"\n\"'import pandas as pd; \"\n'df=pd.read_csv(\"{input}\"); '\n'df[\"Signal\"] = df[\"Length\"]*2; '\n'df.to_csv(\"{output}\", index=False)'\n\"'\"\n)\n\n# 3. Run the loop (Init -&gt; Run -&gt; Check -&gt; Refine)\nfinal_df = run_adaptive_search(\n    command=cmd,\n    input_cols=['Length', 'Angle'],\n    outcome_col='Signal',\n    ranges=ranges,\n    max_iter=2,\n    n_start=5\n)\nprint(len(final_df))"
+    "text": "Name\nType\nDescription\nDefault\n\n\n\n\npoi_col\nstr\nThe parameter of interest (e.g., ‘Crack Length’).\nrequired\n\n\nthreshold\nfloat\nThe failure threshold (e.g., 4.0 dB).\nrequired\n\n\nbandwidth_ratio\nfloat\nSmoothing bandwidth fraction (default 0.1).\n0.1\n\n\nn_boot\nint\nBootstrap iterations for confidence bounds.\n1000"
   },
   {
-    "objectID": "api_reference/adaptive.generate_targeted_samples.html",
-    "href": "api_reference/adaptive.generate_targeted_samples.html",
-    "title": "adaptive.generate_targeted_samples",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.pod.html#returns",
+    "href": "api_reference/digiqual.core.SimulationStudy.pod.html#returns",
+    "title": "pod",
     "section": "",
-    "text": "generate_targeted_samples(df, input_cols, outcome_col, n_new_per_fix=10)\nActive Learning Engine: Generates new samples based on diagnostic failures.\nIt consumes the results table from sample_sufficiency. - If Input Coverage fails -&gt; Triggers _fill_gaps (Exploration). - If Model Fit or Bootstrap fails -&gt; Triggers _sample_uncertainty (Exploitation).\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nCurrent simulation data.\nrequired\n\n\ninput_cols\nList[str]\nInput variable names.\nrequired\n\n\noutcome_col\nstr\nOutcome variable name.\nrequired\n\n\nn_new_per_fix\nint\nNumber of samples to generate per detected issue.\n10\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: New recommended samples.\n\n\n\n\n\n\nimport pandas as pd\n# 1. Setup data with a massive gap in 'Length' (0-1, then 9-10)\ndf = pd.DataFrame({'Length': [0.1, 0.9, 9.1, 9.9], 'Signal': [1, 1, 1, 1]})\n\n# 2. Ask for new samples to fix the gap\nnew_pts = generate_targeted_samples(\n    df=df,\n    input_cols=['Length'],\n    outcome_col='Signal',\n    n_new_per_fix=2\n)\nprint(new_pts)\n#    Length Refinement_Reason\n# 0     5.4      Gap in Length\n# 1     3.2      Gap in Length"
+    "text": "Name\nType\nDescription\n\n\n\n\nDict\nDict[str, Any]\nDictionary containing models, curves, and fit statistics."
   },
   {
-    "objectID": "api_reference/adaptive.generate_targeted_samples.html#parameters",
-    "href": "api_reference/adaptive.generate_targeted_samples.html#parameters",
-    "title": "adaptive.generate_targeted_samples",
+    "objectID": "api_reference/digiqual.core.SimulationStudy.pod.html#examples",
+    "href": "api_reference/digiqual.core.SimulationStudy.pod.html#examples",
+    "title": "pod",
     "section": "",
-    "text": "Name\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nCurrent simulation data.\nrequired\n\n\ninput_cols\nList[str]\nInput variable names.\nrequired\n\n\noutcome_col\nstr\nOutcome variable name.\nrequired\n\n\nn_new_per_fix\nint\nNumber of samples to generate per detected issue.\n10"
-  },
-  {
-    "objectID": "api_reference/adaptive.generate_targeted_samples.html#returns",
-    "href": "api_reference/adaptive.generate_targeted_samples.html#returns",
-    "title": "adaptive.generate_targeted_samples",
-    "section": "",
-    "text": "Name\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: New recommended samples."
-  },
-  {
-    "objectID": "api_reference/adaptive.generate_targeted_samples.html#examples",
-    "href": "api_reference/adaptive.generate_targeted_samples.html#examples",
-    "title": "adaptive.generate_targeted_samples",
-    "section": "",
-    "text": "import pandas as pd\n# 1. Setup data with a massive gap in 'Length' (0-1, then 9-10)\ndf = pd.DataFrame({'Length': [0.1, 0.9, 9.1, 9.9], 'Signal': [1, 1, 1, 1]})\n\n# 2. Ask for new samples to fix the gap\nnew_pts = generate_targeted_samples(\n    df=df,\n    input_cols=['Length'],\n    outcome_col='Signal',\n    n_new_per_fix=2\n)\nprint(new_pts)\n#    Length Refinement_Reason\n# 0     5.4      Gap in Length\n# 1     3.2      Gap in Length"
-  },
-  {
-    "objectID": "api_reference/core.SimulationStudy.html",
-    "href": "api_reference/core.SimulationStudy.html",
-    "title": "core.SimulationStudy",
-    "section": "",
-    "text": "SimulationStudy(input_cols, outcome_col)\nA workflow manager for simulation reliability assessment.\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\ninputs\nList[str]\nList of input variable names.\n\n\noutcome\nstr\nName of the outcome variable.\n\n\ndata\npd.DataFrame\nThe raw simulation data.\n\n\nclean_data\npd.DataFrame\nData that has passed validation.\n\n\nsufficiency_results\npd.DataFrame\nThe latest diagnostic results.\n\n\npod_results\nDict\nResults from the latest PoD analysis.\n\n\nplots\nDict\nStores the latest generated figures.\n\n\n\n\n\n\nfrom digiqual.core import SimulationStudy\nstudy = SimulationStudy(\n    input_cols=['Length', 'Angle'],\n    outcome_col='Signal'\n)\n\n\n\n\n\n\nName\nDescription\n\n\n\n\nadd_data\nIngests raw simulation data, filtering for relevant columns only.\n\n\ndiagnose\nRuns statistical diagnostics to evaluate if the current sample size is sufficient.\n\n\noptimise\nRuns the automated Active Learning loop (Initialize -&gt; Execute -&gt; Diagnose -&gt; Refine).\n\n\npod\nRuns the generalized Probability of Detection (PoD) analysis.\n\n\nrefine\nIdentifies gaps or high-variance regions and suggests new simulation points.\n\n\nvalidate\nCleans and validates the raw data stored in self.data.\n\n\nvisualise\nGenerates and displays diagnostic plots (Signal Model and PoD Curve)."
-  },
-  {
-    "objectID": "api_reference/core.SimulationStudy.html#attributes",
-    "href": "api_reference/core.SimulationStudy.html#attributes",
-    "title": "core.SimulationStudy",
-    "section": "",
-    "text": "Name\nType\nDescription\n\n\n\n\ninputs\nList[str]\nList of input variable names.\n\n\noutcome\nstr\nName of the outcome variable.\n\n\ndata\npd.DataFrame\nThe raw simulation data.\n\n\nclean_data\npd.DataFrame\nData that has passed validation.\n\n\nsufficiency_results\npd.DataFrame\nThe latest diagnostic results.\n\n\npod_results\nDict\nResults from the latest PoD analysis.\n\n\nplots\nDict\nStores the latest generated figures."
-  },
-  {
-    "objectID": "api_reference/core.SimulationStudy.html#examples",
-    "href": "api_reference/core.SimulationStudy.html#examples",
-    "title": "core.SimulationStudy",
-    "section": "",
-    "text": "from digiqual.core import SimulationStudy\nstudy = SimulationStudy(\n    input_cols=['Length', 'Angle'],\n    outcome_col='Signal'\n)"
-  },
-  {
-    "objectID": "api_reference/core.SimulationStudy.html#methods",
-    "href": "api_reference/core.SimulationStudy.html#methods",
-    "title": "core.SimulationStudy",
-    "section": "",
-    "text": "Name\nDescription\n\n\n\n\nadd_data\nIngests raw simulation data, filtering for relevant columns only.\n\n\ndiagnose\nRuns statistical diagnostics to evaluate if the current sample size is sufficient.\n\n\noptimise\nRuns the automated Active Learning loop (Initialize -&gt; Execute -&gt; Diagnose -&gt; Refine).\n\n\npod\nRuns the generalized Probability of Detection (PoD) analysis.\n\n\nrefine\nIdentifies gaps or high-variance regions and suggests new simulation points.\n\n\nvalidate\nCleans and validates the raw data stored in self.data.\n\n\nvisualise\nGenerates and displays diagnostic plots (Signal Model and PoD Curve)."
-  },
-  {
-    "objectID": "api_reference/diagnostics.sample_sufficiency.html",
-    "href": "api_reference/diagnostics.sample_sufficiency.html",
-    "title": "diagnostics.sample_sufficiency",
-    "section": "",
-    "text": "sample_sufficiency(df, input_cols, outcome_col)\nPerforms statistical tests on sampling sufficiency.\n\n\n\nInput Space Coverage (Gaps)\nModel Fit Stability (CV Score)\nBootstrap Convergence (Coefficient of Variation)\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nThe simulation data. Will be validated via validate_simulation internally.\nrequired\n\n\ninput_cols\nList[str]\nList of input variable names.\nrequired\n\n\noutcome_col\nstr\nName of the outcome variable.\nrequired\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A table containing pass/fail metrics for each test, including the threshold values evaluated against."
-  },
-  {
-    "objectID": "api_reference/diagnostics.sample_sufficiency.html#runs-3-checks",
-    "href": "api_reference/diagnostics.sample_sufficiency.html#runs-3-checks",
-    "title": "diagnostics.sample_sufficiency",
-    "section": "",
-    "text": "Input Space Coverage (Gaps)\nModel Fit Stability (CV Score)\nBootstrap Convergence (Coefficient of Variation)"
-  },
-  {
-    "objectID": "api_reference/diagnostics.sample_sufficiency.html#parameters",
-    "href": "api_reference/diagnostics.sample_sufficiency.html#parameters",
-    "title": "diagnostics.sample_sufficiency",
-    "section": "",
-    "text": "Name\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nThe simulation data. Will be validated via validate_simulation internally.\nrequired\n\n\ninput_cols\nList[str]\nList of input variable names.\nrequired\n\n\noutcome_col\nstr\nName of the outcome variable.\nrequired"
-  },
-  {
-    "objectID": "api_reference/diagnostics.sample_sufficiency.html#returns",
-    "href": "api_reference/diagnostics.sample_sufficiency.html#returns",
-    "title": "diagnostics.sample_sufficiency",
-    "section": "",
-    "text": "Name\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A table containing pass/fail metrics for each test, including the threshold values evaluated against."
-  },
-  {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.add_data.html",
-    "href": "api_reference/digiqual.core.SimulationStudy.add_data.html",
-    "title": "add_data",
-    "section": "",
-    "text": "add_data(df)\nIngests raw simulation data, filtering for relevant columns only.\nThis method automatically strips away any columns in df that were not defined in self.inputs or self.outcome during initialization.\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nThe DataFrame to ingest.\nrequired\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nValueError\nIf the new data is missing any required input or outcome columns.\n\n\n\n\n\n\nimport pandas as pd\ndf = pd.DataFrame({\n    'Length': [1.0, 2.5, 5.0],\n    'Angle': [0, 15, -10],\n    'Signal': [0.5, 0.8, 1.2]\n})\nstudy.add_data(df)"
-  },
-  {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.add_data.html#parameters",
-    "href": "api_reference/digiqual.core.SimulationStudy.add_data.html#parameters",
-    "title": "add_data",
-    "section": "",
-    "text": "Name\nType\nDescription\nDefault\n\n\n\n\ndf\npd.DataFrame\nThe DataFrame to ingest.\nrequired"
-  },
-  {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.add_data.html#raises",
-    "href": "api_reference/digiqual.core.SimulationStudy.add_data.html#raises",
-    "title": "add_data",
-    "section": "",
-    "text": "Name\nType\nDescription\n\n\n\n\n\nValueError\nIf the new data is missing any required input or outcome columns."
-  },
-  {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.add_data.html#examples",
-    "href": "api_reference/digiqual.core.SimulationStudy.add_data.html#examples",
-    "title": "add_data",
-    "section": "",
-    "text": "import pandas as pd\ndf = pd.DataFrame({\n    'Length': [1.0, 2.5, 5.0],\n    'Angle': [0, 15, -10],\n    'Signal': [0.5, 0.8, 1.2]\n})\nstudy.add_data(df)"
-  },
-  {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.optimise.html",
-    "href": "api_reference/digiqual.core.SimulationStudy.optimise.html",
-    "title": "optimise",
-    "section": "",
-    "text": "optimise(\n    command,\n    ranges,\n    n_start=20,\n    n_step=10,\n    max_iter=5,\n    input_file='sim_input.csv',\n    output_file='sim_output.csv',\n)\nRuns the automated Active Learning loop (Initialize -&gt; Execute -&gt; Diagnose -&gt; Refine).\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ncommand\nstr\nSolver command (e.g. “python solver.py {input} {output}”).\nrequired\n\n\nranges\nDict\nInput bounds, e.g. {“Length”: (0, 10)}.\nrequired\n\n\nn_start\nint\nInitial sample size (only if data is empty).\n20\n\n\nn_step\nint\nBatch size for refinement.\n10\n\n\nmax_iter\nint\nMax refinement loops.\n5\n\n\ninput_file\nstr\nTemp input filename.\n'sim_input.csv'\n\n\noutput_file\nstr\nTemp output filename.\n'sim_output.csv'\n\n\n\n\n\n\n# 1. Define the variable ranges\nranges = {\"Length\": (0, 10), \"Angle\": (-45, 45)}\n\nstudy = SimulationStudy(input_cols=[\"Length\", \"Angle\"], outcome_col=\"Signal\")\n\n# 2. Define a \"solver\" command.\n# We use 'python -c' to simulate an external tool (like Ansys/Abaqus)\n# that reads {input}, does math, and saves to {output}.\ncmd = (\n\"python -c \"\n\"'import pandas as pd; \"\n'df=pd.read_csv(\"{input}\"); '\n'df[\"Signal\"] = df[\"Length\"]*2; '\n'df.to_csv(\"{output}\", index=False)'\n\"'\"\n)\n\n# 3. Run the automated loop\nstudy.optimise(\ncommand=cmd,\nranges=ranges,\nmax_iter=3\n)\n\n# 4. View the results\n_ = study.pod()\nstudy.visualise()"
-  },
-  {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.optimise.html#parameters",
-    "href": "api_reference/digiqual.core.SimulationStudy.optimise.html#parameters",
-    "title": "optimise",
-    "section": "",
-    "text": "Name\nType\nDescription\nDefault\n\n\n\n\ncommand\nstr\nSolver command (e.g. “python solver.py {input} {output}”).\nrequired\n\n\nranges\nDict\nInput bounds, e.g. {“Length”: (0, 10)}.\nrequired\n\n\nn_start\nint\nInitial sample size (only if data is empty).\n20\n\n\nn_step\nint\nBatch size for refinement.\n10\n\n\nmax_iter\nint\nMax refinement loops.\n5\n\n\ninput_file\nstr\nTemp input filename.\n'sim_input.csv'\n\n\noutput_file\nstr\nTemp output filename.\n'sim_output.csv'"
-  },
-  {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.optimise.html#examples",
-    "href": "api_reference/digiqual.core.SimulationStudy.optimise.html#examples",
-    "title": "optimise",
-    "section": "",
-    "text": "# 1. Define the variable ranges\nranges = {\"Length\": (0, 10), \"Angle\": (-45, 45)}\n\nstudy = SimulationStudy(input_cols=[\"Length\", \"Angle\"], outcome_col=\"Signal\")\n\n# 2. Define a \"solver\" command.\n# We use 'python -c' to simulate an external tool (like Ansys/Abaqus)\n# that reads {input}, does math, and saves to {output}.\ncmd = (\n\"python -c \"\n\"'import pandas as pd; \"\n'df=pd.read_csv(\"{input}\"); '\n'df[\"Signal\"] = df[\"Length\"]*2; '\n'df.to_csv(\"{output}\", index=False)'\n\"'\"\n)\n\n# 3. Run the automated loop\nstudy.optimise(\ncommand=cmd,\nranges=ranges,\nmax_iter=3\n)\n\n# 4. View the results\n_ = study.pod()\nstudy.visualise()"
-  },
-  {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.refine.html",
-    "href": "api_reference/digiqual.core.SimulationStudy.refine.html",
-    "title": "refine",
-    "section": "",
-    "text": "refine(n_points=10)\nIdentifies gaps or high-variance regions and suggests new simulation points.\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nn_points\nint\nNumber of new samples to suggest per detected issue.\n10\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A DataFrame of recommended new input coordinates.\n\n\n\n\n\n\n# If diagnostics fail, ask for 10 new points to fix it\nnew_samples = study.refine(n_points=10)\nprint(new_samples.head())"
-  },
-  {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.refine.html#parameters",
-    "href": "api_reference/digiqual.core.SimulationStudy.refine.html#parameters",
-    "title": "refine",
-    "section": "",
-    "text": "Name\nType\nDescription\nDefault\n\n\n\n\nn_points\nint\nNumber of new samples to suggest per detected issue.\n10"
-  },
-  {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.refine.html#returns",
-    "href": "api_reference/digiqual.core.SimulationStudy.refine.html#returns",
-    "title": "refine",
-    "section": "",
-    "text": "Name\nType\nDescription\n\n\n\n\n\npd.DataFrame\npd.DataFrame: A DataFrame of recommended new input coordinates."
-  },
-  {
-    "objectID": "api_reference/digiqual.core.SimulationStudy.refine.html#examples",
-    "href": "api_reference/digiqual.core.SimulationStudy.refine.html#examples",
-    "title": "refine",
-    "section": "",
-    "text": "# If diagnostics fail, ask for 10 new points to fix it\nnew_samples = study.refine(n_points=10)\nprint(new_samples.head())"
+    "text": "results = study.pod(poi_col=\"Length\", threshold=0.5)\nprint(results['dist_info'])"
   },
   {
     "objectID": "api_reference/digiqual.core.SimulationStudy.visualise.html",
@@ -700,7 +686,7 @@
     "href": "docs/install.html",
     "title": "Installation",
     "section": "",
-    "text": "You can install digiqual directly from PyPI (or GitHub).\n\n\nIf you are managing a project with uv, add digiqual as a dependency:\n\nTo install the latest stable release (v0.11.0):\n\nuv add \"digiqual\"\n\nTo install the latest development version (main branch from github):\n\nuv add \"digiqual @ git+https://github.com/JGIBristol/digiqual.git\"\nIf you just want to install it into a virtual environment without modifying a project file (e.g., for a quick script), use pip interface:\nuv pip install digiqual\"\n\n\n\nTo install the latest stable release (v0.11.0):\npip install digiqual\nTo install the latest development version:\npip install \"git+https://github.com/JGIBristol/digiqual.git\"",
+    "text": "You can install digiqual directly from PyPI (or GitHub).\n\n\nIf you are managing a project with uv, add digiqual as a dependency:\n\nTo install the latest stable release (v0.12.0):\n\nuv add \"digiqual\"\n\nTo install the latest development version (main branch from github):\n\nuv add \"digiqual @ git+https://github.com/JGIBristol/digiqual.git\"\nIf you just want to install it into a virtual environment without modifying a project file (e.g., for a quick script), use pip interface:\nuv pip install digiqual\"\n\n\n\nTo install the latest stable release (v0.12.0):\npip install digiqual\nTo install the latest development version:\npip install \"git+https://github.com/JGIBristol/digiqual.git\"",
     "crumbs": [
       "Installation"
     ]
@@ -710,7 +696,7 @@
     "href": "docs/install.html#option-1-install-via-uv-recommended",
     "title": "Installation",
     "section": "",
-    "text": "If you are managing a project with uv, add digiqual as a dependency:\n\nTo install the latest stable release (v0.11.0):\n\nuv add \"digiqual\"\n\nTo install the latest development version (main branch from github):\n\nuv add \"digiqual @ git+https://github.com/JGIBristol/digiqual.git\"\nIf you just want to install it into a virtual environment without modifying a project file (e.g., for a quick script), use pip interface:\nuv pip install digiqual\"",
+    "text": "If you are managing a project with uv, add digiqual as a dependency:\n\nTo install the latest stable release (v0.12.0):\n\nuv add \"digiqual\"\n\nTo install the latest development version (main branch from github):\n\nuv add \"digiqual @ git+https://github.com/JGIBristol/digiqual.git\"\nIf you just want to install it into a virtual environment without modifying a project file (e.g., for a quick script), use pip interface:\nuv pip install digiqual\"",
     "crumbs": [
       "Installation"
     ]
@@ -720,7 +706,7 @@
     "href": "docs/install.html#option-2-install-via-standard-pip",
     "title": "Installation",
     "section": "",
-    "text": "To install the latest stable release (v0.11.0):\npip install digiqual\nTo install the latest development version:\npip install \"git+https://github.com/JGIBristol/digiqual.git\"",
+    "text": "To install the latest stable release (v0.12.0):\npip install digiqual\nTo install the latest development version:\npip install \"git+https://github.com/JGIBristol/digiqual.git\"",
     "crumbs": [
       "Installation"
     ]
@@ -730,7 +716,7 @@
     "href": "docs/qs_class.html",
     "title": "SimulationStudy Class",
     "section": "",
-    "text": "Use the SimulationStudy manager to handle the entire lifecycle: storage, diagnostics, and active refinement. This allows you to automatically fix issues in your design.\nIn this example, we will intentionally feed the study “bad” data (with a large gap in the input space) to demonstrate how the active learning module identifies and fixes the problem.\n\n1. Setup & “Flawed” Data Generation\nFirst, we define our physics simulation and create a dataset with a deliberate gap (missing data between 3mm and 7mm).\n\nimport numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\nfrom IPython.display import display, Markdown\n\nfrom digiqual import SimulationStudy\n\n\n# --- Define the Physics ---\ndef apply_physics(df):\n    \"\"\"Simulates a signal with quadratic trends and heteroscedastic noise.\"\"\"\n    # 1. Base Signal: Quadratic trend (2*L + 0.5*L^2)\n    # 2. Angle Penalty: Misalignment (-0.1*Angle) reduces signal\n    signal = (\n        10.0\n        + (2.0 * df[\"Length\"])\n        + (0.5 * df[\"Length\"] ** 2)\n        - (0.1 * np.abs(df[\"Angle\"]))\n    )\n\n    # 3. Heteroscedastic Noise: Higher roughness = More scatter\n    noise_scale = 0.5 + (1.5 * df[\"Roughness\"])\n    noise = np.random.normal(loc=0, scale=noise_scale, size=len(df))\n\n    return signal + noise\n\n\n# --- Create Flawed Data (Gap between 3mm and 7mm) ---\ndf1 = pd.DataFrame(\n    {\n        \"Length\": np.random.uniform(0.1, 3.0, 40),\n        \"Angle\": np.random.uniform(-10, 10, 40),\n        \"Roughness\": np.random.uniform(0, 0.5, 40),\n    }\n)\n\ndf2 = pd.DataFrame(\n    {\n        \"Length\": np.random.uniform(7.0, 10.0, 40),\n        \"Angle\": np.random.uniform(-10, 10, 40),\n        \"Roughness\": np.random.uniform(0, 0.5, 40),\n    }\n)\n\n# Combine and Initialize Study\ndf_initial = pd.concat([df1, df2], ignore_index=True)\ndf_initial[\"Signal\"] = apply_physics(df_initial)\n\nstudy = SimulationStudy(\n    input_cols=[\"Length\", \"Angle\", \"Roughness\"], outcome_col=\"Signal\"\n)\nstudy.add_data(df_initial)\n\nData updated. Total rows: 80\n\n\n\n\n2. Diagnosis (Detecting the Issue)\nWe now ask the study manager to diagnose the health of our experiment. We expect it to flag the Input Coverage test because of the gap we created.\n\nstudy.diagnose()\n\nRunning validation...\nValidation passed. 80 valid rows ready.\nChecking sample sufficiency...\n\n\n\n\n\n\n\n\n\nTest\nVariable\nMetric\nValue\nThreshold\nPass\n\n\n\n\n0\nInput Coverage\nLength\nMax Gap Ratio\n0.4305\n&lt; 0.20\nFalse\n\n\n1\nInput Coverage\nAngle\nMax Gap Ratio\n0.0491\n&lt; 0.20\nTrue\n\n\n2\nInput Coverage\nRoughness\nMax Gap Ratio\n0.0668\n&lt; 0.20\nTrue\n\n\n3\nModel Fit (CV)\nSignal\nMean R2 Score\n0.9983\n&gt; 0.50\nTrue\n\n\n4\nBootstrap Convergence\nSignal\nAvg CV (Rel Std Dev)\n0.0154\n&lt; 0.15\nTrue\n\n\n5\nBootstrap Convergence\nSignal\nMax CV (Rel Std Dev)\n0.0331\n&lt; 0.30\nTrue\n\n\n\n\n\n\n\n\n\n3. Adaptive Refinement (The Fix)\nInstead of manually guessing where to add points, we use refine(). The study manager automatically detects the gap and generates targeted samples to fill it. In this example, we run the apply_physics() function, but in reality, users should feed the new samples dataframe into their simulation engine to calculate the outcome variable. Users can then add those results into the SimulationStudy class using the add_data() method.\n\n# Generate active learning samples (20 points to fill the gap)\nnew_samples = study.refine(n_points=20)\n\nif not new_samples.empty:\n    # Apply the exact same physics model to the new points\n    new_samples['Signal'] = apply_physics(new_samples)\n\n    # Add back to study\n    study.add_data(new_samples)\n\nDiagnostics flagged issues. Initiating Active Learning...\n -&gt; Strategy: Exploration (Filling gaps in Length)\nData updated. Total rows: 100\n\n\nNow we verify that the issue is resolved:\n\n# Re-run diagnostics to confirm the green light\nstudy.diagnose()\n\nRunning validation...\nValidation passed. 100 valid rows ready.\nChecking sample sufficiency...\n\n\n\n\n\n\n\n\n\nTest\nVariable\nMetric\nValue\nThreshold\nPass\n\n\n\n\n0\nInput Coverage\nLength\nMax Gap Ratio\n0.0418\n&lt; 0.20\nTrue\n\n\n1\nInput Coverage\nAngle\nMax Gap Ratio\n0.0435\n&lt; 0.20\nTrue\n\n\n2\nInput Coverage\nRoughness\nMax Gap Ratio\n0.0418\n&lt; 0.20\nTrue\n\n\n3\nModel Fit (CV)\nSignal\nMean R2 Score\n0.9974\n&gt; 0.50\nTrue\n\n\n4\nBootstrap Convergence\nSignal\nAvg CV (Rel Std Dev)\n0.0127\n&lt; 0.15\nTrue\n\n\n5\nBootstrap Convergence\nSignal\nMax CV (Rel Std Dev)\n0.0255\n&lt; 0.30\nTrue\n\n\n\n\n\n\n\n\n\n4. Reliability Analysis\nWith a validated dataset, we can now run the complete PoD pipeline. The pod() method handles model fitting, distribution selection, and bootstrapping in a single call.\nBecause the SimulationStudy object manages the state, we can run the analysis and immediately generate standard diagnostics without needing to manually handle the output data.\n\n# 1. Run Analysis (Threshold = 18 dB)\n_ = study.pod(poi_col=\"Length\", threshold=18.0)\n\n--- Starting Reliability Analysis (PoI: Length) ---\n1. Selecting Mean Model (Cross-Validation)...\n-&gt; Selected Model: Polynomial (Degree 3)\n2. Fitting Variance Model (Kernel Smoothing)...\n   -&gt; Smoothing Bandwidth: 0.9618\n3. Inferring Error Distribution (AIC)...\n   -&gt; Selected Distribution: norm\n4. Computing PoD Curve...\n5. Running Bootstrap (1000 iterations)...\n   -&gt; a90/95 Reliability Index: 2.968\n--- Analysis Complete ---\n\n\n# 2. Visualize Results\nstudy.visualise()\n\n\n\n\n\n\n\n\n\n\n\n(a) Best Fitting Model (Statistics)\n\n\n\n\n\n\n\n\n\n\n\n\n\n(b) Signal Response Model (Physics)\n\n\n\n\n\n\n\n\n\n\n\n\n\n(c) Probability of Detection Curve (Reliability)\n\n\n\n\n\n\n\nFigure 1: Reliability Analysis Results\n\n\n\n\n\nAppendix: Full Script\n\nimport numpy as np\nimport pandas as pd\n\nfrom digiqual import SimulationStudy\nfrom digiqual.sampling import generate_lhs\n\n\n# --- Define the Physics ---\ndef apply_physics(df):\n    \"\"\"Simulates a signal with quadratic trends and heteroscedastic noise.\"\"\"\n    # 1. Base Signal: Quadratic trend (2*L + 0.5*L^2)\n    # 2. Angle Penalty: Misalignment (-0.1*Angle) reduces signal\n    signal = (\n        10.0\n        + (2.0 * df[\"Length\"])\n        + (0.5 * df[\"Length\"] ** 2)\n        - (0.1 * np.abs(df[\"Angle\"]))\n    )\n\n    # 3. Heteroscedastic Noise: Higher roughness = More scatter\n    noise_scale = 0.5 + (1.5 * df[\"Roughness\"])\n    noise = np.random.normal(loc=0, scale=noise_scale, size=len(df))\n\n    return signal + noise\n\n\n# --- Create and analyse a complete dataset ---\nvars_df = pd.DataFrame(\n    [\n        {\"Name\": \"Length\", \"Min\": 0.1, \"Max\": 10},\n        {\"Name\": \"Angle\", \"Min\": -90, \"Max\": 90},\n        {\"Name\": \"Roughness\", \"Min\": 0, \"Max\": 1},\n    ]\n)\n\ndf = generate_lhs(ranges=vars_df, n=50)\n\ndf[\"Signal\"] = apply_physics(df)\n\nstudy = SimulationStudy(\n    input_cols=[\"Length\", \"Angle\", \"Roughness\"], outcome_col=\"Signal\"\n)\nstudy.add_data(df)\n\nstudy.validate()\n\nstudy.diagnose()\n\nstudy.refine()\n\n_ = study.pod(poi_col=\"Length\", threshold=15)\n\nstudy.visualise()",
+    "text": "Use the SimulationStudy manager to handle the entire lifecycle: storage, diagnostics, and active refinement. This allows you to automatically fix issues in your design.\nIn this example, we will intentionally feed the study “bad” data (with a large gap in the input space) to demonstrate how the active learning module identifies and fixes the problem.\n\n1. Setup & “Flawed” Data Generation\nFirst, we define our physics simulation and create a dataset with a deliberate gap (missing data between 3mm and 7mm).\n\nimport numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\nfrom IPython.display import display, Markdown\n\nfrom digiqual import SimulationStudy\n\n\n# --- Define the Physics ---\ndef apply_physics(df):\n    \"\"\"Simulates a signal with quadratic trends and heteroscedastic noise.\"\"\"\n    # 1. Base Signal: Quadratic trend (2*L + 0.5*L^2)\n    # 2. Angle Penalty: Misalignment (-0.1*Angle) reduces signal\n    signal = (\n        10.0\n        + (2.0 * df[\"Length\"])\n        + (0.5 * df[\"Length\"] ** 2)\n        - (0.1 * np.abs(df[\"Angle\"]))\n    )\n\n    # 3. Heteroscedastic Noise: Higher roughness = More scatter\n    noise_scale = 0.5 + (1.5 * df[\"Roughness\"])\n    noise = np.random.normal(loc=0, scale=noise_scale, size=len(df))\n\n    return signal + noise\n\n\n# --- Create Flawed Data (Gap between 3mm and 7mm) ---\ndf1 = pd.DataFrame(\n    {\n        \"Length\": np.random.uniform(0.1, 3.0, 40),\n        \"Angle\": np.random.uniform(-10, 10, 40),\n        \"Roughness\": np.random.uniform(0, 0.5, 40),\n    }\n)\n\ndf2 = pd.DataFrame(\n    {\n        \"Length\": np.random.uniform(7.0, 10.0, 40),\n        \"Angle\": np.random.uniform(-10, 10, 40),\n        \"Roughness\": np.random.uniform(0, 0.5, 40),\n    }\n)\n\n# Combine and Initialize Study\ndf_initial = pd.concat([df1, df2], ignore_index=True)\ndf_initial[\"Signal\"] = apply_physics(df_initial)\n\nstudy = SimulationStudy(\n    input_cols=[\"Length\", \"Angle\", \"Roughness\"], outcome_col=\"Signal\"\n)\nstudy.add_data(df_initial)\n\nData updated. Total rows: 80\n\n\n\n\n2. Diagnosis (Detecting the Issue)\nWe now ask the study manager to diagnose the health of our experiment. We expect it to flag the Input Coverage test because of the gap we created.\n\nstudy.diagnose()\n\nRunning validation...\nValidation passed. 80 valid rows ready.\nChecking sample sufficiency...\n\n\n\n\n\n\n\n\n\nTest\nVariable\nMetric\nValue\nThreshold\nPass\n\n\n\n\n0\nInput Coverage\nLength\nMax Gap Ratio\n0.4140\n&lt; 0.20\nFalse\n\n\n1\nInput Coverage\nAngle\nMax Gap Ratio\n0.0636\n&lt; 0.20\nTrue\n\n\n2\nInput Coverage\nRoughness\nMax Gap Ratio\n0.0541\n&lt; 0.20\nTrue\n\n\n3\nModel Fit (CV)\nSignal\nMean R2 Score\n0.9977\n&gt; 0.50\nTrue\n\n\n4\nBootstrap Convergence\nSignal\nAvg CV (Rel Std Dev)\n0.0132\n&lt; 0.15\nTrue\n\n\n5\nBootstrap Convergence\nSignal\nMax CV (Rel Std Dev)\n0.0257\n&lt; 0.30\nTrue\n\n\n\n\n\n\n\n\n\n3. Adaptive Refinement (The Fix)\nInstead of manually guessing where to add points, we use refine(). The study manager automatically detects the gap and generates targeted samples to fill it. In this example, we run the apply_physics() function, but in reality, users should feed the new samples dataframe into their simulation engine to calculate the outcome variable. Users can then add those results into the SimulationStudy class using the add_data() method.\n\n# Generate active learning samples (20 points to fill the gap)\nnew_samples = study.refine(n_points=20)\n\nif not new_samples.empty:\n    # Apply the exact same physics model to the new points\n    new_samples['Signal'] = apply_physics(new_samples)\n\n    # Add back to study\n    study.add_data(new_samples)\n\nDiagnostics flagged issues. Initiating Active Learning...\n -&gt; Strategy: Exploration (Filling gaps in Length)\nData updated. Total rows: 100\n\n\nNow we verify that the issue is resolved:\n\n# Re-run diagnostics to confirm the green light\nstudy.diagnose()\n\nRunning validation...\nValidation passed. 100 valid rows ready.\nChecking sample sufficiency...\n\n\n\n\n\n\n\n\n\nTest\nVariable\nMetric\nValue\nThreshold\nPass\n\n\n\n\n0\nInput Coverage\nLength\nMax Gap Ratio\n0.0533\n&lt; 0.20\nTrue\n\n\n1\nInput Coverage\nAngle\nMax Gap Ratio\n0.0636\n&lt; 0.20\nTrue\n\n\n2\nInput Coverage\nRoughness\nMax Gap Ratio\n0.0504\n&lt; 0.20\nTrue\n\n\n3\nModel Fit (CV)\nSignal\nMean R2 Score\n0.9970\n&gt; 0.50\nTrue\n\n\n4\nBootstrap Convergence\nSignal\nAvg CV (Rel Std Dev)\n0.0142\n&lt; 0.15\nTrue\n\n\n5\nBootstrap Convergence\nSignal\nMax CV (Rel Std Dev)\n0.0280\n&lt; 0.30\nTrue\n\n\n\n\n\n\n\n\n\n4. Reliability Analysis\nWith a validated dataset, we can now run the complete PoD pipeline. The pod() method handles model fitting, distribution selection, and bootstrapping in a single call.\nBecause the SimulationStudy object manages the state, we can run the analysis and immediately generate standard diagnostics without needing to manually handle the output data.\n\n# 1. Run Analysis (Threshold = 18 dB)\n_ = study.pod(poi_col=\"Length\", threshold=18.0)\n\n--- Starting Reliability Analysis (PoI: Length) ---\n1. Selecting Mean Model (Cross-Validation)...\n-&gt; Selected Model: Polynomial (Degree 2)\n2. Fitting Variance Model (Kernel Smoothing)...\n   -&gt; Smoothing Bandwidth: 0.9756\n3. Inferring Error Distribution (AIC)...\n   -&gt; Selected Distribution: norm\n4. Computing PoD Curve...\n5. Running Bootstrap (1000 iterations)...\n   -&gt; a90/95 Reliability Index: 2.877\n--- Analysis Complete ---\n\n\n# 2. Visualize Results\nstudy.visualise()\n\n\n\n\n\n\n\n\n\n\n\n(a) Best Fitting Model (Statistics)\n\n\n\n\n\n\n\n\n\n\n\n\n\n(b) Signal Response Model (Physics)\n\n\n\n\n\n\n\n\n\n\n\n\n\n(c) Probability of Detection Curve (Reliability)\n\n\n\n\n\n\n\nFigure 1: Reliability Analysis Results\n\n\n\n\n\nAppendix: Full Script\n\nimport numpy as np\nimport pandas as pd\n\nfrom digiqual import SimulationStudy\nfrom digiqual.sampling import generate_lhs\n\n\n# --- Define the Physics ---\ndef apply_physics(df):\n    \"\"\"Simulates a signal with quadratic trends and heteroscedastic noise.\"\"\"\n    # 1. Base Signal: Quadratic trend (2*L + 0.5*L^2)\n    # 2. Angle Penalty: Misalignment (-0.1*Angle) reduces signal\n    signal = (\n        10.0\n        + (2.0 * df[\"Length\"])\n        + (0.5 * df[\"Length\"] ** 2)\n        - (0.1 * np.abs(df[\"Angle\"]))\n    )\n\n    # 3. Heteroscedastic Noise: Higher roughness = More scatter\n    noise_scale = 0.5 + (1.5 * df[\"Roughness\"])\n    noise = np.random.normal(loc=0, scale=noise_scale, size=len(df))\n\n    return signal + noise\n\n\n# --- Create and analyse a complete dataset ---\nvars_df = pd.DataFrame(\n    [\n        {\"Name\": \"Length\", \"Min\": 0.1, \"Max\": 10},\n        {\"Name\": \"Angle\", \"Min\": -90, \"Max\": 90},\n        {\"Name\": \"Roughness\", \"Min\": 0, \"Max\": 1},\n    ]\n)\n\ndf = generate_lhs(ranges=vars_df, n=50)\n\ndf[\"Signal\"] = apply_physics(df)\n\nstudy = SimulationStudy(\n    input_cols=[\"Length\", \"Angle\", \"Roughness\"], outcome_col=\"Signal\"\n)\nstudy.add_data(df)\n\nstudy.diagnose()\n\nstudy.refine()\n\n_ = study.pod(poi_col=\"Length\", threshold=15)\n\nstudy.visualise()",
     "crumbs": [
       "Quick Start"
     ]
