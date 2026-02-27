@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from typing import List,Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional
 from scipy.stats import qmc
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
@@ -16,12 +16,52 @@ import os
 
 #### Helper Functions for generate_targeted_samples()
 
+def _filter_by_graveyard(
+    candidates: pd.DataFrame,
+    graveyard: pd.DataFrame,
+    input_cols: List[str],
+    threshold: float = 0.05
+) -> pd.DataFrame:
+    """Filters out candidates that fall within a normalized distance threshold of known failures."""
+    if graveyard is None or graveyard.empty or candidates.empty:
+        return candidates
+
+    # Combine to find the global min and max for fair 0-1 normalization
+    combined = pd.concat([candidates[input_cols], graveyard[input_cols]], ignore_index=True)
+
+    # Force float types immediately to prevent "object" dtype errors
+    min_vals = combined.min().astype(float)
+    max_vals = combined.max().astype(float)
+    range_vals = (max_vals - min_vals).replace(0.0, 1.0)
+
+    # Extract raw, pure NumPy arrays for safe and fast mathematical operations
+    cand_arr = ((candidates[input_cols] - min_vals) / range_vals).values.astype(float)
+    grave_arr = ((graveyard[input_cols] - min_vals) / range_vals).values.astype(float)
+
+    keep_indices = []
+
+    # Check each candidate against all points in the graveyard using pure arrays
+    for i in range(len(cand_arr)):
+        cand_row = cand_arr[i]
+
+        # Calculate Euclidean distance to all failed points
+        distances = np.sqrt(((grave_arr - cand_row)**2).sum(axis=1))
+
+        # If the closest failed point is further than our threshold, keep it!
+        if distances.min() > threshold:
+            keep_indices.append(candidates.index[i]) # Save the original DataFrame index
+
+    return candidates.loc[keep_indices].copy()
+
+
 def _fill_gaps(
     df: pd.DataFrame,
     target_col: str,
     all_inputs: List[str],
-    n: int
-    ) -> pd.DataFrame:
+    n: int,
+    graveyard: Optional[pd.DataFrame] = None,
+    threshold: float = 0.05
+) -> pd.DataFrame:
     """Identifies the largest empty interval and generates samples inside it."""
     # 1. Find the coordinates of the largest gap
     sorted_vals = np.sort(df[target_col].values)
@@ -30,9 +70,10 @@ def _fill_gaps(
     gap_start = sorted_vals[max_gap_idx]
     gap_end = sorted_vals[max_gap_idx + 1]
 
-    # 2. Generate random candidates
+    # 2. Generate random candidates (Oversample to ensure we have enough after filtering)
+    n_pool = max(n * 10, 100)
     sampler = qmc.LatinHypercube(d=len(all_inputs))
-    sample_01 = sampler.random(n=n)
+    sample_01 = sampler.random(n=n_pool)
 
     # 3. Scale candidates: Target col fits in gap; others span full range
     scaled_data = {}
@@ -46,14 +87,24 @@ def _fill_gaps(
             # Constrain to full domain
             scaled_data[col] = sample_01[:, i] * (col_max - col_min) + col_min
 
-    return pd.DataFrame(scaled_data)
+    candidates = pd.DataFrame(scaled_data)
+
+    # 4. Filter against the graveyard BEFORE selecting the final n
+    if graveyard is not None and not graveyard.empty:
+        candidates = _filter_by_graveyard(candidates, graveyard, all_inputs, threshold)
+
+    # Return exactly the number requested
+    return candidates.head(n).copy()
+
 
 def _sample_uncertainty(
     df: pd.DataFrame,
     input_cols: List[str],
     outcome_col: str,
-    n: int
-    ) -> pd.DataFrame:
+    n: int,
+    graveyard: Optional[pd.DataFrame] = None,
+    threshold: float = 0.05
+) -> pd.DataFrame:
     """Uses Bootstrap Query-by-Committee to find regions of high variance."""
 
     if n <= 0:
@@ -70,11 +121,22 @@ def _sample_uncertainty(
         # This math scales the 0-1 random samples to your data's actual Min and Max
         candidates[col] = sample_01[:, i] * (df[col].max() - df[col].min()) + df[col].min()
 
+    # --- NEW: Filter the candidate pool BEFORE running expensive predictions ---
+    if graveyard is not None and not graveyard.empty:
+        candidates = _filter_by_graveyard(candidates, graveyard, input_cols, threshold)
+
+        # If the filter removed everything (highly unlikely), generate a quick fallback
+        if candidates.empty:
+            return pd.DataFrame(columns=input_cols)
+
+    # Reset index so predictions map cleanly
+    candidates = candidates.reset_index(drop=True)
+
     # --- STEP 2: TRAIN THE COMMITTEE ---
     # We prepare to store predictions from 10 different versions of our model.
     X = df[input_cols].values
     y = df[outcome_col].values
-    preds = np.zeros((n_candidates, 10)) # A matrix to hold 1,000 rows x 10 model guesses
+    preds = np.zeros((len(candidates), 10)) # A matrix to hold rows x 10 model guesses
 
     for i in range(10):
         # A) Resample: Create a 'bootstrap' dataset (same size as original, but shuffled with duplicates)
@@ -86,7 +148,7 @@ def _sample_uncertainty(
         # C) Train: The model learns the relationship based on this specific bootstrap sample
         model.fit(X_res, y_res)
 
-        # D) Predict: We ask this specific model to guess the outcomes for all 1,000 candidates
+        # D) Predict: We ask this specific model to guess the outcomes for all valid candidates
         preds[:, i] = model.predict(candidates[input_cols].values)
 
     # --- STEP 3: MEASURE DISAGREEMENT ---
@@ -109,7 +171,9 @@ def generate_targeted_samples(
     df: pd.DataFrame,
     input_cols: List[str],
     outcome_col: str,
-    n_new_per_fix: int = 10
+    n_new_per_fix: int = 10,
+    failed_data: Optional[pd.DataFrame] = None,
+    distance_threshold: float = 0.05
 ) -> pd.DataFrame:
     """
     Active Learning Engine: Generates new samples based on diagnostic failures.
@@ -123,6 +187,8 @@ def generate_targeted_samples(
         input_cols (List[str]): Input variable names.
         outcome_col (str): Outcome variable name.
         n_new_per_fix (int): Number of samples to generate per detected issue.
+        failed_data (Optional[pd.DataFrame]): Graveyard of inputs that crashed the solver.
+        distance_threshold (float): Minimum normalized distance to maintain from failed points.
 
     Returns:
         pd.DataFrame: New recommended samples.
@@ -156,6 +222,11 @@ def generate_targeted_samples(
         return pd.DataFrame()
 
     print("Diagnostics flagged issues. Initiating Active Learning...")
+
+    # Check if we have anything to report from the graveyard diagnostic checks
+    if failed_data is not None and not failed_data.empty:
+        print(f" -> Active Graveyard Tracker: Protecting against {len(failed_data)} known bad regions.")
+
     new_samples_list = []
 
     # 2. DECIDE: Iterate through failures and dispatch handlers
@@ -175,8 +246,11 @@ def generate_targeted_samples(
                 continue
 
             print(f" -> Strategy: Exploration (Filling gaps in {var_name})")
-            # Call the specific solver for gaps
-            samples = _fill_gaps(df, var_name, input_cols, n_new_per_fix)
+            # Call the specific solver for gaps, passing graveyard limits
+            samples = _fill_gaps(
+                df, var_name, input_cols, n_new_per_fix,
+                graveyard=failed_data, threshold=distance_threshold
+            )
 
             # --- NEW: Tag the reason for these samples ---
             samples['Refinement_Reason'] = f"Gap in {var_name}"
@@ -189,8 +263,11 @@ def generate_targeted_samples(
         elif test_name in ["Model Fit (CV)", "Bootstrap Convergence"]:
             if "Global_Model" not in handled_vars:
                 print(" -> Strategy: Exploitation (Targeting high uncertainty regions)")
-                # Call the specific solver for uncertainty
-                samples = _sample_uncertainty(df, input_cols, outcome_col, n_new_per_fix)
+                # Call the specific solver for uncertainty, passing graveyard limits
+                samples = _sample_uncertainty(
+                    df, input_cols, outcome_col, n_new_per_fix,
+                    graveyard=failed_data, threshold=distance_threshold
+                )
 
                 # --- NEW: Tag the reason for these samples ---
                 samples['Refinement_Reason'] = "High Model Uncertainty"
@@ -296,21 +373,31 @@ def run_adaptive_search(
     """
     print("\n=== STARTING ADAPTIVE OPTIMIZATION ===")
 
-    # Initialize working dataset
     current_data = existing_data.copy() if existing_data is not None else pd.DataFrame()
+    total_attempted = 0
+
+    # NEW: Initialize the Failure Graveyard
+    failed_data = pd.DataFrame(columns=input_cols)
 
     # --- STEP 1: INITIALIZATION ---
     if current_data.empty:
         print(f"--- Iteration 0: Generating Initial Design ({n_start} points) ---")
 
-        # 1. Generate Samples (Dict input)
         initial_samples = generate_lhs(n_start, ranges)
+        total_attempted += len(initial_samples)
 
-        # 2. Run Simulation
         results = _execute_simulation(
             initial_samples, command, input_cols, input_file, output_file
         )
-        current_data = results
+
+        # CLEANUP: Separate successes and failures safely
+        if results.empty:
+            failed_data = pd.concat([failed_data, initial_samples[input_cols]], ignore_index=True)
+        else:
+            successful_mask = results[outcome_col].notna()
+            current_data = results[successful_mask].reset_index(drop=True)
+            failed_data = pd.concat([failed_data, results[~successful_mask][input_cols]], ignore_index=True)
+
     else:
         print(f"--- Iteration 0: Resuming with {len(current_data)} existing points ---")
 
@@ -318,40 +405,50 @@ def run_adaptive_search(
     for i in range(max_iter):
         print(f"\n--- Iteration {i+1}: Diagnostics Check ---")
 
-        # A. Diagnose (Using pure functions from diagnostics.py)
-        # We must validate first to ensure clean data for metrics
         clean_df, _ = validate_simulation(current_data, input_cols, outcome_col)
 
         if clean_df.empty:
-            # Fallback if validation kills everything (rare)
             diag = pd.DataFrame()
         else:
             diag = sample_sufficiency(clean_df, input_cols, outcome_col)
 
         # B. Success?
         if not diag.empty and diag['Pass'].all():
-            print(f"\n>>> CONVERGENCE REACHED at {len(current_data)} points! <<<")
+            print("\n>>> CONVERGENCE REACHED! <<<")
+            print(f"Final Report: {len(current_data)} successful runs (out of {total_attempted} attempts). Graveyard contains {len(failed_data)} points.")
             return current_data
 
-        # C. Refine (Using pure function from adaptive.py)
+        # C. Refine
         print(">> Model invalid. Refining design...")
-        # Note: generate_targeted_samples is likely in this same file or imported
         new_samples = generate_targeted_samples(
-            clean_df, input_cols, outcome_col, n_new_per_fix=n_step
+            clean_df, input_cols, outcome_col, n_new_per_fix=n_step,
+            failed_data=failed_data, distance_threshold=0.05
         )
 
         if new_samples.empty:
-            print(">> Refinement algorithm converged.")
+            print("\n>> Refinement algorithm converged (no new valid samples needed).")
+            print(f"Final Report: {len(current_data)} successful runs (out of {total_attempted} attempts). Graveyard contains {len(failed_data)} points.")
             return current_data
 
         # D. Execute
         print(f"--- Running Batch {i+1} ({len(new_samples)} points) ---")
+        total_attempted += len(new_samples)
+
         new_results = _execute_simulation(
             new_samples, command, input_cols, input_file, output_file
         )
 
-        # E. Accumulate
-        current_data = pd.concat([current_data, new_results], ignore_index=True)
+        # E. Accumulate and Cleanup cohesively
+        if new_results.empty:
+            failed_data = pd.concat([failed_data, new_samples[input_cols]], ignore_index=True)
+        else:
+            successful_mask = new_results[outcome_col].notna()
+            new_successful = new_results[successful_mask]
+            current_data = pd.concat([current_data, new_successful], ignore_index=True)
+
+            new_failed = new_results[~successful_mask][input_cols]
+            failed_data = pd.concat([failed_data, new_failed], ignore_index=True)
 
     print(f"\n>>> WARNING: Max iterations ({max_iter}) reached. <<<")
+    print(f"Final Report: {len(current_data)} successful runs (out of {total_attempted} attempts). Graveyard contains {len(failed_data)} points.")
     return current_data
