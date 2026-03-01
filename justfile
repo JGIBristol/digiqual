@@ -116,7 +116,7 @@ clean:
 
 patch: clean
     just test_matrix
-    just bump
+    just bump patch
     just build_package
     just build_app
     just build_website
