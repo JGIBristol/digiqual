@@ -64,13 +64,12 @@ def validate_simulation(
 
     # Data Cleaning
     subset = df[required_cols].copy()
+
+    # Force everything to be a number. Text becomes NaN.
     subset_numeric = subset.apply(pd.to_numeric, errors='coerce')
 
-    mask_numeric = subset_numeric.notna().all(axis=1)
-    # Ensure outcome is positive (common requirement for PoD, adjust if needed)
-    mask_positive = subset_numeric[outcome_col] > 0
-    mask_positive = mask_positive.fillna(False)
-    mask_valid = mask_numeric & mask_positive
+    # A row is only valid if EVERY required column has a real number in it
+    mask_valid = subset_numeric.notna().all(axis=1)
 
     df_clean = subset_numeric.loc[mask_valid].copy()
     df_removed = df.loc[~mask_valid].copy()
