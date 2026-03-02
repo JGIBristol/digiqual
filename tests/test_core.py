@@ -38,12 +38,19 @@ def test_add_data(study, clean_df):
     assert study.clean_data.empty
 
 def test_validate_explicit(study, clean_df):
+    """
+    Verifies that numeric negative signals are now treated as valid.
+    """
+    # This row has a negative signal, which is now allowed
     dirty_row = pd.DataFrame({'Length': [1], 'Angle': [0], 'Signal': [-5]})
     mixed_df = pd.concat([clean_df, dirty_row], ignore_index=True)
     study.add_data(mixed_df)
     study._validate()
-    assert len(study.clean_data) == 20
-    assert len(study.removed_data) == 1
+
+    # 20 rows from clean_df + 1 from dirty_row = 21 valid rows
+    assert len(study.clean_data) == 21
+    # No rows should be removed because -5 is a valid number
+    assert len(study.removed_data) == 0
 
 def test_diagnose_implicit_validation(study, clean_df):
     study.add_data(clean_df)

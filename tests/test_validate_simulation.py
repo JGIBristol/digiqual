@@ -51,9 +51,13 @@ def test_validate_simulation_non_numeric_drop():
     # Verify the bad data is preserved in df_removed
     assert "bad_text" in df_removed['InputA'].values
 
-# 5. Test Negative/Zero Signal Drop
+# 5. Test Negative/Zero Signal Handling (Now Allowed)
 def test_validate_simulation_negative_signal():
-    # Create 15 rows: 10 good, 5 bad (negative/zero)
+    """
+    Verifies that negative and zero values in the outcome column are
+    preserved during the cleaning process.
+    """
+    # Create 15 rows: 10 positive, 5 negative/zero
     df = pd.DataFrame({
         'InputA': [1]*15,
         'Signal': [10]*10 + [-5, 0, -1, 0, -10]
@@ -61,9 +65,13 @@ def test_validate_simulation_negative_signal():
 
     df_clean, df_removed = validate_simulation(df, input_cols=['InputA'], outcome_col='Signal')
 
-    assert len(df_clean) == 10
-    assert len(df_removed) == 5
-    assert (df_clean['Signal'] > 0).all() # Verify all remaining signals are positive
+    # All 15 rows should be kept because they are numeric
+    assert len(df_clean) == 15
+    assert df_removed.empty
+
+    # Verify that negative values and zeros are actually in the output
+    assert (df_clean['Signal'] < 0).any()
+    assert (df_clean['Signal'] == 0).any()
 
 # 6. Test "Too Few Rows" (Expect Error)
 def test_validate_simulation_too_few_rows():
