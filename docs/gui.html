@@ -208,7 +208,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#how-to-access-the-app" id="toc-how-to-access-the-app" class="nav-link active" data-scroll-target="#how-to-access-the-app">1. How to Access the App</a></li>
+  <li><a href="#how-to-access-the-app" id="toc-how-to-access-the-app" class="nav-link active" data-scroll-target="#how-to-access-the-app">1. How to Access the App</a>
+  <ul class="collapse">
+  <li><a href="#option-a-using-uv-via-cli-recommended" id="toc-option-a-using-uv-via-cli-recommended" class="nav-link" data-scroll-target="#option-a-using-uv-via-cli-recommended">Option A: Using <code>uv</code> via CLI (Recommended)</a></li>
+  <li><a href="#option-b-from-a-python-script" id="toc-option-b-from-a-python-script" class="nav-link" data-scroll-target="#option-b-from-a-python-script">Option B: From a Python Script</a></li>
+  </ul></li>
   <li><a href="#the-app-workflow" id="toc-the-app-workflow" class="nav-link" data-scroll-target="#the-app-workflow">2. The App Workflow</a>
   <ul class="collapse">
   <li><a href="#module-1-experimental-design" id="toc-module-1-experimental-design" class="nav-link" data-scroll-target="#module-1-experimental-design">Module 1: Experimental Design</a></li>
@@ -243,15 +247,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>While the <code>SimulationStudy</code> class offers powerful programmatic control, sometimes you just need a clean visual interface to explore your data without writing scripts. The DigiQual App wraps the core statistical engine into a modern, user-friendly graphical interface, allowing you to run the entire lifecycle—from design to diagnostics to reliability analysis—directly in your browser.</p>
 <section id="how-to-access-the-app" class="level2">
 <h2 class="anchored" data-anchor-id="how-to-access-the-app">1. How to Access the App</h2>
-<p>Currently, the DigiQual app is bundled directly with the Python package. You can launch it locally from your terminal or Jupyter environment using the built-in UI function.</p>
-<div id="fa3d64d4" class="cell" data-execution_count="1">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Launch the local application</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual <span class="im">import</span> dq_ui</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>dq_ui()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Currently, the DigiQual app is bundled directly with the Python package. Depending on your workflow, there are a few ways to launch it.</p>
+<section id="option-a-using-uv-via-cli-recommended" class="level3">
+<h3 class="anchored" data-anchor-id="option-a-using-uv-via-cli-recommended">Option A: Using <code>uv</code> via CLI (Recommended)</h3>
+<p>If you use <code>uv</code> for environment management, you can launch the app directly from your terminal as a Command Line Interface (CLI) tool. This is the fastest way to get started.</p>
+<p>To run the app instantly without permanently installing it to your environment:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uvx</span> digiqual</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>If you plan to use it frequently, you can install it as a persistent global tool on your machine:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> tool install digiqual</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Once installed, simply type this from any terminal:</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">digiqual</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Linux Users:</strong> To ensure the graphical window renders correctly on Linux distributions, you must include the <code>linux-gui</code> extra during installation:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> tool install <span class="st">"digiqual[linux-gui]"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="option-b-from-a-python-script" class="level3">
+<h3 class="anchored" data-anchor-id="option-b-from-a-python-script">Option B: From a Python Script</h3>
+<p>If you are already working inside a Python script or a Jupyter environment, you can launch it locally using the built-in UI function.</p>
+<div id="6632ad41" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Launch the local application</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual <span class="im">import</span> dq_ui</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>dq_ui()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>This will spin up a local server and automatically open the DigiQual dashboard in your default web browser.</p>
 <p><strong>Coming Soon: Standalone Executables</strong> We are actively developing standalone, double-click executables for both Windows and macOS. In the near future, you or your colleagues will be able to run the complete DigiQual toolkit as a standard desktop application, without needing to install Python, manage virtual environments, or touch a command line.</p>
+</section>
 </section>
 <section id="the-app-workflow" class="level2">
 <h2 class="anchored" data-anchor-id="the-app-workflow">2. The App Workflow</h2>
