@@ -1,12 +1,23 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
+message: "If you use this software, please cite both the software and the underlying paper."
 authors:
 - family-names: "Tyler"
   given-names: "Josh"
+  orcid: "https://orcid.org/0000-0000-0000-0000" # Recommended: add your ORCID
 title: "digiqual: Statistical Toolkit for Reliability Assessment in NDT"
 version: 0.2.1
+doi: "10.5281/zenodo.XXXXXXX" # Replace with your Zenodo DOI once registered
 date-released: 2026-01-23
 url: "https://github.com/JGIBristol/digiqual"
+repository-code: "https://github.com/JGIBristol/digiqual"
+keywords:
+  - "NDT"
+  - "reliability assessment"
+  - "statistics"
+identifiers:
+  - type: url
+    value: "https://pypi.org/project/digiqual/"
+    description: "The PyPI release of the software"
 preferred-citation:
   type: article
   authors:
