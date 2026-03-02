@@ -3,7 +3,7 @@ message: "If you use this software, please cite both the software and the underl
 authors:
 - family-names: "Tyler"
   given-names: "Josh"
-  orcid: "https://orcid.org/0000-0000-0000-0000" # Recommended: add your ORCID
+  orcid: "https://orcid.org/0000-0002-2917-3621"
 title: "digiqual: Statistical Toolkit for Reliability Assessment in NDT"
 version: 0.2.1
 doi: "10.5281/zenodo.XXXXXXX" # Replace with your Zenodo DOI once registered
