@@ -80,6 +80,7 @@ This single command handles the entire Active Learning loop:
 2. Runs the solver command, passing the temporary input and output file paths.
 3. Checks diagnostics to see if the data is sufficient.
 4. If needed, generates up to 10 new points targeting weak areas and repeats (up to 5 times).
+5. Checks the elapsed time against `max_hours` to ensure the loop stops safely if the physical time limit is reached.
 
 
 
@@ -90,6 +91,7 @@ study.optimise(
     n_start=20,  # Initial batch size
     n_step=10,  # Refinement batch size
     max_iter=5,  # Safety limit for the loop
+    max_hours=1.5,  # Time limit to safely stop after 1.5 hours
 )
 ```
 

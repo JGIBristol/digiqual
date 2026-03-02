@@ -202,6 +202,7 @@ class SimulationStudy:
         n_start: int = 20,
         n_step: int = 10,
         max_iter: int = 5,
+        max_hours: float = None,
         input_file: str = "sim_input.csv",
         output_file: str = "sim_output.csv"
     ) -> None:
@@ -214,6 +215,7 @@ class SimulationStudy:
             n_start (int): Initial sample size (only if data is empty).
             n_step (int): Batch size for refinement.
             max_iter (int): Max refinement loops.
+            max_hours (float, optional): Physical time limit in hours to safely stop the loop.
             input_file (str): Temp input filename.
             output_file (str): Temp output filename.
 
@@ -259,6 +261,7 @@ class SimulationStudy:
             n_start=n_start,
             n_step=n_step,
             max_iter=max_iter,
+            max_hours=max_hours,
             input_file=input_file,
             output_file=output_file
         )

@@ -1,6 +1,6 @@
 [project]
 name = "digiqual"
-version = "0.12.1"
+version = "0.12.2"
 description = "Statistical Toolkit for Reliability Assessment in NDT"
 authors = [
   {name = "Josh Tyler", email = "josh.tyler@bristol.ac.uk"}
@@ -44,6 +44,9 @@ dev = [
     "nbformat",
     "pyinstaller",
     "pywebview"
+]
+linux-gui = [
+    "pywebview[qt]"
 ]
 
 

@@ -12,6 +12,7 @@ from .sampling import generate_lhs
 
 import subprocess
 import os
+import time
 
 
 #### Helper Functions for generate_targeted_samples()
@@ -324,6 +325,7 @@ def run_adaptive_search(
     n_start: int = 20,
     n_step: int = 10,
     max_iter: int = 5,
+    max_hours: Optional[float] = None,
     input_file: str = "sim_input.csv",
     output_file: str = "sim_output.csv"
 ) -> pd.DataFrame:
@@ -337,10 +339,14 @@ def run_adaptive_search(
         ranges (Dict): Input bounds.
         existing_data (pd.DataFrame, optional): Start data.
         n_start (int): Init batch size.
+        n_step (int): Points added per refinement step.
         max_iter (int): Max loops.
+        max_hours (float, optional): Physical time limit in hours.
+        input_file (str): Temporary file for solver input.
+        output_file (str): Temporary file for solver output.
 
     Returns:
-        pd.DataFrame: Final dataset.
+        pd.DataFrame: Final dataset containing all successful runs.
 
     Examples
     --------
@@ -349,40 +355,41 @@ def run_adaptive_search(
     ranges = {'Length': (0, 10), 'Angle': (-45, 45)}
 
     # 2. Define a command that reads {input} and writes {output}
-    # (Here we use python -c to simulate a solver)
     cmd = (
-    "python -c "
-    "'import pandas as pd; "
-    'df=pd.read_csv("{input}"); '
-    'df["Signal"] = df["Length"]*2; '
-    'df.to_csv("{output}", index=False)'
-    "'"
+        "python -c "
+        "'import pandas as pd; "
+        'df=pd.read_csv("{input}"); '
+        'df["Signal"] = df["Length"]*2; '
+        'df.to_csv("{output}", index=False)'
+        "'"
     )
 
-    # 3. Run the loop (Init -> Run -> Check -> Refine)
+    # 3. Run with a 1.5 hour time limit
     final_df = run_adaptive_search(
         command=cmd,
         input_cols=['Length', 'Angle'],
         outcome_col='Signal',
         ranges=ranges,
-        max_iter=2,
-        n_start=5
+        max_iter=10,
+        max_hours=1.5
     )
-    print(len(final_df))
+    print(f"Collected {len(final_df)} samples.")
     ```
     """
-    print("\n=== STARTING ADAPTIVE OPTIMIZATION ===")
+    print("\n" + "="*40)
+    print("      STARTING ADAPTIVE OPTIMIZATION")
+    print("="*40)
+
+    start_time = time.time()
+    max_seconds = max_hours * 3600 if max_hours is not None else None
 
     current_data = existing_data.copy() if existing_data is not None else pd.DataFrame()
     total_attempted = 0
-
-    # NEW: Initialize the Failure Graveyard
     failed_data = pd.DataFrame(columns=input_cols)
 
     # --- STEP 1: INITIALIZATION ---
     if current_data.empty:
         print(f"--- Iteration 0: Generating Initial Design ({n_start} points) ---")
-
         initial_samples = generate_lhs(n_start, ranges)
         total_attempted += len(initial_samples)
 
@@ -390,19 +397,24 @@ def run_adaptive_search(
             initial_samples, command, input_cols, input_file, output_file
         )
 
-        # CLEANUP: Separate successes and failures safely
         if results.empty:
             failed_data = pd.concat([failed_data, initial_samples[input_cols]], ignore_index=True)
         else:
             successful_mask = results[outcome_col].notna()
             current_data = results[successful_mask].reset_index(drop=True)
             failed_data = pd.concat([failed_data, results[~successful_mask][input_cols]], ignore_index=True)
-
     else:
         print(f"--- Iteration 0: Resuming with {len(current_data)} existing points ---")
 
     # --- STEP 2: REFINEMENT LOOP ---
     for i in range(max_iter):
+        # Time Check
+        if max_seconds is not None:
+            elapsed = time.time() - start_time
+            if elapsed > max_seconds:
+                print(f"\n[!] TIME LIMIT REACHED ({max_hours} hrs). Stopping gracefully.")
+                break
+
         print(f"\n--- Iteration {i+1}: Diagnostics Check ---")
 
         clean_df, _ = validate_simulation(current_data, input_cols, outcome_col)
@@ -412,13 +424,11 @@ def run_adaptive_search(
         else:
             diag = sample_sufficiency(clean_df, input_cols, outcome_col)
 
-        # B. Success?
+        # Convergence Check
         if not diag.empty and diag['Pass'].all():
             print("\n>>> CONVERGENCE REACHED! <<<")
-            print(f"Final Report: {len(current_data)} successful runs (out of {total_attempted} attempts). Graveyard contains {len(failed_data)} points.")
-            return current_data
+            break
 
-        # C. Refine
         print(">> Model invalid. Refining design...")
         new_samples = generate_targeted_samples(
             clean_df, input_cols, outcome_col, n_new_per_fix=n_step,
@@ -427,10 +437,8 @@ def run_adaptive_search(
 
         if new_samples.empty:
             print("\n>> Refinement algorithm converged (no new valid samples needed).")
-            print(f"Final Report: {len(current_data)} successful runs (out of {total_attempted} attempts). Graveyard contains {len(failed_data)} points.")
-            return current_data
+            break
 
-        # D. Execute
         print(f"--- Running Batch {i+1} ({len(new_samples)} points) ---")
         total_attempted += len(new_samples)
 
@@ -438,17 +446,25 @@ def run_adaptive_search(
             new_samples, command, input_cols, input_file, output_file
         )
 
-        # E. Accumulate and Cleanup cohesively
         if new_results.empty:
             failed_data = pd.concat([failed_data, new_samples[input_cols]], ignore_index=True)
         else:
             successful_mask = new_results[outcome_col].notna()
             new_successful = new_results[successful_mask]
             current_data = pd.concat([current_data, new_successful], ignore_index=True)
-
             new_failed = new_results[~successful_mask][input_cols]
             failed_data = pd.concat([failed_data, new_failed], ignore_index=True)
 
-    print(f"\n>>> WARNING: Max iterations ({max_iter}) reached. <<<")
-    print(f"Final Report: {len(current_data)} successful runs (out of {total_attempted} attempts). Graveyard contains {len(failed_data)} points.")
+    # --- STEP 3: FINAL REPORTING ---
+    end_time = time.time()
+    total_duration_mins = (end_time - start_time) / 60
+
+    print("\n" + "-"*40)
+    print(">>> SEARCH COMPLETE <<<")
+    print(f"Total Time:      {total_duration_mins:.2f} minutes")
+    print(f"Successful Runs: {len(current_data)}")
+    print(f"Failed Runs:     {len(failed_data)} (in graveyard)")
+    print(f"Total Attempted: {total_attempted}")
+    print("-"*40 + "\n")
+
     return current_data

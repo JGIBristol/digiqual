@@ -5,7 +5,31 @@ While the `SimulationStudy` class offers powerful programmatic control, sometime
 
 ## 1. How to Access the App
 
-Currently, the DigiQual app is bundled directly with the Python package. You can launch it locally from your terminal or Jupyter environment using the built-in UI function.
+Currently, the DigiQual app is bundled directly with the Python package. Depending on your workflow, there are a few ways to launch it.
+
+### Option A: Using `uv` via CLI (Recommended)
+
+If you use `uv` for environment management, you can launch the app directly from your terminal as a Command Line Interface (CLI) tool. This is the fastest way to get started.
+
+To run the app instantly without permanently installing it to your environment:
+```bash
+uvx digiqual
+```
+If you plan to use it frequently, you can install it as a persistent global tool on your machine:
+
+```bash
+uv tool install digiqual
+# Once installed, simply type this from any terminal:
+digiqual
+```
+**Linux Users:** To ensure the graphical window renders correctly on Linux distributions, you must include the `linux-gui` extra during installation:
+
+```bash
+uv tool install "digiqual[linux-gui]"
+```
+
+### Option B: From a Python Script
+If you are already working inside a Python script or a Jupyter environment, you can launch it locally using the built-in UI function.
 
 ```{python}
 # | eval: false
@@ -16,6 +40,7 @@ dq_ui()
 ```
 
 This will spin up a local server and automatically open the DigiQual dashboard in your default web browser.
+
 
 **Coming Soon: Standalone Executables**
 We are actively developing standalone, double-click executables for both Windows and macOS. In the near future, you or your colleagues will be able to run the complete DigiQual toolkit as a standard desktop application, without needing to install Python, manage virtual environments, or touch a command line.
