@@ -26,6 +26,8 @@ app/*.spec
 package
 
 **/*.csv
+!app/sufficient_data.csv
+!app/initial_data.csv
 
 # --- Testing & Code Quality ---
 .pytest_cache/
