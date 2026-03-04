@@ -114,7 +114,7 @@ _ = study.pod(poi_col="Length", threshold=18.0)
 ```
 
 ```{python}
-# | label: fig-oop-results
+# | label: fig-results
 # | fig-cap: "Reliability Analysis Results"
 # | fig-subcap:
 # |   - "Best Fitting Model (Statistics)"
