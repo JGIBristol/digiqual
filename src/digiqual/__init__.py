@@ -1,12 +1,14 @@
 __version__ = "0.12.2"
 
-# Import core modules
-from .core import SimulationStudy
-from . import pod
-from . import diagnostics
-from . import adaptive
-from . import sampling
-from . import plotting
+print(" Starting DigiQual... Loading statistical libraries (this may take a few seconds)...")
+
+# Import core modules (telling Ruff to ignore the E402 rule for these specific lines)
+from .core import SimulationStudy  # noqa: E402
+from . import pod                  # noqa: E402
+from . import diagnostics          # noqa: E402
+from . import adaptive             # noqa: E402
+from . import sampling             # noqa: E402
+from . import plotting             # noqa: E402
 
 def dq_ui():
     """
