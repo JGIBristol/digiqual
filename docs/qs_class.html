@@ -252,7 +252,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="setup-flawed-data-generation" class="level3">
 <h3 class="anchored" data-anchor-id="setup-flawed-data-generation">1. Setup &amp; “Flawed” Data Generation</h3>
 <p>First, we define our physics simulation and create a dataset with a deliberate gap (missing data between 3mm and 7mm).</p>
-<div id="eaabb0e5" class="cell" data-execution_count="1">
+<div id="61bb7545" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -306,14 +306,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>study.add_data(df_initial)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Data updated. Total rows: 80</code></pre>
+<pre><code> Starting DigiQual... Loading statistical libraries (this may take a few seconds)...
+Data updated. Total rows: 80</code></pre>
 </div>
 </div>
 </section>
 <section id="diagnosis-detecting-the-issue" class="level3">
 <h3 class="anchored" data-anchor-id="diagnosis-detecting-the-issue">2. Diagnosis (Detecting the Issue)</h3>
 <p>We now ask the study manager to diagnose the health of our experiment. We expect it to flag the Input Coverage test because of the gap we created.</p>
-<div id="9f3f3956" class="cell" data-execution_count="2">
+<div id="08901b6b" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Running validation...
@@ -342,7 +343,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.4113</td>
+<td>0.4203</td>
 <td>&lt; 0.20</td>
 <td>False</td>
 </tr>
@@ -351,7 +352,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.0672</td>
+<td>0.0688</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -360,7 +361,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.0464</td>
+<td>0.0509</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -369,7 +370,7 @@ Checking sample sufficiency...</code></pre>
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9985</td>
+<td>0.9976</td>
 <td>&gt; 0.50</td>
 <td>True</td>
 </tr>
@@ -378,7 +379,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Avg CV (Rel Std Dev)</td>
-<td>0.0162</td>
+<td>0.0149</td>
 <td>&lt; 0.15</td>
 <td>True</td>
 </tr>
@@ -387,7 +388,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Max CV (Rel Std Dev)</td>
-<td>0.0320</td>
+<td>0.0298</td>
 <td>&lt; 0.30</td>
 <td>True</td>
 </tr>
@@ -401,7 +402,7 @@ Checking sample sufficiency...</code></pre>
 <section id="adaptive-refinement-the-fix" class="level3">
 <h3 class="anchored" data-anchor-id="adaptive-refinement-the-fix">3. Adaptive Refinement (The Fix)</h3>
 <p>Instead of manually guessing where to add points, we use refine(). The study manager automatically detects the gap and generates targeted samples to fill it. In this example, we run the <code>apply_physics()</code> function, but in reality, users should feed the new samples dataframe into their simulation engine to calculate the outcome variable. Users can then add those results into the SimulationStudy class using the <code>add_data()</code> method.</p>
-<div id="7698976c" class="cell" data-execution_count="3">
+<div id="58ea8f89" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate active learning samples (20 points to fill the gap)</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>new_samples <span class="op">=</span> study.refine(n_points<span class="op">=</span><span class="dv">20</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -418,7 +419,7 @@ Data updated. Total rows: 100</code></pre>
 </div>
 </div>
 <p>Now we verify that the issue is resolved:</p>
-<div id="bbcb29e9" class="cell" data-execution_count="4">
+<div id="456f8b4d" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-run diagnostics to confirm the green light</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -448,7 +449,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.0575</td>
+<td>0.1084</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -457,7 +458,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.0538</td>
+<td>0.0445</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -466,7 +467,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.0372</td>
+<td>0.0509</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -484,7 +485,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Avg CV (Rel Std Dev)</td>
-<td>0.0137</td>
+<td>0.0123</td>
 <td>&lt; 0.15</td>
 <td>True</td>
 </tr>
@@ -493,7 +494,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Max CV (Rel Std Dev)</td>
-<td>0.0280</td>
+<td>0.0259</td>
 <td>&lt; 0.30</td>
 <td>True</td>
 </tr>
@@ -516,28 +517,28 @@ Checking sample sufficiency...</code></pre>
 1. Selecting Mean Model (Cross-Validation)...
 -&gt; Selected Model: Polynomial (Degree 2)
 2. Fitting Variance Model (Kernel Smoothing)...
-   -&gt; Smoothing Bandwidth: 0.9784
+   -&gt; Smoothing Bandwidth: 0.9792
 3. Inferring Error Distribution (AIC)...
    -&gt; Selected Distribution: norm
 4. Computing PoD Curve...
 5. Running Bootstrap (1000 iterations)...
-   -&gt; a90/95 Reliability Index: 2.943
+   -&gt; a90/95 Reliability Index: 2.881
 --- Analysis Complete ---</code></pre>
 </div>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Visualize Results</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>study.visualise()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div id="fig-oop-results" class="quarto-layout-panel">
+<div id="fig-results" class="quarto-layout-panel">
 <figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-oop-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div aria-describedby="fig-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="quarto-layout-row">
-<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-oop-results" style="flex-basis: 100.0%;justify-content: flex-start;">
-<div id="fig-oop-results-1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-results" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-results-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
-<div aria-describedby="fig-oop-results-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="qs_class_files/figure-html/fig-oop-results-output-1.png" data-ref-parent="fig-oop-results" width="854" height="471" class="figure-img">
+<div aria-describedby="fig-results-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="qs_class_files/figure-html/fig-results-output-1.png" data-ref-parent="fig-results" width="854" height="471" class="figure-img">
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-oop-results-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-results-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (a) Best Fitting Model (Statistics)
 </figcaption>
 </figure>
@@ -545,13 +546,13 @@ Checking sample sufficiency...</code></pre>
 </div>
 </div>
 <div class="quarto-layout-row">
-<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-oop-results" style="flex-basis: 100.0%;justify-content: flex-start;">
-<div id="fig-oop-results-2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-results" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-results-2" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
-<div aria-describedby="fig-oop-results-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="qs_class_files/figure-html/fig-oop-results-output-2.png" data-ref-parent="fig-oop-results" width="585" height="449" class="figure-img">
+<div aria-describedby="fig-results-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="qs_class_files/figure-html/fig-results-output-2.png" data-ref-parent="fig-results" width="585" height="449" class="figure-img">
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-oop-results-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-results-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (b) Signal Response Model (Physics)
 </figcaption>
 </figure>
@@ -559,13 +560,13 @@ Checking sample sufficiency...</code></pre>
 </div>
 </div>
 <div class="quarto-layout-row">
-<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-oop-results" style="flex-basis: 100.0%;justify-content: flex-start;">
-<div id="fig-oop-results-3" class="quarto-float quarto-figure quarto-figure-center anchored">
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-results" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-results-3" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
-<div aria-describedby="fig-oop-results-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="qs_class_files/figure-html/fig-oop-results-output-3.png" data-ref-parent="fig-oop-results" width="589" height="449" class="figure-img">
+<div aria-describedby="fig-results-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="qs_class_files/figure-html/fig-results-output-3.png" data-ref-parent="fig-results" width="589" height="449" class="figure-img">
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-oop-results-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-results-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (c) Probability of Detection Curve (Reliability)
 </figcaption>
 </figure>
@@ -573,7 +574,7 @@ Checking sample sufficiency...</code></pre>
 </div>
 </div>
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-oop-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;1: Reliability Analysis Results
 </figcaption>
 </figure>
