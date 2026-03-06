@@ -6,7 +6,7 @@ authors:
   orcid: "https://orcid.org/0000-0002-2917-3621"
 title: "digiqual: Statistical Toolkit for Reliability Assessment in NDT"
 version: 0.2.1
-doi: "10.5281/zenodo.XXXXXXX" # Replace with your Zenodo DOI once registered
+doi: "10.5281/zenodo.18890933"
 date-released: 2026-01-23
 url: "https://github.com/JGIBristol/digiqual"
 repository-code: "https://github.com/JGIBristol/digiqual"
