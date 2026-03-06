@@ -81,6 +81,51 @@ h1, h2, h3, h4, h5, h6 {
     border-right: 1px solid #e5e7eb;
 }
 
+/* --- 6. FORM INPUT POLISH --- */
+.form-control:focus, .form-select:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(15, 52, 96, 0.25);
+}
+
+/* Update your existing button styles to include transitions */
+.btn {
+    transition: all 0.2s ease-in-out;
+}
+
+/* --- 7. CUSTOM SCROLLBARS --- */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--bs-secondary);
+}
+
+/* --- 8. NAVIGATION ACTIVE STATE --- */
+.navbar .nav-link.active {
+    color: #ffffff !important; /* Pure white text so it stands out */
+    font-weight: 700;
+    border-bottom: 3px solid var(--bs-warning); /* Bright amber underline */
+}
+
+/* Optional: Make inactive tabs slightly faded white so the active one stands out more */
+.navbar .nav-link {
+    color: rgba(255, 255, 255, 0.7) !important;
+    transition: color 0.2s ease-in-out;
+}
+
+.navbar .nav-link:hover {
+    color: #ffffff !important; /* Lighten up when the mouse hovers over them */
+}
+
 @media (min-width: 1400px) {
     .sidebar.sidebar-navigation {
         margin-left: -20px;
@@ -196,7 +241,7 @@ app_ui = ui.page_navbar(
                     class_="shadow-sm"
                 )
             ),
-            col_widths=[7, 5]
+            col_widths=[-1,5,5,-1]
         ),
         icon=icon_svg("house")
     ),
@@ -252,7 +297,7 @@ app_ui = ui.page_navbar(
                 ),
                 class_="d-flex flex-column gap-3"
             ),
-            col_widths=(6, 6)
+            col_widths=[-1,5,5,-1]
         ),
         icon=icon_svg("table")
     ),
@@ -293,7 +338,7 @@ app_ui = ui.page_navbar(
                 ui.output_ui("remediation_ui"),
                 class_="d-flex flex-column gap-3"
             ),
-            col_widths=(6, 6) # Symmetrical layout
+            col_widths=[-1,4,6,-1]
         ),
         icon=icon_svg("check-double")
     ),
@@ -301,9 +346,12 @@ app_ui = ui.page_navbar(
 #### UI - PoD Analysis (Tab 4) ####
     ui.nav_panel(
         "PoD Analysis",
+        ui.layout_columns(
         ui.card(
             ui.card_header("Analysis Results"),
-            ui.output_ui("analysis_output")
+            ui.output_ui("analysis_output"),
+            ),
+        col_widths=[-1,10,-1]
         ),
         icon=icon_svg("chart-line")
     ),
@@ -311,7 +359,7 @@ app_ui = ui.page_navbar(
     id="navbar",
     fillable=True,
     theme=shinyswatch.theme.flatly(),
-    header=ui.tags.style(app_css)  # <-- CHANGED: pass the string here
+    header=ui.tags.style(app_css)
 )
 
 #### Server Definition ####

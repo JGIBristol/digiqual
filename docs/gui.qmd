@@ -12,9 +12,13 @@ Currently, the DigiQual app is bundled directly with the Python package. Dependi
 If you use `uv` for environment management, you can launch the app directly from your terminal as a Command Line Interface (CLI) tool. This is the fastest way to get started.
 
 To run the app instantly without permanently installing it to your environment:
+
 ```bash
-uvx digiqual
+uvx -v digiqual
 ```
+*Note: The `-v` (verbose) flag is highly recommended here! Without it, `uvx` runs quietly and the app might appear frozen for a few minutes while it downloads the required statistical packages in the background.*
+<br>
+
 If you plan to use it frequently, you can install it as a persistent global tool on your machine:
 
 ```bash
