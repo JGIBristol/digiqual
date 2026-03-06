@@ -119,6 +119,6 @@ patch: clean
     just bump patch
     just build_package
     just build_app
-    just build_website
     just build_pypi
+    just build_website
     just cls
