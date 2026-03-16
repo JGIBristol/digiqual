@@ -1,6 +1,6 @@
 __version__ = "0.12.3"
 
-print(" Starting DigiQual... Loading statistical libraries (this may take a few seconds)...")
+# print(" Starting DigiQual... Loading statistical libraries (this may take a few seconds)...")
 
 # Import core modules (telling Ruff to ignore the E402 rule for these specific lines)
 from .core import SimulationStudy  # noqa: E402
