@@ -37,7 +37,7 @@ def show_about():
     """Triggers an alert box with version info inside the app."""
     if webview.windows:
         webview.windows[0].evaluate_js(
-            'alert("DigiQual\\nVersion 0.12.3\\nStatistical Toolkit for Reliability Assessment in NDT");'
+            'alert("DigiQual\\nVersion 0.12.4\\nStatistical Toolkit for Reliability Assessment in NDT");'
         )
 
 def open_documentation():
