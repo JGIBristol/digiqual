@@ -8,6 +8,7 @@ import numpy as np
 from digiqual.sampling import generate_lhs
 from digiqual import SimulationStudy
 import shinyswatch
+from pathlib import Path
 
 #### App CSS ####
 app_css = """
@@ -225,12 +226,8 @@ app_ui = ui.page_navbar(
                         # Disclaimer
                         ui.h6("Disclaimer & Data Privacy Notice:", class_="fw-bold small"),
                         ui.p(
-                            "This software is provided 'as is', without warranty of any kind. ",
-                            "In no event shall the authors be liable for any claim or damages.",
-                            class_="x-small text-muted fst-italic mb-3"
-                        ),
-                        # Data Privacy
-                        ui.p(
+                            "This software is provided 'as is', without warranty of any kind. "
+                            "In no event shall the authors be liable for any claim or damages."
                             "All processing is performed locally. This application "
                             "does not implement data persistence, nor does it facilitate the outbound "
                             "transmission of user-supplied datasets to external servers.",
@@ -240,8 +237,13 @@ app_ui = ui.page_navbar(
                         # Support
                         ui.p("Development supported by:", class_="x-small fw-bold text-center text-muted mb-2"),
                         ui.div(
-                            ui.span("[ Funder Logo Placeholder ]", class_="text-muted small"),
-                            class_="bg-light border rounded p-2 text-center"
+                            ui.img(
+                                    src="ukri-epsrc-square-logo.png",
+                                    height="50px",
+                                    alt="UKRI EPSRC Logo"
+                                ),
+                                ui.span("UKRI EPSRC", class_="text-muted small d-block mt-1"),
+                                class_="bg-light border rounded p-2 text-center"
                         ),
                         class_="p-3"
                     ),
@@ -933,4 +935,12 @@ def server(input, output, session):
             yield df.to_csv(index=False)
 
 #### App ####
-app = App(app_ui, server)
+# 1. Define the absolute path to your www directory
+www_dir = Path(__file__).parent / "www"
+
+# 2. Pass the directory to the App constructor
+app = App(
+    ui=app_ui,       # Or whatever your UI variable is named
+    server=server,
+    static_assets=www_dir  # <-- This is the crucial addition!
+)
