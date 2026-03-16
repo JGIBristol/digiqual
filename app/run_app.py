@@ -28,25 +28,9 @@ if not getattr(sys, 'frozen', False):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     sys.path.insert(0, os.path.join(base_dir, "src"))
 
-# --- 3. The Python API Bridge ---
-class DownloadApi:
-    def save_csv(self, content, filename):
-        """
-        Saves content to a file, using the filename provided by JS.
-        """
-        # Open the native macOS Save Dialog with the specific filename
-        save_path = webview.windows[0].create_file_dialog(
-            webview.SAVE_DIALOG,
-            directory='/',
-            save_filename=filename  # <--- Dynamic Name Here
-        )
-
-        if save_path:
-            try:
-                with open(save_path, 'w', encoding='utf-8') as f:
-                    f.write(content)
-            except Exception as e:
-                print(f"Error saving file: {e}")
+# --- 3. Enable Native Downloads ---
+# This entirely replaces the custom JS bridge and fixes the OS dialog bug!
+webview.settings['ALLOW_DOWNLOADS'] = True
 
 # --- 4. Menu Bar Actions ---
 def show_about():
@@ -72,40 +56,7 @@ menu_items = [
     ])
 ]
 
-# --- 5. The JavaScript Injector ---
-def inject_js(window):
-    script = """
-    // Map Button IDs to Filenames
-    const filenameMap = {
-        'download_lhs': 'experimental_design.csv',
-        'download_new_samples': 'refinement_samples.csv',
-        'download_pod_results': 'pod_analysis_results.csv'
-    };
-
-    document.addEventListener('click', function(e) {
-        // Find the download link
-        var target = e.target.closest('a.shiny-download-link');
-
-        if (target) {
-            e.preventDefault();
-
-            // 1. Determine the filename based on the ID
-            // Default to 'results.csv' if ID is not in our map
-            var name = filenameMap[target.id] || 'results.csv';
-
-            // 2. Fetch the data
-            fetch(target.href)
-                .then(response => response.text())
-                .then(data => {
-                    // 3. Send data AND filename to Python
-                    pywebview.api.save_csv(data, name);
-                })
-                .catch(err => alert('Download failed: ' + err));
-        }
-    });
-    """
-    window.evaluate_js(script)
-
+# --- 5. Application Startup ---
 def start_server():
     run_app(app, port=SELECTED_PORT, host=HOST, launch_browser=False, reload=False)
 
@@ -114,15 +65,14 @@ if __name__ == '__main__':
     t.daemon = True
     t.start()
 
-    api = DownloadApi()
+    # Note: js_api parameter has been cleanly removed
     window = webview.create_window(
         'DigiQual',
         f'http://{HOST}:{SELECTED_PORT}',
         width=1200,
         height=800,
-        resizable=True,
-        js_api=api
+        resizable=True
     )
 
-    # Note: menu=menu_items is added here!
-    webview.start(func=inject_js, args=window, private_mode=False, menu=menu_items)
+    # Note: func=inject_js has been cleanly removed
+    webview.start(private_mode=False, menu=menu_items)
