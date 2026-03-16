@@ -223,10 +223,17 @@ app_ui = ui.page_navbar(
                         ),
                         ui.hr(),
                         # Disclaimer
-                        ui.h6("Disclaimer:", class_="fw-bold small"),
+                        ui.h6("Disclaimer & Data Privacy Notice:", class_="fw-bold small"),
                         ui.p(
                             "This software is provided 'as is', without warranty of any kind. ",
                             "In no event shall the authors be liable for any claim or damages.",
+                            class_="x-small text-muted fst-italic mb-3"
+                        ),
+                        # Data Privacy
+                        ui.p(
+                            "All processing is performed locally. This application "
+                            "does not implement data persistence, nor does it facilitate the outbound "
+                            "transmission of user-supplied datasets to external servers.",
                             class_="x-small text-muted fst-italic mb-3"
                         ),
                         ui.hr(),
