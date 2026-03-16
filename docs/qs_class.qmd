@@ -15,7 +15,6 @@ First, we define our physics simulation and create a dataset with a deliberate g
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from IPython.display import display, Markdown
 
 from digiqual import SimulationStudy
 
