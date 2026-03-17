@@ -32,7 +32,7 @@ package
 # --- Testing & Code Quality ---
 .pytest_cache/
 .coverage
-htmlcov/
+.vscode
 
 # --- Project Data & Outputs ---
 materials
