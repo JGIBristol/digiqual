@@ -77,4 +77,4 @@ With a validated dataset, you can construct your Probability of Detection (PoD) 
 
 - The app handles the model fitting and bootstrapping in the background.
 
-- It automatically visualizes the results, displaying both the Signal Response Model (Physics) and the Probability of Detection Curve (Reliability) side-by-side.
+- It automatically visualises the results, displaying both the Signal Response Model (Physics) and the Probability of Detection Curve (Reliability) side-by-side.
