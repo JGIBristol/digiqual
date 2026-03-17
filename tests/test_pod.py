@@ -14,6 +14,9 @@ from digiqual.pod import (
 import pandas as pd
 from digiqual.core import SimulationStudy
 
+from unittest.mock import patch
+from digiqual.pod import calculate_reliability_point
+
 # --- FIXTURES: Synthetic Physics Data ---
 
 @pytest.fixture
@@ -226,3 +229,35 @@ def test_simulation_study_pod_integration(linear_data):
     assert 'ci_lower' in curves
     assert 'ci_upper' in curves
     assert len(curves['pod']) == 100
+
+# --- NEW TESTS FOR POD ---
+
+
+
+@patch("digiqual.pod.cross_val_score")
+def test_fit_robust_mean_model_kriging(mock_cv, linear_data):
+    X, y = linear_data
+    # Force Polynomial scores to be terrible (-1000) and Kriging to be great (-1)
+    def side_effect(model, *args, **kwargs):
+        if hasattr(model, 'kernel'):
+            return np.array([-1, -1])  # Kriging
+        else:
+            return np.array([-1000, -1000])  # Polynomial
+    mock_cv.side_effect = side_effect
+
+    model = fit_robust_mean_model(X, y, max_degree=1, n_folds=2)
+    assert model.model_type_ == 'Kriging'
+
+def test_infer_best_distribution_exception():
+    X = np.array([1, 2, 3])
+    # Pass NaNs to force exception in scipy.stats.*.fit
+    residuals = np.array([np.nan, np.nan, np.nan])
+    dist_name, params = infer_best_distribution(residuals, X, bandwidth=1.0)
+    assert dist_name == 'norm'
+    assert params == (0, 1)
+
+def test_calculate_reliability_point_nan():
+    X_eval = np.array([1, 2, 3])
+    ci_lower = np.array([0.1, 0.2, 0.3]) # target is 0.9 by default
+    res = calculate_reliability_point(X_eval, ci_lower, target_pod=0.9)
+    assert np.isnan(res)
