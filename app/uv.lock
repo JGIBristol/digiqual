@@ -287,7 +287,7 @@ wheels = [
 
 [[package]]
 name = "digiqual"
-version = "0.12.4"
+version = "0.12.5"
 source = { editable = "../" }
 dependencies = [
     { name = "faicons" },
@@ -313,6 +313,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "pyinstaller", marker = "extra == 'dev'" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.2" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pywebview" },
     { name = "pywebview", marker = "extra == 'dev'" },
     { name = "pywebview", extras = ["qt"], marker = "extra == 'linux-gui'" },

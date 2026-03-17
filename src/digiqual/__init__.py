@@ -1,4 +1,4 @@
-__version__ = "0.12.4"
+__version__ = "0.12.5"
 
 # print(" Starting DigiQual... Loading statistical libraries (this may take a few seconds)...")
 
