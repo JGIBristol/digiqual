@@ -36,9 +36,11 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel.force-include]
 "app" = "digiqual/app"
 
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
     "quartodoc",
     "jupyter",
     "nbformat",
