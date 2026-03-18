@@ -26,13 +26,21 @@ Your command string must contain two special placeholders: `{input}` and `{outpu
 
 Most heavy physics solvers don't natively read and write CSVs in exactly the way DigiQual expects. In real life, you will usually write a small "wrapper script" (e.g., `run_my_model.py` or `run_my_model.bat`). See [Appendix](#sec-appendix) for full examples python and MATLAB.
 
+### Key Features
+- **Batch Processing:** A critical detail is that the `{input}` CSV does not contain just one simulation point. It contains an **entire batch** of points (determined by `n_start` or `n_step`). Your wrapper script must loop over each row in the CSV, execute the solver for that set of inputs, record the result, and finally save all results to the `{output}` CSV.
+
+- **Handling Failures (Graveyard):** If the external solver crashes or fails to converge for a specific input row, your wrapper should leave the outcome column blank (or insert `NaN`) for that row. DigiQual will detect this and automatically add those coordinates to a "graveyard", ensuring it never tries to sample that exact region again!
+
+
+### Core Loop
 Your wrapper script's job is to:
 
 1. Read the DigiQual `{input}` CSV.
-2. Modify your solver's native input deck (e.g., updating parameters in an Ansys `.mac` file).
-3. Trigger the actual solver in headless/batch mode.
-4. Extract the results (e.g., the signal or stress value) from the solver's output files.
-5. Save a clean CSV to the `{output}` path with the original inputs and the new outcome column appended.
+2. **Loop** over every row (each row is one simulation design point). For each row:
+   * Modify your solver's native input deck (e.g., updating parameters in an Ansys `.mac` file).
+   * Trigger the actual solver in headless/batch mode.
+   * Extract the results (e.g., the signal or stress value). If it fails, record `NaN`.
+3. Save a clean CSV to the `{output}` path containing the **exact original input columns** with the new outcome column appended.
 
 ## The Auto-Pilot Workflow
 
@@ -76,11 +84,11 @@ study = SimulationStudy(input_cols=["Length", "Angle"], outcome_col="Signal")
 
 This single command handles the entire Active Learning loop:
 
-1. Generates 20 initial LHS points (because `study.data` is currently empty).
-2. Runs the solver command, passing the temporary input and output file paths.
-3. Checks diagnostics to see if the data is sufficient.
-4. If needed, generates up to 10 new points targeting weak areas and repeats (up to 5 times).
-5. Checks the elapsed time against `max_hours` to ensure the loop stops safely if the physical time limit is reached.
+1. **Initialisation:** Generates an initial batch of 20 LHS points (`n_start=20`) and passes them via `{input}` to your solver command.
+2. **Execution:** Runs the solver command, passing the temporary input and output file paths.
+3. **Diagnostics (Sense):** Checks statistical diagnostics to see if the data coverage and model accuracy are sufficient.
+4. **Refinement (Decide & Act):** If diagnostics fail, generates a targeted batch of 10 new points (`n_step=10`) focusing on weak areas and repeats the loop (up to `max_iter=5` times).
+5. **Safety Stop:** Checks the elapsed time against `max_hours` to ensure the loop stops safely if the physical time limit is reached.
 
 
 
