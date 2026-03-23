@@ -114,10 +114,20 @@ clean:
 
 # --- COMBO ---
 
-# Combo function that cleans, tests and bumps a patch and then builds all the artefacts.
+# Patch Combo function that cleans, tests and bumps a patch and then builds all the artefacts.
 patch: clean
     just test_matrix
     just bump patch
+    just build_package
+    just build_app
+    just build_pypi
+    just build_website
+    just cls
+
+# Minor Combo function that cleans, tests and bumps a patch and then builds all the artefacts.
+minor: clean
+    just test_matrix
+    just bump minor
     just build_package
     just build_app
     just build_pypi
