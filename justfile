@@ -114,6 +114,7 @@ clean:
 
 # --- COMBO ---
 
+# Combo function that cleans, tests and bumps a patch and then builds all the artefacts.
 patch: clean
     just test_matrix
     just bump patch
