@@ -34,22 +34,20 @@ def validate_simulation(
     Raises:
         ValidationError: If columns are missing, types are wrong, or too few valid rows remain.
 
-    Examples
-    --------
-    ```python
-    import pandas as pd
-    # Create dirty data (includes text and negative values)
-    df = pd.DataFrame({
-        'Length': [1.0, 'BadValue', 5.0],
-        'Signal': [0.5, 0.8, -1.2]
-    })
+    Examples:
+        ```python
+        import pandas as pd
+        # Create dirty data (includes text and negative values)
+        df = pd.DataFrame({
+            'Length': [1.0, 'BadValue', 5.0],
+            'Signal': [0.5, 0.8, -1.2]
+        })
 
-    # Validate
-    clean, removed = validate_simulation(df, ['Length'], 'Signal')
-    print(f"Clean rows: {len(clean)}")
-    print(f"Removed rows: {len(removed)}")
-    ```
-
+        # Validate
+        clean, removed = validate_simulation(df, ['Length'], 'Signal')
+        print(f"Clean rows: {len(clean)}")
+        print(f"Removed rows: {len(removed)}")
+        ```
     """
     if not isinstance(df, pd.DataFrame) or df.empty:
         raise ValidationError("Input is not a valid pandas DataFrame or is empty.")
@@ -194,6 +192,17 @@ def sample_sufficiency(
     Returns:
         pd.DataFrame: A table containing pass/fail metrics for each test,
                       including the threshold values evaluated against.
+
+    Examples:
+        ```python
+        import pandas as pd
+        df = pd.DataFrame({
+            'Length': [1.0, 2.5, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0],
+            'Signal': [0.5, 0.8, 1.2, 1.5, 1.8, 2.2, 2.5, 2.8, 3.2, 3.5]
+        })
+        report = sample_sufficiency(df, input_cols=['Length'], outcome_col='Signal')
+        print(report[['Test', 'Pass']])
+        ```
     """
     # 1. Validate simulation data
     df_clean, df_removed = validate_simulation(df, input_cols, outcome_col)

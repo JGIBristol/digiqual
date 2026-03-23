@@ -194,25 +194,24 @@ def generate_targeted_samples(
     Returns:
         pd.DataFrame: New recommended samples.
 
-    Examples
-    --------
-    ```python
-    import pandas as pd
-    # 1. Setup data with a massive gap in 'Length' (0-1, then 9-10)
-    df = pd.DataFrame({'Length': [0.1, 0.9, 9.1, 9.9], 'Signal': [1, 1, 1, 1]})
+    Examples:
+        ```python
+        import pandas as pd
+        # 1. Setup data with a massive gap in 'Length' (0-1, then 9-10)
+        df = pd.DataFrame({'Length': [0.1, 0.9, 9.1, 9.9], 'Signal': [1, 1, 1, 1]})
 
-    # 2. Ask for new samples to fix the gap
-    new_pts = generate_targeted_samples(
-        df=df,
-        input_cols=['Length'],
-        outcome_col='Signal',
-        n_new_per_fix=2
-    )
-    print(new_pts)
-    #    Length Refinement_Reason
-    # 0     5.4      Gap in Length
-    # 1     3.2      Gap in Length
-    ```
+        # 2. Ask for new samples to fix the gap
+        new_pts = generate_targeted_samples(
+            df=df,
+            input_cols=['Length'],
+            outcome_col='Signal',
+            n_new_per_fix=2
+        )
+        print(new_pts)
+        #    Length Refinement_Reason
+        # 0     5.4      Gap in Length
+        # 1     3.2      Gap in Length
+        ```
     """
     # 1. SENSE: Run the diagnostics to get the status report
     report = sample_sufficiency(df, input_cols, outcome_col)
@@ -348,33 +347,32 @@ def run_adaptive_search(
     Returns:
         pd.DataFrame: Final dataset containing all successful runs.
 
-    Examples
-    --------
-    ```python
-    # 1. Define bounds
-    ranges = {'Length': (0, 10), 'Angle': (-45, 45)}
+    Examples:
+        ```python
+        # 1. Define bounds
+        ranges = {'Length': (0, 10), 'Angle': (-45, 45)}
 
-    # 2. Define a command that reads {input} and writes {output}
-    cmd = (
-        "python -c "
-        "'import pandas as pd; "
-        'df=pd.read_csv("{input}"); '
-        'df["Signal"] = df["Length"]*2; '
-        'df.to_csv("{output}", index=False)'
-        "'"
-    )
+        # 2. Define a command that reads {input} and writes {output}
+        cmd = (
+            "python -c "
+            "'import pandas as pd; "
+            'df=pd.read_csv("{input}"); '
+            'df["Signal"] = df["Length"]*2; '
+            'df.to_csv("{output}", index=False)'
+            "'"
+        )
 
-    # 3. Run with a 1.5 hour time limit
-    final_df = run_adaptive_search(
-        command=cmd,
-        input_cols=['Length', 'Angle'],
-        outcome_col='Signal',
-        ranges=ranges,
-        max_iter=10,
-        max_hours=1.5
-    )
-    print(f"Collected {len(final_df)} samples.")
-    ```
+        # 3. Run with a 1.5 hour time limit
+        final_df = run_adaptive_search(
+            command=cmd,
+            input_cols=['Length', 'Angle'],
+            outcome_col='Signal',
+            ranges=ranges,
+            max_iter=10,
+            max_hours=1.5
+        )
+        print(f"Collected {len(final_df)} samples.")
+        ```
     """
     print("\n" + "="*40)
     print("      STARTING ADAPTIVE OPTIMIZATION")

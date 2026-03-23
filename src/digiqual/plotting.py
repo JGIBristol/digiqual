@@ -25,22 +25,22 @@ def plot_signal_model(
         mean_curve: The predicted mean response at X_eval.
         threshold: The detection threshold (horizontal line).
         local_std: (Optional) The predicted standard deviation at X_eval. If provided, adds 95% prediction bounds to show noise structure.
+        poi_name: The label to use for the Parameter of Interest on the x-axis.
         ax: (Optional) Matplotlib axes to plot on. Creates new if None.
 
-    Examples
-    --------
-    ```python
-    import matplotlib.pyplot as plt
+    Examples:
+        ```python
+        import matplotlib.pyplot as plt
 
-    # Plot the physics model
-    ax = plot_signal_model(
-        X, y, X_eval, mean_curve,
-        threshold=3.0,
-        local_std=std_curve,
-        poi_name="Crack Length (mm)"
-    )
-    plt.show()
-    ```
+        # Plot the physics model
+        ax = plot_signal_model(
+            X, y, X_eval, mean_curve,
+            threshold=3.0,
+            local_std=std_curve,
+            poi_name="Crack Length (mm)"
+        )
+        plt.show()
+        ```
     """
     if ax is None:
         fig, ax = plt.subplots()
@@ -97,21 +97,21 @@ def plot_pod_curve(
         ci_lower: (Optional) The lower 95% confidence bound.
         ci_upper: (Optional) The upper 95% confidence bound.
         target_pod: The target reliability level (usually 0.90) to mark on the plot.
+        poi_name: The label to use for the Parameter of Interest on the x-axis.
         ax: (Optional) Matplotlib axes to plot on.
 
-    Examples
-    --------
-    ```python
-    # Plot the reliability curve with confidence bounds
-    ax = plot_pod_curve(
-        X_eval, pod_curve,
-        ci_lower=lower_bound,
-        ci_upper=upper_bound,
-        target_pod=0.90
-    )
-    plt.show()
-    ```
-
+    Examples:
+        ```python
+        # Plot the reliability curve with confidence bounds
+        ax = plot_pod_curve(
+            X_eval, pod_curve,
+            ci_lower=lower_bound,
+            ci_upper=upper_bound,
+            target_pod=0.90,
+            poi_name="Crack Length (mm)"
+        )
+        plt.show()
+        ```
     """
     if ax is None:
         fig, ax = plt.subplots()

@@ -34,6 +34,15 @@ def fit_robust_mean_model(
         - `model_type_` (str): Either 'Polynomial' or 'Kriging'.
         - `model_params_` (Any): The selected integer degree or the fitted kernel.
         - `cv_scores_` (dict): The cross-validation MSE scores for all tested models.
+
+    Examples:
+        ```python
+        import numpy as np
+        X = np.linspace(0, 10, 50)
+        y = 3 * X + np.random.normal(0, 1, 50)
+        model = fit_robust_mean_model(X, y)
+        print(model.model_type_)
+        ```
     """
     X_2d = X.reshape(-1, 1)
     degrees = range(1, max_degree + 1)
@@ -92,6 +101,16 @@ def plot_model_selection(cv_scores: dict) -> Any:
     """
     Generates a normalized bar chart of the Bias-Variance Tradeoff from CV scores,
     alongside a sorted table of the exact MSE values in best-fit order.
+
+    Args:
+        cv_scores (dict): Dictionary mapping model tuple containing (model_type, params) to its Cross-Validation MSE score.
+
+    Examples:
+        ```python
+        # Assuming we ran fit_robust_mean_model and saved the model
+        fig = plot_model_selection(model.cv_scores_)
+        # plt.show()
+        ```
     """
     import matplotlib.pyplot as plt
     import numpy as np
@@ -206,6 +225,13 @@ def fit_variance_model(
             - residuals: Raw differences between `y` and the mean model prediction.
             - bandwidth: The calculated smoothing window size (absolute units).
             - X_eval: A linearly spaced grid over the X domain for plotting/evaluation.
+
+    Examples:
+        ```python
+        residuals, bandwidth, X_eval = fit_variance_model(
+            X, y, mean_model, bandwidth_ratio=0.1
+        )
+        ```
     """
     X_2d = X.reshape(-1, 1)
     y_pred = mean_model.predict(X_2d)
@@ -237,6 +263,11 @@ def predict_local_std(
 
     Returns:
         np.ndarray: An array of standard deviation estimates corresponding to `X_eval`.
+
+    Examples:
+        ```python
+        local_std = predict_local_std(X, residuals, X_eval, bandwidth)
+        ```
     """
     X_source = X.reshape(1, -1)
     X_target = X_eval.reshape(-1, 1)
@@ -276,6 +307,12 @@ def infer_best_distribution(
         Tuple[str, Tuple]:
             - best_name: The SciPy name of the best-fitting distribution (e.g., 'norm').
             - best_params: The fitted parameters for that distribution (e.g., loc, scale).
+
+    Examples:
+        ```python
+        dist_name, dist_params = infer_best_distribution(residuals, X, bandwidth)
+        print(f"Best distribution: {dist_name}")
+        ```
     """
     #
     local_std = predict_local_std(X, residuals, X, bandwidth)
@@ -342,21 +379,20 @@ def compute_pod_curve(
             - pod_curve: Array of probabilities [0, 1] for each point in X_eval.
             - mean_curve: Array of mean signal response values for X_eval.
 
-    Examples
-    --------
-    ```python
-    # Assuming we have fitted models (mean_model) and data (X, residuals)
-    # Calculate the PoD curve for a threshold of 0.5
-    pod, mean_resp = compute_pod_curve(
-        X_eval=np.linspace(0, 10, 100),
-        mean_model=mean_model,
-        X=X,
-        residuals=residuals,
-        bandwidth=1.5,
-        dist_info=('norm', (0, 1)),
-        threshold=0.5
-    )
-    ```
+    Examples:
+        ```python
+        # Assuming we have fitted models (mean_model) and data (X, residuals)
+        # Calculate the PoD curve for a threshold of 0.5
+        pod, mean_resp = compute_pod_curve(
+            X_eval=np.linspace(0, 10, 100),
+            mean_model=mean_model,
+            X=X,
+            residuals=residuals,
+            bandwidth=1.5,
+            dist_info=('norm', (0, 1)),
+            threshold=0.5
+        )
+        ```
     """
     #
     dist_name, dist_params = dist_info
@@ -408,16 +444,15 @@ def bootstrap_pod_ci(
             - lower_ci: The 2.5th percentile PoD curve (Lower 95% Bound).
             - upper_ci: The 97.5th percentile PoD curve (Upper 95% Bound).
 
-    Examples
-    --------
-    ```python
-    # Generate 95% confidence bounds
-    lower, upper = bootstrap_pod_ci(
-        X, y, X_eval, threshold=0.5,
-        model_type='Polynomial', model_params=3,
-        bandwidth=1.5, dist_info=('norm', (0, 1)), n_boot=100
-    )
-    ```
+    Examples:
+        ```python
+        # Generate 95% confidence bounds
+        lower, upper = bootstrap_pod_ci(
+            X, y, X_eval, threshold=0.5,
+            model_type='Polynomial', model_params=3,
+            bandwidth=1.5, dist_info=('norm', (0, 1)), n_boot=100
+        )
+        ```
     """
     n_samples = len(y)
     pod_matrix = np.zeros((n_boot, len(X_eval)))
@@ -460,8 +495,19 @@ def calculate_reliability_point(
     Calculates the defect size (a90/95) where the Lower Confidence Bound
     crosses the target reliability threshold (usually 0.90).
 
+    Args:
+        X_eval (np.ndarray): The evaluation grid points.
+        ci_lower (np.ndarray): The lower confidence bound curve (y values).
+        target_pod (float, optional): Target reliability level. Defaults to 0.90.
+
     Returns:
         float: The interpolated x-value, or np.nan if not reached.
+
+    Examples:
+        ```python
+        a90_95 = calculate_reliability_point(X_eval, lower_ci, target_pod=0.90)
+        print(f"a90/95 point: {a90_95:.2f}")
+        ```
     """
     # Check if the curve actually reaches the target
     if np.max(ci_lower) < target_pod:
