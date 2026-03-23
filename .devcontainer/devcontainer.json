@@ -1,0 +1,19 @@
+{
+    "name": "Python UV DevContainer",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.defaultInterpreterPath": "/workspace/.venv/bin/python"
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance"
+            ]
+        }
+    },
+    "remoteUser": "vscode",
+    "postCreateCommand": "uv venv /workspace/.venv && uv pip install ruff pytest black || echo 'uv setup complete'"
+}

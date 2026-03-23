@@ -105,7 +105,7 @@ quartodoc:
         - pod.predict_local_std
         - pod.compute_pod_curve
         - pod.bootstrap_pod_ci
-
+        - pod.calculate_reliability_point
 
         # -- Plotting --
         - plotting.plot_signal_model
