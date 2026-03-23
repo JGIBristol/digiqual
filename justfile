@@ -26,11 +26,11 @@ test_matrix:
     @echo "✅ All tests passed and development environment restored!"
 
 # Run the app in "Browser Mode" (Best for coding/debugging)
-app:
+app_dev:
     cd app && uv run shiny run app.py
 
 # Run the app in "Desktop Mode" (Best for testing the .exe look)
-app_desktop:
+app:
     cd app && uv run python run_app.py
 
 # --- VERSIONING ---
