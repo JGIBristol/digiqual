@@ -7,28 +7,29 @@ import pandas as pd
 import numpy as np
 from digiqual.sampling import generate_lhs
 from digiqual import SimulationStudy
-import shinyswatch
 from pathlib import Path
 
 #### App CSS ####
 app_css = """
-/* --- 1. CORE PALETTE (Modern Engineering) --- */
+/* --- 1. CORE PALETTE (Modern Fluent) --- */
 :root {
-    --bs-primary: #0f3460;
-    --bs-primary-rgb: 15, 52, 96;
-    --bs-secondary: #536473;
-    --bs-secondary-rgb: 83, 100, 115;
-    --bs-success: #10b981;
-    --bs-success-rgb: 16, 185, 129;
-    --bs-warning: #f59e0b;
-    --bs-warning-rgb: 245, 158, 11;
-    --bs-danger: #e11d48;
-    --bs-danger-rgb: 225, 29, 72;
-    --bs-body-bg: #f3f4f6;
-    --bs-body-color: #1f2937;
+    --bs-primary: #006abc; /* Fluent blue */
+    --bs-primary-rgb: 0, 106, 188;
+    --bs-success: #107c10;
+    --bs-warning: #ffb900;
+    --bs-danger: #d13438;
+    --bs-body-bg: #faf9f8; /* Soft fluent gray */
+    --bs-body-color: #242424;
+    --bs-border-color: #edebe9;
 }
 
 /* --- 2. GLOBAL TYPOGRAPHY --- */
+body {
+    font-family: 'Segoe UI', 'Segoe UI Variable', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+}
+
 h1, h2, h3, h4, h5, h6 {
     color: var(--bs-primary);
     font-weight: 700;
@@ -36,103 +37,222 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .navbar-brand {
-    font-weight: 800 !important;
-    letter-spacing: 0.05em;
+    font-weight: 600 !important;
+    letter-spacing: normal;
 }
 
-/* --- 3. COMPONENT POLISH --- */
+/* --- 3. COMPONENT POLISH (Fluent Elevation & Acrylic) --- */
 .card {
-    border: 1px solid rgba(0,0,0,0.08);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 1px solid #edebe9;
+    box-shadow: 0 1.6px 3.6px 0 rgba(0,0,0,0.132), 0 0.3px 0.9px 0 rgba(0,0,0,0.108); /* Fluent Elevation 2 */
     border-radius: 8px;
-    margin-bottom: 1rem;
+    margin-bottom: 24px;
     background-color: #ffffff;
 }
 
 .card-header {
     background-color: transparent;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--bs-border-color);
     font-weight: 600;
-    color: var(--bs-primary);
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+    color: #242424;
+    padding: 16px 20px;
+}
+
+.card-body {
+    padding: 24px 20px;
+}
+
+/* Buttons Fluent Style */
+.btn {
+    border-radius: 4px;
+    font-weight: 600;
+    padding: 6px 20px;
+    transition: all 0.1s ease-in-out;
+    border: 1px solid transparent;
 }
 
 .btn-primary {
     background-color: var(--bs-primary);
-    border-color: var(--bs-primary);
     color: #ffffff;
 }
 .btn-primary:hover {
-    background-color: #162a45;
-}
-
-.btn-success, .btn-warning, .btn-danger {
+    background-color: #005a9e;
     color: #ffffff;
 }
-
-/* --- 4. ALERT FIXES --- */
-.alert h1, .alert h2, .alert h3, .alert h4, .alert h5, .alert h6 {
-    color: inherit;
+.btn-primary:active {
+    background-color: #004578;
+    transform: scale(0.98);
 }
 
-/* --- 5. LAYOUT --- */
-.sidebar {
+.btn-success { background-color: var(--bs-success); color: #fff; }
+.btn-success:hover { background-color: #0b5a0b; color: #fff; }
+.btn-warning { background-color: var(--bs-warning); color: #000; }
+.btn-warning:hover { background-color: #da9d00; color: #000; }
+.btn-danger { background-color: var(--bs-danger); color: #fff; }
+.btn-danger:hover { background-color: #a82a2d; color: #fff; }
+
+.btn-outline-secondary {
+    border: 1px solid #8a8886;
+    color: #323130;
+    background-color: transparent;
+}
+.btn-outline-secondary:hover {
+    background-color: #f3f2f1;
+    color: #201f1e;
+}
+
+/* --- 4. CONTROLS (Form inputs) --- */
+.form-control, .form-select {
+    border-radius: 4px;
+    border: 1px solid #8a8886;
+    border-bottom: 2px solid #8a8886;
     background-color: #ffffff;
-    border-right: 1px solid #e5e7eb;
+    padding: 6px 12px;
+    transition: all 0.2s ease;
 }
 
-/* --- 6. FORM INPUT POLISH --- */
 .form-control:focus, .form-select:focus {
     border-color: var(--bs-primary);
-    box-shadow: 0 0 0 0.25rem rgba(15, 52, 96, 0.25);
+    border-bottom: 2px solid var(--bs-primary);
+    box-shadow: none;
+    outline: none;
 }
 
-/* Update your existing button styles to include transitions */
-.btn {
-    transition: all 0.2s ease-in-out;
+/* Better File Upload UI (Fluent-inspired Drop Zone) */
+.shiny-input-container:has(input[type="file"]) .input-group {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 2px dashed #c8c6c4 !important;
+    border-radius: 6px !important;
+    background-color: #faf9f8 !important;
+    padding: 30px 20px !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    text-align: center !important;
 }
 
-/* --- 7. CUSTOM SCROLLBARS --- */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-}
-::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: var(--bs-secondary);
+.shiny-input-container:has(input[type="file"]) .input-group:hover {
+    border-color: var(--bs-primary) !important;
+    background-color: #f3f2f1 !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 
-/* --- 8. NAVIGATION ACTIVE STATE --- */
-.navbar .nav-link.active {
-    color: #ffffff !important; /* Pure white text so it stands out */
-    font-weight: 700;
-    border-bottom: 3px solid var(--bs-warning); /* Bright amber underline */
+.shiny-input-container:has(input[type="file"]) .input-group-btn {
+    width: 100% !important;
 }
 
-/* Optional: Make inactive tabs slightly faded white so the active one stands out more */
+.shiny-input-container:has(input[type="file"]) .btn-file {
+    background-color: transparent !important;
+    border: none !important;
+    color: var(--bs-primary) !important;
+    font-weight: 600 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    display: block !important;
+    font-size: 1.1em !important;
+}
+
+.shiny-input-container:has(input[type="file"]) .form-control {
+    display: block !important;
+    width: 100% !important;
+    border: none !important;
+    background: transparent !important;
+    text-align: center !important;
+    box-shadow: none !important;
+    color: #605e5c !important;
+    margin-top: 10px !important;
+    padding: 0 !important;
+    height: auto !important;
+}
+
+.shiny-input-container:has(input[type="file"]) label {
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+/* Container for Centered Configuration Inputs */
+.config-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 1.5rem !important; /* Better spacing than HRs */
+}
+
+/* Ensure individual input containers are centered */
+.config-container .shiny-input-container {
+    width: 100% !important;
+    max-width: 400px !important; /* Constrain width for a tidy look */
+    margin-left: auto !important;
+    margin-right: auto !important;
+    margin-bottom: 0 !important;
+}
+
+/* Fix for Selectize labels and control alignment */
+.config-container .control-label {
+    margin-bottom: 8px !important;
+    width: 100% !important;
+}
+
+/* Align selectize itself (content stays left, container centered) */
+.config-container .selectize-control {
+    text-align: left !important;
+}
+
+/* --- 5. NAVIGATION (Top Bar) --- */
+.navbar {
+    background: #006abc !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    color: #fff;
+}
+
+.navbar-brand {
+    color: #fff !important;
+}
+
 .navbar .nav-link {
-    color: rgba(255, 255, 255, 0.7) !important;
-    transition: color 0.2s ease-in-out;
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-weight: 500;
+    padding: 10px 16px;
+    margin: 0 4px;
+    border-radius: 4px;
+    transition: background-color 0.1s;
 }
 
 .navbar .nav-link:hover {
-    color: #ffffff !important; /* Lighten up when the mouse hovers over them */
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
-@media (min-width: 1400px) {
-    .sidebar.sidebar-navigation {
-        margin-left: -20px;
-    }
+.navbar .nav-link.active {
+    color: #ffffff !important;
+    font-weight: 600;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* --- 6. CUSTOM SCROLLBARS --- */
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background-color: #c8c6c4;
+    border-radius: 10px;
+    border: 3px solid #faf9f8;
+}
+::-webkit-scrollbar-thumb:hover { background-color: #a19f9d; }
+
+/* MISC TWEAKS */
+.text-primary { color: var(--bs-primary) !important; }
+.text-muted { color: #605e5c !important; }
+.bg-light { background-color: #f3f2f1 !important; }
+
+hr {
+    border-top: 1px solid #edebe9;
+    opacity: 1;
 }
 """
+
 
 #### UI Definition ####
 app_ui = ui.page_navbar(
@@ -163,7 +283,7 @@ app_ui = ui.page_navbar(
                         ui.tags.li("Automatic scaling to variable bounds.", class_="x-small"),
                         class_="text-muted mb-0"
                     ),
-                    class_="mb-3 border-start border-4 border-primary shadow-sm"
+                    class_="mb-3 border-start border-4 border-primary"
                 ),
 
                 # Module 2: Diagnostics
@@ -177,7 +297,7 @@ app_ui = ui.page_navbar(
                         ui.tags.li("Identify model instability or insufficient samples.", class_="x-small"),
                         class_="text-muted mb-0"
                     ),
-                    class_="mb-3 border-start border-4 border-warning shadow-sm"
+                    class_="mb-3 border-start border-4 border-warning"
                 ),
 
                 # Module 3: Analysis
@@ -191,7 +311,7 @@ app_ui = ui.page_navbar(
                         ui.tags.li("Uncertainty quantification with bootstrap resampling.", class_="x-small"),
                         class_="text-muted mb-0"
                     ),
-                    class_="mb-3 border-start border-4 border-success shadow-sm"
+                    class_="mb-3 border-start border-4 border-success"
                 ),
             ),
 
@@ -247,7 +367,7 @@ app_ui = ui.page_navbar(
                         ),
                         class_="p-3"
                     ),
-                    class_="shadow-sm"
+                    class_=""
                 )
             ),
             col_widths=[-1,5,5,-1]
@@ -258,55 +378,60 @@ app_ui = ui.page_navbar(
 #### UI - Experimental Design (Tab 2) ####
     ui.nav_panel(
         "Experimental Design",
-        ui.layout_columns(
-            # --- LEFT: VARIABLE INPUTS
-            ui.card(
-                ui.card_header("Experimental Design Variables"),
-                ui.div(
-                    ui.layout_columns(
-                        ui.tags.label("Variable Name", class_="fw-bold"),
-                        ui.tags.label("Min Value", class_="fw-bold"),
-                        ui.tags.label("Max Value", class_="fw-bold"),
-                        ui.div(),
-                        col_widths=(4, 3, 3, 2)
-                    ),
-                    class_="mb-2 px-1"
-                ),
-                ui.div(
-                    ui.div(id="variable_rows_container"),
+        ui.div(
+            ui.h3("Experimental Design", class_="mb-4 text-center"),
+            ui.layout_columns(
+                # --- LEFT: VARIABLE INPUTS
+                ui.card(
+                    ui.card_header("Experimental Design Variables"),
                     ui.div(
-                        ui.input_action_button(
-                            "add_variable_btn", "Add Variable",
-                            icon=icon_svg("plus"), class_="btn-outline-secondary btn-sm"
+                        ui.layout_columns(
+                            ui.tags.label("Variable Name", class_="fw-bold"),
+                            ui.tags.label("Min Value", class_="fw-bold"),
+                            ui.tags.label("Max Value", class_="fw-bold"),
+                            ui.div(),
+                            col_widths=(4, 3, 3, 2)
                         ),
-                        class_="mt-3 d-flex justify-content-start"
+                        class_="mb-2 px-1"
                     ),
-                ),
-                height="100%"
-            ),
-
-            # --- RIGHT: PREVIEW & SETTINGS
-            ui.div(
-                ui.card(
-                    ui.card_header("Framework Preview"),
-                    ui.output_data_frame("preview_experimental_design"),
-                    full_screen=True,
-                ),
-                ui.card(
-                    ui.card_header("Generation Settings"),
                     ui.div(
-                        ui.input_numeric("num_rows", "Number of samples", value=100, min=1, width="180px"),
-                        class_="d-flex justify-content-center mb-3"
+                        ui.div(id="variable_rows_container"),
+                        ui.div(
+                            ui.input_action_button(
+                                "add_variable_btn", "Add Variable",
+                                icon=icon_svg("plus"), class_="btn-outline-secondary btn-sm"
+                            ),
+                            class_="mt-3 d-flex justify-content-start"
+                        ),
                     ),
-                    ui.input_task_button(
-                        "generate_btn", "Generate Framework",
-                        class_="btn-primary w-100", icon=icon_svg("gears")
-                    ),
-                    ui.output_ui("download_btn_container", class_="mt-3")
+                    class_="mb-0"
                 ),
-                class_="d-flex flex-column gap-3"
+
+                # --- RIGHT: PREVIEW & SETTINGS ---
+                ui.div(
+                    ui.card(
+                        ui.card_header("Framework Preview"),
+                        ui.output_data_frame("preview_experimental_design"),
+                        full_screen=True,
+                        class_="mb-3"
+                    ),
+                    ui.card(
+                        ui.card_header("Generation Settings"),
+                        ui.div(
+                            ui.input_numeric("num_rows", "Number of samples", value=100, min=1, width="180px"),
+                            class_="d-flex justify-content-center mb-3"
+                        ),
+                        ui.input_task_button(
+                            "generate_btn", "Generate Framework",
+                            class_="btn-primary w-100", icon=icon_svg("gears")
+                        ),
+                        ui.output_ui("download_btn_container", class_="mt-3"),
+                    ),
+                    class_="d-flex flex-column"
+                ),
+                col_widths=[-1,5,5,-1]
             ),
-            col_widths=[-1,5,5,-1]
+            class_="container-fluid py-3"
         ),
         icon=icon_svg("table")
     ),
@@ -315,39 +440,45 @@ app_ui = ui.page_navbar(
 #### UI - Simulation Diagnostics (Tab 3) ####
     ui.nav_panel(
         "Simulation Diagnostics",
-        ui.layout_columns(
-            # --- LEFT: CONFIGURATION ---
-            ui.card(
-                ui.card_header("Diagnostic Configuration"),
-                ui.input_file("upload_csv", "Upload CSV file", accept=[".csv"], multiple=False),
-                ui.hr(),
-                ui.input_selectize("input_cols", "Select Input Variables", choices=[], multiple=True),
-                ui.input_selectize("outcome_col", "Select Outcome Variable", choices=[], multiple=False),
-
-                # Permanent Error Display for selection conflicts
-                ui.output_ui("selection_error_display"),
-
-                ui.hr(),
-                # This is the primary status alert (Success/Failure)
-                ui.output_ui("validation_status"),
-                height="100%"
-            ),
-
-            # --- RIGHT: PREVIEWS & REPORTS ---
-            ui.div(
-                # Dynamic Preview (Hides when no data is present)
-                ui.output_ui("dynamic_preview_card"),
-
+        ui.div(
+            ui.h3("Simulation Diagnostics", class_="mb-4 text-center"),
+            ui.layout_columns(
+                # --- LEFT: CONFIGURATION ---
                 ui.card(
-                    ui.card_header("Validation Report"),
-                    ui.output_data_frame("validation_results_table"),
-                    full_screen=True
+                    ui.card_header("Diagnostic Configuration"),
+                    ui.div(
+                        ui.input_file("upload_csv", "Upload CSV file", accept=[".csv"], multiple=False),
+                        ui.input_selectize("input_cols", "Select Input Variables", choices=[], multiple=True),
+                        ui.input_selectize("outcome_col", "Select Outcome Variable", choices=[], multiple=False),
+
+                        # Permanent Error Display for selection conflicts
+                        ui.output_ui("selection_error_display"),
+
+                        # This is the primary status alert (Success/Failure)
+                        ui.output_ui("validation_status"),
+                        class_="config-container"
+                    ),
+                    class_="mb-0"
                 ),
-                # Remediation logic is now anchored to the results
-                ui.output_ui("remediation_ui"),
-                class_="d-flex flex-column gap-3"
+
+                # --- RIGHT: PREVIEWS & REPORTS ---
+                ui.div(
+                    # Dynamic Preview (Hides when no data is present)
+                    ui.output_ui("dynamic_preview_card"),
+
+                    ui.card(
+                        ui.card_header("Validation Report"),
+                        ui.output_data_frame("validation_results_table"),
+                        full_screen=True,
+                        class_="mb-3"
+                    ),
+                    # Remediation logic is now anchored to the results
+                    ui.output_ui("remediation_ui"),
+                    class_="d-flex flex-column"
+                ),
+                col_widths=[-1,3,7,-1]
             ),
-            col_widths=[-1,4,6,-1]
+            class_="container-fluid py-3"
         ),
         icon=icon_svg("check-double")
     ),
@@ -355,19 +486,22 @@ app_ui = ui.page_navbar(
 #### UI - PoD Analysis (Tab 4) ####
     ui.nav_panel(
         "PoD Analysis",
-        ui.layout_columns(
-        ui.card(
-            ui.card_header("Analysis Results"),
-            ui.output_ui("analysis_output"),
+        ui.div(
+            ui.h3("PoD Analysis", class_="mb-4 text-center"),
+            ui.layout_columns(
+                ui.card(
+                    ui.card_header("Analysis Results"),
+                    ui.output_ui("analysis_output"),
+                ),
+                col_widths=[-1,10,-1]
             ),
-        col_widths=[-1,10,-1]
+            class_="container-fluid py-3"
         ),
         icon=icon_svg("chart-line")
     ),
     title="DigiQual",
     id="navbar",
     fillable=True,
-    theme=shinyswatch.theme.flatly(),
     header=ui.tags.style(app_css)
 )
 
@@ -391,7 +525,7 @@ def server(input, output, session):
                     ui.input_numeric(f"var_min_{idx}", label=None, value=0),
                     ui.input_numeric(f"var_max_{idx}", label=None, value=10),
                     ui.input_action_button(
-                        f"remove_{idx}", "Remove", icon=icon_svg("trash"),
+                        f"remove_{idx}", "", icon=icon_svg("trash"),
                         class_="btn-outline-danger btn-sm"
                     ),
                     col_widths=(4, 3, 3, 2)
