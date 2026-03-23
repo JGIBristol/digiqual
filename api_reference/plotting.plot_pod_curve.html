@@ -237,10 +237,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 10%">
-<col style="width: 21%">
-<col style="width: 57%">
-<col style="width: 10%">
+<col style="width: 9%">
+<col style="width: 18%">
+<col style="width: 51%">
+<col style="width: 20%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -282,6 +282,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><code>0.9</code></td>
 </tr>
 <tr class="even">
+<td>poi_name</td>
+<td>str</td>
+<td>The label to use for the Parameter of Interest on the x-axis.</td>
+<td><code>'Parameter of Interest'</code></td>
+</tr>
+<tr class="odd">
 <td>ax</td>
 <td>Optional[plt.Axes]</td>
 <td>(Optional) Matplotlib axes to plot on.</td>
@@ -297,9 +303,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    X_eval, pod_curve,</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    ci_lower<span class="op">=</span>lower_bound,</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    ci_upper<span class="op">=</span>upper_bound,</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    target_pod<span class="op">=</span><span class="fl">0.90</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    target_pod<span class="op">=</span><span class="fl">0.90</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    poi_name<span class="op">=</span><span class="st">"Crack Length (mm)"</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 </section>
