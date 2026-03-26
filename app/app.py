@@ -423,18 +423,23 @@ ui.nav_panel(
                 # --- LEFT: VARIABLE INPUTS
                 ui.card(
                     ui.card_header("Experimental Design Variables"),
+                    # Header Row
                     ui.div(
                         ui.layout_columns(
-                            ui.tags.label("Variable Name", class_="fw-bold"),
-                            ui.tags.label("Min Value", class_="fw-bold"),
-                            ui.tags.label("Max Value", class_="fw-bold"),
-                            ui.div(),
-                            col_widths=(4, 3, 3, 2)
+                            ui.tags.label("Variable Name", class_="fw-bold mb-0"),
+                            ui.tags.label("Min Value", class_="fw-bold mb-0"),
+                            ui.tags.label("Max Value", class_="fw-bold mb-0"),
+                            ui.div(), # Spacer for the delete button column
+                            col_widths=(4, 3, 3, 2),
+                            gap="5px",
+                            class_="mb-0" # Drops layout_columns default bottom margin
                         ),
-                        class_="mb-2 px-1"
+                        class_="mb-0 px-1 text-center" # Removed border-bottom and pb-2
                     ),
+                    # Container for Rows
                     ui.div(
-                        ui.div(id="variable_rows_container"),
+                        # mt-0 and pt-0 eliminate the space above the rows
+                        ui.div(id="variable_rows_container", class_="mt-0 pt-0"),
                         ui.div(
                             ui.input_action_button(
                                 "add_variable_btn", "Add Variable",
@@ -567,10 +572,12 @@ def server(input, output, session):
                         f"remove_{idx}", "", icon=icon_svg("trash"),
                         class_="btn-outline-danger btn-sm"
                     ),
-                    col_widths=(4, 3, 3, 2)
+                    col_widths=(4, 3, 3, 2),
+                    gap="5px",         # Matches the header gap
+                    class_="mt-0 mb-0" # Kills default layout_columns margins
                 ),
                 id=f"row_container_{idx}",
-                class_="mb-2"
+                class_="mb-2 mt-0"     # Keeps a small gap between rows, but 0 on top
             )
         )
 
