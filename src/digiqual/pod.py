@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.stats as stats
+from scipy.spatial.distance import cdist
 from typing import Tuple, Any
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
@@ -21,12 +22,16 @@ def fit_robust_mean_model(
 
     This function performs k-fold Cross Validation (CV) to find the model type
     (Polynomial or Kriging) and parameters (e.g., degree) that minimize the
-    Mean Squared Error (MSE), balancing bias and variance.
+    Mean Squared Error (MSE), balancing the bias-variance tradeoff. It natively
+    supports both 1D baseline assessments and multi-dimensional spaces incorporating
+    nuisance parameters.
 
     Args:
-        X (np.ndarray): 1D array of input variable values (e.g., flaw size).
+        X (np.ndarray): 1D array of input variable values (e.g., flaw size) or a 2D
+            matrix for multi-dimensional inputs (e.g., flaw size + defect angle).
         y (np.ndarray): 1D array of outcome values (e.g., signal response).
-        max_degree (int, optional): The maximum polynomial degree to test. Defaults to 10.
+        max_degree (int, optional): The maximum polynomial degree to test. For N-dimensional
+            data, this accounts for complex interaction terms. Defaults to 10.
         n_folds (int, optional): Number of folds for Cross Validation. Defaults to 10.
 
     Returns:
@@ -38,13 +43,14 @@ def fit_robust_mean_model(
     Examples:
         ```python
         import numpy as np
-        X = np.linspace(0, 10, 50)
-        y = 3 * X + np.random.normal(0, 1, 50)
+        # Multi-dimensional example (Size and Angle)
+        X = np.random.rand(50, 2) * 10
+        y = 3 * X[:, 0] - 0.5 * X[:, 1] + np.random.normal(0, 1, 50)
         model = fit_robust_mean_model(X, y)
-        print(model.model_type_)
+        print(f"Winning model: {model.model_type_}")
         ```
     """
-    X_2d = X.reshape(-1, 1)
+    X_mat = X if X.ndim > 1 else X.reshape(-1, 1)
     degrees = range(1, max_degree + 1)
     cv_scores = {}
 
@@ -54,7 +60,7 @@ def fit_robust_mean_model(
     for d in degrees:
         model = make_pipeline(PolynomialFeatures(degree=d), LinearRegression())
         # Use neg_mean_squared_error; we take the negative to get positive MSE
-        scores = cross_val_score(model, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
+        scores = cross_val_score(model, X_mat, y, cv=cv, scoring='neg_mean_squared_error')
         cv_scores[('Polynomial', d)] = -np.mean(scores)
 
     # 2. Evaluate Kriging (Gaussian Process)
@@ -69,7 +75,7 @@ def fit_robust_mean_model(
         random_state=42
     )
 
-    gpr_scores = cross_val_score(gpr, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
+    gpr_scores = cross_val_score(gpr, X_mat, y, cv=cv, scoring='neg_mean_squared_error')
     cv_scores[('Kriging', None)] = -np.mean(gpr_scores)
 
     # 3. Find best overall model
@@ -79,7 +85,7 @@ def fit_robust_mean_model(
     # 4. Train final model
     if best_type == 'Polynomial':
         final_model = make_pipeline(PolynomialFeatures(degree=best_params), LinearRegression())
-        final_model.fit(X_2d, y)
+        final_model.fit(X_mat, y)
         final_model.model_params_ = best_params
     else:
         # Re-initialize with the same wide-bound kernel
@@ -89,7 +95,7 @@ def fit_robust_mean_model(
             alpha=np.var(y) * 0.01,
             random_state=42
         )
-        final_model.fit(X_2d, y)
+        final_model.fit(X_mat, y)
         final_model.model_params_ = final_model.kernel_
 
     final_model.model_type_ = best_type
@@ -209,14 +215,16 @@ def fit_variance_model(
     Calculates residuals and prepares the grid for variance estimation.
 
     This acts as the setup phase for the heteroscedasticity model. It computes
-    the raw residuals from the mean model and defines the smoothing bandwidth.
+    the raw residuals from the multi-dimensional mean model. It intelligently
+    isolates the primary Parameter of Interest (the first column of X) to establish
+    the smoothing bandwidth and the evaluation grid for downstream visualization.
 
     Args:
-        X (np.ndarray): The original input data.
+        X (np.ndarray): The original input data matrix (1D or N-dimensional).
         y (np.ndarray): The original outcome data.
         mean_model (Any): The fitted sklearn pipeline from `fit_robust_mean_model`.
         bandwidth_ratio (float, optional): The kernel smoothing window size as a
-            fraction of the data range (X_max - X_min). Defaults to 0.1.
+            fraction of the PoI data range (PoI_max - PoI_min). Defaults to 0.1.
         n_eval_points (int, optional): Number of points in the evaluation grid.
             Defaults to 100.
 
@@ -224,21 +232,23 @@ def fit_variance_model(
         Tuple[np.ndarray, float, np.ndarray]:
             - residuals: Raw differences between `y` and the mean model prediction.
             - bandwidth: The calculated smoothing window size (absolute units).
-            - X_eval: A linearly spaced grid over the X domain for plotting/evaluation.
+            - X_eval: A linearly spaced 1D grid over the Parameter of Interest domain.
 
     Examples:
         ```python
         residuals, bandwidth, X_eval = fit_variance_model(
-            X, y, mean_model, bandwidth_ratio=0.1
+            X_nd, y, mean_model, bandwidth_ratio=0.1
         )
         ```
     """
-    X_2d = X.reshape(-1, 1)
-    y_pred = mean_model.predict(X_2d)
+    X_mat = X if X.ndim > 1 else X.reshape(-1, 1)
+    y_pred = mean_model.predict(X_mat)
     residuals = y - y_pred
 
-    bandwidth = (X.max() - X.min()) * bandwidth_ratio
-    X_eval = np.linspace(X.min(), X.max(), n_eval_points)
+    # Use only the Parameter of Interest (first column) to establish the evaluation grid and bandwidth
+    poi_col = X[:, 0] if X.ndim > 1 else X
+    bandwidth = (poi_col.max() - poi_col.min()) * bandwidth_ratio
+    X_eval = np.linspace(poi_col.min(), poi_col.max(), n_eval_points)
 
     return residuals, bandwidth, X_eval
 
@@ -254,10 +264,12 @@ def predict_local_std(
 
     This implements a Nadaraya-Watson estimator specifically for the squared
     residuals to model how noise varies across the input domain (heteroscedasticity).
+    For multi-dimensional spaces, it computes the N-dimensional Euclidean distance
+    between points to properly assign local weights across all parameters.
 
     Args:
-        X (np.ndarray): The source locations (original data inputs).
-        residuals (np.ndarray): The residuals observed at `X`.
+        X (np.ndarray): The source locations (original data inputs, 1D or N-D).
+        residuals (np.ndarray): The raw residuals observed at `X`.
         X_eval (np.ndarray): The target locations to estimate variance at.
         bandwidth (float): The width of the Gaussian kernel (sigma).
 
@@ -266,16 +278,17 @@ def predict_local_std(
 
     Examples:
         ```python
-        local_std = predict_local_std(X, residuals, X_eval, bandwidth)
+        local_std = predict_local_std(X_nd, residuals, X_eval_nd, bandwidth)
         ```
     """
-    X_source = X.reshape(1, -1)
-    X_target = X_eval.reshape(-1, 1)
+    X_source = X if X.ndim > 1 else X.reshape(-1, 1)
+    X_target = X_eval if X_eval.ndim > 1 else X_eval.reshape(-1, 1)
 
     sq_residuals = residuals.flatten() ** 2
 
-    diff = X_target - X_source
-    weights = stats.norm.pdf(diff, loc=0, scale=bandwidth)
+    # Calculate Euclidean distance between points for N-Dimensions
+    distances = cdist(X_target, X_source, metric='euclidean')
+    weights = stats.norm.pdf(distances, loc=0, scale=bandwidth)
 
     row_sums = weights.sum(axis=1, keepdims=True)
     row_sums[row_sums == 0] = 1e-10
@@ -296,12 +309,13 @@ def infer_best_distribution(
 
     This function normalizes residuals by their local standard deviation (Z-scores)
     and tests them against a suite of candidate distributions (Normal, Gumbel,
-    Logistic, Laplace, t-Student).
+    Logistic, Laplace, t-Student). It accepts multi-dimensional inputs to ensure
+    local standard deviation maps correctly across complex feature spaces.
 
     Args:
         residuals (np.ndarray): Raw residuals from the mean model.
-        X (np.ndarray): Input locations for the residuals.
-        bandwidth (float): Bandwidth used for local standardization.
+        X (np.ndarray): Input locations for the residuals (1D or N-D matrix).
+        bandwidth (float): Bandwidth used for local standardization mapping.
 
     Returns:
         Tuple[str, Tuple]:
@@ -310,7 +324,7 @@ def infer_best_distribution(
 
     Examples:
         ```python
-        dist_name, dist_params = infer_best_distribution(residuals, X, bandwidth)
+        dist_name, dist_params = infer_best_distribution(residuals, X_nd, bandwidth)
         print(f"Best distribution: {dist_name}")
         ```
     """
@@ -364,9 +378,11 @@ def compute_pod_curve(
 
     Combines the Mean Model, Variance Model, and Error Distribution to compute
     the probability that the signal exceeds the threshold at every point in `X_eval`.
+    In an N-dimensional context, this acts as the base conditional PoD evaluator
+    before Monte Carlo integration marginalizes the results.
 
     Args:
-        X_eval (np.ndarray): The grid points to calculate PoD for.
+        X_eval (np.ndarray): The grid points or matrix to calculate PoD for.
         mean_model (Any): The fitted sklearn mean response model.
         X (np.ndarray): Original input data (needed for variance prediction).
         residuals (np.ndarray): Original residuals (needed for variance prediction).
@@ -386,7 +402,7 @@ def compute_pod_curve(
         pod, mean_resp = compute_pod_curve(
             X_eval=np.linspace(0, 10, 100),
             mean_model=mean_model,
-            X=X,
+            X=X_nd,
             residuals=residuals,
             bandwidth=1.5,
             dist_info=('norm', (0, 1)),
@@ -397,7 +413,8 @@ def compute_pod_curve(
     #
     dist_name, dist_params = dist_info
 
-    mean_curve = mean_model.predict(X_eval.reshape(-1, 1))
+    X_eval_mat = X_eval if X_eval.ndim > 1 else X_eval.reshape(-1, 1)
+    mean_curve = mean_model.predict(X_eval_mat)
     sigma_curve = predict_local_std(X, residuals, X_eval, bandwidth)
 
     z_threshold = (threshold - mean_curve) / sigma_curve
@@ -424,12 +441,12 @@ def bootstrap_pod_ci(
 
     This function resamples the original data with replacement `n_boot` times.
     For each resample, it refits the Mean Model (dynamically rebuilding either
-    a Polynomial or Kriging model), recalculates residuals, and generates a new PoD curve.
-    If Kriging is selected, the optimizer is disabled during bootstrapping to remain
-    computationally tractable.
+    a Polynomial or Kriging model for N-dimensional spaces), recalculates residuals,
+    and generates a new PoD curve. If Kriging is selected, the optimizer is disabled
+    during bootstrapping to remain computationally tractable.
 
     Args:
-        X (np.ndarray): Original input data.
+        X (np.ndarray): Original input data (1D or N-dimensional matrix).
         y (np.ndarray): Original outcome data.
         X_eval (np.ndarray): Grid points for evaluation.
         threshold (float): Detection threshold.
@@ -448,7 +465,7 @@ def bootstrap_pod_ci(
         ```python
         # Generate 95% confidence bounds
         lower, upper = bootstrap_pod_ci(
-            X, y, X_eval, threshold=0.5,
+            X_nd, y, X_eval, threshold=0.5,
             model_type='Polynomial', model_params=3,
             bandwidth=1.5, dist_info=('norm', (0, 1)), n_boot=100
         )
@@ -461,6 +478,7 @@ def bootstrap_pod_ci(
         # Resample indices
         idx = np.random.choice(n_samples, n_samples, replace=True)
         X_res, y_res = X[idx], y[idx]
+        X_res_mat = X_res if X_res.ndim > 1 else X_res.reshape(-1, 1)
 
         # Conditionally Fit Mean Model based on winning type
         if model_type == 'Polynomial':
@@ -471,10 +489,10 @@ def bootstrap_pod_ci(
                 kernel=model_params, alpha=np.var(y_res)*0.01, optimizer=None
             )
 
-        mean_model.fit(X_res.reshape(-1, 1), y_res)
+        mean_model.fit(X_res_mat, y_res)
 
         # Residuals
-        y_pred = mean_model.predict(X_res.reshape(-1, 1))
+        y_pred = mean_model.predict(X_res_mat)
         res_res = y_res - y_pred
 
         # Predict

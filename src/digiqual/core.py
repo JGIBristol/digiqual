@@ -1,30 +1,40 @@
 import pandas as pd
-from typing import List, Dict, Any, Tuple
+import numpy as np
+from typing import List, Dict, Any, Tuple, Optional
 
 from .diagnostics import validate_simulation, sample_sufficiency, ValidationError
 from .adaptive import generate_targeted_samples, run_adaptive_search
 from .plotting import plot_signal_model, plot_pod_curve
 from . import pod
+from . import integration
 
 class SimulationStudy:
     """
-    A workflow manager for simulation reliability assessment.
+    A workflow manager for simulation-based reliability assessment.
+
+    This class serves as the main API for the digiqual package. It handles data
+    ingestion, validation, active learning (adaptive refinement), and coordinates
+    both 1D and Multi-Dimensional Probability of Detection (PoD) analyses.
 
     Attributes:
-        inputs (List[str]): List of input variable names.
-        outcome (str): Name of the outcome variable.
-        data (pd.DataFrame): The raw simulation data.
-        clean_data (pd.DataFrame): Data that has passed validation.
-        sufficiency_results (pd.DataFrame): The latest diagnostic results.
-        pod_results (Dict): Results from the latest PoD analysis.
-        plots (Dict): Stores the latest generated figures.
+        inputs (List[str]): List of input variable names defined by the user.
+        outcome (str): Name of the outcome variable (signal response).
+        data (pd.DataFrame): The raw, unvalidated simulation data.
+        clean_data (pd.DataFrame): Data that has passed all numeric validation checks.
+        removed_data (pd.DataFrame): Rows removed during validation (e.g., NaNs).
+        sufficiency_results (pd.DataFrame): Diagnostics on sample size and stability.
+        pod_results (Dict): Results and models from the latest 1D PoD analysis.
+        multi_results (Dict): Results from the latest Multi-Dimensional PoD analysis.
+        plots (Dict): Stores the latest generated matplotlib figures.
 
     Examples:
         ```python
         from digiqual.core import SimulationStudy
+
+        # Initialize the study with your parameter names
         study = SimulationStudy(
-            input_cols=['Length', 'Angle'],
-            outcome_col='Signal'
+            input_cols=['Crack_Length', 'Defect_Angle'],
+            outcome_col='Ultrasonic_Signal'
         )
         ```
     """
@@ -44,6 +54,7 @@ class SimulationStudy:
         self.removed_data: pd.DataFrame = pd.DataFrame()
         self.sufficiency_results: pd.DataFrame = pd.DataFrame()
         self.pod_results: Dict[str, Any] = {}
+        self.multi_results: Dict[str, Any] = {}
         self.plots: Dict[str, Any] = {}
 
     #### Adding Data ####
@@ -51,8 +62,9 @@ class SimulationStudy:
         """
         Ingests raw simulation data, filtering for relevant columns only.
 
-        This method automatically strips away any columns in `df` that were not
-        defined in `self.inputs` or `self.outcome` during initialization.
+        This method strips away any columns in the provided dataframe that were not
+        defined in `self.inputs` or `self.outcome` during initialization. It also
+        resets the internal analysis state so old results aren't accidentally plotted.
 
         Args:
             df (pd.DataFrame): The DataFrame to ingest.
@@ -63,11 +75,7 @@ class SimulationStudy:
         Examples:
             ```python
             import pandas as pd
-            df = pd.DataFrame({
-                'Length': [1.0, 2.5, 5.0],
-                'Angle': [0, 15, -10],
-                'Signal': [0.5, 0.8, 1.2]
-            })
+            df = pd.read_csv("simulation_results.csv")
             study.add_data(df)
             ```
         """
@@ -90,6 +98,7 @@ class SimulationStudy:
         self.clean_data = pd.DataFrame()
         self.sufficiency_results = pd.DataFrame()
         self.pod_results = {}
+        self.multi_results = {}
         self.plots = {}
 
     #### Validating self.data ####
@@ -97,15 +106,8 @@ class SimulationStudy:
         """
         Cleans and validates the raw data stored in `self.data`.
 
-        Populates `self.clean_data` with valid rows and `self.removed_data`
-        with invalid ones (e.g., NaNs, negative signals, wrong types).
-
-        Examples:
-            ```python
-            study._validate()
-            # Output: Running validation...
-            # Output: Validation passed. 50 valid rows ready.
-            ```
+        Populates `self.clean_data` with valid numeric rows and `self.removed_data`
+        with invalid ones (e.g., NaNs, text values). Automatically called before analysis.
         """
         print("Running validation...")
         try:
@@ -127,7 +129,7 @@ class SimulationStudy:
         Checks for Input Coverage (Gaps), Model Fit Stability, and Bootstrap Convergence.
 
         Returns:
-            pd.DataFrame: A summary of diagnostic metrics.
+            pd.DataFrame: A summary table of diagnostic metrics and pass/fail status.
 
         Examples:
             ```python
@@ -162,13 +164,6 @@ class SimulationStudy:
 
         Returns:
             pd.DataFrame: A DataFrame of recommended new input coordinates.
-
-        Examples:
-            ```python
-            # If diagnostics fail, ask for 10 new points to fix it
-            new_samples = study.refine(n_points=10)
-            print(new_samples.head())
-            ```
         """
 
         if self.clean_data.empty:
@@ -211,45 +206,13 @@ class SimulationStudy:
             max_hours (float, optional): Physical time limit in hours to safely stop the loop.
             input_file (str): Temp input filename.
             output_file (str): Temp output filename.
-
-        Examples:
-            ```python
-            # 1. Define the variable ranges
-            ranges = {"Length": (0, 10), "Angle": (-45, 45)}
-            
-            study = SimulationStudy(input_cols=["Length", "Angle"], outcome_col="Signal")
-            
-            # 2. Define a "solver" command.
-            # We use 'python -c' to simulate an external tool (like Ansys/Abaqus)
-            # that reads {input}, does math, and saves to {output}.
-            cmd = (
-            "python -c "
-            "'import pandas as pd; "
-            'df=pd.read_csv("{input}"); '
-            'df["Signal"] = df["Length"]*2; '
-            'df.to_csv("{output}", index=False)'
-            "'"
-            )
-            
-            # 3. Run the automated loop
-            study.optimise(
-            command=cmd,
-            ranges=ranges,
-            max_iter=3
-            )
-            
-            # 4. View the results
-            _ = study.pod(poi_col="Length", threshold=4.0)
-            study.visualise()
-            ```
         """
-        # 1. Delegate to the Agnostic Engine
         final_data = run_adaptive_search(
             command=command,
-            input_cols=self.inputs,       # Pass List[str]
-            outcome_col=self.outcome,     # Pass str
+            input_cols=self.inputs,
+            outcome_col=self.outcome,
             ranges=ranges,
-            existing_data=self.data,      # Pass DataFrame (State)
+            existing_data=self.data,
             n_start=n_start,
             n_step=n_step,
             max_iter=max_iter,
@@ -258,11 +221,10 @@ class SimulationStudy:
             output_file=output_file
         )
 
-        # 2. Update Class State with the result
-        self.data = pd.DataFrame() # Clear old state to avoid duplication
+        self.data = pd.DataFrame()
         self.add_data(final_data)
 
-#### PoD Analysis ####
+    #### 1D PoD Analysis ####
     def pod(
         self,
         poi_col: str,
@@ -271,24 +233,28 @@ class SimulationStudy:
         n_boot: int = 1000
     ) -> Dict[str, Any]:
         """
-        Runs the generalized Probability of Detection (PoD) analysis.
+        Runs the baseline 1D Probability of Detection (PoD) analysis.
+
+        This isolates a single Parameter of Interest and models its direct relationship
+        with the signal. It balances robust mean regression (Kriging/Polynomials) with
+        heteroscedastic variance modeling to produce standard a-vs-a reliability curves.
 
         Args:
             poi_col (str): The parameter of interest (e.g., 'Crack Length').
-            threshold (float): The failure threshold (e.g., 4.0 dB).
-            bandwidth_ratio (float): Smoothing bandwidth fraction (default 0.1).
-            n_boot (int): Bootstrap iterations for confidence bounds.
+            threshold (float): The failure threshold for detection.
+            bandwidth_ratio (float, optional): Smoothing bandwidth fraction. Defaults to 0.1.
+            n_boot (int, optional): Bootstrap iterations for confidence bounds. Defaults to 1000.
 
         Returns:
-            Dict: Dictionary containing models, curves, and fit statistics.
+            Dict: Dictionary containing models, generated curves, and fit statistics.
+            This is also stored internally in `self.pod_results`.
 
         Examples:
             ```python
-            results = study.pod(poi_col="Length", threshold=0.5)
-            print(results['dist_info'])
+            results = study.pod(poi_col="Length", threshold=4.0)
+            study.visualise()
             ```
         """
-        # 0. Safety Checks
         if self.clean_data.empty:
             self._validate()
             if self.clean_data.empty:
@@ -297,38 +263,26 @@ class SimulationStudy:
         if poi_col not in self.clean_data.columns:
             raise ValueError(f"Parameter of Interest '{poi_col}' not found in data columns.")
 
-        # 1. Prepare Data Vectors
-        print(f"--- Starting Reliability Analysis (PoI: {poi_col}) ---")
+        print(f"--- Starting 1D Reliability Analysis (PoI: {poi_col}) ---")
         X = self.clean_data[poi_col].values
         y = self.clean_data[self.outcome].values
 
-        # 2. Fit Mean Model (Robust Regression)
         print("1. Selecting Mean Model (Cross-Validation)...")
         mean_model = pod.fit_robust_mean_model(X, y)
-        if mean_model.model_type_ == 'Polynomial':
-            print(f"-> Selected Model: Polynomial (Degree {mean_model.model_params_})")
-        else:
-            print("-> Selected Model: Kriging (Gaussian Process)")
 
-        # 3. Fit Variance Model & Generate Grid
         print("2. Fitting Variance Model (Kernel Smoothing)...")
         residuals, bandwidth, X_eval = pod.fit_variance_model(
             X, y, mean_model, bandwidth_ratio=bandwidth_ratio
         )
-        print(f"   -> Smoothing Bandwidth: {bandwidth:.4f}")
 
-        # 4. Infer Distribution
         print("3. Inferring Error Distribution (AIC)...")
         dist_name, dist_params = pod.infer_best_distribution(residuals, X, bandwidth)
-        print(f"   -> Selected Distribution: {dist_name}")
 
-        # 5. Compute PoD Curve
         print("4. Computing PoD Curve...")
         pod_curve, mean_curve = pod.compute_pod_curve(
             X_eval, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold
         )
 
-        # 6. Bootstrap Confidence Intervals
         print(f"5. Running Bootstrap ({n_boot} iterations)...")
         lower_ci, upper_ci = pod.bootstrap_pod_ci(
             X, y, X_eval, threshold,
@@ -336,12 +290,12 @@ class SimulationStudy:
             n_boot=n_boot
         )
 
-        # 7.
         a90_95 = pod.calculate_reliability_point(X_eval, lower_ci, target_pod=0.90)
-        print(f"   -> a90/95 Reliability Index: {a90_95:.3f}")
 
-        # 8. Package Results
+        # Clear multi_results if running a fresh 1D pod
+        self.multi_results = {}
         self.pod_results = {
+            "type": "1D",
             "poi_col": poi_col,
             "threshold": threshold,
             "a90_95": a90_95,
@@ -363,59 +317,225 @@ class SimulationStudy:
         print("--- Analysis Complete ---")
         return self.pod_results
 
-    #### Visualise Results ####
-    def visualise(self, show: bool = True, save_path: str = None) -> None:
+    #### Multi-Dimensional PoD Analysis (NEW) ####
+    def multi(
+        self,
+        poi_col: str,
+        nuisance_cols: List[str],
+        threshold: float,
+        nuisance_dists: Optional[Dict[str, Any]] = None,
+        bandwidth_ratio: float = 0.1,
+        n_mc_samples: int = 5000
+    ) -> Dict[str, Any]:
         """
-        Generates and displays diagnostic plots (Signal Model and PoD Curve).
+        Runs flexible, multi-dimensional PoD analysis with Monte Carlo integration.
+
+        This method trains an N-dimensional Kriging model to learn the complex signal
+        landscape across all parameters. It then marginalizes the `nuisance_cols` by
+        simulating thousands of virtual real-world scenarios (defined by `nuisance_dists`)
+        and integrating them out to produce a highly calibrated 1D PoD curve for the `poi_col`.
 
         Args:
-            show (bool): If True, calls plt.show().
-            save_path (str, optional): If provided, saves figures to disk (e.g., 'results/run1'). Appends '_signal.png' and '_pod.png'.
+            poi_col (str): The main parameter of interest to plot against (e.g., 'Size').
+            nuisance_cols (List[str]): Additional variables affecting the signal (e.g., ['Angle']).
+            threshold (float): The failure threshold for detection.
+            nuisance_dists (Dict[str, Any], optional): Mapping of nuisance columns to
+                `scipy.stats` distributions. If omitted, defaults to Uniform bounds.
+            bandwidth_ratio (float, optional): Smoothing bandwidth fraction. Defaults to 0.1.
+            n_mc_samples (int, optional): Size of the Monte Carlo integration matrix.
+                Higher values yield smoother curves. Defaults to 5000.
+
+        Returns:
+            Dict: Dictionary containing the n-dimensional model and the marginalized curve.
+            This is also stored internally in `self.multi_results`.
 
         Examples:
             ```python
-            # Display only
+            import scipy.stats as stats
+
+            # Define how nuisance parameters behave in reality
+            dists = {'Defect_Angle': stats.norm(0, 5)}
+
+            # Run the multi-dimensional assessment
+            results = study.multi(
+                poi_col='Crack_Length',
+                nuisance_cols=['Defect_Angle'],
+                threshold=4.0,
+                nuisance_dists=dists,
+                n_mc_samples=10000
+            )
             study.visualise()
-            
-            # Save to disk
-            study.visualise(show=False, save_path='my_plots')
             ```
         """
-        if not self.pod_results:
-            print("No PoD results found. Please run .pod() first.")
+        if self.clean_data.empty:
+            self._validate()
+            if self.clean_data.empty:
+                raise ValueError("Cannot run analysis: No valid data available.")
+
+        all_cols = [poi_col] + nuisance_cols
+        missing = [c for c in all_cols if c not in self.clean_data.columns]
+        if missing:
+            raise ValueError(f"Missing required columns in dataset: {missing}")
+
+        print("--- Starting Multi-Dimensional Reliability Analysis ---")
+        print(f"PoI: {poi_col} | Nuisance Parameters: {nuisance_cols}")
+
+        # 1. Prepare N-Dimensional Data Matrix
+        X_nd = self.clean_data[all_cols].values
+        y = self.clean_data[self.outcome].values
+
+        # 2. Fit Models
+        print("1. Fitting Multi-Dimensional Mean Model (Cross-Validation)...")
+        mean_model = pod.fit_robust_mean_model(X_nd, y)
+        if mean_model.model_type_ == 'Polynomial':
+            print(f"   -> Selected: Multi-D Polynomial (Degree {mean_model.model_params_})")
+        else:
+            print("   -> Selected: N-Dimensional Kriging (Gaussian Process)")
+
+        print("2. Fitting Variance Model & Distribution...")
+        residuals, bandwidth, _ = pod.fit_variance_model(
+            X_nd, y, mean_model, bandwidth_ratio=bandwidth_ratio
+        )
+        dist_name, dist_params = pod.infer_best_distribution(residuals, X_nd, bandwidth)
+
+        # 3. Monte Carlo Integration
+        print(f"3. Running Monte Carlo Integration ({n_mc_samples} samples)...")
+
+        # Grid just for the final 1D marginalized plot
+        X_eval_poi = np.linspace(
+            self.clean_data[poi_col].min(),
+            self.clean_data[poi_col].max(),
+            100
+        )
+
+        # Build the virtual reality space
+        mc_samples = integration.build_integration_space(
+            nuisance_cols=nuisance_cols,
+            reference_data=self.clean_data,
+            nuisance_dists=nuisance_dists,
+            n_mc_samples=n_mc_samples
+        )
+
+        # Integrate out the noise
+        marginal_pod_curve = integration.compute_marginal_pod(
+            X_eval_grid=X_eval_poi,
+            mean_model=mean_model,
+            bandwidth=bandwidth,
+            dist_info=(dist_name, dist_params),
+            threshold=threshold,
+            mc_samples=mc_samples
+        )
+
+        # Clear pod_results if running a fresh multi pod
+        self.pod_results = {}
+        self.multi_results = {
+            "type": "Multi-D",
+            "poi_col": poi_col,
+            "threshold": threshold,
+            "X_eval_poi": X_eval_poi,
+            "marginal_pod": marginal_pod_curve,
+            "mean_model": mean_model,
+            # We save X and y so we can plot the raw scattered data against the curve later
+            "X_raw_poi": self.clean_data[poi_col].values,
+            "y_raw": y
+        }
+
+        print("--- Multi-Dimensional Analysis Complete ---")
+        return self.multi_results
+
+
+    #### Visualise Results ####
+    def visualise(self, show: bool = True, save_path: str = None) -> None:
+        """
+        Generates and displays diagnostic plots.
+
+        Automatically routes to either 1D or Multi-Dimensional plotting logic
+        based on the most recently executed analysis method (`.pod()` or `.multi()`).
+
+        Args:
+            show (bool, optional): If True, calls plt.show() to display in the IDE/notebook. Defaults to True.
+            save_path (str, optional): Base file path to save figures (e.g., 'results/run1'). Defaults to None.
+
+        Examples:
+            ```python
+            # Run analysis and immediately show plots
+            study.pod("Length", threshold=4.0)
+            study.visualise()
+
+            # Run a new multi-dimensional analysis and save plots to disk
+            study.multi("Length", ["Angle"], threshold=4.0)
+            study.visualise(show=False, save_path='./outputs/multi_study')
+            ```
+        """
+        # Determine which results to use based on which method was run last
+        if self.multi_results:
+            res = self.multi_results
+            is_multi = True
+        elif self.pod_results:
+            res = self.pod_results
+            is_multi = False
+        else:
+            print("No results found. Please run .pod() or .multi() first.")
             return
 
-        res = self.pod_results
         poi_label = res.get("poi_col", "Parameter of Interest")
 
-        local_std = pod.predict_local_std(
-            res["X"], res["residuals"], res["X_eval"], res["bandwidth"]
-        )
+        # --- MULTI-DIMENSIONAL PLOTTING ---
+        if is_multi:
+            # 0. Model Selection Plot
+            if hasattr(res["mean_model"], "cv_scores_"):
+                self.plots["model_selection"] = pod.plot_model_selection(res["mean_model"].cv_scores_)
 
-        # 0. Model Selection Plot (NEW)
-        if hasattr(res["mean_model"], "cv_scores_"):
-            self.plots["model_selection"] = pod.plot_model_selection(res["mean_model"].cv_scores_)
+            # 1. Signal Cloud Plot (Showing the spread caused by nuisance params)
+            self.plots["signal_model"] = plot_signal_model(
+                X=res["X_raw_poi"],
+                y=res["y_raw"],
+                X_eval=res["X_eval_poi"],
+                mean_curve=np.full_like(res["X_eval_poi"], np.nan), # Don't plot 1D mean here
+                threshold=res["threshold"],
+                local_std=None,
+                poi_name=poi_label
+            )
+            self.plots["signal_model"].set_title("Raw Signal Cloud (Nuisance Variation)", fontweight='bold')
 
-        # 1. Signal Model Plot
-        self.plots["signal_model"] = plot_signal_model(
-            X=res["X"],
-            y=res["y"],
-            X_eval=res["X_eval"],
-            mean_curve=res["curves"]["mean_response"],
-            threshold=res["threshold"],
-            local_std=local_std,
-            poi_name=poi_label
-        )
+            # 2. Marginalized PoD Curve Plot
+            self.plots["pod_curve"] = plot_pod_curve(
+                X_eval=res["X_eval_poi"],
+                pod_curve=res["marginal_pod"],
+                ci_lower=None, # To be added in future features
+                ci_upper=None,
+                target_pod=0.90,
+                poi_name=poi_label
+            )
+            self.plots["pod_curve"].set_title("Marginalized PoD Curve", fontweight='bold')
 
-        # 2. PoD Curve Plot
-        self.plots["pod_curve"] = plot_pod_curve(
-            X_eval=res["X_eval"],
-            pod_curve=res["curves"]["pod"],
-            ci_lower=res["curves"]["ci_lower"],
-            ci_upper=res["curves"]["ci_upper"],
-            target_pod=0.90,
-            poi_name=poi_label
-        )
+        # --- 1D PLOTTING ---
+        else:
+            local_std = pod.predict_local_std(
+                res["X"], res["residuals"], res["X_eval"], res["bandwidth"]
+            )
+
+            if hasattr(res["mean_model"], "cv_scores_"):
+                self.plots["model_selection"] = pod.plot_model_selection(res["mean_model"].cv_scores_)
+
+            self.plots["signal_model"] = plot_signal_model(
+                X=res["X"],
+                y=res["y"],
+                X_eval=res["X_eval"],
+                mean_curve=res["curves"]["mean_response"],
+                threshold=res["threshold"],
+                local_std=local_std,
+                poi_name=poi_label
+            )
+
+            self.plots["pod_curve"] = plot_pod_curve(
+                X_eval=res["X_eval"],
+                pod_curve=res["curves"]["pod"],
+                ci_lower=res["curves"]["ci_lower"],
+                ci_upper=res["curves"]["ci_upper"],
+                target_pod=0.90,
+                poi_name=poi_label
+            )
 
         # Handle Saving
         if save_path:
