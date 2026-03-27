@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import scipy.stats as stats
 from typing import Tuple, Dict, List, Any, Optional
+from . import pod
 
 def build_integration_space(
     nuisance_cols: List[str],
@@ -86,7 +87,9 @@ def compute_marginal_pod(
     bandwidth: float,
     dist_info: Tuple[str, Tuple],
     threshold: float,
-    mc_samples: np.ndarray
+    mc_samples: np.ndarray,
+    X_orig: np.ndarray,
+    residuals: np.ndarray
 ) -> np.ndarray:
     """
     Computes the 1D Marginal PoD by integrating out the nuisance parameters.
@@ -146,8 +149,8 @@ def compute_marginal_pod(
         mean_preds = mean_model.predict(X_mc_eval)
 
         # 3. Calculate conditional PoDs
-        # Assuming constant bandwidth variance localized to the PoI for marginalization
-        sigma_preds = np.full_like(mean_preds, bandwidth)
+        # Calculate true local standard deviation across the N-Dimensional MC sample space
+        sigma_preds = pod.predict_local_std(X_orig, residuals, X_mc_eval, bandwidth)
         z_thresholds = (threshold - mean_preds) / sigma_preds
         conditional_pods = 1 - dist_obj.cdf(z_thresholds, *dist_params)
 

@@ -261,3 +261,21 @@ def test_calculate_reliability_point_nan():
     ci_lower = np.array([0.1, 0.2, 0.3]) # target is 0.9 by default
     res = calculate_reliability_point(X_eval, ci_lower, target_pod=0.9)
     assert np.isnan(res)
+
+def test_fit_robust_mean_model_nd_shapes():
+    np.random.seed(42)
+    X = np.random.rand(50, 2)
+    y = X[:, 0] * 2 + X[:, 1] + np.random.normal(0, 0.1, 50)
+    model = fit_robust_mean_model(X, y, max_degree=2, n_folds=2)
+    assert hasattr(model, 'model_type_')
+
+def test_predict_local_std_nd():
+    np.random.seed(42)
+    X_source = np.random.rand(20, 2)
+    residuals = np.random.normal(0, 1, 20)
+    X_target = np.random.rand(5, 2)
+    bandwidth = 1.0
+    
+    std_preds = predict_local_std(X_source, residuals, X_target, bandwidth)
+    assert len(std_preds) == 5
+    assert np.all(std_preds > 0)

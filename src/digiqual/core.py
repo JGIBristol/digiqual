@@ -423,7 +423,9 @@ class SimulationStudy:
             bandwidth=bandwidth,
             dist_info=(dist_name, dist_params),
             threshold=threshold,
-            mc_samples=mc_samples
+            mc_samples=mc_samples,
+            X_orig=X_nd,
+            residuals=residuals
         )
 
         # Clear pod_results if running a fresh multi pod
