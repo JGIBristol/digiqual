@@ -320,7 +320,7 @@ class SimulationStudy:
     #### Multi-Dimensional PoD Analysis (NEW) ####
     def multi(
         self,
-        poi_col: str,
+        poi_cols: List[str],
         nuisance_cols: List[str],
         threshold: float,
         nuisance_dists: Optional[Dict[str, Any]] = None,
@@ -336,7 +336,7 @@ class SimulationStudy:
         and integrating them out to produce a highly calibrated 1D PoD curve for the `poi_col`.
 
         Args:
-            poi_col (str): The main parameter of interest to plot against (e.g., 'Size').
+            poi_cols (List[str]): The parameters of interest to plot against (e.g., ['Size', 'Angle']). Supports length 1 or 2.
             nuisance_cols (List[str]): Additional variables affecting the signal (e.g., ['Angle']).
             threshold (float): The failure threshold for detection.
             nuisance_dists (Dict[str, Any], optional): Mapping of nuisance columns to
@@ -372,13 +372,13 @@ class SimulationStudy:
             if self.clean_data.empty:
                 raise ValueError("Cannot run analysis: No valid data available.")
 
-        all_cols = [poi_col] + nuisance_cols
+        all_cols = poi_cols + nuisance_cols
         missing = [c for c in all_cols if c not in self.clean_data.columns]
         if missing:
             raise ValueError(f"Missing required columns in dataset: {missing}")
 
         print("--- Starting Multi-Dimensional Reliability Analysis ---")
-        print(f"PoI: {poi_col} | Nuisance Parameters: {nuisance_cols}")
+        print(f"PoI: {poi_cols} | Nuisance Parameters: {nuisance_cols}")
 
         # 1. Prepare N-Dimensional Data Matrix
         X_nd = self.clean_data[all_cols].values
@@ -401,12 +401,21 @@ class SimulationStudy:
         # 3. Monte Carlo Integration
         print(f"3. Running Monte Carlo Integration ({n_mc_samples} samples)...")
 
-        # Grid just for the final 1D marginalized plot
-        X_eval_poi = np.linspace(
-            self.clean_data[poi_col].min(),
-            self.clean_data[poi_col].max(),
-            100
-        )
+        # Grid just for the final 1D/2D marginalized plot
+        if len(poi_cols) == 1:
+            X_eval_poi = np.linspace(
+                self.clean_data[poi_cols[0]].min(),
+                self.clean_data[poi_cols[0]].max(),
+                100
+            )
+            X_eval_poi = X_eval_poi.reshape(-1, 1)
+        elif len(poi_cols) == 2:
+            x1 = np.linspace(self.clean_data[poi_cols[0]].min(), self.clean_data[poi_cols[0]].max(), 30)
+            x2 = np.linspace(self.clean_data[poi_cols[1]].min(), self.clean_data[poi_cols[1]].max(), 30)
+            X1, X2 = np.meshgrid(x1, x2)
+            X_eval_poi = np.hstack((X1.reshape(-1, 1), X2.reshape(-1, 1)))
+        else:
+            raise ValueError("Only 1 or 2 Parameters of Interest are supported.")
 
         # Build the virtual reality space
         mc_samples = integration.build_integration_space(
@@ -432,13 +441,13 @@ class SimulationStudy:
         self.pod_results = {}
         self.multi_results = {
             "type": "Multi-D",
-            "poi_col": poi_col,
+            "poi_cols": poi_cols,
             "threshold": threshold,
             "X_eval_poi": X_eval_poi,
             "marginal_pod": marginal_pod_curve,
             "mean_model": mean_model,
             # We save X and y so we can plot the raw scattered data against the curve later
-            "X_raw_poi": self.clean_data[poi_col].values,
+            "X_raw_poi": self.clean_data[poi_cols].values,
             "y_raw": y
         }
 
@@ -488,28 +497,36 @@ class SimulationStudy:
             if hasattr(res["mean_model"], "cv_scores_"):
                 self.plots["model_selection"] = pod.plot_model_selection(res["mean_model"].cv_scores_)
 
-            # 1. Signal Cloud Plot (Showing the spread caused by nuisance params)
-            self.plots["signal_model"] = plot_signal_model(
-                X=res["X_raw_poi"],
-                y=res["y_raw"],
-                X_eval=res["X_eval_poi"],
-                mean_curve=np.full_like(res["X_eval_poi"], np.nan), # Don't plot 1D mean here
-                threshold=res["threshold"],
-                local_std=None,
-                poi_name=poi_label
-            )
-            self.plots["signal_model"].set_title("Raw Signal Cloud (Nuisance Variation)", fontweight='bold')
+            if len(res["poi_cols"]) == 1:
+                poi_label = res["poi_cols"][0]
+                self.plots["signal_model"] = plot_signal_model(
+                    X=res["X_raw_poi"][:, 0],
+                    y=res["y_raw"],
+                    X_eval=res["X_eval_poi"][:, 0],
+                    mean_curve=np.full_like(res["X_eval_poi"][:, 0], np.nan),
+                    threshold=res["threshold"],
+                    local_std=None,
+                    poi_name=poi_label
+                )
+                self.plots["signal_model"].set_title("Raw Signal Cloud (Nuisance Variation)", fontweight='bold')
 
-            # 2. Marginalized PoD Curve Plot
-            self.plots["pod_curve"] = plot_pod_curve(
-                X_eval=res["X_eval_poi"],
-                pod_curve=res["marginal_pod"],
-                ci_lower=None, # To be added in future features
-                ci_upper=None,
-                target_pod=0.90,
-                poi_name=poi_label
-            )
-            self.plots["pod_curve"].set_title("Marginalized PoD Curve", fontweight='bold')
+                self.plots["pod_curve"] = plot_pod_curve(
+                    X_eval=res["X_eval_poi"][:, 0],
+                    pod_curve=res["marginal_pod"],
+                    ci_lower=None,
+                    ci_upper=None,
+                    target_pod=0.90,
+                    poi_name=poi_label
+                )
+                self.plots["pod_curve"].set_title("Marginalized PoD Curve", fontweight='bold')
+            else:
+                poi_labels = res["poi_cols"]
+                from .plotting import plot_pod_surface
+                self.plots["pod_curve"] = plot_pod_surface(
+                    X_eval=res["X_eval_poi"],
+                    pod_curve=res["marginal_pod"],
+                    poi_names=poi_labels
+                )
 
         # --- 1D PLOTTING ---
         else:

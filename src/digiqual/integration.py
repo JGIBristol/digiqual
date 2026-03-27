@@ -141,9 +141,13 @@ def compute_marginal_pod(
 
     for i, poi_val in enumerate(X_eval_grid):
         # 1. Create matrix for this specific PoI value across all MC nuisance variations
-        # E.g., [[Size_1, Angle_mc1], [Size_1, Angle_mc2], ...]
-        poi_col = np.full((n_mc, 1), poi_val)
-        X_mc_eval = np.hstack((poi_col, mc_samples))
+        # Works for both scalar 1D values and N-dimensional points
+        if np.isscalar(poi_val) or np.ndim(poi_val) == 0:
+            poi_mat = np.full((n_mc, 1), float(poi_val))
+        else:
+            poi_mat = np.tile(poi_val, (n_mc, 1))
+            
+        X_mc_eval = np.hstack((poi_mat, mc_samples))
 
         # 2. Predict signals for all Monte Carlo variations
         mean_preds = mean_model.predict(X_mc_eval)

@@ -322,6 +322,22 @@ ui.nav_panel(
                                 ),
                                 class_="border-start border-3 border-success ps-3 mb-1"
                             ),
+                            ui.hr(class_="my-4"),
+
+                            # Module 4: Multi-D Analysis
+                            ui.div(
+                                ui.h5(
+                                    ui.span(icon_svg("layer-group"), class_="text-info me-2"),
+                                    "4. Multi-D PoD Analysis", class_="fw-bold mb-2"
+                                ),
+                                ui.p("Evaluate complex multi-dimensional signal spaces with actual field variations.", class_="fw-semibold mb-2"),
+                                ui.tags.ul(
+                                    ui.tags.li("Advanced N-Dimensional Kriging Meta-models."),
+                                    ui.tags.li("Simulate nuisance parameter distributions to find theoretical worst-cases."),
+                                    class_="mb-0 ps-3 text-muted"
+                                ),
+                                class_="border-start border-3 border-info ps-3 mb-1"
+                            ),
                             class_="p-3"
                         )
                     )
@@ -542,6 +558,43 @@ ui.nav_panel(
             class_="container-fluid py-3"
         ),
         icon=icon_svg("chart-line")
+    ),
+#### UI - Multi-Dimensional PoD (Tab 5) ####
+    ui.nav_panel(
+        "Multi-D PoD",
+        ui.div(
+            ui.h3("Multi-Dimensional PoD Analysis", class_="mb-4 text-center"),
+            ui.layout_columns(
+                # --- LEFT: INPUTS ---
+                ui.card(
+                    ui.card_header("Model Configuration"),
+                    ui.input_selectize(
+                        "multi_poi_cols", "Parameters of Interest (Max 2)",
+                        choices=[], multiple=True
+                    ),
+                    ui.input_selectize(
+                        "multi_nuisance_cols", "Nuisance Parameters",
+                        choices=[], multiple=True
+                    ),
+                    ui.input_numeric("multi_threshold", "Signal Threshold", value=5.0),
+                    ui.hr(),
+                    ui.h6("Nuisance Distributions", class_="fw-bold"),
+                    ui.output_ui("nuisance_dist_configs"),
+                    ui.input_action_button(
+                        "btn_run_multi_pod", "Run Multi-D Analysis",
+                        class_="btn-primary text-white fw-bold mt-3"
+                    )
+                ),
+                # --- RIGHT: RESULTS ---
+                ui.card(
+                    ui.card_header("Analysis Results"),
+                    ui.output_ui("multi_pod_results_container")
+                ),
+                col_widths=[3, 9]
+            ),
+            class_="container-fluid py-3"
+        ),
+        icon=icon_svg("layer-group")
     ),
     title="DigiQual",
     id="navbar",
@@ -896,12 +949,23 @@ def server(input, output, session):
         if uploaded_data() is None:
             return None
 
-        # Initialize study with current UI selections
+        in_cols = [c for c in list(input.input_cols()) if c.strip() != '']
+        out_col = str(input.outcome_col()).strip()
+
+        if not in_cols or not out_col:
+            return None
+
+        df = uploaded_data()
+        missing = [col for col in in_cols + [out_col] if col not in df.columns]
+        if missing:
+            return None
+
+        # Initialize study with current UI selections safely
         study = SimulationStudy(
-            input_cols=list(input.input_cols()),
-            outcome_col=input.outcome_col()
+            input_cols=in_cols,
+            outcome_col=out_col
         )
-        study.add_data(uploaded_data())
+        study.add_data(df)
         return study
 
     # --- REACTIVE VALUES ---
@@ -1111,6 +1175,183 @@ def server(input, output, session):
         Downloads the curve data.
         """
         df = pod_export_data()
+        if df is not None:
+            yield df.to_csv(index=False)
+
+#### Server - Multi-D Analysis (Tab 5) ####
+
+    import scipy.stats as stats
+
+    multi_pod_metrics = reactive.value(None)
+    multi_pod_export_data = reactive.value(None)
+    plot_multi_trigger = reactive.value(0)
+
+    @reactive.effect
+    def update_multi_choices():
+        study = current_study()
+        if study:
+            cols = study.inputs if hasattr(study, 'inputs') and study.inputs else []
+            if len(cols) == 0 and not study.clean_data.empty:
+                cols = study.clean_data.columns.tolist()
+            ui.update_selectize("multi_poi_cols", choices=cols)
+            ui.update_selectize("multi_nuisance_cols", choices=cols)
+
+    @render.ui
+    def nuisance_dist_configs():
+        selected_nuisances = input.multi_nuisance_cols()
+        if not selected_nuisances:
+            return ui.p("No nuisance parameters selected.", class_="text-muted small")
+
+        study = current_study()
+        if not study or study.clean_data.empty:
+            return ui.p("Please upload valid data first.", class_="text-danger small")
+
+        df = study.clean_data
+        ui_elements = []
+        for col in selected_nuisances:
+            min_val = float(df[col].min())
+            max_val = float(df[col].max())
+            mean_val = float(df[col].mean())
+            std_val = float(df[col].std())
+
+            ui_elements.append(
+                ui.div(
+                    ui.tags.strong(col, class_="d-block mb-1"),
+                    ui.input_select(f"dist_type_{col}", "Distribution shape", {"norm": "Normal (Gaussian)", "uniform": "Uniform (Min/Max)"}),
+                    ui.panel_conditional(
+                        f"input.dist_type_{col} == 'uniform'",
+                        ui.input_numeric(f"dist_min_{col}", "Min", value=min_val),
+                        ui.input_numeric(f"dist_max_{col}", "Max", value=max_val)
+                    ),
+                    ui.panel_conditional(
+                        f"input.dist_type_{col} == 'norm'",
+                        ui.input_numeric(f"dist_mean_{col}", "Mean", value=mean_val),
+                        ui.input_numeric(f"dist_std_{col}", "Std Dev", value=std_val)
+                    ),
+                    ui.hr(class_="my-2"),
+                    class_="border rounded p-2 mb-2 bg-light"
+                )
+            )
+        return ui.div(*ui_elements)
+
+    @reactive.effect
+    @reactive.event(input.btn_run_multi_pod)
+    def compute_multi_pod_analysis():
+        study = current_study()
+        if not study:
+            return
+
+        poi_cols = list(input.multi_poi_cols())
+        nuisance_cols = list(input.multi_nuisance_cols())
+
+        if not poi_cols:
+            ui.notification_show("Select at least one Parameter of Interest.", type="error")
+            return
+        if len(poi_cols) > 2:
+            ui.notification_show("Select a maximum of 2 Parameters of Interest.", type="error")
+            return
+
+        # Build nuisance dists dictionary safely
+        dists = {}
+        for col in nuisance_cols:
+            dist_type = input[f"dist_type_{col}"]()
+            if dist_type == "uniform":
+                d_min = input[f"dist_min_{col}"]()
+                d_max = input[f"dist_max_{col}"]()
+                dists[col] = stats.uniform(loc=d_min, scale=(d_max - d_min))
+            elif dist_type == "norm":
+                d_mean = input[f"dist_mean_{col}"]()
+                d_std = input[f"dist_std_{col}"]()
+                dists[col] = stats.norm(loc=d_mean, scale=d_std)
+
+        try:
+            results = study.multi(
+                poi_cols=poi_cols,
+                nuisance_cols=nuisance_cols,
+                threshold=input.multi_threshold(),
+                nuisance_dists=dists,
+                n_mc_samples=5000
+            )
+
+            # Build Multi metrics
+            mean_model = results["mean_model"]
+            model_str = f"Polynomial (Deg {mean_model.model_params_})" if mean_model.model_type_ == 'Polynomial' else "Kriging (GP)"
+
+            metrics = {
+                "Parameters of Interest": ", ".join(poi_cols),
+                "Nuisance Parameters": ", ".join(nuisance_cols) if nuisance_cols else "None",
+                "Threshold": results["threshold"],
+                "Mean Model": model_str
+            }
+            multi_pod_metrics.set(metrics)
+
+            export_df = pd.DataFrame({
+                "x_eval": [str(x) for x in results["X_eval_poi"]],
+                "marginal_pod": results["marginal_pod"].flatten()
+            })
+            multi_pod_export_data.set(export_df)
+
+            study.visualise(show=False)
+            plot_multi_trigger.set(plot_multi_trigger() + 1)
+
+        except Exception as e:
+            ui.notification_show(f"Analysis Failed: {str(e)}", type="error")
+
+    @render.ui
+    def multi_pod_results_container():
+        if multi_pod_metrics() is None:
+            return ui.div()
+        return ui.div(
+            ui.card(
+                ui.card_header("Model Selection (Bias-Variance Tradeoff)"),
+                ui.output_plot("plot_multi_model_selection", height="400px"),
+                full_screen=True, class_="mb-3"
+            ),
+            ui.layout_columns(
+                ui.card(ui.card_header("Signal Cloud (Nuisance Spread)"), ui.output_plot("plot_multi_signal"), full_screen=True),
+                ui.card(ui.card_header("Marginalized PoD Surface"), ui.output_plot("plot_multi_curve"), full_screen=True),
+                col_widths=[6, 6], class_="mb-3"
+            ),
+            ui.layout_columns(
+                ui.card(ui.card_header("Key Analysis Specs"), ui.output_data_frame("multi_stats_table")),
+                ui.card(
+                    ui.card_header("Export 2D/3D Data"),
+                    ui.div(
+                        ui.p("Download the fully bounded, marginalized surface map data."),
+                        ui.download_button("download_multi_results", "Download Surface CSV", class_="btn-success w-100")
+                    ), class_="d-flex align-items-center justify-content-center text-center h-100"
+                ), col_widths=[8, 4]
+            )
+        )
+
+    @render.plot
+    def plot_multi_model_selection():
+        _ = plot_multi_trigger()
+        study = current_study()
+        return study.plots["model_selection"] if study and "model_selection" in study.plots else None
+
+    @render.plot
+    def plot_multi_signal():
+        _ = plot_multi_trigger()
+        study = current_study()
+        return study.plots["signal_model"] if study and "signal_model" in study.plots else None
+
+    @render.plot
+    def plot_multi_curve():
+        _ = plot_multi_trigger()
+        study = current_study()
+        return study.plots["pod_curve"] if study and "pod_curve" in study.plots else None
+
+    @render.data_frame
+    def multi_stats_table():
+        data = multi_pod_metrics()
+        if data is None:
+            return None
+        return render.DataGrid(pd.DataFrame(list(data.items()), columns=["Metric", "Value"]), width="100%", filters=False)
+
+    @render.download(filename="multi_pod_surface.csv")
+    def download_multi_results():
+        df = multi_pod_export_data()
         if df is not None:
             yield df.to_csv(index=False)
 
