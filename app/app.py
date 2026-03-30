@@ -966,6 +966,7 @@ def server(input, output, session):
             outcome_col=out_col
         )
         study.add_data(df)
+        study._validate()
         return study
 
     # --- REACTIVE VALUES ---

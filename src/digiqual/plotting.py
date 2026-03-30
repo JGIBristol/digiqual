@@ -151,3 +151,68 @@ def plot_pod_curve(
     ax.grid(True, alpha=0.3)
 
     return ax
+
+
+def plot_pod_surface(
+    X_eval: np.ndarray,
+    pod_curve: np.ndarray,
+    poi_names: list,
+    ax: Optional[plt.Axes] = None
+) -> plt.Axes:
+    """
+    Result Plot 3: 3D Surface for Multi-Dimensional PoD.
+
+    Visualizes the marginalized PoD surface across two Parameters of Interest.
+
+    Args:
+        X_eval: The grid of points used for the curves.
+        pod_curve: The main PoD estimate (0.0 to 1.0).
+        poi_names: The labels for the two Parameters of Interest.
+        ax: (Optional) Matplotlib axes to plot on. Creates new 3D axes if None.
+    """
+    if ax is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+    # Calculate grid dimension
+    n_points = int(np.sqrt(len(pod_curve)))
+    
+    # Reshape arrays for 3D plotting
+    X1 = X_eval[:, 0].reshape(n_points, n_points)
+    X2 = X_eval[:, 1].reshape(n_points, n_points)
+    Z = pod_curve.reshape(n_points, n_points)
+
+    # Plot surface
+    surf = ax.plot_surface(X1, X2, Z, cmap='viridis', edgecolor='none', alpha=0.8)
+
+    # Formatting
+    ax.set_xlabel(poi_names[0])
+    ax.set_ylabel(poi_names[1])
+    ax.set_zlabel("Probability of Detection")
+    ax.set_title(f"Marginalized PoD Surface\n({poi_names[0]} vs {poi_names[1]})")
+
+    return ax
+
+
+def plot_signal_surface(
+    X: np.ndarray,
+    y: np.ndarray,
+    poi_names: list,
+    ax: Optional[plt.Axes] = None
+) -> plt.Axes:
+    """
+    Result Plot 4: 3D Scatter for Raw Signal Cloud.
+
+    Visualizes the raw simulation data points in a 3D space for multi-dimensional analysis.
+    """
+    if ax is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+    ax.scatter(X[:, 0], X[:, 1], y, alpha=0.5, c='grey', s=20, label='Simulation Data')
+    ax.set_xlabel(poi_names[0])
+    ax.set_ylabel(poi_names[1])
+    ax.set_zlabel("Signal Response")
+    ax.set_title(f"Raw Signal Cloud (Nuisance Variation)\n({poi_names[0]} vs {poi_names[1]})")
+    
+    return ax

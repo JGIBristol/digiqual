@@ -521,7 +521,14 @@ class SimulationStudy:
                 self.plots["pod_curve"].set_title("Marginalized PoD Curve", fontweight='bold')
             else:
                 poi_labels = res["poi_cols"]
-                from .plotting import plot_pod_surface
+                from .plotting import plot_pod_surface, plot_signal_surface
+                
+                self.plots["signal_model"] = plot_signal_surface(
+                    X=res["X_raw_poi"],
+                    y=res["y_raw"],
+                    poi_names=poi_labels
+                )
+                
                 self.plots["pod_curve"] = plot_pod_surface(
                     X_eval=res["X_eval_poi"],
                     pod_curve=res["marginal_pod"],
