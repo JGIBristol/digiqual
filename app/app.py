@@ -670,7 +670,7 @@ def server(input, output, session):
     def download_lhs():
         df = final_generated_df()
         if df is not None:
-            yield df.to_csv(index=False)
+            yield df.to_csv(index=False).encode('utf-8')
 
     @reactive.effect
     @reactive.event(input.num_rows)
@@ -881,7 +881,7 @@ def server(input, output, session):
     def download_new_samples():
         df = new_samples()
         if df is not None:
-            yield df.to_csv(index=False)
+            yield df.to_csv(index=False).encode('utf-8')
 
 
 #### Server - PoD Generation (Tab 4) ####
@@ -1055,6 +1055,7 @@ def server(input, output, session):
                 class_="mb-3"
             ),
             # Row 3: Table and Download Actions
+            # Row 3: Table and Download Actions
             ui.layout_columns(
                 ui.card(
                     ui.card_header("Key Reliability Metrics"),
@@ -1063,10 +1064,17 @@ def server(input, output, session):
                 ui.card(
                     ui.card_header("Export Results"),
                     ui.div(
-                        ui.p("Download the full curve data (PoD, CI) for external reporting."),
-                        ui.download_button("download_pod_results", "Download Results CSV", class_="btn-success w-100")
+                        # Updated text explaining the two download options
+                        ui.p("Download the key reliability metrics or the full curve data (PoD, CI) for external reporting.", class_="small text-muted mb-3"),
+
+                        # New button for metrics
+                        ui.download_button("download_pod_metrics", "Download Metrics", class_="btn-primary w-100 mb-2", icon=icon_svg("file-csv")),
+
+                        # Updated existing button for the curve
+                        ui.download_button("download_pod_results", "Download Full Curve", class_="btn-success w-100", icon=icon_svg("download"))
                     ),
-                    class_="d-flex align-items-center justify-content-center text-center h-100"
+                    # Changed to flex-column to stack the buttons and text nicely
+                    class_="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3"
                 ),
                 col_widths=[8, 4]
             )
@@ -1112,7 +1120,18 @@ def server(input, output, session):
         """
         df = pod_export_data()
         if df is not None:
-            yield df.to_csv(index=False)
+            yield df.to_csv(index=False).encode('utf-8')
+
+    @render.download(filename="pod_metrics_summary.csv")
+    def download_pod_metrics():
+        """
+        Downloads the scalar key reliability metrics as a CSV.
+        """
+        metrics_dict = pod_metrics()
+        if metrics_dict is not None:
+            # Convert the stored dictionary into a DataFrame just like we do for the UI table
+            df = pd.DataFrame(list(metrics_dict.items()), columns=["Metric", "Value"])
+            yield df.to_csv(index=False).encode('utf-8')
 
 #### App ####
 # 1. Define the absolute path to your www directory
