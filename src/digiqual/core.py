@@ -216,9 +216,9 @@ class SimulationStudy:
             ```python
             # 1. Define the variable ranges
             ranges = {"Length": (0, 10), "Angle": (-45, 45)}
-            
+
             study = SimulationStudy(input_cols=["Length", "Angle"], outcome_col="Signal")
-            
+
             # 2. Define a "solver" command.
             # We use 'python -c' to simulate an external tool (like Ansys/Abaqus)
             # that reads {input}, does math, and saves to {output}.
@@ -230,14 +230,14 @@ class SimulationStudy:
             'df.to_csv("{output}", index=False)'
             "'"
             )
-            
+
             # 3. Run the automated loop
             study.optimise(
             command=cmd,
             ranges=ranges,
             max_iter=3
             )
-            
+
             # 4. View the results
             _ = study.pod(poi_col="Length", threshold=4.0)
             study.visualise()
@@ -344,6 +344,7 @@ class SimulationStudy:
         self.pod_results = {
             "poi_col": poi_col,
             "threshold": threshold,
+            "n_boot" : n_boot,
             "a90_95": a90_95,
             "X": X,
             "y": y,
@@ -376,7 +377,7 @@ class SimulationStudy:
             ```python
             # Display only
             study.visualise()
-            
+
             # Save to disk
             study.visualise(show=False, save_path='my_plots')
             ```

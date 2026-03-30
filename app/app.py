@@ -995,13 +995,30 @@ def server(input, output, session):
                 model_str = "Kriging (Gaussian Process)"
 
             # 4. Create Metrics Dictionary for the UI
+
+            # Unpack distribution info
+            dist_name = results["dist_info"][0].capitalize()
+            dist_params = results["dist_info"][1]
+            formatted_params = ", ".join([f"{p:.4f}" for p in dist_params])
+
+            # Extract the Mean Squared Error (MSE) of the winning model
+            cv_scores = results["mean_model"].cv_scores_
+            best_mse = min(cv_scores.values())
+
+            # Calculate Sample Size
+            n_samples = len(results["X"])
+
             metrics = {
                 "Parameter of Interest": results["poi_col"],
                 "Threshold": results["threshold"],
                 "a90/95": a9095_str,
+                "Sample Size (N)": n_samples,
                 "Mean Model": model_str,
+                "Model Fit (MSE)": f"{best_mse:.2e}",
                 "Smoothing Bandwidth": f"{results['bandwidth']:.4f}",
-                "Error Distribution": results["dist_info"][0].capitalize()
+                "Error Distribution": dist_name,
+                "Distribution Parameters": formatted_params,
+                "Bootstrap Iterations": results["n_boot"]
             }
             pod_metrics.set(metrics)
 
