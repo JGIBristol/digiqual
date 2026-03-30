@@ -7,6 +7,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score, KFold
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
+from scipy.optimize import minimize_scalar
 
 #### Mean Model - Robust Regression (Polynomial + Kriging) ####
 
@@ -198,46 +199,149 @@ def plot_model_selection(cv_scores: dict) -> Any:
 
 #### Variance Model - Kernel Smoothing ####
 
+def optimize_bandwidth(
+    X: np.ndarray,
+    residuals: np.ndarray,
+    min_ratio: float = 0.01,
+    max_ratio: float = 0.5
+) -> float:
+    """
+    Finds the optimal kernel smoothing bandwidth using Leave-One-Out Cross-Validation (LOO-CV).
+
+    This function automatically determines the best smoothing window (sigma) for the
+    variance model. It evaluates different bandwidths by predicting the squared residual
+    of each point using a Gaussian weighted average of all *other* points, selecting
+    the bandwidth that minimizes the Mean Squared Error (MSE) of these predictions.
+
+    Args:
+        X (np.ndarray): A 1D array of the original input locations (e.g., flaw sizes).
+        residuals (np.ndarray): The raw residuals calculated from the mean model
+            (differences between observed y and predicted mean y).
+        min_ratio (float, optional): The lower bound for the optimizer's search space,
+            defined as a fraction of the total range of X (X.max() - X.min()). Defaults to 0.01.
+        max_ratio (float, optional): The upper bound for the optimizer's search space,
+            defined as a fraction of the total range of X. Defaults to 0.5.
+
+    Returns:
+        float: The optimal smoothing bandwidth in the absolute units of X.
+
+    Examples:
+        ```python
+        import numpy as np
+
+        # 1. Generate dummy input data and simulated residuals
+        X = np.linspace(0, 10, 50)
+        # Simulate heteroscedastic noise (variance increases with X)
+        residuals = np.random.normal(0, X * 0.5, size=50)
+
+        # 2. Find the optimal bandwidth
+        optimal_bw = optimize_bandwidth(X, residuals)
+        print(f"Optimal Bandwidth: {optimal_bw:.4f}")
+        ```
+    """
+    sq_residuals = residuals.flatten() ** 2
+    X_flat = X.flatten()
+    data_range = X_flat.max() - X_flat.min()
+
+    def loo_cv_objective(bw: float) -> float:
+        # Calculate distance matrix between all points
+        diff = X_flat.reshape(-1, 1) - X_flat.reshape(1, -1)
+
+        # Calculate Gaussian weights
+        weights = stats.norm.pdf(diff, loc=0, scale=bw)
+
+        # Leave-One-Out: Set diagonal to zero so a point doesn't predict itself
+        np.fill_diagonal(weights, 0)
+
+        # Normalize weights so each row sums to 1
+        row_sums = weights.sum(axis=1)
+        row_sums[row_sums == 0] = 1e-10  # Prevent division by zero
+        weights = weights / row_sums.reshape(-1, 1)
+
+        # Predict the squared residuals
+        preds = weights @ sq_residuals
+
+        # Return the Mean Squared Error of the variance prediction
+        return float(np.mean((sq_residuals - preds) ** 2))
+
+    # Define the search bounds for the optimizer
+    bounds = (data_range * min_ratio, data_range * max_ratio)
+
+    # Run a bounded scalar optimization to find the minimum LOO-CV error
+    res = minimize_scalar(loo_cv_objective, bounds=bounds, method='bounded')
+
+    return float(res.x)
+
+
 def fit_variance_model(
     X: np.ndarray,
     y: np.ndarray,
     mean_model: Any,
+    auto_bandwidth: bool = True,
     bandwidth_ratio: float = 0.1,
     n_eval_points: int = 100
 ) -> Tuple[np.ndarray, float, np.ndarray]:
     """
-    Calculates residuals and prepares the grid for variance estimation.
+    Calculates residuals and defines the smoothing bandwidth for variance estimation.
 
-    This acts as the setup phase for the heteroscedasticity model. It computes
-    the raw residuals from the mean model and defines the smoothing bandwidth.
+    This function acts as the setup phase for modeling heteroscedasticity. It computes
+    the raw residuals from the provided mean model and establishes the smoothing
+    bandwidth either via automated Cross-Validation or a fixed user-defined ratio.
+    It also generates a linearly spaced evaluation grid over the X domain.
 
     Args:
-        X (np.ndarray): The original input data.
-        y (np.ndarray): The original outcome data.
-        mean_model (Any): The fitted sklearn pipeline from `fit_robust_mean_model`.
+        X (np.ndarray): The 1D array of original input data (e.g., parameter of interest).
+        y (np.ndarray): The 1D array of original outcome data (e.g., signal response).
+        mean_model (Any): A fitted scikit-learn estimator (e.g., Pipeline or
+            GaussianProcessRegressor) that implements a `.predict()` method.
+        auto_bandwidth (bool, optional): If True, dynamically calculates the optimal
+            bandwidth using Leave-One-Out Cross-Validation. If False, falls back to
+            the fixed `bandwidth_ratio`. Defaults to True.
         bandwidth_ratio (float, optional): The kernel smoothing window size as a
-            fraction of the data range (X_max - X_min). Defaults to 0.1.
-        n_eval_points (int, optional): Number of points in the evaluation grid.
-            Defaults to 100.
+            fraction of the data range (X.max() - X.min()). Only used if
+            `auto_bandwidth` is False. Defaults to 0.1.
+        n_eval_points (int, optional): The number of points to generate for the
+            evaluation grid (`X_eval`). Defaults to 100.
 
     Returns:
         Tuple[np.ndarray, float, np.ndarray]:
-            - residuals: Raw differences between `y` and the mean model prediction.
-            - bandwidth: The calculated smoothing window size (absolute units).
-            - X_eval: A linearly spaced grid over the X domain for plotting/evaluation.
+            - residuals: Raw differences between `y` and the mean model predictions.
+            - bandwidth: The selected smoothing window size (in absolute units of X).
+            - X_eval: A linearly spaced grid over the X domain for downstream plotting/evaluation.
 
     Examples:
         ```python
+        import numpy as np
+        from sklearn.linear_model import LinearRegression
+
+        # 1. Setup dummy data and a basic mean model
+        X = np.linspace(0, 10, 50)
+        y = 2.5 * X + np.random.normal(0, 1, 50)
+
+        model = LinearRegression()
+        model.fit(X.reshape(-1, 1), y)
+
+        # 2. Extract residuals and optimized bandwidth
         residuals, bandwidth, X_eval = fit_variance_model(
-            X, y, mean_model, bandwidth_ratio=0.1
+            X, y,
+            mean_model=model,
+            auto_bandwidth=True
         )
+
+        print(f"Calculated Bandwidth: {bandwidth:.4f}")
+        print(f"Evaluation Grid Size: {len(X_eval)}")
         ```
     """
     X_2d = X.reshape(-1, 1)
     y_pred = mean_model.predict(X_2d)
     residuals = y - y_pred
 
-    bandwidth = (X.max() - X.min()) * bandwidth_ratio
+    if auto_bandwidth:
+        print("   -> Optimizing bandwidth via LOO-CV...")
+        bandwidth = optimize_bandwidth(X, residuals)
+    else:
+        bandwidth = (X.max() - X.min()) * bandwidth_ratio
+
     X_eval = np.linspace(X.min(), X.max(), n_eval_points)
 
     return residuals, bandwidth, X_eval
