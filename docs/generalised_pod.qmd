@@ -1,0 +1,70 @@
+---
+title: "Generalised Probability of Detection"
+---
+
+In traditional non-destructive evaluation (NDE), the standard $\hat{a}$ vs $a$ approach relies on several restrictive assumptions: linearity, homoscedasticity (constant variance), and normality of residuals. Interaction with complex physics—such as crack roughness—often breaks these assumptions.
+
+To address this, `digiqual` implements a generalized framework based on the work of Malkiel et al. (2025). This article showcases the specific functions used to relax these assumptions.
+
+
+## 1. Automated Model Selection: `fit_robust_mean_model()`
+Instead of forcing a linear relationship, `digiqual` treats the expectation model as a selection problem.
+
+* **Functionality**: This function evaluates a pool of candidate models, including polynomials (up to degree 10) and Gaussian Process (Kriging) models.
+* **The Relaxation**: It uses **10-fold Cross-Validation (CV)** to calculate the Mean Squared Error (MSE) for every candidate.
+* **Selection Logic**: By identifying the model that minimizes the CV error, the system automatically balances bias and variance without manual tuning.
+
+```{python}
+#| eval: false
+# From pod.py: Selecting the best fit among Poly 1-10 and Kriging
+best_model_info = min(cv_scores, key=cv_scores.get)
+best_type, best_params = best_model_info
+```
+
+## 2. Modeling Heteroscedasticity: `predict_local_std()`
+In many simulations, signal scatter increases with flaw size. `digiqual` replaces the "constant variance" assumption with a localized estimation.
+
+* **Functionality**: It implements a **Nadaraya-Watson Gaussian kernel average smoother**.
+* **The Relaxation**: The function calculates the variance at a specific point by taking a weighted average of the surrounding squared residuals.
+* **Bandwidth Optimisation**: The `optimize_bandwidth` function uses **Leave-One-Out Cross-Validation (LOO-CV)** to determine the optimal "window" (sigma) for this smoothing.
+
+```{python}
+#| eval: false
+# From pod.py: Calculating weights for the local variance
+weights = stats.norm.pdf(diff, loc=0, scale=bandwidth)
+local_std = np.sqrt(weights @ sq_residuals)
+```
+
+## 3. Inferring Error Distributions: `infer_best_distribution()`
+The assumption that noise is always Gaussian (Normal) is often inaccurate for safety-critical inspections.
+
+* **Functionality**: This function standardizes the residuals (calculating Z-scores) using the local standard deviation estimated above.
+* **The Relaxation**: It fits the Z-scores against a suite of distributions: **Normal, Gumbel (left/right skewed), Logistic, Laplace, and t-Student**.
+* **Selection Logic**: The best-fitting distribution is selected using the **Akaike Information Criterion (AIC)**, which rewards likelihood while penalizing overfitting.
+
+```{python}
+# | eval: false
+# pod.py identifies the best analytical distribution to use for PoD
+for dist_name in candidates:
+    params = dist_obj.fit(z_scores)
+    aic = 2 * k - 2 * log_likelihood  # Lower is better
+```
+
+## 4. Analytical PoD and Bootstrapping
+Once the models for the mean, variance, and distribution are established, the PoD is calculated.
+
+### Curve Generation: `compute_pod_curve()`
+This function analytically derives the PoD at every point by calculating the probability that the signal exceeds the threshold, based on the inferred distribution and local variance.
+
+### Confidence Bounds: `bootstrap_pod_ci()`
+Because the model is now non-linear and non-normal, traditional analytical confidence bounds are not tractable. `digiqual` uses **Bootstrap resampling** (typically 1000 iterations) to generate 95% confidence intervals by refitting the models to resampled datasets.
+
+
+## Example Summary
+By calling `study.pod()`, these functions work in sequence:
+1.  **`fit_robust_mean_model`** finds the non-linear trend.
+2.  **`fit_variance_model`** and **`predict_local_std`** capture the growing noise.
+3.  **`infer_best_distribution`** selects the true shape of the error.
+4.  **`bootstrap_pod_ci`** quantifies the reliability of the resulting curve.
+
+Would you like me to help you implement a custom diagnostic plot that specifically compares the residuals against the selected AIC distribution?

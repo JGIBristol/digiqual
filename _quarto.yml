@@ -33,6 +33,8 @@ website:
         href: index.qmd
       - text: "Installation"
         href: docs/install.qmd
+      - text: "PoD Generalisation"
+        href: docs/generalised_pod.qmd
       - text: "Quick Start"
         href: docs/qs_class.qmd
       - text: "GUI - Shiny App"
@@ -99,6 +101,7 @@ quartodoc:
 
         # -- PoD Analysis --
         - pod.fit_robust_mean_model
+        - pod.optimise_bandwidth
         - pod.fit_variance_model
         - pod.infer_best_distribution
         - pod.plot_model_selection

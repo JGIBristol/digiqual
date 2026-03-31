@@ -199,7 +199,7 @@ def plot_model_selection(cv_scores: dict) -> Any:
 
 #### Variance Model - Kernel Smoothing ####
 
-def optimize_bandwidth(
+def optimise_bandwidth(
     X: np.ndarray,
     residuals: np.ndarray,
     min_ratio: float = 0.01,
@@ -338,7 +338,7 @@ def fit_variance_model(
 
     if auto_bandwidth:
         print("   -> Optimizing bandwidth via LOO-CV...")
-        bandwidth = optimize_bandwidth(X, residuals)
+        bandwidth = optimise_bandwidth(X, residuals)
     else:
         bandwidth = (X.max() - X.min()) * bandwidth_ratio
 
