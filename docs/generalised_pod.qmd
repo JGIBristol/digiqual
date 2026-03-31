@@ -62,9 +62,11 @@ Because the model is now non-linear and non-normal, traditional analytical confi
 
 ## Example Summary
 By calling `study.pod()`, these functions work in sequence:
-1.  **`fit_robust_mean_model`** finds the non-linear trend.
-2.  **`fit_variance_model`** and **`predict_local_std`** capture the growing noise.
-3.  **`infer_best_distribution`** selects the true shape of the error.
-4.  **`bootstrap_pod_ci`** quantifies the reliability of the resulting curve.
 
-Would you like me to help you implement a custom diagnostic plot that specifically compares the residuals against the selected AIC distribution?
+1.  **`fit_robust_mean_model`** finds the non-linear trend.
+
+2.  **`fit_variance_model`** and **`predict_local_std`** capture the growing noise.
+
+3.  **`infer_best_distribution`** selects the true shape of the error.
+
+4.  **`bootstrap_pod_ci`** quantifies the reliability of the resulting curve.
