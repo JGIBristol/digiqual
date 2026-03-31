@@ -67,7 +67,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
 <link href="../docs/gui.html" rel="next">
-<link href="../docs/install.html" rel="prev">
+<link href="../docs/generalised_pod.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
@@ -180,6 +180,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">PoD Generalisation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../docs/qs_class.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Quick Start</span></a>
   </div>
@@ -252,7 +258,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="setup-flawed-data-generation" class="level3">
 <h3 class="anchored" data-anchor-id="setup-flawed-data-generation">1. Setup &amp; “Flawed” Data Generation</h3>
 <p>First, we define our physics simulation and create a dataset with a deliberate gap (missing data between 3mm and 7mm).</p>
-<div id="8bb84f67" class="cell" data-execution_count="1">
+<div id="d33498e9" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -312,7 +318,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="diagnosis-detecting-the-issue" class="level3">
 <h3 class="anchored" data-anchor-id="diagnosis-detecting-the-issue">2. Diagnosis (Detecting the Issue)</h3>
 <p>We now ask the study manager to diagnose the health of our experiment. We expect it to flag the Input Coverage test because of the gap we created.</p>
-<div id="450b4153" class="cell" data-execution_count="2">
+<div id="20772699" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Running validation...
@@ -341,7 +347,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.4123</td>
+<td>0.4191</td>
 <td>&lt; 0.20</td>
 <td>False</td>
 </tr>
@@ -350,7 +356,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.0572</td>
+<td>0.0581</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -359,7 +365,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.0767</td>
+<td>0.0470</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -368,7 +374,7 @@ Checking sample sufficiency...</code></pre>
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9984</td>
+<td>0.9976</td>
 <td>&gt; 0.50</td>
 <td>True</td>
 </tr>
@@ -377,7 +383,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Avg CV (Rel Std Dev)</td>
-<td>0.0144</td>
+<td>0.0197</td>
 <td>&lt; 0.15</td>
 <td>True</td>
 </tr>
@@ -386,7 +392,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Max CV (Rel Std Dev)</td>
-<td>0.0286</td>
+<td>0.0405</td>
 <td>&lt; 0.30</td>
 <td>True</td>
 </tr>
@@ -400,7 +406,7 @@ Checking sample sufficiency...</code></pre>
 <section id="adaptive-refinement-the-fix" class="level3">
 <h3 class="anchored" data-anchor-id="adaptive-refinement-the-fix">3. Adaptive Refinement (The Fix)</h3>
 <p>Instead of manually guessing where to add points, we use refine(). The study manager automatically detects the gap and generates targeted samples to fill it. In this example, we run the <code>apply_physics()</code> function, but in reality, users should feed the new samples dataframe into their simulation engine to calculate the outcome variable. Users can then add those results into the SimulationStudy class using the <code>add_data()</code> method.</p>
-<div id="40bc2a26" class="cell" data-execution_count="3">
+<div id="863877ad" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate active learning samples (20 points to fill the gap)</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>new_samples <span class="op">=</span> study.refine(n_points<span class="op">=</span><span class="dv">20</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -417,7 +423,7 @@ Data updated. Total rows: 100</code></pre>
 </div>
 </div>
 <p>Now we verify that the issue is resolved:</p>
-<div id="91635d4d" class="cell" data-execution_count="4">
+<div id="61ae796c" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-run diagnostics to confirm the green light</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -447,7 +453,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.0606</td>
+<td>0.0700</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -456,7 +462,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.0572</td>
+<td>0.0561</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -465,7 +471,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.0568</td>
+<td>0.0398</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -474,7 +480,7 @@ Checking sample sufficiency...</code></pre>
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9978</td>
+<td>0.9973</td>
 <td>&gt; 0.50</td>
 <td>True</td>
 </tr>
@@ -483,7 +489,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Avg CV (Rel Std Dev)</td>
-<td>0.0149</td>
+<td>0.0177</td>
 <td>&lt; 0.15</td>
 <td>True</td>
 </tr>
@@ -492,7 +498,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Max CV (Rel Std Dev)</td>
-<td>0.0310</td>
+<td>0.0347</td>
 <td>&lt; 0.30</td>
 <td>True</td>
 </tr>
@@ -515,12 +521,13 @@ Checking sample sufficiency...</code></pre>
 1. Selecting Mean Model (Cross-Validation)...
 -&gt; Selected Model: Polynomial (Degree 2)
 2. Fitting Variance Model (Kernel Smoothing)...
-   -&gt; Smoothing Bandwidth: 0.9860
+   -&gt; Optimizing bandwidth via LOO-CV...
+   -&gt; Smoothing Bandwidth: 3.8086
 3. Inferring Error Distribution (AIC)...
-   -&gt; Selected Distribution: norm
+   -&gt; Selected Distribution: logistic
 4. Computing PoD Curve...
 5. Running Bootstrap (1000 iterations)...
-   -&gt; a90/95 Reliability Index: 2.840
+   -&gt; a90/95 Reliability Index: 2.853
 --- Analysis Complete ---</code></pre>
 </div>
 </div>
@@ -1040,8 +1047,8 @@ Figure&nbsp;1: Reliability Analysis Results
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../docs/install.html" class="pagination-link" aria-label="Installation">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Installation</span>
+      <a href="../docs/generalised_pod.html" class="pagination-link" aria-label="PoD Generalisation">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">PoD Generalisation</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">

@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>pod.infer_best_distribution – digiqual</title>
+<title>pod.optimise_bandwidth – digiqual</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -212,14 +212,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.pod.infer_best_distribution" id="toc-digiqual.pod.infer_best_distribution" class="nav-link active" data-scroll-target="#digiqual.pod.infer_best_distribution">pod.infer_best_distribution</a>
+  <li><a href="#digiqual.pod.optimise_bandwidth" id="toc-digiqual.pod.optimise_bandwidth" class="nav-link active" data-scroll-target="#digiqual.pod.optimise_bandwidth">pod.optimise_bandwidth</a>
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
   <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
   <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
   </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/pod.infer_best_distribution.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/pod.optimise_bandwidth.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
@@ -227,19 +227,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<section id="digiqual.pod.infer_best_distribution" class="level1">
-<h1>pod.infer_best_distribution</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>infer_best_distribution(residuals, X, bandwidth)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Selects the best statistical distribution for the standardized residuals using AIC.</p>
-<p>This function normalizes residuals by their local standard deviation (Z-scores) and tests them against a suite of candidate distributions (Normal, Gumbel, Logistic, Laplace, t-Student).</p>
+<section id="digiqual.pod.optimise_bandwidth" class="level1">
+<h1>pod.optimise_bandwidth</h1>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>optimise_bandwidth(X, residuals, min_ratio<span class="op">=</span><span class="fl">0.01</span>, max_ratio<span class="op">=</span><span class="fl">0.5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Finds the optimal kernel smoothing bandwidth using Leave-One-Out Cross-Validation (LOO-CV).</p>
+<p>This function automatically determines the best smoothing window (sigma) for the variance model. It evaluates different bandwidths by predicting the squared residual of each point using a Gaussian weighted average of all <em>other</em> points, selecting the bandwidth that minimizes the Mean Squared Error (MSE) of these predictions.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 14%">
-<col style="width: 15%">
-<col style="width: 55%">
-<col style="width: 15%">
+<col style="width: 6%">
+<col style="width: 7%">
+<col style="width: 79%">
+<col style="width: 7%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -251,22 +251,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td>residuals</td>
+<td>X</td>
 <td>np.ndarray</td>
-<td>Raw residuals from the mean model.</td>
+<td>A 1D array of the original input locations (e.g., flaw sizes).</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
-<td>X</td>
+<td>residuals</td>
 <td>np.ndarray</td>
-<td>Input locations for the residuals.</td>
+<td>The raw residuals calculated from the mean model (differences between observed y and predicted mean y).</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
-<td>bandwidth</td>
+<td>min_ratio</td>
 <td>float</td>
-<td>Bandwidth used for local standardization.</td>
-<td><em>required</em></td>
+<td>The lower bound for the optimizer’s search space, defined as a fraction of the total range of X (X.max() - X.min()). Defaults to 0.01.</td>
+<td><code>0.01</code></td>
+</tr>
+<tr class="even">
+<td>max_ratio</td>
+<td>float</td>
+<td>The upper bound for the optimizer’s search space, defined as a fraction of the total range of X. Defaults to 0.5.</td>
+<td><code>0.5</code></td>
 </tr>
 </tbody>
 </table>
@@ -275,9 +281,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 3%">
 <col style="width: 10%">
-<col style="width: 85%">
+<col style="width: 10%">
+<col style="width: 79%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -288,17 +294,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td></td>
-<td>Tuple[str, Tuple]</td>
-<td>Tuple[str, Tuple]: - best_name: The SciPy name of the best-fitting distribution (e.g., ‘norm’). - best_params: The fitted parameters for that distribution (e.g., loc, scale).</td>
+<td>float</td>
+<td>float</td>
+<td>The optimal smoothing bandwidth in the absolute units of X.</td>
 </tr>
 </tbody>
 </table>
 </section>
 <section id="examples" class="level2 doc-section doc-section-examples">
 <h2 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>dist_name, dist_params <span class="op">=</span> infer_best_distribution(residuals, X, bandwidth)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Best distribution: </span><span class="sc">{</span>dist_name<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Generate dummy input data and simulated residuals</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="dv">10</span>, <span class="dv">50</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate heteroscedastic noise (variance increases with X)</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>residuals <span class="op">=</span> np.random.normal(<span class="dv">0</span>, X <span class="op">*</span> <span class="fl">0.5</span>, size<span class="op">=</span><span class="dv">50</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Find the optimal bandwidth</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>optimal_bw <span class="op">=</span> optimize_bandwidth(X, residuals)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Optimal Bandwidth: </span><span class="sc">{</span>optimal_bw<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 </section>
@@ -710,4 +724,4 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/pod.infer_best_distribution.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/pod.optimise_bandwidth.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

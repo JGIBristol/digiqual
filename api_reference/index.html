@@ -140,6 +140,12 @@ ul.task-list li input[type="checkbox"] {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">PoD Generalisation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../docs/qs_class.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Quick Start</span></a>
   </div>
@@ -247,38 +253,42 @@ ul.task-list li input[type="checkbox"] {
 <td>Fits regression models (Polynomials and Kriging) and selects the optimal one.</td>
 </tr>
 <tr class="even">
-<td><a href="../api_reference/pod.fit_variance_model.html#digiqual.pod.fit_variance_model">pod.fit_variance_model</a></td>
-<td>Calculates residuals and prepares the grid for variance estimation.</td>
+<td><a href="../api_reference/pod.optimise_bandwidth.html#digiqual.pod.optimise_bandwidth">pod.optimise_bandwidth</a></td>
+<td>Finds the optimal kernel smoothing bandwidth using Leave-One-Out Cross-Validation (LOO-CV).</td>
 </tr>
 <tr class="odd">
+<td><a href="../api_reference/pod.fit_variance_model.html#digiqual.pod.fit_variance_model">pod.fit_variance_model</a></td>
+<td>Calculates residuals and defines the smoothing bandwidth for variance estimation.</td>
+</tr>
+<tr class="even">
 <td><a href="../api_reference/pod.infer_best_distribution.html#digiqual.pod.infer_best_distribution">pod.infer_best_distribution</a></td>
 <td>Selects the best statistical distribution for the standardized residuals using AIC.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/pod.plot_model_selection.html#digiqual.pod.plot_model_selection">pod.plot_model_selection</a></td>
 <td>Generates a normalized bar chart of the Bias-Variance Tradeoff from CV scores,</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/pod.predict_local_std.html#digiqual.pod.predict_local_std">pod.predict_local_std</a></td>
 <td>Estimates the local standard deviation using Gaussian Kernel Smoothing.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/pod.compute_pod_curve.html#digiqual.pod.compute_pod_curve">pod.compute_pod_curve</a></td>
 <td>Calculates the Probability of Detection (PoD) curve.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/pod.bootstrap_pod_ci.html#digiqual.pod.bootstrap_pod_ci">pod.bootstrap_pod_ci</a></td>
 <td>Estimates 95% Confidence Bounds for the PoD curve via Bootstrapping.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/pod.calculate_reliability_point.html#digiqual.pod.calculate_reliability_point">pod.calculate_reliability_point</a></td>
 <td>Calculates the defect size (a90/95) where the Lower Confidence Bound</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/plotting.plot_signal_model.html#digiqual.plotting.plot_signal_model">plotting.plot_signal_model</a></td>
 <td>Diagnostic Plot 1: Signal vs Parameter of Interest (The Physics).</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/plotting.plot_pod_curve.html#digiqual.plotting.plot_pod_curve">plotting.plot_pod_curve</a></td>
 <td>Result Plot 2: Probability of Detection (The Reliability).</td>
 </tr>
