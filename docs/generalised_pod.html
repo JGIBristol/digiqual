@@ -287,7 +287,7 @@ window.Quarto = {
 <li><strong>The Relaxation</strong>: It uses <strong>10-fold Cross-Validation (CV)</strong> to calculate the Mean Squared Error (MSE) for every candidate.</li>
 <li><strong>Selection Logic</strong>: By identifying the model that minimizes the CV error, the system automatically balances bias and variance without manual tuning.</li>
 </ul>
-<div id="dd09503b" class="cell" data-execution_count="1">
+<div id="34d001a5" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># From pod.py: Selecting the best fit among Poly 1-10 and Kriging</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>best_model_info <span class="op">=</span> <span class="bu">min</span>(cv_scores, key<span class="op">=</span>cv_scores.get)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>best_type, best_params <span class="op">=</span> best_model_info</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -301,7 +301,7 @@ window.Quarto = {
 <li><strong>The Relaxation</strong>: The function calculates the variance at a specific point by taking a weighted average of the surrounding squared residuals.</li>
 <li><strong>Bandwidth Optimisation</strong>: The <code>optimize_bandwidth</code> function uses <strong>Leave-One-Out Cross-Validation (LOO-CV)</strong> to determine the optimal “window” (sigma) for this smoothing.</li>
 </ul>
-<div id="fb7b67da" class="cell" data-execution_count="2">
+<div id="1d4cae77" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># From pod.py: Calculating weights for the local variance</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>weights <span class="op">=</span> stats.norm.pdf(diff, loc<span class="op">=</span><span class="dv">0</span>, scale<span class="op">=</span>bandwidth)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>local_std <span class="op">=</span> np.sqrt(weights <span class="op">@</span> sq_residuals)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -315,7 +315,7 @@ window.Quarto = {
 <li><strong>The Relaxation</strong>: It fits the Z-scores against a suite of distributions: <strong>Normal, Gumbel (left/right skewed), Logistic, Laplace, and t-Student</strong>.</li>
 <li><strong>Selection Logic</strong>: The best-fitting distribution is selected using the <strong>Akaike Information Criterion (AIC)</strong>, which rewards likelihood while penalizing overfitting.</li>
 </ul>
-<div id="2aa919e7" class="cell" data-execution_count="3">
+<div id="a6663cef" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># pod.py identifies the best analytical distribution to use for PoD</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> dist_name <span class="kw">in</span> candidates:</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    params <span class="op">=</span> dist_obj.fit(z_scores)</span>
@@ -336,8 +336,13 @@ window.Quarto = {
 </section>
 <section id="example-summary" class="level2">
 <h2 class="anchored" data-anchor-id="example-summary">Example Summary</h2>
-<p>By calling <code>study.pod()</code>, these functions work in sequence: 1. <strong><code>fit_robust_mean_model</code></strong> finds the non-linear trend. 2. <strong><code>fit_variance_model</code></strong> and <strong><code>predict_local_std</code></strong> capture the growing noise. 3. <strong><code>infer_best_distribution</code></strong> selects the true shape of the error. 4. <strong><code>bootstrap_pod_ci</code></strong> quantifies the reliability of the resulting curve.</p>
-<p>Would you like me to help you implement a custom diagnostic plot that specifically compares the residuals against the selected AIC distribution?</p>
+<p>By calling <code>study.pod()</code>, these functions work in sequence:</p>
+<ol type="1">
+<li><p><strong><code>fit_robust_mean_model</code></strong> finds the non-linear trend.</p></li>
+<li><p><strong><code>fit_variance_model</code></strong> and <strong><code>predict_local_std</code></strong> capture the growing noise.</p></li>
+<li><p><strong><code>infer_best_distribution</code></strong> selects the true shape of the error.</p></li>
+<li><p><strong><code>bootstrap_pod_ci</code></strong> quantifies the reliability of the resulting curve.</p></li>
+</ol>
 
 
 </section>
