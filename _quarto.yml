@@ -6,6 +6,7 @@ project:
     - "docs/"
     - "api_reference/"
     - "!materials/"
+    - "!todo.qmd"
 
 website:
   title: "digiqual"

@@ -1,6 +1,7 @@
 # --- System & IDE ---
 .DS_Store
 .vscode/
+todo.qmd
 
 # --- Python Essentials ---
 __pycache__/
