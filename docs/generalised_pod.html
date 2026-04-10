@@ -2,13 +2,16 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.8.27">
+<meta name="generator" content="quarto-1.9.36">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>Generalised Probability of Detection – digiqual</title>
 <style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -69,15 +72,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../docs/install.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-63f40605e193dc93a4365595d04dae46.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-831061df6c70ccdfa1370a25a7cb3c32.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -107,7 +109,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -287,7 +289,7 @@ window.Quarto = {
 <li><strong>The Relaxation</strong>: It uses <strong>10-fold Cross-Validation (CV)</strong> to calculate the Mean Squared Error (MSE) for every candidate.</li>
 <li><strong>Selection Logic</strong>: By identifying the model that minimizes the CV error, the system automatically balances bias and variance without manual tuning.</li>
 </ul>
-<div id="34d001a5" class="cell" data-execution_count="1">
+<div id="831bbaaa" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># From pod.py: Selecting the best fit among Poly 1-10 and Kriging</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>best_model_info <span class="op">=</span> <span class="bu">min</span>(cv_scores, key<span class="op">=</span>cv_scores.get)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>best_type, best_params <span class="op">=</span> best_model_info</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -301,7 +303,7 @@ window.Quarto = {
 <li><strong>The Relaxation</strong>: The function calculates the variance at a specific point by taking a weighted average of the surrounding squared residuals.</li>
 <li><strong>Bandwidth Optimisation</strong>: The <code>optimize_bandwidth</code> function uses <strong>Leave-One-Out Cross-Validation (LOO-CV)</strong> to determine the optimal “window” (sigma) for this smoothing.</li>
 </ul>
-<div id="1d4cae77" class="cell" data-execution_count="2">
+<div id="7e4f569f" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># From pod.py: Calculating weights for the local variance</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>weights <span class="op">=</span> stats.norm.pdf(diff, loc<span class="op">=</span><span class="dv">0</span>, scale<span class="op">=</span>bandwidth)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>local_std <span class="op">=</span> np.sqrt(weights <span class="op">@</span> sq_residuals)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -315,7 +317,7 @@ window.Quarto = {
 <li><strong>The Relaxation</strong>: It fits the Z-scores against a suite of distributions: <strong>Normal, Gumbel (left/right skewed), Logistic, Laplace, and t-Student</strong>.</li>
 <li><strong>Selection Logic</strong>: The best-fitting distribution is selected using the <strong>Akaike Information Criterion (AIC)</strong>, which rewards likelihood while penalizing overfitting.</li>
 </ul>
-<div id="a6663cef" class="cell" data-execution_count="3">
+<div id="5b65d7b4" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># pod.py identifies the best analytical distribution to use for PoD</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> dist_name <span class="kw">in</span> candidates:</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    params <span class="op">=</span> dist_obj.fit(z_scores)</span>
