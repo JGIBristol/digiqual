@@ -261,3 +261,32 @@ def test_calculate_reliability_point_nan():
     ci_lower = np.array([0.1, 0.2, 0.3]) # target is 0.9 by default
     res = calculate_reliability_point(X_eval, ci_lower, target_pod=0.9)
     assert np.isnan(res)
+
+
+def test_forced_model_still_shows_full_cv(linear_data):
+    """Forced model should still populate cv_scores_ in full."""
+    X, y = linear_data
+    model = fit_robust_mean_model(X, y, model_override="polynomial", force_degree=2)
+    assert model.forced_model_ is True
+    assert len(model.cv_scores_) > 1          # full, not a single NaN entry
+    assert not any(np.isnan(v) for v in model.cv_scores_.values())
+
+def test_cv_winner_differs_from_forced(linear_data):
+    """cv_winner_ should reflect what CV would have picked, not the forced choice."""
+    X, y = linear_data
+    model = fit_robust_mean_model(X, y, model_override="kriging")
+    assert model.model_type_ == 'Kriging'
+    assert model.cv_winner_ is not None       # always set
+    # cv_winner_ may or may not be Kriging — the point is it's independently determined
+
+def test_plot_model_selection_highlights_forced(linear_data):
+    """Plot should render without error when used_key differs from cv_winner_key."""
+    X, y = linear_data
+    model = fit_robust_mean_model(X, y, model_override="polynomial", force_degree=1)
+    fig = plot_model_selection(
+        model.cv_scores_,
+        used_key=('Polynomial', 1),
+        cv_winner_key=model.cv_winner_
+    )
+    assert fig is not None
+    assert len(fig.axes) == 2
