@@ -15,7 +15,9 @@ def fit_robust_mean_model(
     X: np.ndarray,
     y: np.ndarray,
     max_degree: int = 10,
-    n_folds: int = 10
+    n_folds: int = 10,
+    model_override: str = "auto",
+    force_degree: int | None = None
 ) -> Any:
     """
     Fits regression models (Polynomials and Kriging) and selects the optimal one.
@@ -24,11 +26,18 @@ def fit_robust_mean_model(
     (Polynomial or Kriging) and parameters (e.g., degree) that minimize the
     Mean Squared Error (MSE), balancing bias and variance.
 
+    When ``model_override`` is set to ``"polynomial"`` or ``"kriging"``, CV
+    selection is skipped and the requested model type is fitted directly.
+
     Args:
         X (np.ndarray): 1D array of input variable values (e.g., flaw size).
         y (np.ndarray): 1D array of outcome values (e.g., signal response).
         max_degree (int, optional): The maximum polynomial degree to test. Defaults to 10.
         n_folds (int, optional): Number of folds for Cross Validation. Defaults to 10.
+        model_override (str, optional): Force a model type. One of ``"auto"``,
+            ``"polynomial"``, or ``"kriging"``. Defaults to ``"auto"``.
+        force_degree (int | None, optional): When ``model_override="polynomial"``,
+            use this degree instead of CV selection. Defaults to None (CV selects).
 
     Returns:
         Any: A fitted scikit-learn model with the following added attributes:
@@ -43,12 +52,42 @@ def fit_robust_mean_model(
         y = 3 * X + np.random.normal(0, 1, 50)
         model = fit_robust_mean_model(X, y)
         print(model.model_type_)
+
+        # Force a cubic polynomial
+        model = fit_robust_mean_model(X, y, model_override="polynomial", force_degree=3)
         ```
     """
     X_2d = X.reshape(-1, 1)
-    degrees = range(1, max_degree + 1)
     cv_scores = {}
 
+    override = model_override.lower()
+
+    # --- Forced Polynomial with known degree (skip CV entirely) ---
+    if override == "polynomial" and force_degree is not None:
+        final_model = make_pipeline(PolynomialFeatures(degree=force_degree), LinearRegression())
+        final_model.fit(X_2d, y)
+        final_model.model_type_ = "Polynomial"
+        final_model.model_params_ = force_degree
+        final_model.cv_scores_ = {("Polynomial", force_degree): np.nan}
+        return final_model
+
+    # --- Forced Kriging (skip CV entirely) ---
+    if override == "kriging":
+        kernel = C(1.0, (1e-5, 1e6)) * RBF(1.0, (1e-3, 1e5))
+        final_model = GaussianProcessRegressor(
+            kernel=kernel,
+            n_restarts_optimizer=15,
+            alpha=np.var(y) * 0.01,
+            random_state=42
+        )
+        final_model.fit(X_2d, y)
+        final_model.model_type_ = "Kriging"
+        final_model.model_params_ = final_model.kernel_
+        final_model.cv_scores_ = {("Kriging", None): np.nan}
+        return final_model
+
+    # --- Auto / Forced Polynomial without degree: run CV ---
+    degrees = range(1, max_degree + 1)
     cv = KFold(n_splits=n_folds, shuffle=True, random_state=42)
 
     # 1. Evaluate Polynomials
@@ -58,20 +97,17 @@ def fit_robust_mean_model(
         scores = cross_val_score(model, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
         cv_scores[('Polynomial', d)] = -np.mean(scores)
 
-    # 2. Evaluate Kriging (Gaussian Process)
-    # INCREASED BOUNDS: Constant value up to 1e6 and RBF length scale up to 1e5
-    # This addresses the ConvergenceWarning
+    # 2. Evaluate Kriging (only when auto)
     kernel = C(1.0, (1e-5, 1e6)) * RBF(1.0, (1e-3, 1e5))
-
-    gpr = GaussianProcessRegressor(
-        kernel=kernel,
-        n_restarts_optimizer=10, # Increased for better global search
-        alpha=np.var(y) * 0.01,
-        random_state=42
-    )
-
-    gpr_scores = cross_val_score(gpr, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
-    cv_scores[('Kriging', None)] = -np.mean(gpr_scores)
+    if override == "auto":
+        gpr = GaussianProcessRegressor(
+            kernel=kernel,
+            n_restarts_optimizer=10,
+            alpha=np.var(y) * 0.01,
+            random_state=42
+        )
+        gpr_scores = cross_val_score(gpr, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
+        cv_scores[('Kriging', None)] = -np.mean(gpr_scores)
 
     # 3. Find best overall model
     best_model_info = min(cv_scores, key=cv_scores.get)
@@ -83,10 +119,9 @@ def fit_robust_mean_model(
         final_model.fit(X_2d, y)
         final_model.model_params_ = best_params
     else:
-        # Re-initialize with the same wide-bound kernel
         final_model = GaussianProcessRegressor(
             kernel=kernel,
-            n_restarts_optimizer=15, # More restarts for the final fit
+            n_restarts_optimizer=15,
             alpha=np.var(y) * 0.01,
             random_state=42
         )

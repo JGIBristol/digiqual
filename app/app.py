@@ -308,11 +308,29 @@ ui.nav_panel(
                             ),
                             ui.hr(class_="my-4"),
 
-                            # Module 3: Analysis
+
+                            # Module 3: Visualisation
+                            ui.div(
+                                ui.h5(
+                                    ui.span(icon_svg("display"), class_="text-info me-2"),
+                                    "3. Data Visualisation", class_="fw-bold mb-2"
+                                ),
+                                ui.p("Inspect simulation variables and results.", class_="fw-semibold mb-2"),
+                                ui.tags.ul(
+                                    ui.tags.li(""),
+                                    ui.tags.li(""),
+                                    class_="mb-0 ps-3 text-muted"
+                                ),
+                                class_="border-start border-3 border-info ps-3 mb-3"
+                            ),
+                            ui.hr(class_="my-4"),
+
+
+                            # Module 4: Analysis
                             ui.div(
                                 ui.h5(
                                     ui.span(icon_svg("chart-line"), class_="text-success me-2"),
-                                    "3. PoD Analysis", class_="fw-bold mb-2"
+                                    "4. PoD Analysis", class_="fw-bold mb-2"
                                 ),
                                 ui.p("Construct Generalized Probability of Detection (PoD) curves.", class_="fw-semibold mb-2"),
                                 ui.tags.ul(
@@ -354,18 +372,40 @@ ui.nav_panel(
 
                             # Methodology
                             ui.div(
-                                ui.h5("Methodology Reference", class_="fw-bold mb-2"),
-                                ui.p(
-                                    "Malkiel, N., Croxford, A. J., & Wilcox, P. D. (2025). ",
-                                    ui.span("A generalized method for the reliability assessment of safety–critical inspection. ", class_="fst-italic"),
-                                    "Proceedings of the Royal Society A.",
-                                    class_="text-muted mb-3"
+                                ui.h5("Methodology References", class_="fw-bold mb-3"),
+
+                                # Reference Block 1
+                                ui.div(
+                                    ui.p(
+                                        "Malkiel, N., Croxford, A. J., & Wilcox, P. D. (2025). ",
+                                        ui.span("A generalized method for the reliability assessment of safety–critical inspection. ", class_="fst-italic"),
+                                        "Proceedings of the Royal Society A.",
+                                        class_="text-muted mb-2"
+                                    ),
+                                    ui.a(
+                                        "View Paper",
+                                        href="https://doi.org/10.1098/rspa.2024.0654",
+                                        target="_blank",
+                                        class_="btn btn-outline-secondary w-100"
+                                    ),
+                                    class_="mb-4"
                                 ),
-                                ui.a(
-                                    "View Paper",
-                                    href="https://doi.org/10.1098/rspa.2024.0654",
-                                    target="_blank",
-                                    class_="btn btn-outline-secondary w-100"
+
+                                # Reference Block 2
+                                ui.div(
+                                    ui.p(
+                                        "Malkiel, N., Croxford, A. J., & Wilcox, P. D. (2026). ",
+                                        ui.span("A comprehensive investigation of flexible and multi-dimensional simulation-based PoD analysis. ", class_="fst-italic"),
+                                        "NDT & E International",
+                                        class_="text-muted mb-2"
+                                    ),
+                                    ui.a(
+                                        "View Paper",
+                                        href="https://doi.org/10.1016/j.ndteint.2025.103596",
+                                        target="_blank",
+                                        class_="btn btn-outline-secondary w-100"
+                                    ),
+                                    class_="mb-2"
                                 )
                             ),
                             ui.hr(class_="my-4"),
@@ -525,6 +565,22 @@ ui.nav_panel(
             class_="container-fluid py-3"
         ),
         icon=icon_svg("check-double")
+    ),
+
+
+
+#### UI - Data Visualisation (Tab 3.5) ####
+    ui.nav_panel(
+        "Data Visualisation",
+        ui.div(
+            ui.h3("Data Visualisation", class_="mb-4 text-center"),
+            ui.layout_columns(
+                # --- LEFT: CONFIGURATION ---
+            class_="container-fluid py-3"
+        ),
+
+    ),
+    icon=icon_svg("display")
     ),
 
 #### UI - PoD Analysis (Tab 4) ####
@@ -944,17 +1000,55 @@ def server(input, output, session):
 
         # -- Input Controls --
         inputs = list(input.input_cols())
+
+        # Compute outcome summary stats to guide threshold selection
+        outcome_vals = uploaded_data()[input.outcome_col()]
+        outcome_stats = {
+            "min": outcome_vals.min(),
+            "median": outcome_vals.median(),
+            "max": outcome_vals.max(),
+        }
+
         ui_elements.append(
             ui.card(
                 ui.card_header("Probability of Detection (PoD) Settings"),
                 ui.layout_columns(
-                    ui.input_select("pod_param", "Parameter of Interest", choices=inputs),
-                    ui.input_numeric("pod_threshold", "Threshold Value", value=5.0),
                     ui.div(
-                        ui.input_task_button("btn_run_pod", "Run Analysis", class_="btn-primary w-100", icon=icon_svg("chart-line")),
-                        class_="pt-4"
-                    )
+                        ui.h6("Data Selection", class_="text-muted"),
+                        ui.input_select("pod_param", "Parameter of Interest", choices=inputs),
+                    ),
+                    ui.div(
+                        ui.h6("Model Configuration", class_="text-muted"),
+                        ui.input_select(
+                            "pod_model_override", "Model Override",
+                            choices=["Auto (Best Fit)", "Polynomial", "Kriging"],
+                            selected="Auto (Best Fit)"
+                        ),
+                        ui.panel_conditional(
+                            "input.pod_model_override === 'Polynomial'",
+                            ui.input_slider("pod_poly_degree", "Polynomial Degree", min=1, max=10, value=3, step=1),
+                        ),
+                        ui.input_numeric(
+                                "pod_threshold",
+                                f"Detection Threshold ({input.outcome_col()})",
+                                value=round(outcome_stats['median'], 1),
+                                min=round(outcome_stats['min'], 3),
+                                max=round(outcome_stats['max'], 3),
+                            ),
+                        ui.tags.small(
+                            ui.tags.span("Min ", style="color:#6c757d;"),
+                            ui.tags.span(f"{outcome_stats['min']:.3g}", style="font-weight:600;"),
+                            ui.tags.span("  ·  Median ", style="color:#6c757d; margin-left:4px;"),
+                            ui.tags.span(f"{outcome_stats['median']:.3g}", style="font-weight:600;"),
+                            ui.tags.span("  ·  Max ", style="color:#6c757d; margin-left:4px;"),
+                            ui.tags.span(f"{outcome_stats['max']:.3g}", style="font-weight:600;"),
+                            class_="text-muted d-block",
+                            style="margin-top:-8px; font-size:0.8em;",
+                        ),
+                    ),
+                    col_widths=[6, 6],
                 ),
+                ui.input_task_button("btn_run_pod", "Run Analysis", class_="btn-primary w-100", icon=icon_svg("chart-line")),
             )
         )
 
@@ -977,24 +1071,40 @@ def server(input, output, session):
             return
 
         try:
-            # 1. Run the Analysis (Generates models and curves)
+            # 1. Map UI selection to backend parameters
+            override_map = {
+                "Auto (Best Fit)": "auto",
+                "Polynomial": "polynomial",
+                "Kriging": "kriging",
+            }
+            model_override = override_map.get(input.pod_model_override(), "auto")
+            force_degree = None
+            if model_override == "polynomial":
+                try:
+                    force_degree = int(input.pod_poly_degree())
+                except Exception:
+                    force_degree = None
+
+            # 2. Run the Analysis (Generates models and curves)
             results = study.pod(
                 poi_col=input.pod_param(),
-                threshold=input.pod_threshold()
+                threshold=input.pod_threshold(),
+                model_override=model_override,
+                force_degree=force_degree,
             )
 
-            # 2. Calculate a90/95 (Interpolate)
+            # 3. Calculate a90/95 (Interpolate)
             val = results["a90_95"]
             a9095_str = f"{val:.3f}" if not np.isnan(val) else "Not Reached"
 
-            # 3. Format the Mean Model string based on the new architecture
+            # 4. Format the Mean Model string based on the new architecture
             mean_model = results["mean_model"]
             if mean_model.model_type_ == 'Polynomial':
                 model_str = f"Polynomial (Degree {mean_model.model_params_})"
             else:
                 model_str = "Kriging (Gaussian Process)"
 
-            # 4. Create Metrics Dictionary for the UI
+            # 5. Create Metrics Dictionary for the UI
 
             # Unpack distribution info
             dist_name = results["dist_info"][0].capitalize()
@@ -1003,7 +1113,8 @@ def server(input, output, session):
 
             # Extract the Mean Squared Error (MSE) of the winning model
             cv_scores = results["mean_model"].cv_scores_
-            best_mse = min(cv_scores.values())
+            mse_values = [v for v in cv_scores.values() if not np.isnan(v)]
+            best_mse_str = f"{min(mse_values):.2e}" if mse_values else "N/A (forced model)"
 
             # Calculate Sample Size
             n_samples = len(results["X"])
@@ -1014,7 +1125,7 @@ def server(input, output, session):
                 "a90/95": a9095_str,
                 "Sample Size (N)": n_samples,
                 "Mean Model": model_str,
-                "Model Fit (MSE)": f"{best_mse:.2e}",
+                "Model Fit (MSE)": best_mse_str,
                 "Smoothing Bandwidth": f"{results['bandwidth']:.4f}",
                 "Error Distribution": dist_name,
                 "Distribution Parameters": formatted_params,
@@ -1022,7 +1133,7 @@ def server(input, output, session):
             }
             pod_metrics.set(metrics)
 
-            # 5. Prepare Data for Download
+            # 6. Prepare Data for Download
             export_df = pd.DataFrame({
                 "x_defect_size": results["X_eval"],
                 "pod_mean": results["curves"]["pod"],
@@ -1031,7 +1142,7 @@ def server(input, output, session):
             })
             pod_export_data.set(export_df)
 
-            # 6. Generate Plots (Visualise draws them internally)
+            # 7. Generate Plots (Visualise draws them internally)
             study.visualise(show=False)
             plot_trigger.set(plot_trigger() + 1)
 

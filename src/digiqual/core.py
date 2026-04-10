@@ -268,7 +268,9 @@ class SimulationStudy:
         poi_col: str,
         threshold: float,
         bandwidth_ratio: float = 0.1,
-        n_boot: int = 1000
+        n_boot: int = 1000,
+        model_override: str = "auto",
+        force_degree: int | None = None
     ) -> Dict[str, Any]:
         """
         Runs the generalized Probability of Detection (PoD) analysis.
@@ -278,6 +280,10 @@ class SimulationStudy:
             threshold (float): The failure threshold (e.g., 4.0 dB).
             bandwidth_ratio (float): Smoothing bandwidth fraction (default 0.1).
             n_boot (int): Bootstrap iterations for confidence bounds.
+            model_override (str): Force a model type. One of "auto",
+                "polynomial", or "kriging". Defaults to "auto".
+            force_degree (int | None): When model_override="polynomial",
+                use this degree. Defaults to None (CV selects).
 
         Returns:
             Dict: Dictionary containing models, curves, and fit statistics.
@@ -304,7 +310,9 @@ class SimulationStudy:
 
         # 2. Fit Mean Model (Robust Regression)
         print("1. Selecting Mean Model (Cross-Validation)...")
-        mean_model = pod.fit_robust_mean_model(X, y)
+        mean_model = pod.fit_robust_mean_model(
+            X, y, model_override=model_override, force_degree=force_degree
+        )
         if mean_model.model_type_ == 'Polynomial':
             print(f"-> Selected Model: Polynomial (Degree {mean_model.model_params_})")
         else:
