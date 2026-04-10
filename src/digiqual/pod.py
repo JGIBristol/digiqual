@@ -59,66 +59,63 @@ def fit_robust_mean_model(
     """
     X_2d = X.reshape(-1, 1)
     cv_scores = {}
-
     override = model_override.lower()
 
-    # --- Forced Polynomial with known degree (skip CV entirely) ---
-    if override == "polynomial" and force_degree is not None:
-        final_model = make_pipeline(PolynomialFeatures(degree=force_degree), LinearRegression())
-        final_model.fit(X_2d, y)
-        final_model.model_type_ = "Polynomial"
-        final_model.model_params_ = force_degree
-        final_model.cv_scores_ = {("Polynomial", force_degree): np.nan}
-        return final_model
-
-    # --- Forced Kriging (skip CV entirely) ---
-    if override == "kriging":
-        kernel = C(1.0, (1e-5, 1e6)) * RBF(1.0, (1e-3, 1e5))
-        final_model = GaussianProcessRegressor(
-            kernel=kernel,
-            n_restarts_optimizer=15,
-            alpha=np.var(y) * 0.01,
-            random_state=42
-        )
-        final_model.fit(X_2d, y)
-        final_model.model_type_ = "Kriging"
-        final_model.model_params_ = final_model.kernel_
-        final_model.cv_scores_ = {("Kriging", None): np.nan}
-        return final_model
-
-    # --- Auto / Forced Polynomial without degree: run CV ---
-    degrees = range(1, max_degree + 1)
+    # -----------------------------------------------------------------------
+    # Step 1: Always run full CV across all polynomials AND Kriging.
+    # This ensures cv_scores_ is always fully populated for the plot,
+    # regardless of whether the user has forced a model override.
+    # -----------------------------------------------------------------------
     cv = KFold(n_splits=n_folds, shuffle=True, random_state=42)
 
-    # 1. Evaluate Polynomials
-    for d in degrees:
+    for d in range(1, max_degree + 1):
         model = make_pipeline(PolynomialFeatures(degree=d), LinearRegression())
-        # Use neg_mean_squared_error; we take the negative to get positive MSE
         scores = cross_val_score(model, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
         cv_scores[('Polynomial', d)] = -np.mean(scores)
 
-    # 2. Evaluate Kriging (only when auto)
     kernel = C(1.0, (1e-5, 1e6)) * RBF(1.0, (1e-3, 1e5))
-    if override == "auto":
-        gpr = GaussianProcessRegressor(
-            kernel=kernel,
-            n_restarts_optimizer=10,
-            alpha=np.var(y) * 0.01,
-            random_state=42
-        )
-        gpr_scores = cross_val_score(gpr, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
-        cv_scores[('Kriging', None)] = -np.mean(gpr_scores)
+    gpr = GaussianProcessRegressor(
+        kernel=kernel,
+        n_restarts_optimizer=10,
+        alpha=np.var(y) * 0.01,
+        random_state=42
+    )
+    gpr_scores = cross_val_score(gpr, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
+    cv_scores[('Kriging', None)] = -np.mean(gpr_scores)
 
-    # 3. Find best overall model
-    best_model_info = min(cv_scores, key=cv_scores.get)
-    best_type, best_params = best_model_info
+    # Record the CV winner before applying any override
+    cv_winner = min(cv_scores, key=cv_scores.get)
 
-    # 4. Train final model
+    # -----------------------------------------------------------------------
+    # Step 2: Determine which model to actually use.
+    # -----------------------------------------------------------------------
+    forced = False
+
+    if override == "polynomial" and force_degree is not None:
+        # User forced a specific degree
+        best_type, best_params = 'Polynomial', force_degree
+        forced = True
+    elif override == "kriging":
+        # User forced Kriging
+        best_type, best_params = 'Kriging', None
+        forced = True
+    elif override == "polynomial":
+        # User wants polynomial but left degree to CV — pick best poly
+        poly_scores = {k: v for k, v in cv_scores.items() if k[0] == 'Polynomial'}
+        best_type, best_params = min(poly_scores, key=poly_scores.get)
+    else:
+        # Auto: use overall CV winner
+        best_type, best_params = cv_winner
+
+    # -----------------------------------------------------------------------
+    # Step 3: Fit the final model using the selected type and parameters.
+    # -----------------------------------------------------------------------
     if best_type == 'Polynomial':
         final_model = make_pipeline(PolynomialFeatures(degree=best_params), LinearRegression())
         final_model.fit(X_2d, y)
         final_model.model_params_ = best_params
     else:
+        # Use more restarts for the final fit than during CV
         final_model = GaussianProcessRegressor(
             kernel=kernel,
             n_restarts_optimizer=15,
@@ -130,81 +127,123 @@ def fit_robust_mean_model(
 
     final_model.model_type_ = best_type
     final_model.cv_scores_ = cv_scores
+    final_model.cv_winner_ = cv_winner
+    final_model.forced_model_ = forced
 
     return final_model
 
-def plot_model_selection(cv_scores: dict) -> Any:
+def plot_model_selection(
+    cv_scores: dict,
+    used_key: tuple | None = None,
+    cv_winner_key: tuple | None = None
+) -> Any:
     """
     Generates a normalized bar chart of the Bias-Variance Tradeoff from CV scores,
     alongside a sorted table of the exact MSE values in best-fit order.
 
+    Bars are colour-coded to distinguish the CV winner, the user-forced model
+    (when different from the CV winner), and all other candidates.
+
     Args:
-        cv_scores (dict): Dictionary mapping model tuple containing (model_type, params) to its Cross-Validation MSE score.
+        cv_scores (dict): Dictionary mapping ``(model_type, params)`` tuples to
+            their Cross-Validation MSE scores.
+        used_key (tuple | None): The ``(type, params)`` key of the model that was
+            actually used for the PoD calculation. If ``None``, the bar with the
+            lowest MSE is treated as the used model.
+        cv_winner_key (tuple | None): The ``(type, params)`` key of the CV winner.
+            If ``None``, falls back to the bar with the lowest MSE.
 
     Examples:
         ```python
-        # Assuming we ran fit_robust_mean_model and saved the model
-        fig = plot_model_selection(model.cv_scores_)
-        # plt.show()
+        fig = plot_model_selection(
+            model.cv_scores_,
+            used_key=('Polynomial', 5),
+            cv_winner_key=model.cv_winner_
+        )
         ```
     """
     import matplotlib.pyplot as plt
+    import matplotlib.patches as mpatches
     import numpy as np
 
-    # 1. Prepare the data for the bar chart
+    # --- 1. Build ordered labels and MSE values ---
     poly_keys = [k for k in cv_scores.keys() if k[0] == 'Polynomial']
     poly_degrees = sorted([k[1] for k in poly_keys])
 
     labels = []
     mses = []
+    keys = []
 
     for d in poly_degrees:
         labels.append(f"Poly {d}")
         mses.append(cv_scores[('Polynomial', d)])
+        keys.append(('Polynomial', d))
 
     if ('Kriging', None) in cv_scores:
         labels.append("Kriging")
         mses.append(cv_scores[('Kriging', None)])
+        keys.append(('Kriging', None))
 
-    # Normalize by minimum error (matching the MATLAB paper implementation)
+    # Normalise by minimum error
     min_mse = min(mses)
     normalized_mses = [m / min_mse for m in mses]
 
-    # 2. Prepare the data for the sorted table
-    # Sort dictionary by MSE ascending (lowest/best first)
+    # Resolve which bar is the CV winner and which is the used model
+    if cv_winner_key is None:
+        cv_winner_key = keys[int(np.argmin(mses))]
+    if used_key is None:
+        used_key = cv_winner_key
+
+    forced = (used_key != cv_winner_key)
+
+    # --- 2. Assign bar colours ---
+    # crimson  = CV winner
+    # #1f77b4  = standard blue (other candidates)
+    # #ff7f0e  = orange (user-forced model, when different from CV winner)
+    colours = []
+    for k in keys:
+        if k == cv_winner_key:
+            colours.append('crimson')
+        elif k == used_key:
+            colours.append('#ff7f0e')
+        else:
+            colours.append('#1f77b4')
+
+    # --- 3. Build the sorted MSE table ---
     sorted_scores = sorted(cv_scores.items(), key=lambda item: item[1])
     table_data = []
     for (m_type, m_param), score in sorted_scores:
         name = f"Poly {m_param}" if m_type == 'Polynomial' else "Kriging"
-        # Format to 1 decimal place in scientific notation = 2 significant figures
-        val_str = f"{score:.1e}"
-        table_data.append([name, val_str])
+        table_data.append([name, f"{score:.1e}"])
 
-    # 3. Create the Figure and subplots (Bar chart on left, Table on right)
+    # --- 4. Create figure ---
     fig, (ax_plot, ax_table) = plt.subplots(
         1, 2, figsize=(9, 5), gridspec_kw={'width_ratios': [2.2, 1]}
     )
 
-    # --- Bar Chart (Left) ---
-    bars = ax_plot.bar(labels, normalized_mses, color='#1f77b4', edgecolor='black', alpha=0.8)
+    # --- Bar Chart ---
+    ax_plot.bar(labels, normalized_mses, color=colours, edgecolor='black', alpha=0.85)
 
-    # Highlight the winning model in red
-    best_idx = np.argmin(mses)
-    bars[best_idx].set_color('crimson')
-    bars[best_idx].set_edgecolor('black')
-
-    # Add the reference line at 1.0
-    ax_plot.axhline(1.0, color='red', linestyle='-.', linewidth=1.5, label='Min Error')
-
+    ax_plot.axhline(1.0, color='red', linestyle='-.', linewidth=1.5, label='Min Error (CV)')
     ax_plot.set_title('Model Selection: Bias-Variance Tradeoff', fontweight='bold')
     ax_plot.set_ylabel('Error / Min Error [-]')
     ax_plot.grid(True, axis='y', linestyle=':', alpha=0.7)
-
-    # Rotate x-axis labels to prevent overlap
     ax_plot.tick_params(axis='x', rotation=45)
-    ax_plot.legend()
 
-    # --- Table (Right) ---
+    # Build a legend that only shows relevant entries
+    legend_handles = [
+        mpatches.Patch(color='crimson', label='CV Winner'),
+    ]
+    if forced:
+        legend_handles.append(
+            mpatches.Patch(color='#ff7f0e', label='Used (User Override)')
+        )
+    legend_handles.append(
+        mpatches.Patch(color='#1f77b4', label='Other Candidates')
+    )
+    ax_plot.legend(handles=legend_handles, fontsize=8)
+
+    # --- Table ---
     ax_table.axis('off')
     ax_table.set_title('MSE Values\n(Best Fit Order)', fontweight='bold', pad=10)
 
@@ -214,21 +253,25 @@ def plot_model_selection(cv_scores: dict) -> Any:
         loc='center',
         cellLoc='center'
     )
-
-    # Style the table
     table.auto_set_font_size(False)
     table.set_fontsize(10)
-    table.scale(1, 1.8) # Stretch vertically for better readability
+    table.scale(1, 1.8)
 
-    # Bold the headers and highlight the winning row
+    # Style table rows: bold headers, highlight CV winner and used model
+    cv_winner_name = f"Poly {cv_winner_key[1]}" if cv_winner_key[0] == 'Polynomial' else "Kriging"
+    used_name = f"Poly {used_key[1]}" if used_key[0] == 'Polynomial' else "Kriging"
+
     for (row, col), cell in table.get_celld().items():
         if row == 0:
             cell.set_text_props(weight='bold')
-        if row == 1:
-            cell.set_facecolor('#ffcccc') # Light red background for the winner
+            continue
+        cell_label = table_data[row - 1][0]  # row 1 = table_data[0]
+        if cell_label == cv_winner_name:
+            cell.set_facecolor('#ffcccc')  # light red for CV winner
+        if forced and cell_label == used_name:
+            cell.set_facecolor('#ffe0b2')  # light orange for forced model
 
     fig.tight_layout()
-
     return fig
 
 

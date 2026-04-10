@@ -1111,10 +1111,17 @@ def server(input, output, session):
             dist_params = results["dist_info"][1]
             formatted_params = ", ".join([f"{p:.4f}" for p in dist_params])
 
-            # Extract the Mean Squared Error (MSE) of the winning model
-            cv_scores = results["mean_model"].cv_scores_
-            mse_values = [v for v in cv_scores.values() if not np.isnan(v)]
-            best_mse_str = f"{min(mse_values):.2e}" if mse_values else "N/A (forced model)"
+            # Extract the MSE for the model that was actually used.
+            # Because CV always runs in full now, this is always a real value —
+            # even when the user has forced a model override.
+            mean_model = results["mean_model"]
+            cv_scores = mean_model.cv_scores_
+            if mean_model.model_type_ == 'Polynomial':
+                used_key = ('Polynomial', mean_model.model_params_)
+            else:
+                used_key = ('Kriging', None)
+            used_mse = cv_scores.get(used_key, np.nan)
+            best_mse_str = f"{used_mse:.2e}" if not np.isnan(used_mse) else "N/A"
 
             # Calculate Sample Size
             n_samples = len(results["X"])

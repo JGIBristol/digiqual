@@ -403,7 +403,18 @@ class SimulationStudy:
 
         # 0. Model Selection Plot (NEW)
         if hasattr(res["mean_model"], "cv_scores_"):
-            self.plots["model_selection"] = pod.plot_model_selection(res["mean_model"].cv_scores_)
+            mean_model = res["mean_model"]
+            used_key = (
+                ('Polynomial', mean_model.model_params_)
+                if mean_model.model_type_ == 'Polynomial'
+                else ('Kriging', None)
+            )
+            cv_winner_key = getattr(mean_model, 'cv_winner_', None)
+            self.plots["model_selection"] = pod.plot_model_selection(
+            mean_model.cv_scores_,
+            used_key=used_key,
+            cv_winner_key=cv_winner_key
+            )
 
         # 1. Signal Model Plot
         self.plots["signal_model"] = plot_signal_model(
