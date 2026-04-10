@@ -574,13 +574,10 @@ ui.nav_panel(
         "Data Visualisation",
         ui.div(
             ui.h3("Data Visualisation", class_="mb-4 text-center"),
-            ui.layout_columns(
-                # --- LEFT: CONFIGURATION ---
-            class_="container-fluid py-3"
+            ui.output_ui("viz_content"),
+            class_="container-fluid py-3 overflow-auto h-100"
         ),
-
-    ),
-    icon=icon_svg("display")
+        icon=icon_svg("display")
     ),
 
 #### UI - PoD Analysis (Tab 4) ####
@@ -819,7 +816,7 @@ def server(input, output, session):
         else:
             return ui.div(
                 ui.h5(icon_svg("triangle-exclamation"), " Issues Detected"),
-                ui.p("See Remediation options for next steps.", class_="small mb-0"),
+                ui.p("See Data Visualisation Tab for more information and the Remediation options to the right for next steps.", class_="small mb-0"),
                 class_="alert alert-danger mt-3"
             )
 
@@ -938,6 +935,355 @@ def server(input, output, session):
         df = new_samples()
         if df is not None:
             yield df.to_csv(index=False).encode('utf-8')
+
+
+#### Server - Visualisation (Tab 3.5) ####
+
+    @render.ui
+    def viz_content():
+        """
+        Master render for the entire viz tab.
+        Reads uploaded_data() and diagnostic_table() from the Diagnostics tab —
+        no separate upload is needed here.
+        """
+        if uploaded_data() is None:
+            return ui.div(
+                ui.div(
+                    ui.h4("No Data Available", class_="text-muted"),
+                    ui.p("Upload a CSV in the 'Simulation Diagnostics' tab to begin."),
+                    class_="text-center p-5 bg-light border rounded"
+                )
+            )
+
+        df = uploaded_data()
+        all_cols = list(df.columns)
+
+        return ui.div(
+            # ── Row 1: Summary Statistics ──────────────────────────────────────
+            ui.card(
+                ui.card_header("Summary Statistics"),
+                ui.output_data_frame("viz_summary_table"),
+                full_screen=True,
+                class_="mb-3"
+            ),
+
+            # ── Row 2: Variable Inspector ──────────────────────────────────────
+            ui.layout_columns(
+                # Left: Controls
+                ui.card(
+                    ui.card_header("Inspector Controls"),
+                    ui.div(
+                        ui.input_select(
+                            "viz_variable", "Select Variable",
+                            choices=all_cols,
+                            selected=all_cols[0] if all_cols else None,
+                        ),
+                        ui.input_select(
+                            "viz_plot_type", "Plot Type",
+                            choices=["Distribution", "vs Outcome"],
+                            selected="Distribution",
+                        ),
+                        ui.hr(),
+                        ui.output_ui("viz_diagnostic_badge"),
+                        class_="p-2"
+                    )
+                ),
+                # Right: Plot
+                ui.card(
+                    ui.card_header("Variable Plot"),
+                    ui.output_plot("viz_variable_plot", height="360px"),
+                    full_screen=True,
+                ),
+                col_widths=[3, 9],
+                class_="mb-3"
+            ),
+
+            # ── Row 3: Coverage Overview (all inputs, one panel each) ──────────
+            ui.card(
+                ui.card_header("Input Space Coverage Overview"),
+                ui.p(
+                    "Distribution of each input variable. "
+                    "Green title = coverage passed. "
+                    "Red title + orange shading = gap detected.",
+                    class_="small text-muted px-3 pt-2 mb-0"
+                ),
+                ui.output_plot("viz_coverage_overview", height="300px"),
+                full_screen=True,
+            ),
+        )
+
+
+    @render.data_frame
+    def viz_summary_table():
+        df = uploaded_data()
+        if df is None:
+            return None
+
+        rows = []
+        for col in df.columns:
+            numeric = pd.to_numeric(df[col], errors="coerce").dropna()
+            n_valid = len(numeric)
+            rows.append({
+                "Variable":   col,
+                "N (Total)":  len(df[col]),
+                "N (Valid)":  n_valid,
+                "Min":        f"{numeric.min():.4g}"    if n_valid else "N/A",
+                "Median":     f"{numeric.median():.4g}" if n_valid else "N/A",
+                "Mean":       f"{numeric.mean():.4g}"   if n_valid else "N/A",
+                "Std Dev":    f"{numeric.std():.4g}"    if n_valid else "N/A",
+                "Max":        f"{numeric.max():.4g}"    if n_valid else "N/A",
+            })
+
+        return render.DataGrid(pd.DataFrame(rows), width="100%", filters=False)
+
+
+    @render.ui
+    def viz_diagnostic_badge():
+        """
+        Shows pass/fail status for the currently selected variable,
+        sourced from the diagnostic_table reactive already computed in Tab 3.
+        """
+        diag = diagnostic_table()
+        if diag is None or diag.empty:
+            return ui.p(
+                "Run diagnostics in Tab 3 to see variable status here.",
+                class_="text-muted small fst-italic"
+            )
+
+        try:
+            var = input.viz_variable()
+        except Exception:
+            return ui.div()
+
+        var_rows = diag[diag["Variable"] == var]
+        if var_rows.empty:
+            return ui.div()
+
+        if var_rows["Pass"].astype(bool).all():
+            return ui.div(
+                ui.span(
+                    icon_svg("circle-check"), " All Diagnostics Passed",
+                    class_="text-success fw-bold small"
+                ),
+                class_="mt-1"
+            )
+
+        failed_tests = set(var_rows.loc[~var_rows["Pass"].astype(bool), "Test"])
+        return ui.div(
+            ui.span(
+                icon_svg("triangle-exclamation"),
+                f" Failed: {', '.join(failed_tests)}",
+                class_="text-danger fw-bold small"
+            ),
+            class_="mt-1"
+        )
+
+
+    @render.plot
+    def viz_variable_plot():
+        import matplotlib.pyplot as plt
+        from matplotlib.transforms import blended_transform_factory
+
+        df = uploaded_data()
+        if df is None:
+            return None
+
+        try:
+            var = input.viz_variable()
+            plot_type = input.viz_plot_type()
+        except Exception:
+            return None
+
+        if var not in df.columns:
+            return None
+
+        outcome = input.outcome_col()
+
+        # ── Find gap for this variable (from diagnostics if available) ─────────
+        gap_start = gap_end = None
+        coverage_failed = False
+        diag = diagnostic_table()
+        if diag is not None and not diag.empty:
+            fail_row = diag[
+                (diag["Test"] == "Input Coverage") &
+                (diag["Variable"] == var) &
+                (~diag["Pass"].astype(bool))
+            ]
+            if not fail_row.empty:
+                coverage_failed = True
+                sorted_vals = np.sort(df[var].dropna().values)
+                if len(sorted_vals) > 1:
+                    diffs = np.diff(sorted_vals)
+                    idx = np.argmax(diffs)
+                    gap_start = sorted_vals[idx]
+                    gap_end = sorted_vals[idx + 1]
+
+        fig, ax = plt.subplots(figsize=(8, 4))
+        vals = df[var].dropna().values
+
+        # ── Distribution ───────────────────────────────────────────────────────
+        if plot_type == "Distribution" or var == outcome:
+            ax.hist(
+                vals, bins=25, color="#1f77b4", alpha=0.65,
+                edgecolor="white", density=True, label="Distribution"
+            )
+
+            # KDE overlay
+            if len(vals) > 3:
+                try:
+                    from scipy.stats import gaussian_kde
+                    kde = gaussian_kde(vals, bw_method="scott")
+                    x_kde = np.linspace(vals.min(), vals.max(), 200)
+                    ax.plot(x_kde, kde(x_kde), color="#006abc",
+                            linewidth=2, label="KDE")
+                except Exception:
+                    pass
+
+            # Rug plot along the x-axis (blended transform: data x, axes y)
+            trans = blended_transform_factory(ax.transData, ax.transAxes)
+            ax.plot(
+                vals, np.full(len(vals), -0.04), "|",
+                color="#242424", alpha=0.35, markersize=10,
+                transform=trans, clip_on=False
+            )
+
+            # Gap overlay
+            if coverage_failed and gap_start is not None:
+                ax.axvspan(
+                    gap_start, gap_end,
+                    color="#d13438", alpha=0.15,
+                    label=f"Coverage Gap ({gap_start:.3g} – {gap_end:.3g})"
+                )
+
+            ax.set_xlabel(var)
+            ax.set_ylabel("Density")
+            ax.set_title(f"Distribution of '{var}'")
+
+        # ── vs Outcome scatter ─────────────────────────────────────────────────
+        else:
+            if outcome not in df.columns:
+                ax.text(
+                    0.5, 0.5, "Outcome column not configured",
+                    ha="center", va="center", transform=ax.transAxes,
+                    color="#605e5c", fontsize=12
+                )
+            else:
+                x_data = df[var].dropna()
+                y_data = df[outcome].loc[x_data.index]
+
+                ax.scatter(x_data, y_data, alpha=0.55, color="#1f77b4",
+                        s=25, label="Data")
+
+                # Linear trend
+                if len(x_data) > 2:
+                    try:
+                        p = np.poly1d(np.polyfit(x_data, y_data, 1))
+                        x_line = np.linspace(x_data.min(), x_data.max(), 100)
+                        ax.plot(x_line, p(x_line), color="#d13438",
+                                linewidth=1.5, linestyle="--", label="Linear Trend")
+                    except Exception:
+                        pass
+
+                # Gap overlay on x-axis
+                if coverage_failed and gap_start is not None:
+                    ax.axvspan(
+                        gap_start, gap_end,
+                        color="#d13438", alpha=0.12,
+                        label=f"Coverage Gap ({gap_start:.3g} – {gap_end:.3g})"
+                    )
+
+                ax.set_xlabel(var)
+                ax.set_ylabel(outcome)
+                ax.set_title(f"'{var}'  vs  '{outcome}'")
+
+        ax.legend(fontsize=8, loc="best")
+        ax.grid(True, alpha=0.3)
+        fig.tight_layout()
+        return fig
+
+
+    @render.plot
+    def viz_coverage_overview():
+        """
+        One histogram panel per input variable. Title is green (pass) or red (fail).
+        Orange shading marks the largest gap when coverage fails.
+        Computed from _check_input_coverage directly so it's always up to date,
+        even if the user hasn't explicitly run diagnostics.
+        """
+        import matplotlib.pyplot as plt
+        from digiqual.diagnostics import _check_input_coverage
+
+        df = uploaded_data()
+        if df is None:
+            return None
+
+        # Use selected inputs, falling back to all-but-outcome if none chosen yet
+        input_cols_list = list(input.input_cols())
+        outcome = input.outcome_col()
+        if not input_cols_list:
+            input_cols_list = [c for c in df.columns if c != outcome]
+        if not input_cols_list:
+            return None
+
+        try:
+            coverage_res = _check_input_coverage(df, input_cols_list)
+        except Exception:
+            coverage_res = {}
+
+        n = len(input_cols_list)
+        ncols = min(n, 3)
+        nrows = -(-n // ncols)  # ceiling division
+
+        fig, axes = plt.subplots(
+            nrows, ncols,
+            figsize=(5 * ncols, 3 * nrows),
+            squeeze=False
+        )
+
+        for idx, col in enumerate(input_cols_list):
+            row, c = divmod(idx, ncols)
+            ax = axes[row][c]
+
+            vals = df[col].dropna().values
+            res = coverage_res.get(col, {})
+            passed = res.get("sufficient_coverage", True)
+
+            bar_color = "#107c10" if passed else "#d13438"
+            ax.hist(vals, bins=20, color=bar_color, alpha=0.55, edgecolor="white")
+
+            # Shade the largest gap when coverage fails
+            if not passed and len(vals) > 1:
+                sorted_vals = np.sort(vals)
+                diffs = np.diff(sorted_vals)
+                gap_idx = np.argmax(diffs)
+                ax.axvspan(
+                    sorted_vals[gap_idx], sorted_vals[gap_idx + 1],
+                    color="#ffb900", alpha=0.4,
+                    label=f"Gap ratio: {res.get('max_gap_ratio', 0):.2f}"
+                )
+                ax.legend(fontsize=7, loc="upper right")
+
+            status = "✓" if passed else "✗"
+            ax.set_title(
+                f"{col}  {status}",
+                color="#107c10" if passed else "#d13438",
+                fontweight="bold", fontsize=10
+            )
+            ax.set_xlabel(col, fontsize=9)
+            ax.set_ylabel("Count", fontsize=9)
+            ax.grid(True, alpha=0.3)
+
+        # Hide unused subplot slots
+        for idx in range(n, nrows * ncols):
+            row, c = divmod(idx, ncols)
+            axes[row][c].set_visible(False)
+
+        fig.suptitle(
+            "Input Space Coverage  (✓ Pass  ✗ Fail)",
+            fontsize=12, fontweight="bold"
+        )
+        fig.tight_layout()
+        return fig
 
 
 #### Server - PoD Generation (Tab 4) ####
