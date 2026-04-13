@@ -317,8 +317,8 @@ ui.nav_panel(
                                 ),
                                 ui.p("Inspect simulation variables and results.", class_="fw-semibold mb-2"),
                                 ui.tags.ul(
-                                    ui.tags.li(""),
-                                    ui.tags.li(""),
+                                    ui.tags.li("Per-variable distribution and gap inspection."),
+                                    ui.tags.li("Model fit and bootstrap convergence visualised."),
                                     class_="mb-0 ps-3 text-muted"
                                 ),
                                 class_="border-start border-3 border-info ps-3 mb-3"
@@ -1010,9 +1010,10 @@ def server(input, output, session):
                 ui.output_plot("viz_coverage_overview", height="300px"),
                 full_screen=True,
             ),
-            # ── Row 4: Full Diagnostic Results Overview ────────────────────────
+            # ── Row 4: Full Outcome Diagnostic Overview ────────────────────────
             ui.card(
-                ui.card_header("Diagnostic Results Overview"),
+                ui.card_header("Outcome Diagnostic Overview"),
+                ui.output_ui("viz_diagnostics_state"),
                 ui.p(
                     "Left: Actual vs Predicted scatter for the degree-3 polynomial model. "
                     "Points hugging the diagonal indicate a good fit. "
@@ -1020,7 +1021,7 @@ def server(input, output, session):
                     "iterations. Lines flattening below the thresholds indicate convergence.",
                     class_="small text-muted px-3 pt-2 mb-0"
                 ),
-                ui.output_ui("viz_diagnostics_state"),
+
                 full_screen=True,
             ),
         )
@@ -1479,13 +1480,13 @@ def server(input, output, session):
                         bbox_to_anchor=(0.97, 0.70))
         ax_boot.grid(True, alpha=0.3)
 
-        fig.suptitle("Diagnostic Visualisations", fontweight="bold", fontsize=12)
         fig.tight_layout()
         return fig
 
 #### Server - PoD Generation (Tab 4) ####
 
     # --- SHARED CALCULATOR ---
+
     @reactive.calc
     def current_study():
         """
@@ -1503,6 +1504,24 @@ def server(input, output, session):
         study.add_data(uploaded_data())
         return study
 
+
+    @reactive.calc
+    def outcome_stats():
+        """Centrally managed outcome statistics to prevent NameErrors."""
+        df = uploaded_data()
+        if df is None or not input.outcome_col():
+            return None
+
+        vals = pd.to_numeric(df[input.outcome_col()], errors="coerce").dropna()
+        if vals.empty:
+            return None
+
+        return {
+            "min": float(vals.min()),
+            "median": float(vals.median()),
+            "max": float(vals.max()),
+        }
+
     # --- REACTIVE VALUES ---
     # Store scalar results for the table (e.g., a90/95, bandwidth)
     pod_metrics = reactive.value(None)
@@ -1513,6 +1532,12 @@ def server(input, output, session):
 
 
     # --- MAIN UI ---
+    @reactive.effect
+    @reactive.event(uploaded_data)
+    def _reset_pod_on_new_data():
+        pod_metrics.set(None)
+        pod_export_data.set(None)
+
     @render.ui
     def analysis_output():
         """
@@ -1544,13 +1569,10 @@ def server(input, output, session):
         # -- Input Controls --
         inputs = list(input.input_cols())
 
-        # Compute outcome summary stats to guide threshold selection
-        outcome_vals = uploaded_data()[input.outcome_col()]
-        outcome_stats = {
-            "min": outcome_vals.min(),
-            "median": outcome_vals.median(),
-            "max": outcome_vals.max(),
-        }
+        # Get outcome summary stats from our shared reactive calculator
+        stats = outcome_stats()
+        if stats is None:
+            return ui.div(ui.p("Processing data...", class_="text-muted text-center p-3"))
 
         ui_elements.append(
             ui.card(
@@ -1574,17 +1596,17 @@ def server(input, output, session):
                         ui.input_numeric(
                                 "pod_threshold",
                                 f"Detection Threshold ({input.outcome_col()})",
-                                value=round(outcome_stats['median'], 1),
-                                min=round(outcome_stats['min'], 3),
-                                max=round(outcome_stats['max'], 3),
+                                value=round(stats['median'], 1),
+                                min=round(stats['min'], 3),
+                                max=round(stats['max'], 3),
                             ),
                         ui.tags.small(
                             ui.tags.span("Min ", style="color:#6c757d;"),
-                            ui.tags.span(f"{outcome_stats['min']:.3g}", style="font-weight:600;"),
+                            ui.tags.span(f"{stats['min']:.3g}", style="font-weight:600;"),
                             ui.tags.span("  ·  Median ", style="color:#6c757d; margin-left:4px;"),
-                            ui.tags.span(f"{outcome_stats['median']:.3g}", style="font-weight:600;"),
+                            ui.tags.span(f"{stats['median']:.3g}", style="font-weight:600;"),
                             ui.tags.span("  ·  Max ", style="color:#6c757d; margin-left:4px;"),
-                            ui.tags.span(f"{outcome_stats['max']:.3g}", style="font-weight:600;"),
+                            ui.tags.span(f"{stats['max']:.3g}", style="font-weight:600;"),
                             class_="text-muted d-block",
                             style="margin-top:-8px; font-size:0.8em;",
                         ),
@@ -1609,9 +1631,22 @@ def server(input, output, session):
         """
         Runs .pod(), calculates a90/95, and triggers plotting.
         """
+
         study = current_study()
         if study is None:
             return
+
+        stats = outcome_stats()
+        if stats is None:
+            return
+
+        threshold = input.pod_threshold()
+        if not (stats['min'] <= threshold <= stats['max']):
+            ui.notification_show(
+                "Threshold is outside the range of the outcome variable — results may be uninformative.",
+                type="warning"
+            )
+        # ------
 
         try:
             # 1. Map UI selection to backend parameters
@@ -1732,7 +1767,6 @@ def server(input, output, session):
                 col_widths=[6, 6],
                 class_="mb-3"
             ),
-            # Row 3: Table and Download Actions
             # Row 3: Table and Download Actions
             ui.layout_columns(
                 ui.card(
