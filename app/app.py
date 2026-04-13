@@ -1492,7 +1492,7 @@ def server(input, output, session):
     @reactive.effect
     @reactive.event(uploaded_data, input.input_cols, input.outcome_col)
     def update_study():
-        if uploaded_data() is None:
+        if uploaded_data() is None or not input.input_cols() or not input.outcome_col():
             study_instance.set(None)
             return
 
