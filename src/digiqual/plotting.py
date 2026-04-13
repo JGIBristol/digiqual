@@ -150,3 +150,37 @@ def plot_pod_curve(
     ax.grid(True, alpha=0.3)
 
     return ax
+
+def plot_pod_surface(
+    poi_grids: list,
+    pod_curve: np.ndarray,
+    poi_names: list,
+    ax: Optional[plt.Axes] = None
+) -> plt.Axes:
+    """
+    Plots a 2D heatmap / contour for multi-dimensional PoD (2 Parameters of Interest).
+    """
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8,6))
+    else:
+        fig = ax.get_figure()
+
+    grid_x, grid_y = np.meshgrid(poi_grids[0], poi_grids[1], indexing='ij')
+    Z = pod_curve.reshape(len(poi_grids[0]), len(poi_grids[1]))
+
+    c = ax.contourf(grid_x, grid_y, Z, levels=np.linspace(0, 1.0, 11), cmap='viridis', alpha=0.9)
+    fig.colorbar(c, ax=ax, label="Probability of Detection")
+
+    try:
+        # Avoid error if no contours generated
+        ax.contour(grid_x, grid_y, Z, levels=[0.90], colors='white', linewidths=2, linestyles='--')
+        ax.plot([], [], color='white', linestyle='--', linewidth=2, label='a90/95 Contour')
+    except Exception:
+        pass
+
+    ax.set_xlabel(poi_names[0])
+    ax.set_ylabel(poi_names[1])
+    ax.set_title(f"PoD Surface ({poi_names[0]} vs {poi_names[1]})")
+    ax.legend(loc='lower right')
+    
+    return ax

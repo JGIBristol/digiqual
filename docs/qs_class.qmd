@@ -108,8 +108,8 @@ Because the `SimulationStudy` object manages the state, we can run the analysis 
 
 ```{python}
 #| label: analysis-run
-# 1. Run Analysis (Threshold = 18 dB)
-_ = study.pod(poi_col="Length", threshold=18.0)
+# 1. Run Analysis (Marginalising noise out across Nuisance Variables)
+_ = study.pod(poi_col="Length", nuisance_col=["Angle", "Roughness"], threshold=18.0)
 ```
 
 ```{python}
@@ -179,7 +179,8 @@ study.diagnose()
 
 study.refine()
 
-_ = study.pod(poi_col="Length", threshold=15)
+# Analyse multi-dimensional PoD (1 PoI, 2 Nuisance)
+_ = study.pod(poi_col="Length", nuisance_col=["Angle", "Roughness"], threshold=15)
 
 study.visualise()
 ```

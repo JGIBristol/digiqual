@@ -1586,7 +1586,18 @@ def server(input, output, session):
                 ui.layout_columns(
                     ui.div(
                         ui.h6("Data Selection", class_="text-muted"),
-                        ui.input_select("pod_param", "Parameter of Interest", choices=inputs),
+                        ui.input_radio_buttons("pod_analysis_type", "Analysis Modality",
+                                              choices=["1D Marginal PoD", "Multi-Dimensional PoD"],
+                                              selected="1D Marginal PoD", inline=True),
+                        ui.panel_conditional(
+                            "input.pod_analysis_type === '1D Marginal PoD'",
+                            ui.input_select("pod_param", "Parameter of Interest", choices=inputs),
+                        ),
+                        ui.panel_conditional(
+                            "input.pod_analysis_type === 'Multi-Dimensional PoD'",
+                            ui.input_selectize("pod_pois", "Parameters of Interest (Max 2)", choices=inputs, multiple=True),
+                            ui.input_selectize("pod_nuisance", "Nuisance Parameters (Max 2)", choices=inputs, multiple=True),
+                        ),
                     ),
                     ui.div(
                         ui.h6("Model Configuration", class_="text-muted"),
@@ -1669,10 +1680,27 @@ def server(input, output, session):
                 except Exception:
                     force_degree = None
 
+            if input.pod_analysis_type() == '1D Marginal PoD':
+                poi_cols = [input.pod_param()]
+                nuisance_cols = []
+            else:
+                poi_cols = list(input.pod_pois())
+                nuisance_cols = list(input.pod_nuisance())
+                if not poi_cols or len(poi_cols) > 2:
+                    ui.notification_show("Please select 1 or 2 Parameters of Interest.", type="error")
+                    return
+                if len(nuisance_cols) > 2:
+                    ui.notification_show("Please select up to 2 Nuisance Parameters.", type="error")
+                    return
+                if set(poi_cols).intersection(set(nuisance_cols)):
+                    ui.notification_show("Parameters of Interest and Nuisance Parameters cannot overlap.", type="error")
+                    return
+
             # 2. Run the Analysis (Generates models and curves)
             results = study.pod(
-                poi_col=input.pod_param(),
+                poi_col=poi_cols,
                 threshold=input.pod_threshold(),
+                nuisance_col=nuisance_cols,
                 model_override=model_override,
                 force_degree=force_degree,
             )
@@ -1725,12 +1753,18 @@ def server(input, output, session):
             pod_metrics.set(metrics)
 
             # 6. Prepare Data for Download
-            export_df = pd.DataFrame({
-                "x_defect_size": results["X_eval"],
-                "pod_mean": results["curves"]["pod"],
-                "ci_lower": results["curves"]["ci_lower"],
-                "ci_upper": results["curves"]["ci_upper"]
-            })
+            export_data = {}
+            if isinstance(results["poi_col"], str) or len(poi_cols) == 1:
+                export_data["x_defect_size"] = results["X_eval"].flatten()
+            else:
+                for i, col in enumerate(poi_cols):
+                    export_data[col] = results["X_eval"][:, i]
+            
+            export_data["pod_mean"] = results["curves"]["pod"]
+            export_data["ci_lower"] = results["curves"]["ci_lower"]
+            export_data["ci_upper"] = results["curves"]["ci_upper"]
+            
+            export_df = pd.DataFrame(export_data)
             pod_export_data.set(export_df)
 
             # 7. Generate Plots (Visualise draws them internally)

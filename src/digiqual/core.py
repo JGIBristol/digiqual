@@ -265,8 +265,9 @@ class SimulationStudy:
 #### PoD Analysis ####
     def pod(
         self,
-        poi_col: str,
+        poi_col: list | str,
         threshold: float,
+        nuisance_col: list | str | None = None,
         bandwidth_ratio: float = 0.1,
         n_boot: int = 1000,
         model_override: str = "auto",
@@ -276,8 +277,9 @@ class SimulationStudy:
         Runs the generalized Probability of Detection (PoD) analysis.
 
         Args:
-            poi_col (str): The parameter of interest (e.g., 'Crack Length').
+            poi_col (list | str): The parameter(s) of interest (e.g., 'Crack Length', ['Angle', 'Depth']).
             threshold (float): The failure threshold (e.g., 4.0 dB).
+            nuisance_col (list | str | None): The nuisance parameters to marginalize over via MC integration.
             bandwidth_ratio (float): Smoothing bandwidth fraction (default 0.1).
             n_boot (int): Bootstrap iterations for confidence bounds.
             model_override (str): Force a model type. One of "auto",
@@ -300,12 +302,26 @@ class SimulationStudy:
             if self.clean_data.empty:
                 raise ValueError("Cannot run PoD analysis: No valid data available.")
 
-        if poi_col not in self.clean_data.columns:
-            raise ValueError(f"Parameter of Interest '{poi_col}' not found in data columns.")
+        if isinstance(poi_col, str):
+            poi_cols = [poi_col]
+        else:
+            poi_cols = poi_col
+            
+        if nuisance_col is None:
+            nuisance_cols = []
+        elif isinstance(nuisance_col, str):
+            nuisance_cols = [nuisance_col]
+        else:
+            nuisance_cols = nuisance_col
+            
+        all_cols = poi_cols + nuisance_cols
+        for c in all_cols:
+            if c not in self.clean_data.columns:
+                raise ValueError(f"Variable '{c}' not found in data columns.")
 
         # 1. Prepare Data Vectors
-        print(f"--- Starting Reliability Analysis (PoI: {poi_col}) ---")
-        X = self.clean_data[poi_col].values
+        print(f"--- Starting Reliability Analysis (PoIs: {poi_cols}) ---")
+        X = self.clean_data[all_cols].values
         y = self.clean_data[self.outcome].values
 
         # 2. Fit Mean Model (Robust Regression)
@@ -320,7 +336,7 @@ class SimulationStudy:
 
         # 3. Fit Variance Model & Generate Grid
         print("2. Fitting Variance Model (Kernel Smoothing)...")
-        residuals, bandwidth, X_eval = pod.fit_variance_model(
+        residuals, bandwidth = pod.fit_variance_model(
             X, y, mean_model, bandwidth_ratio=bandwidth_ratio
         )
         print(f"   -> Smoothing Bandwidth: {bandwidth:.4f}")
@@ -330,10 +346,26 @@ class SimulationStudy:
         dist_name, dist_params = pod.infer_best_distribution(residuals, X, bandwidth)
         print(f"   -> Selected Distribution: {dist_name}")
 
+        # Build PoI grid and nuisance ranges
+        import numpy as np
+        poi_grids = []
+        for col in poi_cols:
+            num_points = 100 if len(poi_cols) == 1 else 30
+            poi_grids.append(np.linspace(self.clean_data[col].min(), self.clean_data[col].max(), num_points))
+            
+        if len(poi_cols) == 1:
+            X_eval = poi_grids[0].reshape(-1, 1)
+        else:
+            mesh = np.meshgrid(*poi_grids, indexing='ij')
+            X_eval = np.vstack([m.flatten() for m in mesh]).T
+            
+        nuisance_ranges = {c: (float(self.clean_data[c].min()), float(self.clean_data[c].max())) for c in nuisance_cols}
+
         # 5. Compute PoD Curve
         print("4. Computing PoD Curve...")
-        pod_curve, mean_curve = pod.compute_pod_curve(
-            X_eval, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold
+        from digiqual.integration import compute_multi_dim_pod
+        pod_curve, mean_curve = compute_multi_dim_pod(
+            X_eval, nuisance_ranges, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold
         )
 
         # 6. Bootstrap Confidence Intervals
@@ -341,22 +373,27 @@ class SimulationStudy:
         lower_ci, upper_ci = pod.bootstrap_pod_ci(
             X, y, X_eval, threshold,
             mean_model.model_type_, mean_model.model_params_, bandwidth, (dist_name, dist_params),
-            n_boot=n_boot
+            n_boot=n_boot, nuisance_ranges=nuisance_ranges
         )
 
         # 7.
-        a90_95 = pod.calculate_reliability_point(X_eval, lower_ci, target_pod=0.90)
-        print(f"   -> a90/95 Reliability Index: {a90_95:.3f}")
+        a90_95 = np.nan
+        if len(poi_cols) == 1:
+            a90_95 = pod.calculate_reliability_point(X_eval.flatten(), lower_ci, target_pod=0.90)
+            print(f"   -> a90/95 Reliability Index: {a90_95:.3f}")
 
         # 8. Package Results
         self.pod_results = {
-            "poi_col": poi_col,
+            "poi_col": poi_cols[0] if len(poi_cols) == 1 else poi_cols,
+            "poi_cols": poi_cols,
+            "nuisance_cols": nuisance_cols,
             "threshold": threshold,
             "n_boot" : n_boot,
             "a90_95": a90_95,
             "X": X,
             "y": y,
             "X_eval": X_eval,
+            "poi_grids": poi_grids,
             "mean_model": mean_model,
             "bandwidth": bandwidth,
             "residuals": residuals,
@@ -397,11 +434,14 @@ class SimulationStudy:
         res = self.pod_results
         poi_label = res.get("poi_col", "Parameter of Interest")
 
-        local_std = pod.predict_local_std(
-            res["X"], res["residuals"], res["X_eval"], res["bandwidth"]
-        )
+        poi_cols = res.get("poi_cols", [poi_label])
+        nuisance_cols = res.get("nuisance_cols", [])
 
-        # 0. Model Selection Plot
+        local_std = None
+        if len(poi_cols) == 1 and len(nuisance_cols) == 0:
+            local_std = pod.predict_local_std(
+                res["X"], res["residuals"], res["X_eval"], res["bandwidth"]
+            )
         if hasattr(res["mean_model"], "cv_scores_"):
             mean_model = res["mean_model"]
             model_type = getattr(mean_model, 'model_type_', None)
@@ -421,26 +461,35 @@ class SimulationStudy:
                 cv_winner_key=cv_winner_key
             )
 
-        # 1. Signal Model Plot
-        self.plots["signal_model"] = plot_signal_model(
-            X=res["X"],
-            y=res["y"],
-            X_eval=res["X_eval"],
-            mean_curve=res["curves"]["mean_response"],
-            threshold=res["threshold"],
-            local_std=local_std,
-            poi_name=poi_label
-        )
+        # 1. Signal Model Plot (Only if 1 PoI)
+        if len(poi_cols) == 1:
+            self.plots["signal_model"] = plot_signal_model(
+                X=res["X"][:, 0],
+                y=res["y"],
+                X_eval=res["X_eval"].flatten(),
+                mean_curve=res["curves"]["mean_response"],
+                threshold=res["threshold"],
+                local_std=local_std,
+                poi_name=poi_cols[0]
+            )
 
-        # 2. PoD Curve Plot
-        self.plots["pod_curve"] = plot_pod_curve(
-            X_eval=res["X_eval"],
-            pod_curve=res["curves"]["pod"],
-            ci_lower=res["curves"]["ci_lower"],
-            ci_upper=res["curves"]["ci_upper"],
-            target_pod=0.90,
-            poi_name=poi_label
-        )
+        # 2. PoD Curve/Surface Plot
+        if len(poi_cols) == 1:
+            self.plots["pod_curve"] = plot_pod_curve(
+                X_eval=res["X_eval"].flatten(),
+                pod_curve=res["curves"]["pod"],
+                ci_lower=res["curves"]["ci_lower"],
+                ci_upper=res["curves"]["ci_upper"],
+                target_pod=0.90,
+                poi_name=poi_cols[0]
+            )
+        else:
+            from digiqual.plotting import plot_pod_surface
+            self.plots["pod_curve"] = plot_pod_surface(
+                poi_grids=res["poi_grids"],
+                pod_curve=res["curves"]["pod"],
+                poi_names=poi_cols
+            )
 
         # Handle Saving
         if save_path:

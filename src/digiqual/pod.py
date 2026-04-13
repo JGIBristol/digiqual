@@ -57,7 +57,7 @@ def fit_robust_mean_model(
         model = fit_robust_mean_model(X, y, model_override="polynomial", force_degree=3)
         ```
     """
-    X_2d = X.reshape(-1, 1)
+    X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
     cv_scores = {}
     override = model_override.lower()
 
@@ -317,16 +317,17 @@ def optimise_bandwidth(
         print(f"Optimal Bandwidth: {optimal_bw:.4f}")
         ```
     """
+    from scipy.spatial.distance import cdist
+    X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
     sq_residuals = residuals.flatten() ** 2
-    X_flat = X.flatten()
-    data_range = X_flat.max() - X_flat.min()
+    data_range = np.max(X_2d.max(axis=0) - X_2d.min(axis=0))
 
     def loo_cv_objective(bw: float) -> float:
-        # Calculate distance matrix between all points
-        diff = X_flat.reshape(-1, 1) - X_flat.reshape(1, -1)
+        # Calculate euclidean distance matrix
+        dists = cdist(X_2d, X_2d, metric='euclidean')
 
         # Calculate Gaussian weights
-        weights = stats.norm.pdf(diff, loc=0, scale=bw)
+        weights = stats.norm.pdf(dists, loc=0, scale=bw)
 
         # Leave-One-Out: Set diagonal to zero so a point doesn't predict itself
         np.fill_diagonal(weights, 0)
@@ -356,9 +357,8 @@ def fit_variance_model(
     y: np.ndarray,
     mean_model: Any,
     auto_bandwidth: bool = True,
-    bandwidth_ratio: float = 0.1,
-    n_eval_points: int = 100
-) -> Tuple[np.ndarray, float, np.ndarray]:
+    bandwidth_ratio: float = 0.1
+) -> Tuple[np.ndarray, float]:
     """
     Calculates residuals and defines the smoothing bandwidth for variance estimation.
 
@@ -382,10 +382,9 @@ def fit_variance_model(
             evaluation grid (`X_eval`). Defaults to 100.
 
     Returns:
-        Tuple[np.ndarray, float, np.ndarray]:
+        Tuple[np.ndarray, float]:
             - residuals: Raw differences between `y` and the mean model predictions.
             - bandwidth: The selected smoothing window size (in absolute units of X).
-            - X_eval: A linearly spaced grid over the X domain for downstream plotting/evaluation.
 
     Examples:
         ```python
@@ -400,7 +399,7 @@ def fit_variance_model(
         model.fit(X.reshape(-1, 1), y)
 
         # 2. Extract residuals and optimized bandwidth
-        residuals, bandwidth, X_eval = fit_variance_model(
+        residuals, bandwidth = fit_variance_model(
             X, y,
             mean_model=model,
             auto_bandwidth=True
@@ -410,19 +409,18 @@ def fit_variance_model(
         print(f"Evaluation Grid Size: {len(X_eval)}")
         ```
     """
-    X_2d = X.reshape(-1, 1)
+    X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
     y_pred = mean_model.predict(X_2d)
     residuals = y - y_pred
 
     if auto_bandwidth:
         print("   -> Optimizing bandwidth via LOO-CV...")
-        bandwidth = optimise_bandwidth(X, residuals)
+        bandwidth = optimise_bandwidth(X_2d, residuals)
     else:
-        bandwidth = (X.max() - X.min()) * bandwidth_ratio
+        data_range = np.max(X_2d.max(axis=0) - X_2d.min(axis=0))
+        bandwidth = data_range * bandwidth_ratio
 
-    X_eval = np.linspace(X.min(), X.max(), n_eval_points)
-
-    return residuals, bandwidth, X_eval
+    return residuals, bandwidth
 
 
 def predict_local_std(
@@ -451,13 +449,14 @@ def predict_local_std(
         local_std = predict_local_std(X, residuals, X_eval, bandwidth)
         ```
     """
-    X_source = X.reshape(1, -1)
-    X_target = X_eval.reshape(-1, 1)
+    from scipy.spatial.distance import cdist
+    X_source = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
+    X_target = np.atleast_2d(X_eval).T if np.asarray(X_eval).ndim == 1 else np.asarray(X_eval)
 
     sq_residuals = residuals.flatten() ** 2
 
-    diff = X_target - X_source
-    weights = stats.norm.pdf(diff, loc=0, scale=bandwidth)
+    dists = cdist(X_target, X_source, metric='euclidean')
+    weights = stats.norm.pdf(dists, loc=0, scale=bandwidth)
 
     row_sums = weights.sum(axis=1, keepdims=True)
     row_sums[row_sums == 0] = 1e-10
@@ -579,8 +578,9 @@ def compute_pod_curve(
     #
     dist_name, dist_params = dist_info
 
-    mean_curve = mean_model.predict(X_eval.reshape(-1, 1))
-    sigma_curve = predict_local_std(X, residuals, X_eval, bandwidth)
+    X_eval_2d = np.atleast_2d(X_eval).T if np.asarray(X_eval).ndim == 1 else np.asarray(X_eval)
+    mean_curve = mean_model.predict(X_eval_2d)
+    sigma_curve = predict_local_std(X, residuals, X_eval_2d, bandwidth)
 
     z_threshold = (threshold - mean_curve) / sigma_curve
 
@@ -599,7 +599,8 @@ def bootstrap_pod_ci(
     model_params: Any,
     bandwidth: float,
     dist_info: Tuple[str, Tuple],
-    n_boot: int = 1000
+    n_boot: int = 1000,
+    nuisance_ranges: dict = None
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Estimates 95% Confidence Bounds for the PoD curve via Bootstrapping.
@@ -638,11 +639,14 @@ def bootstrap_pod_ci(
     """
     n_samples = len(y)
     pod_matrix = np.zeros((n_boot, len(X_eval)))
+    
+    X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
 
     for i in range(n_boot):
         # Resample indices
         idx = np.random.choice(n_samples, n_samples, replace=True)
-        X_res, y_res = X[idx], y[idx]
+        X_res_2d = X_2d[idx]
+        y_res = y[idx]
 
         # Conditionally Fit Mean Model based on winning type
         if model_type == 'Polynomial':
@@ -653,15 +657,16 @@ def bootstrap_pod_ci(
                 kernel=model_params, alpha=np.var(y_res)*0.01, optimizer=None
             )
 
-        mean_model.fit(X_res.reshape(-1, 1), y_res)
+        mean_model.fit(X_res_2d, y_res)
 
         # Residuals
-        y_pred = mean_model.predict(X_res.reshape(-1, 1))
+        y_pred = mean_model.predict(X_res_2d)
         res_res = y_res - y_pred
 
         # Predict
-        pod_curve, _ = compute_pod_curve(
-            X_eval, mean_model, X_res, res_res, bandwidth, dist_info, threshold
+        from digiqual.integration import compute_multi_dim_pod
+        pod_curve, _ = compute_multi_dim_pod(
+            X_eval, nuisance_ranges or {}, mean_model, X_res_2d, res_res, bandwidth, dist_info, threshold, n_mc_samples=1000
         )
         pod_matrix[i, :] = pod_curve
 

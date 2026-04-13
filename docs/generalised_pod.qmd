@@ -56,6 +56,9 @@ Once the models for the mean, variance, and distribution are established, the Po
 ### Curve Generation: `compute_pod_curve()`
 This function analytically derives the PoD at every point by calculating the probability that the signal exceeds the threshold, based on the inferred distribution and local variance.
 
+### Multi-Dimensional Integration (Active Marginalisation)
+If evaluating multidimensional datasets with nuisance variations (like angle or roughness), `digiqual` utilizes a Monte Carlo Integration engine via Latin Hypercube Sampling (LHS). It actively evaluates the continuous multidimensional space to integrate out the nuisance effects across the PoI grid, generating a realistic marginal Probability of Detection surface. `nuisance_col` can be passed alongside `poi_col` into `study.pod()` to activate this capability.
+
 ### Confidence Bounds: `bootstrap_pod_ci()`
 Because the model is now non-linear and non-normal, traditional analytical confidence bounds are not tractable. `digiqual` uses **Bootstrap resampling** (typically 1000 iterations) to generate 95% confidence intervals by refitting the models to resampled datasets.
 

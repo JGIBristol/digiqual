@@ -73,8 +73,12 @@ Once your external physics solver has run, you can upload the resulting CSV back
 
 With a validated dataset, you can construct your Probability of Detection (PoD) curves.
 
-- Select your Parameter of Interest (e.g., "Length") and set your critical threshold (e.g., 18.0).
+- Toggle the Analysis Modality to evaluate standard **1D Marginal PoD** or select **Multi-Dimensional PoD** for interactive heatmaps. 
 
-- The app handles the model fitting and bootstrapping in the background.
+- Select your Parameter(s) of Interest (e.g., "Length", "Angle") and assign Nuisance Parameters to be marginalised out.
 
-- It automatically visualises the results, displaying both the Signal Response Model (Physics) and the Probability of Detection Curve (Reliability) side-by-side.
+- Set your critical threshold (e.g., 18.0).
+
+- The app handles the Monte Carlo Integration, model fitting, and bootstrapping in the background.
+
+- It automatically visualises the results, displaying both the Signal Response Model (Physics) and the Probability of Detection Curve/Surface (Reliability) side-by-side.
