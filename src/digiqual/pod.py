@@ -378,8 +378,6 @@ def fit_variance_model(
         bandwidth_ratio (float, optional): The kernel smoothing window size as a
             fraction of the data range (X.max() - X.min()). Only used if
             `auto_bandwidth` is False. Defaults to 0.1.
-        n_eval_points (int, optional): The number of points to generate for the
-            evaluation grid (`X_eval`). Defaults to 100.
 
     Returns:
         Tuple[np.ndarray, float]:
@@ -639,7 +637,7 @@ def bootstrap_pod_ci(
     """
     n_samples = len(y)
     pod_matrix = np.zeros((n_boot, len(X_eval)))
-    
+
     X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
 
     for i in range(n_boot):
