@@ -98,20 +98,19 @@ def test_plot_model_selection(linear_data):
 def test_fit_variance_model_outputs(heteroscedastic_data):
     X, y = heteroscedastic_data
     mean_model = fit_robust_mean_model(X, y)
-    residuals, bw, X_eval = fit_variance_model(X, y, mean_model, n_eval_points=20)
+    residuals, bw = fit_variance_model(X.reshape(-1, 1), y, mean_model)
 
     assert len(residuals) == len(y)
     assert isinstance(bw, float)
     assert bw > 0
-    assert len(X_eval) == 20
 
 def test_predict_local_std_heteroscedasticity(heteroscedastic_data):
     X, y = heteroscedastic_data
     mean_model = fit_robust_mean_model(X, y)
-    residuals, bw, _ = fit_variance_model(X, y, mean_model)
+    residuals, bw = fit_variance_model(X.reshape(-1, 1), y, mean_model)
 
-    eval_points = np.array([0.5, 4.5])
-    predicted_std = predict_local_std(X, residuals, eval_points, bw)
+    eval_points = np.array([[0.5], [4.5]])
+    predicted_std = predict_local_std(X.reshape(-1, 1), residuals, eval_points, bw)
 
     assert len(predicted_std) == 2
     assert np.all(predicted_std > 0)
@@ -122,8 +121,8 @@ def test_predict_local_std_heteroscedasticity(heteroscedastic_data):
 def test_infer_best_distribution_gaussian(linear_data):
     X, y = linear_data
     mean_model = fit_robust_mean_model(X, y)
-    residuals, bw, _ = fit_variance_model(X, y, mean_model)
-    dist_name, params = infer_best_distribution(residuals, X, bw)
+    residuals, bw = fit_variance_model(X.reshape(-1, 1), y, mean_model)
+    dist_name, params = infer_best_distribution(residuals, X.reshape(-1, 1), bw)
 
     assert dist_name in ['norm', 't', 'logistic']
     assert len(params) >= 2
@@ -131,15 +130,15 @@ def test_infer_best_distribution_gaussian(linear_data):
 def test_infer_best_distribution_gumbel(gumbel_data):
     X, y = gumbel_data
     mean_model = fit_robust_mean_model(X, y)
-    residuals, bw, _ = fit_variance_model(X, y, mean_model)
-    dist_name, params = infer_best_distribution(residuals, X, bw)
+    residuals, bw = fit_variance_model(X.reshape(-1, 1), y, mean_model)
+    dist_name, params = infer_best_distribution(residuals, X.reshape(-1, 1), bw)
 
     assert dist_name == 'gumbel_r'
     assert isinstance(params, tuple)
 
 def test_infer_best_distribution_safety():
     np.random.seed(123)
-    X = np.linspace(0, 10, 20)
+    X = np.linspace(0, 10, 20).reshape(-1, 1)
     residuals = np.random.normal(0, 1, 20)
     dist_name, params = infer_best_distribution(residuals, X, bandwidth=1.0)
     assert isinstance(dist_name, str)
@@ -149,11 +148,12 @@ def test_infer_best_distribution_safety():
 def test_compute_pod_curve_bounds(linear_data):
     X, y = linear_data
     mean_model = fit_robust_mean_model(X, y)
-    residuals, bw, X_eval = fit_variance_model(X, y, mean_model)
+    residuals, bw = fit_variance_model(X.reshape(-1, 1), y, mean_model)
+    X_eval = np.linspace(X.min(), X.max(), 100).reshape(-1, 1)
     dist_info = ('norm', (0, 1))
 
     pod_curve, mean_curve = compute_pod_curve(
-        X_eval, mean_model, X, residuals, bw, dist_info, threshold=5.0
+        X_eval, mean_model, X.reshape(-1, 1), residuals, bw, dist_info, threshold=5.0
     )
 
     assert len(pod_curve) == len(X_eval)
@@ -167,12 +167,13 @@ def test_bootstrap_pod_ci_structure(linear_data):
     """Test that bootstrap returns valid upper/lower bounds using dynamic models."""
     X, y = linear_data
     mean_model = fit_robust_mean_model(X, y)
-    residuals, bw, X_eval = fit_variance_model(X, y, mean_model)
+    residuals, bw = fit_variance_model(X.reshape(-1, 1), y, mean_model)
+    X_eval = np.linspace(X.min(), X.max(), 100).reshape(-1, 1)
     dist_info = ('norm', (0, 1))
 
     # Run small bootstrap (n_boot=10) for speed using new signature
     lower, upper = bootstrap_pod_ci(
-        X, y, X_eval,
+        X.reshape(-1, 1), y, X_eval,
         threshold=5.0,
         model_type=mean_model.model_type_,
         model_params=mean_model.model_params_,
@@ -190,10 +191,10 @@ def test_bootstrap_kriging_path(linear_data):
     """Explicitly test the Kriging conditional logic inside the bootstrap loop."""
     X, y = linear_data
     kernel = RBF(1.0)
-    X_eval = np.linspace(0.1, 5.0, 10)
+    X_eval = np.linspace(0.1, 5.0, 10).reshape(-1, 1)
 
     lower, upper = bootstrap_pod_ci(
-        X, y, X_eval,
+        X.reshape(-1, 1), y, X_eval,
         threshold=5.0,
         model_type='Kriging',
         model_params=kernel,
@@ -257,7 +258,7 @@ def test_infer_best_distribution_exception():
     assert params == (0, 1)
 
 def test_calculate_reliability_point_nan():
-    X_eval = np.array([1, 2, 3])
+    X_eval = np.array([[1], [2], [3]])
     ci_lower = np.array([0.1, 0.2, 0.3]) # target is 0.9 by default
     res = calculate_reliability_point(X_eval, ci_lower, target_pod=0.9)
     assert np.isnan(res)

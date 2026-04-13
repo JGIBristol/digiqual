@@ -175,10 +175,10 @@ def test_pod_kriging_selection(mock_boot, mock_comp, mock_dist, mock_var, mock_f
     mock_model.cv_scores_ = {}
     mock_fit.return_value = mock_model
 
-    mock_var.return_value = (np.array([1]), 0.1, np.array([1]))
+    mock_var.return_value = (np.ones(len(clean_df)), 0.1)
     mock_dist.return_value = ("norm", (0,1))
-    mock_comp.return_value = (np.array([1]), np.array([1]))
-    mock_boot.return_value = (np.array([1]), np.array([1]))
+    mock_comp.return_value = (np.ones(100), np.ones(100))
+    mock_boot.return_value = (np.ones(100), np.ones(100))
 
     study.pod(poi_col="Length", threshold=0.5)
     assert study.pod_results["mean_model"].model_type_ == 'Kriging'
@@ -199,9 +199,9 @@ def test_visualise(mock_savefig, mock_show, study, clean_df):
     study.pod_results = {
         "poi_col": "Length",
         "threshold": 0.5,
-        "X": np.array([1,2,3]),
+        "X": np.array([[1], [2], [3]]),
         "y": np.array([1,2,3]),
-        "X_eval": np.array([1,2,3]),
+        "X_eval": np.array([[1], [2], [3]]),
         "residuals": np.array([0,0,0]),
         "bandwidth": 0.1,
         "mean_model": mean_model,
@@ -219,6 +219,6 @@ def test_visualise(mock_savefig, mock_show, study, clean_df):
 
 @patch.dict(sys.modules, {'matplotlib.pyplot': None})
 def test_visualise_no_matplotlib(study):
-    study.pod_results = {"poi_col": "Length", "mean_model": MagicMock(), "X": np.array([]), "residuals": np.array([]), "X_eval": np.array([]), "bandwidth": 1, "y": np.array([]), "threshold": 0.5, "curves": {"mean_response": np.array([]), "pod": np.array([]), "ci_lower": np.array([]), "ci_upper": np.array([])}}
+    study.pod_results = {"poi_col": "Length", "mean_model": MagicMock(), "X": np.empty((0, 1)), "residuals": np.array([]), "X_eval": np.empty((0, 1)), "bandwidth": 1, "y": np.array([]), "threshold": 0.5, "curves": {"mean_response": np.array([]), "pod": np.array([]), "ci_lower": np.array([]), "ci_upper": np.array([])}}
     with patch("digiqual.core.pod.plot_model_selection"), patch("digiqual.core.plot_signal_model", return_value=MagicMock()), patch("digiqual.core.plot_pod_curve", return_value=MagicMock()):
         study.visualise(show=True)  # Should hit except ImportError and pass quietly
