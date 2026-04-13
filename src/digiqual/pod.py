@@ -643,6 +643,9 @@ def bootstrap_pod_ci(
     X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
 
     for i in range(n_boot):
+        if (i + 1) % max(1, n_boot // 10) == 0:
+            print(f"      -> [{int((i + 1) / n_boot * 100):3d}%] Completed {i + 1} iterations")
+
         # Resample indices
         idx = np.random.choice(n_samples, n_samples, replace=True)
         X_res_2d = X_2d[idx]

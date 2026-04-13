@@ -1368,7 +1368,7 @@ def server(input, output, session):
 
         r2_val      = float(fit_row["Value"].values[0])      if not fit_row.empty  else None
         fit_passed  = bool(fit_row["Pass"].values[0])         if not fit_row.empty  else True
-        boot_passed = bool(boot_row["Pass"].values[0])        if not boot_row.empty else True
+        boot_passed = bool(boot_row["Pass"].all())            if not boot_row.empty else True
 
         avg_cv_val = None
         max_cv_val = None

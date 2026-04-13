@@ -165,6 +165,8 @@ def _check_bootstrap_convergence(df: pd.DataFrame, input_cols: List[str], outcom
         "bootstrap_iterations": n_bootstraps,
         "avg_relative_width": round(avg_rel_width, 4),
         "max_relative_width": round(max_rel_width, 4),
+        "avg_converged": bool(avg_rel_width < 0.15),
+        "max_converged": bool(max_rel_width < 0.30),
         "converged": bool(is_converged)
     }
 
@@ -192,7 +194,7 @@ def sample_sufficiency(
 
     Returns:
         pd.DataFrame: A table containing pass/fail metrics for each test,
-                      including the threshold values evaluated against.
+                        including the threshold values evaluated against.
 
     Examples:
         ```python
@@ -255,7 +257,7 @@ def sample_sufficiency(
         "Metric": "Avg CV (Rel Std Dev)",
         "Value": boot_res['avg_relative_width'],
         "Threshold": "< 0.15",
-        "Pass": boot_res['converged']
+        "Pass": boot_res['avg_converged']
     })
 
     flat_results.append({
@@ -264,7 +266,7 @@ def sample_sufficiency(
         "Metric": "Max CV (Rel Std Dev)",
         "Value": boot_res['max_relative_width'],
         "Threshold": "< 0.30",
-        "Pass": boot_res['converged']
+        "Pass": boot_res['max_converged']
     })
 
     return pd.DataFrame(flat_results)
