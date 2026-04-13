@@ -116,7 +116,9 @@ Once the loop finishes, `study.data` contains all the valid simulation results a
 # |   - "Probability of Detection Curve (Reliability)"
 # | layout-ncol: 1
 print(f"Total Simulations Run: {len(study.data)}")
-_ = study.pod(poi_col="Length", threshold=20)
+# We can evaluate the 1D Probability of Detection for Length, 
+# while accurately marginalising out the varying Angle using our new data!
+_ = study.pod(poi_col="Length", nuisance_col=["Angle"], threshold=20)
 study.visualise()
 ```
 

@@ -72,6 +72,7 @@ Ensure your simulation outputs are statistically valid before processing.
 The package includes a full statistical engine for calculating Probability of Detection (PoD) curves.
 
 -   **Relaxed Assumptions:** Moves beyond the rigid constraints of the classical $\hat{a}$-versus-$a$ method by handling non-linear signal responses and heteroscedastic noise.
+-   **Multi-Dimensional Active Marginalisation:** Resolves multidimensional physics by integrating out stochastic nuisance parameters (like roughness) via Monte Carlo methods, outputting high-fidelity 2D PoD surface heatmaps alongside standard 1D curves.
 -   **Robust Statistics:** Automatically selects the best polynomial degree and error distribution (e.g., Normal, Gumbel, Logistic) based on data fit (AIC).
 -   **Uncertainty Quantification:** Uses bootstrap resampling to generate robust confidence bounds and $a_{90/95}$ estimates.
 
