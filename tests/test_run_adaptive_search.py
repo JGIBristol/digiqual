@@ -147,8 +147,8 @@ def test_adaptive_refinement_loop(mock_validate, mock_sufficiency, mock_target, 
     """Test the refinement loop: Fail diagnostics -> Generate new points -> Run -> Repeat."""
 
     # --- Iteration 1 Setup: FAIL ---
-    # Validation passes
-    mock_validate.return_value = (sample_df, pd.DataFrame())
+    # Validation passes through
+    mock_validate.side_effect = lambda df, *args: (df, pd.DataFrame())
     # Diagnostics fail
     fail_report = pd.DataFrame({'Test': ['Coverage'], 'Pass': [False]})
     pass_report = pd.DataFrame({'Test': ['Coverage'], 'Pass': [True]})

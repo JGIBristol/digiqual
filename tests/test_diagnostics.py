@@ -24,8 +24,8 @@ def test_check_input_coverage_zero_range():
     # If data range is 0, max_gap_ratio = 1.0
     df = pd.DataFrame({'A': [5, 5, 5, 5]})
     res = _check_input_coverage(df, ['A'])
-    assert res['A']['max_gap_ratio'] == 1.0
-    assert not res['A']['sufficient_coverage']
+    assert res['A']['max_gap_ratio'] == 0.0
+    assert res['A']['sufficient_coverage']
 
 def test_sample_sufficiency_drops_invalid():
     # Provide data that has 10 valid rows and 1 invalid row

@@ -132,9 +132,8 @@ def plot_pod_curve(
     if ci_lower is not None:
         # Check if we actually reach the target reliability
         if np.max(ci_lower) >= target_pod:
-            # INTERPOLATION: Finds the exact X where Y == target_pod
-            # This matches the logic used in the app.py table
-            a90_95 = np.interp(target_pod, ci_lower, X_eval)
+            from digiqual.pod import calculate_reliability_point
+            a90_95 = calculate_reliability_point(X_eval, ci_lower, target_pod)
 
             # Draw the marker lines
             label_text = f"a90/95 = {a90_95:.3f}"

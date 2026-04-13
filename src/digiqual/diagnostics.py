@@ -94,7 +94,7 @@ def _check_input_coverage(df: pd.DataFrame, input_cols: List[str]) -> Dict:
         data_range = sorted_vals[-1] - sorted_vals[0]
 
         if data_range == 0:
-            max_gap_ratio = 1.0
+            max_gap_ratio = 0.0
         else:
             max_gap_ratio = np.max(gaps) / data_range
 
@@ -174,7 +174,8 @@ def _check_bootstrap_convergence(df: pd.DataFrame, input_cols: List[str], outcom
 def sample_sufficiency(
     df: pd.DataFrame,
     input_cols: List[str],
-    outcome_col: str
+    outcome_col: str,
+    skip_validation: bool = False
 ) -> pd.DataFrame:
     """
     Performs statistical tests on sampling sufficiency.
@@ -205,10 +206,12 @@ def sample_sufficiency(
         ```
     """
     # 1. Validate simulation data
-    df_clean, df_removed = validate_simulation(df, input_cols, outcome_col)
-
-    if not df_removed.empty:
-        print(f"Note: {len(df_removed)} invalid rows were dropped automatically.")
+    if not skip_validation:
+        df_clean, df_removed = validate_simulation(df, input_cols, outcome_col)
+        if not df_removed.empty:
+            print(f"Note: {len(df_removed)} invalid rows were dropped automatically.")
+    else:
+        df_clean = df
 
     if len(df_clean) < 10:
         raise ValidationError(

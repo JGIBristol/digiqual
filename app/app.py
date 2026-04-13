@@ -1425,9 +1425,9 @@ def server(input, output, session):
         running_max = []
         accumulated_preds = []
 
-        np.random.seed(42)
+        rng = np.random.default_rng(42)
         for _ in range(n_boot):
-            idx = np.random.choice(len(y), len(y), replace=True)
+            idx = rng.choice(len(y), len(y), replace=True)
             X_b, y_b = X[idx], y[idx]
             m = make_pipeline(PolynomialFeatures(degree=2), LinearRegression())
             m.fit(X_b, y_b)
@@ -1487,22 +1487,28 @@ def server(input, output, session):
 
     # --- SHARED CALCULATOR ---
 
-    @reactive.calc
-    def current_study():
-        """
-        Creates the study object for analysis.
-        Allows access even if validation failed, provided data exists.
-        """
-        if uploaded_data() is None:
-            return None
+    study_instance = reactive.value(None)
 
-        # Initialize study with current UI selections
+    @reactive.effect
+    @reactive.event(uploaded_data, input.input_cols, input.outcome_col)
+    def update_study():
+        if uploaded_data() is None:
+            study_instance.set(None)
+            return
+
         study = SimulationStudy(
             input_cols=list(input.input_cols()),
             outcome_col=input.outcome_col()
         )
         study.add_data(uploaded_data())
-        return study
+        study_instance.set(study)
+
+    @reactive.calc
+    def current_study():
+        """
+        Returns the cached study object.
+        """
+        return study_instance()
 
 
     @reactive.calc

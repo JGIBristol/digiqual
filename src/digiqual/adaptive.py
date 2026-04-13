@@ -13,6 +13,8 @@ from .sampling import generate_lhs
 import subprocess
 import os
 import time
+import shlex
+from sklearn.model_selection import cross_val_score
 
 
 #### Helper Functions for generate_targeted_samples()
@@ -92,7 +94,22 @@ def _fill_gaps(
 
     # 4. Filter against the graveyard BEFORE selecting the final n
     if graveyard is not None and not graveyard.empty:
-        candidates = _filter_by_graveyard(candidates, graveyard, all_inputs, threshold)
+        max_attempts = 10
+        candidates_list = []
+        for _ in range(max_attempts):
+            filtered = _filter_by_graveyard(candidates, graveyard, all_inputs, threshold)
+            candidates_list.append(filtered)
+            if sum(len(c) for c in candidates_list) >= n:
+                break
+            # Generate more if needed
+            sample_01 = sampler.random(n=n_pool)
+            for i, col in enumerate(all_inputs):
+                if col == target_col:
+                    scaled_data[col] = sample_01[:, i] * (gap_end - gap_start) + gap_start
+                else:
+                    scaled_data[col] = sample_01[:, i] * (df[col].max() - df[col].min()) + df[col].min()
+            candidates = pd.DataFrame(scaled_data)
+        candidates = pd.concat(candidates_list, ignore_index=True)
 
     # Return exactly the number requested
     return candidates.head(n).copy()
@@ -139,12 +156,27 @@ def _sample_uncertainty(
     y = df[outcome_col].values
     preds = np.zeros((len(candidates), 10)) # A matrix to hold rows x 10 model guesses
 
+    # --- NEW: Dynamically find best degree ---
+    best_degree = 1
+    best_mse = float('inf')
+    for d in [1, 2, 3]:
+        m = make_pipeline(PolynomialFeatures(d), LinearRegression())
+        try:
+            scores = cross_val_score(m, X, y, cv=5, scoring='neg_mean_squared_error')
+            mse = -np.mean(scores)
+            if mse < best_mse:
+                best_mse = mse
+                best_degree = d
+        except ValueError:
+            pass # fallback to 1 if not enough data
+
+
     for i in range(10):
         # A) Resample: Create a 'bootstrap' dataset (same size as original, but shuffled with duplicates)
         X_res, y_res = resample(X, y, random_state=i)
 
         # B) Define Model: Polynomial (curves) + Linear Regression (solver)
-        model = make_pipeline(PolynomialFeatures(3), LinearRegression())
+        model = make_pipeline(PolynomialFeatures(best_degree), LinearRegression())
 
         # C) Train: The model learns the relationship based on this specific bootstrap sample
         model.fit(X_res, y_res)
@@ -299,8 +331,9 @@ def _execute_simulation(
     cmd = command_template.format(input=input_path, output=output_path)
 
     print(f"   -> Executing: {cmd}")
+    cmd_list = shlex.split(cmd)
     try:
-        subprocess.run(cmd, shell=True, check=True)
+        subprocess.run(cmd_list, shell=False, check=True)
     except subprocess.CalledProcessError as e:
         print(f"   -> Simulation FAILED (Exit Code {e.returncode}).")
         return pd.DataFrame()
@@ -416,6 +449,7 @@ def run_adaptive_search(
         print(f"\n--- Iteration {i+1}: Diagnostics Check ---")
 
         clean_df, _ = validate_simulation(current_data, input_cols, outcome_col)
+        current_data = clean_df.copy()
 
         if clean_df.empty:
             diag = pd.DataFrame()

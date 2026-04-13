@@ -697,4 +697,5 @@ def calculate_reliability_point(
 
     # Interpolate to find exact crossing point
     # We swap args because we are solving for X given Y=0.90
-    return float(np.interp(target_pod, ci_lower, X_eval))
+    monotonic_ci = np.maximum.accumulate(ci_lower)
+    return float(np.interp(target_pod, monotonic_ci, X_eval))
