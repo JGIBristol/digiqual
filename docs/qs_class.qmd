@@ -3,13 +3,15 @@ title: "SimulationStudy Class"
 description: "A streamlined guide using the SimulationStudy manager."
 ---
 
-Use the `SimulationStudy` manager to handle the entire lifecycle: storage, diagnostics, and active refinement. This allows you to automatically fix issues in your design.
+Use the `SimulationStudy` manager to handle the entire lifecycle: storage, diagnostics, active refinement, and analysis.
 
-In this example, we will **intentionally feed the study "bad" data** (with a large gap in the input space) to demonstrate how the active learning module identifies and fixes the problem.
+::: {.callout-note}
+In this tutorial, we will intentionally feed the study **"bad" data** (with a large gap in the input space) to demonstrate how the active learning module automatically identifies and fixes issues.
+:::
 
-### 1. Setup & "Flawed" Data Generation
+### 1. Setup & Data Generation
 
-First, we define our physics simulation and create a dataset with a deliberate gap (missing data between 3mm and 7mm).
+We'll define a simulated physics function with heteroscedastic noise and generate an initial design containing a deliberate gap between 3mm and 7mm.
 
 ```{python}
 import numpy as np
@@ -67,7 +69,11 @@ study.add_data(df_initial)
 
 ### 2. Diagnosis (Detecting the Issue)
 
-We now ask the study manager to diagnose the health of our experiment. We expect it to flag the Input Coverage test because of the gap we created.
+We ask the `SimulationStudy` manager to diagnose the health of our experiment.
+
+::: {.callout-warning}
+Because of our deliberate gap, we expect the diagnostic engine to flag the **Input Coverage** test as failed.
+:::
 
 
 ```{python}
@@ -76,7 +82,11 @@ study.diagnose()
 
 ### 3. Adaptive Refinement (The Fix)
 
-Instead of manually guessing where to add points, we use refine(). The study manager automatically detects the gap and generates targeted samples to fill it. In this example, we run the `apply_physics()` function, but in reality, users should feed the new samples dataframe into their simulation engine to calculate the outcome variable. Users can then add those results into the SimulationStudy class using the `add_data()` method.
+Instead of manually guessing where to add new simulations, we use the `refine()` method. 
+
+1. **Detect:** It automatically targets the exact region where the gap or uncertainty exists.
+2. **Generate:** It outputs a dataframe of new input coordinates.
+3. **Execute & Store:** You run your external simulation on these points and append the results back using `add_data()`.
 
 
 ```{python}
@@ -102,9 +112,16 @@ study.diagnose()
 
 ### 4. Reliability Analysis
 
-With a validated dataset, we can now run the complete PoD pipeline. The `pod()` method handles model fitting, distribution selection, and bootstrapping in a single call.
+With a validated dataset, we can now run the complete PoD pipeline.
 
-Because the `SimulationStudy` object manages the state, we can run the analysis and immediately generate standard diagnostics without needing to manually handle the output data.
+::: {.callout-tip}
+The single `pod()` method automatically handles:
+
+- **Monte-Carlo Integration** (marginalising out Nuisance variables)
+- **Model Selection** (finding the best polynomial fit)
+- **Distribution Inference** (finding the best error distribution)
+- **Bootstrapping** (generating confidence bounds)
+:::
 
 ```{python}
 #| label: analysis-run

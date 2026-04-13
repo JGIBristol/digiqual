@@ -2,74 +2,56 @@
 title: "Generalised Probability of Detection"
 ---
 
-In traditional non-destructive evaluation (NDE), the standard $\hat{a}$ vs $a$ approach relies on several restrictive assumptions: linearity, homoscedasticity (constant variance), and normality of residuals. Interaction with complex physics—such as crack roughness—often breaks these assumptions.
+In traditional non-destructive evaluation (NDE), the standard $\hat{a}$-versus-$a$ approach relies on several restrictive assumptions: 
+1. **Linearity** of the signal response to defect size.
+2. **Homoscedasticity** (constant variance) of noise across all defect sizes.
+3. **Normality** (Gaussian shape) of the residuals.
 
-To address this, `digiqual` implements a generalized framework based on the work of Malkiel et al. (2025). This article showcases the specific functions used to relax these assumptions.
+Interaction with complex physics—such as crack roughness or angle variations—often breaks these assumptions. `digiqual` implements a generalized framework based on Malkiel et al. (2025) to relax these constraints.
 
+## 1. Automated Model Selection (Relaxing Linearity)
+Instead of forcing a linear relationship $\hat{a} = \beta_0 + \beta_1 a$, `digiqual` treats the expectation model as a selection problem.
 
-## 1. Automated Model Selection: `fit_robust_mean_model()`
-Instead of forcing a linear relationship, `digiqual` treats the expectation model as a selection problem.
+### The Mathematics
+It evaluates a pool of candidate models $f(x)$ including polynomials up to degree $10$ and Gaussian Process (Kriging) models. For each model, it performs **$K$-fold Cross-Validation (CV)** to estimate the Mean Squared Error (MSE):
+$$ MSE_{CV} = \frac{1}{n} \sum_{i=1}^n (y_i - \hat{f}^{-k(i)}(x_i))^2 $$
+Where $\hat{f}^{-k(i)}$ is the model trained without the $k$-th fold containing observation $i$. The model minimizing this error is automatically selected, balancing bias and variance.
 
-* **Functionality**: This function evaluates a pool of candidate models, including polynomials (up to degree 10) and Gaussian Process (Kriging) models.
-* **The Relaxation**: It uses **10-fold Cross-Validation (CV)** to calculate the Mean Squared Error (MSE) for every candidate.
-* **Selection Logic**: By identifying the model that minimizes the CV error, the system automatically balances bias and variance without manual tuning.
+## 2. Modeling Heteroscedasticity (Relaxing Constant Variance)
+Signal scatter often increases with flaw size. `digiqual` abandons the constant variance assumption $\sigma^2 = c$, replacing it with a localized estimation $\sigma^2(x)$.
 
-```{python}
-#| eval: false
-# From pod.py: Selecting the best fit among Poly 1-10 and Kriging
-best_model_info = min(cv_scores, key=cv_scores.get)
-best_type, best_params = best_model_info
-```
+### The Mathematics
+It implements a **Nadaraya-Watson Gaussian kernel average smoother**. The variance at any point $x$ is calculated as a weighted average of the surrounding squared residuals $e_i^2 = (y_i - \hat{y}_i)^2$:
+$$ \hat{\sigma}^2(x) = \frac{\sum_{i=1}^n K_h(x - x_i) e_i^2}{\sum_{i=1}^n K_h(x - x_i)} $$
+Where $K_h$ is the Gaussian kernel with bandwidth $h$:
+$$ K_h(u) = \frac{1}{\sqrt{2\pi h^2}} \exp\left(-\frac{u^2}{2h^2}\right) $$
+The optimal bandwidth $h$ is determined automatically via **Leave-One-Out Cross-Validation (LOO-CV)**.
 
-## 2. Modeling Heteroscedasticity: `predict_local_std()`
-In many simulations, signal scatter increases with flaw size. `digiqual` replaces the "constant variance" assumption with a localized estimation.
+## 3. Inferring Error Distributions (Relaxing Normality)
+Noise is rarely perfectly Gaussian. `digiqual` infers the true shape of the error.
 
-* **Functionality**: It implements a **Nadaraya-Watson Gaussian kernel average smoother**.
-* **The Relaxation**: The function calculates the variance at a specific point by taking a weighted average of the surrounding squared residuals.
-* **Bandwidth Optimisation**: The `optimize_bandwidth` function uses **Leave-One-Out Cross-Validation (LOO-CV)** to determine the optimal "window" (sigma) for this smoothing.
+### The Mathematics
+Residuals are first standardized into $Z$-scores using the local standard deviation:
+$$ Z_i = \frac{y_i - \hat{f}(x_i)}{\hat{\sigma}(x_i)} $$
+These $Z$-scores are then fitted against a suite of distributions: Normal, Gumbel, Logistic, Laplace, and t-Student. The best-fitting distribution is selected using the **Akaike Information Criterion (AIC)**:
+$$ AIC = 2k - 2\ln(\hat{L}) $$
+Where $k$ is the number of parameters and $\hat{L}$ is the Maximum Likelihood.
 
-```{python}
-#| eval: false
-# From pod.py: Calculating weights for the local variance
-weights = stats.norm.pdf(diff, loc=0, scale=bandwidth)
-local_std = np.sqrt(weights @ sq_residuals)
-```
+## 4. Multi-Dimensional Integration (Active Marginalisation)
+If evaluating multidimensional datasets with nuisance variations (e.g., angle $\theta$, roughness $R$), `digiqual` utilizes Monte Carlo Integration to output a 1D or 2D marginal Probability of Detection.
 
-## 3. Inferring Error Distributions: `infer_best_distribution()`
-The assumption that noise is always Gaussian (Normal) is often inaccurate for safety-critical inspections.
+### The Mathematics
+The expected PoD for a Parameter of Interest (PoI) vector $\mathbf{x}$ is calculated by integrating the conditional PoD over the joint probability density function $p(\mathbf{z})$ of the nuisance variables $\mathbf{z}$:
+$$ PoD(\mathbf{x}) = \int_{\Omega_z} PoD(\mathbf{x}, \mathbf{z}) p(\mathbf{z}) d\mathbf{z} $$
+`digiqual` approximates this integral computationally via Latin Hypercube Sampling (LHS) across the continuous physics space.
 
-* **Functionality**: This function standardizes the residuals (calculating Z-scores) using the local standard deviation estimated above.
-* **The Relaxation**: It fits the Z-scores against a suite of distributions: **Normal, Gumbel (left/right skewed), Logistic, Laplace, and t-Student**.
-* **Selection Logic**: The best-fitting distribution is selected using the **Akaike Information Criterion (AIC)**, which rewards likelihood while penalizing overfitting.
+## 5. Bootstrapping for Confidence Bounds
+Because the model is non-linear and non-normal, traditional analytical confidence bounds are invalid. 
 
-```{python}
-# | eval: false
-# pod.py identifies the best analytical distribution to use for PoD
-for dist_name in candidates:
-    params = dist_obj.fit(z_scores)
-    aic = 2 * k - 2 * log_likelihood  # Lower is better
-```
-
-## 4. Analytical PoD and Bootstrapping
-Once the models for the mean, variance, and distribution are established, the PoD is calculated.
-
-### Curve Generation: `compute_pod_curve()`
-This function analytically derives the PoD at every point by calculating the probability that the signal exceeds the threshold, based on the inferred distribution and local variance.
-
-### Multi-Dimensional Integration (Active Marginalisation)
-If evaluating multidimensional datasets with nuisance variations (like angle or roughness), `digiqual` utilizes a Monte Carlo Integration engine via Latin Hypercube Sampling (LHS). It actively evaluates the continuous multidimensional space to integrate out the nuisance effects across the PoI grid, generating a realistic marginal Probability of Detection surface. `nuisance_col` can be passed alongside `poi_col` into `study.pod()` to activate this capability.
-
-### Confidence Bounds: `bootstrap_pod_ci()`
-Because the model is now non-linear and non-normal, traditional analytical confidence bounds are not tractable. `digiqual` uses **Bootstrap resampling** (typically 1000 iterations) to generate 95% confidence intervals by refitting the models to resampled datasets.
-
-
-## Example Summary
-By calling `study.pod()`, these functions work in sequence:
-
-1.  **`fit_robust_mean_model`** finds the non-linear trend.
-
-2.  **`fit_variance_model`** and **`predict_local_std`** capture the growing noise.
-
-3.  **`infer_best_distribution`** selects the true shape of the error.
-
-4.  **`bootstrap_pod_ci`** quantifies the reliability of the resulting curve.
+### The Process
+`digiqual` uses **Bootstrap resampling**:
+1. Draw $N$ samples with replacement from the original dataset.
+2. Completely physically re-fit the mean model, variance model, and error distribution.
+3. Calculate the PoD curve.
+4. Repeat this $B$ times (typically $B=1000$).
+5. Extract the $2.5^{th}$ and $97.5^{th}$ percentiles at every point $a$ to form the robust 95% confidence interval $PoD_{95}$.

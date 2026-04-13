@@ -9,6 +9,7 @@ from . import diagnostics          # noqa: E402
 from . import adaptive             # noqa: E402
 from . import sampling             # noqa: E402
 from . import plotting             # noqa: E402
+from . import integration          # noqa: E402
 
 def dq_ui():
     """
@@ -53,5 +54,6 @@ __all__ = [
     "diagnostics",
     "adaptive",
     "sampling",
-    "plotting"
+    "plotting",
+    "integration"
 ]

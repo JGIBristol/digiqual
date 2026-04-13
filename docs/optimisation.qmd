@@ -1,17 +1,25 @@
 # Automated Optimisation
 
-The `optimise` method allows you to run a complete "Active Learning" loop. DigiQual will generate an initial design, run your external solver, check the results, and automatically add new points where the model is weak.
+The `optimise` method allows you to run a complete "Active Learning" loop. DigiQual will generate an initial design, run your external solver, check the results, and automatically add new points where the model is weak. 
 
-Instead of writing `for` loops yourself, you define the problem and let `digiqual` drive.
+## The Active Learning Lifecycle
 
-## How It Works Under the Hood
+When you trigger the `optimise` method, DigiQual acts as an orchestrator, completing the following active learning loop until statistical requirements are satisfied.
 
-When you trigger the `optimise` method, DigiQual acts as an orchestrator for your simulation workflows. It performs the following steps:
+```mermaid
+flowchart TD
+    A[1. Initialise - Generate LHS Design] --> B(2. Execute Solver)
+    B --> C{3. Diagnostics}
+    C -->|Healthy| D[(Final Validated Data)]
+    C -->|Fails Check| E[4. Refinement - Generate Targeted Samples]
+    E --> B
+```
 
+### Breakdowns of the Steps
 1. **Initialisation**: If you have no existing data, DigiQual generates an initial batch of input coordinates using Latin Hypercube Sampling (LHS) to ensure a good spread across your variable ranges.
 2. **Execution**: It writes these coordinates to a temporary CSV file and commands your external solver to run.
 3. **Diagnostics (Sense)**: Once the results are back, DigiQual runs statistical checks. It looks for "gaps" in your input coverage and measures "model uncertainty" using a technique called Bootstrap Query-by-Committee.
-4. **Refinement (Decide & Act)**: If the diagnostics fail, DigiQual generates targeted new samples exactly where the model needs them most (e.g., in the middle of an empty gap, or in highly uncertain regions) and repeats the loop.
+4. **Refinement (Decide & Act)**: If the diagnostics fail, DigiQual generates *targeted* new samples exactly where the model needs them most (e.g., in the middle of an empty gap, or in highly uncertain regions) and repeats the loop.
 
 ## Connecting Your External Solver
 
@@ -24,23 +32,11 @@ Your command string must contain two special placeholders: `{input}` and `{outpu
 
 ### The "Wrapper" Concept
 
-Most heavy physics solvers don't natively read and write CSVs in exactly the way DigiQual expects. In real life, you will usually write a small "wrapper script" (e.g., `run_my_model.py` or `run_my_model.bat`). See [Appendix](#sec-appendix) for full examples python and MATLAB.
+Most heavy physics solvers don't natively read and write CSVs in exactly the way DigiQual expects. In real life, you will usually write a small "wrapper script" (e.g., `run_my_model.py` or `run_my_model.bat`). See [Appendix](#sec-appendix) for full examples in Python and MATLAB.
 
 ### Key Features
 - **Batch Processing:** A critical detail is that the `{input}` CSV does not contain just one simulation point. It contains an **entire batch** of points (determined by `n_start` or `n_step`). Your wrapper script must loop over each row in the CSV, execute the solver for that set of inputs, record the result, and finally save all results to the `{output}` CSV.
-
 - **Handling Failures (Graveyard):** If the external solver crashes or fails to converge for a specific input row, your wrapper should leave the outcome column blank (or insert `NaN`) for that row. DigiQual will detect this and automatically add those coordinates to a "graveyard", ensuring it never tries to sample that exact region again!
-
-
-### Core Loop
-Your wrapper script's job is to:
-
-1. Read the DigiQual `{input}` CSV.
-2. **Loop** over every row (each row is one simulation design point). For each row:
-   * Modify your solver's native input deck (e.g., updating parameters in an Ansys `.mac` file).
-   * Trigger the actual solver in headless/batch mode.
-   * Extract the results (e.g., the signal or stress value). If it fails, record `NaN`.
-3. Save a clean CSV to the `{output}` path containing the **exact original input columns** with the new outcome column appended.
 
 ## The Auto-Pilot Workflow
 
@@ -77,20 +73,11 @@ ranges = {"Length": (0.0, 5.0), "Angle": (-45.0, 45.0)}
 
 # Initialise
 study = SimulationStudy(input_cols=["Length", "Angle"], outcome_col="Signal")
-
 ```
 
 ### 3. Run Optimisation
 
 This single command handles the entire Active Learning loop:
-
-1. **Initialisation:** Generates an initial batch of 20 LHS points (`n_start=20`) and passes them via `{input}` to your solver command.
-2. **Execution:** Runs the solver command, passing the temporary input and output file paths.
-3. **Diagnostics (Sense):** Checks statistical diagnostics to see if the data coverage and model accuracy are sufficient.
-4. **Refinement (Decide & Act):** If diagnostics fail, generates a targeted batch of 10 new points (`n_step=10`) focusing on weak areas and repeats the loop (up to `max_iter=5` times).
-5. **Safety Stop:** Checks the elapsed time against `max_hours` to ensure the loop stops safely if the physical time limit is reached.
-
-
 
 ```{python}
 study.optimise(
@@ -110,14 +97,9 @@ Once the loop finishes, `study.data` contains all the valid simulation results a
 ```{python}
 # | label: fig-optimisation-results
 # | fig-cap: "Reliability Analysis Results"
-# | fig-subcap:
-# |   - "Best Fitting Model (Statistics)"
-# |   - "Signal Response Model (Physics)"
-# |   - "Probability of Detection Curve (Reliability)"
 # | layout-ncol: 1
 print(f"Total Simulations Run: {len(study.data)}")
-# We can evaluate the 1D Probability of Detection for Length, 
-# while accurately marginalising out the varying Angle using our new data!
+# We can evaluate the PoD mapping out the Nuisance Angle!
 _ = study.pod(poi_col="Length", nuisance_col=["Angle"], threshold=20)
 study.visualise()
 ```
@@ -125,78 +107,29 @@ study.visualise()
 
 ## Appendix: Real-World Wrapper Examples {#sec-appendix}
 
-When connecting DigiQual to external physics engines or legacy code, you rarely call the solver directly. Instead, you create a "wrapper script."
+When connecting DigiQual to external engines like MATLAB or Ansys, you will write wrapper scripts. The script reads the input coordinates generated by DigiQual, triggers the solver, and writes an output CSV. See below for examples.
 
-The wrapper's job is simple:
-
-1. Accept the `{input}` and `{output}` file paths from DigiQual.
-2. Read the `{input}` CSV.
-3. Translate those inputs into the format your solver expects (e.g., updating variables, modifying text files).
-4. Run the solver.
-5. Extract the results and save everything to the `{output}` CSV.
-
-Below are examples of how to achieve this in Python and MATLAB.
-
-
-### Example A: Connecting a Custom Python Model
-
-Imagine you have an existing Python file (`beam_model.py`) that contains a complex physics function. You want DigiQual to optimise it.
-
-**1. The Existing Physics Solver (`beam_model.py`)**
-This is your actual engineering code. It doesn't know anything about CSVs or DigiQual.
+### Example A: Python Wrapper
 
 ```{python}
 # | eval: false
-# beam_model.py
-def simulate_beam(length, angle):
-    """A complex, proprietary physics calculation."""
-    # ... heavy calculations happen here ...
-    signal_strength = (length**3) * 0.5 + angle
-    return signal_strength
-```
-
-**2. The Wrapper Script (`python_wrapper.py`)**
-This script acts as the bridge. It reads the CSV from the command line arguments, loops through the data to run the solver, and saves the result.
-
-```{python}
-# | eval: false
-# python_wrapper.py
-import sys
-import pandas as pd
+import sys, pandas as pd
 from beam_model import simulate_beam
 
-
 def main():
-    # 1. Grab the file paths passed by DigiQual
-    input_csv = sys.argv[1]
-    output_csv = sys.argv[2]
-
-    # 2. Read the design points
+    input_csv, output_csv = sys.argv[1], sys.argv[2]
     df = pd.read_csv(input_csv)
-
-    # 3. Run the solver for each row
-    # (We use a lambda function to pass the DataFrame columns into our solver)
-    df["Signal"] = df.apply(
-        lambda row: simulate_beam(row["Length"], row["Angle"]), axis=1
-    )
-
-    # 4. Save the results back for DigiQual to read
+    
+    # Run proprietary solver for each row
+    df["Signal"] = df.apply(lambda row: simulate_beam(row["Length"], row["Angle"]), axis=1)
+    
+    # Save back for DigiQual
     df.to_csv(output_csv, index=False)
-
 
 if __name__ == "__main__":
     main()
 ```
-
-**3. The DigiQual Command**
-In your main optimisation script, you define the `SOLVER_CMD` to call the Python wrapper, passing the placeholders as arguments.
-
-```{python}
-# | eval: false
-# In your main study script
-SOLVER_CMD = "python python_wrapper.py {input} {output}"
-# study.optimise(command=SOLVER_CMD, ...)
-```
+*Run via: `SOLVER_CMD = "python python_wrapper.py {input} {output}"`*
 
 ---
 
@@ -214,8 +147,6 @@ function signal = my_matlab_solver(L, theta)
     signal = (L^3) * 0.5 + theta;
 end
 ```
-
-
 
 **2. The MATLAB Wrapper Function (`matlab_wrapper.m`)**
 We write a top-level MATLAB function that reads the CSV, iterates over the design points, and writes the output CSV.
@@ -244,7 +175,6 @@ function matlab_wrapper(input_csv, output_csv)
     % Exit MATLAB to hand control back to DigiQual
     exit;
 end
-
 ```
 
 **3. The DigiQual Command**

@@ -29,20 +29,28 @@ website:
     collapse-level: 1
     search: true
     contents:
-      # A. Top Level Docs
       - text: "Home"
         href: index.qmd
-      - text: "Installation"
-        href: docs/install.qmd
-      - text: "PoD Generalisation"
-        href: docs/generalised_pod.qmd
-      - text: "Quick Start"
-        href: docs/qs_class.qmd
-      - text: "GUI - Shiny App"
-        href: docs/gui.qmd
-      - text: "Automation & Engines"
-        href: docs/optimisation.qmd
-      - text: "All Functions"
+
+      - section: "Getting Started"
+        contents:
+          - text: "Installation & Setup"
+            href: docs/install.qmd
+          - text: "Python Quick Start"
+            href: docs/qs_class.qmd
+          - text: "Launch the App"
+            href: docs/gui.qmd
+
+      - section: "Detailed Manuals & Theory"
+        contents:
+          - text: "GUI Desktop Manual"
+            href: docs/gui_manual.qmd
+          - text: "Automated Optimisation"
+            href: docs/optimisation.qmd
+          - text: "Generalised PoD Theory"
+            href: docs/generalised_pod.qmd
+
+      - text: "API Reference"
         href: api_reference/index.qmd
 
 
@@ -111,6 +119,11 @@ quartodoc:
         - pod.bootstrap_pod_ci
         - pod.calculate_reliability_point
 
+        # -- Integration --
+        - integration.compute_multi_dim_pod
+
         # -- Plotting --
         - plotting.plot_signal_model
         - plotting.plot_pod_curve
+        - plotting.plot_pod_surface
+        - plotting.plot_signal_surface

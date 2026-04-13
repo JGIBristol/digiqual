@@ -3,41 +3,27 @@ title: "digiqual"
 subtitle: "Statistical Toolkit for Reliability Assessment in NDT"
 ---
 
-`digiqual` is a Python library designed for Non-Destructive Evaluation (NDE) engineers.
-It provides a robust statistical framework for performing Model-Assisted Probability of Detection (MAPOD) studies and reliability assessments.
-The package is built to implement the Generalised $\hat{a}$-versus-$a$ Method, allowing users to assess inspection reliability even when traditional assumptions (linearity, constant variance, Gaussian noise) are not met.
+`digiqual` is a Python library designed for Non-Destructive Evaluation (NDE) engineers. It provides a robust statistical framework for Model-Assisted Probability of Detection (MAPOD) studies, implementing the Generalised $\hat{a}$-versus-$a$ Method to allow reliable assessments even when traditional regression assumptions fail.
 
-## Core Features
+## Quick Start Paths
 
-### 1. Experimental Design
+### 1. The Graphical Interface (Recommended)
+The fastest way to get value from the package is by running the browser-based DigiQual app. No coding is required!
 
-Before running expensive Finite Element (FE) simulations, `digiqual` helps you design your experiment efficiently.
+```bash
+uvx -v digiqual
+```
 
-- **Latin Hypercube Sampling (LHS):** Generate space-filling experimental designs to cover your deterministic parameter space (e.g., defect size) and stochastic nuisance parameters (e.g., roughness, orientation).
-- **Scale & Bound:** Automatically scale samples to your specific variable bounds.
+### 2. The Python API
+If you are building custom workflows or connecting to scripts, add `digiqual` into your python environment.
 
-### 2. Data Validation & Diagnostics
+```bash
+uv add digiqual
+```
 
-Ensure your simulation outputs are statistically valid before processing.
-
-- **Sanity Checks:** Detects overlap between variables, type errors, and insufficient sample sizes.
-- **Sufficiency Diagnostics:** rigorous statistical tests to flag issues like "Input Coverage Gaps" or "Model Instability" before you trust the results.
-
-### 3. Adaptive Refinement & Automated Optimisation
-
-`digiqual` closes the loop between analysis and design.
-
-- **Smart Refinement:** Use `refine()` to identify specific weaknesses in your data. It uses bootstrap committees to find regions of high uncertainty and suggests new points exactly where the model is "confused".
-- **Automated Workflows:** Use the `optimise()` method to run a fully automated "Active Learning" loop. It generates an initial design, executes your external solver, checks diagnostics, and iteratively refines the model until statistical requirements are met.
-
-### 4. Generalised Reliability Analysis
-
-The package includes a full statistical engine for calculating Probability of Detection (PoD) curves.
-
--   **Relaxed Assumptions:** Moves beyond the rigid constraints of the classical $\hat{a}$-versus-$a$ method by handling non-linear signal responses and heteroscedastic noise.
--   **Multi-Dimensional Active Marginalisation:** Resolves multidimensional physics by integrating out stochastic nuisance parameters (like roughness) via Monte Carlo methods, outputting high-fidelity 2D PoD surface heatmaps alongside standard 1D curves.
--   **Robust Statistics:** Automatically selects the best polynomial degree and error distribution (e.g., Normal, Gumbel, Logistic) based on data fit (AIC).
--   **Uncertainty Quantification:** Uses bootstrap resampling to generate robust confidence bounds and $a_{90/95}$ estimates.
+::: {.callout-tip}
+If you are completely new, head over to the **[Installation Guide](docs/install.qmd)** for setup details, or jump straight to the **[Launch the App](docs/gui.qmd)** page.
+:::
 
 ## References
 

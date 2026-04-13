@@ -49,36 +49,7 @@ This will spin up a local server and automatically open the DigiQual dashboard i
 **Coming Soon: Standalone Executables**
 We are actively developing standalone, double-click executables for both Windows and macOS. In the near future, you or your colleagues will be able to run the complete DigiQual toolkit as a standard desktop application, without needing to install Python, manage virtual environments, or touch a command line.
 
-## 2. The App Workflow
 
-The app is divided into three main modules that mirror the programmatic workflow you are already familiar with.
-
-### Module 1: Experimental Design
-
-Instead of defining arrays or dictionaries in code, you can use the UI to visually define your experimental parameters.
-
-- Define your input variables (e.g., Length, Angle) and their minimum/maximum ranges.
-
-- Specify the number of initial samples you want.
-
-- Click generate to instantly build a Latin Hypercube Sample (LHS) framework and download the CSV to feed into your external solver (like MATLAB or Abaqus).
-
-### Module 2: Simulation Diagnostics
-
-Once your external physics solver has run, you can upload the resulting CSV back into the app. Use the dropdowns to assign your input columns and your outcome column (e.g., "Signal"). The app will automatically run health checks, such as testing for input coverage gaps.
-
-**Adaptive Refinement:** If the app detects a deliberate gap or flawed data, it will flag an issue. Instead of manually guessing where to add points, the UI provides a remediation tool to automatically generate targeted samples to fill the gap. You can download these new points, run them through your solver, and upload the complete dataset.
-
-### Module 3: Reliability Analysis
-
-With a validated dataset, you can construct your Probability of Detection (PoD) curves.
-
-- Toggle the Analysis Modality to evaluate standard **1D Marginal PoD** or select **Multi-Dimensional PoD** for interactive heatmaps. 
-
-- Select your Parameter(s) of Interest (e.g., "Length", "Angle") and assign Nuisance Parameters to be marginalised out.
-
-- Set your critical threshold (e.g., 18.0).
-
-- The app handles the Monte Carlo Integration, model fitting, and bootstrapping in the background.
-
-- It automatically visualises the results, displaying both the Signal Response Model (Physics) and the Probability of Detection Curve/Surface (Reliability) side-by-side.
+::: {.callout-note}
+Looking for a detailed breakdown of the functionality inside the App? Check out the [GUI Desktop Manual](gui_manual.qmd).
+:::
