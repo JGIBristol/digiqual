@@ -1043,9 +1043,10 @@ def server(input, output, session):
                 "N (Valid)":  n_valid,
                 "Min":        f"{numeric.min():.4g}"    if n_valid else "N/A",
                 "Median":     f"{numeric.median():.4g}" if n_valid else "N/A",
+                "Max":        f"{numeric.max():.4g}"    if n_valid else "N/A",
                 "Mean":       f"{numeric.mean():.4g}"   if n_valid else "N/A",
                 "Std Dev":    f"{numeric.std():.4g}"    if n_valid else "N/A",
-                "Max":        f"{numeric.max():.4g}"    if n_valid else "N/A",
+
             })
 
         return render.DataGrid(pd.DataFrame(rows), width="100%", filters=False)
@@ -1804,10 +1805,13 @@ def server(input, output, session):
         study = current_study()
         is_multi_dim = len(study.pod_results.get("poi_cols", [])) > 1
 
+        outcome_label = input.outcome_col()
+
         # Unified 2-column layout for both 1D and Multi-Dimensional
         row2 = ui.layout_columns(
             ui.card(
-                ui.card_header("Signal Model Surface" if is_multi_dim else "Signal Model Fit"),
+                # Use dynamic naming based on the outcome label
+                ui.card_header(f"{outcome_label} Surface" if is_multi_dim else f"{outcome_label} Model Fit"),
                 ui.output_plot("plot_signal"),
                 full_screen=True
             ),

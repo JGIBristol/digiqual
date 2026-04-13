@@ -480,7 +480,8 @@ class SimulationStudy:
                 X_raw=res["X"],
                 y_raw=res["y"],
                 threshold=res["threshold"],
-                poi_names=poi_cols
+                poi_names=poi_cols,
+                outcome_name=self.outcome
             )
 
         # 2. PoD Curve/Surface Plot
