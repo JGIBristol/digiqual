@@ -1587,8 +1587,8 @@ def server(input, output, session):
                     ui.div(
                         ui.h6("Data Selection", class_="text-muted"),
                         ui.input_radio_buttons("pod_analysis_type", "Analysis Modality",
-                                              choices=["1D Marginal PoD", "Multi-Dimensional PoD"],
-                                              selected="1D Marginal PoD", inline=True),
+                                                choices=["1D Marginal PoD", "Multi-Dimensional PoD"],
+                                                selected="1D Marginal PoD", inline=True),
                         ui.panel_conditional(
                             "input.pod_analysis_type === '1D Marginal PoD'",
                             ui.input_select("pod_param", "Parameter of Interest", choices=inputs),
@@ -1643,11 +1643,19 @@ def server(input, output, session):
 
     # --- ANALYSIS LOGIC ---
     @reactive.effect
+    @reactive.event(input.pod_analysis_type)
+    def _clear_results_on_modality_change():
+        pod_metrics.set(None)
+        pod_export_data.set(None)
+
+    @reactive.effect
     @reactive.event(input.btn_run_pod)
     def compute_pod_analysis():
         """
         Runs .pod(), calculates a90/95, and triggers plotting.
         """
+        pod_metrics.set(None)
+        pod_export_data.set(None)
 
         study = current_study()
         if study is None:
@@ -1707,7 +1715,10 @@ def server(input, output, session):
 
             # 3. Calculate a90/95 (Interpolate)
             val = results["a90_95"]
-            a9095_str = f"{val:.3f}" if not np.isnan(val) else "Not Reached"
+            if len(poi_cols) > 1:
+                a9095_str = "N/A (Surface)"
+            else:
+                a9095_str = f"{val:.3f}" if not np.isnan(val) else "Not Reached"
 
             # 4. Format the Mean Model string based on the new architecture
             mean_model = results["mean_model"]
@@ -1738,8 +1749,9 @@ def server(input, output, session):
             # Calculate Sample Size
             n_samples = len(results["X"])
 
+            poi_display = ", ".join(results["poi_col"]) if isinstance(results["poi_col"], list) else results["poi_col"]
             metrics = {
-                "Parameter of Interest": results["poi_col"],
+                "Parameter of Interest": poi_display,
                 "Threshold": results["threshold"],
                 "a90/95": a9095_str,
                 "Sample Size (N)": n_samples,
@@ -1759,11 +1771,11 @@ def server(input, output, session):
             else:
                 for i, col in enumerate(poi_cols):
                     export_data[col] = results["X_eval"][:, i]
-            
+
             export_data["pod_mean"] = results["curves"]["pod"]
             export_data["ci_lower"] = results["curves"]["ci_lower"]
             export_data["ci_upper"] = results["curves"]["ci_upper"]
-            
+
             export_df = pd.DataFrame(export_data)
             pod_export_data.set(export_df)
 
@@ -1784,16 +1796,21 @@ def server(input, output, session):
         if pod_metrics() is None:
             return ui.div()
 
-        return ui.div(
-            # Row 1: Model Selection Plot (Full Width)
-            ui.card(
-                ui.card_header("Model Selection (Bias-Variance Tradeoff)"),
-                ui.output_plot("plot_model_selection", height="400px"),
-                full_screen=True,
+        study = current_study()
+        is_multi_dim = len(study.pod_results.get("poi_cols", [])) > 1
+
+        if is_multi_dim:
+            row2 = ui.layout_columns(
+                ui.card(
+                    ui.card_header("PoD Surface Heatmap"),
+                    ui.output_plot("plot_curve"),
+                    full_screen=True
+                ),
+                col_widths=[12],
                 class_="mb-3"
-            ),
-            # Row 2: Signal Model and PoD Plots
-            ui.layout_columns(
+            )
+        else:
+            row2 = ui.layout_columns(
                 ui.card(
                     ui.card_header("Signal Model Fit"),
                     ui.output_plot("plot_signal"),
@@ -1806,7 +1823,18 @@ def server(input, output, session):
                 ),
                 col_widths=[6, 6],
                 class_="mb-3"
+            )
+
+        return ui.div(
+            # Row 1: Model Selection Plot (Full Width)
+            ui.card(
+                ui.card_header("Model Selection (Bias-Variance Tradeoff)"),
+                ui.output_plot("plot_model_selection", height="400px"),
+                full_screen=True,
+                class_="mb-3"
             ),
+            # Row 2: Dynamic Signal Model and PoD Plots
+            row2,
             # Row 3: Table and Download Actions
             ui.layout_columns(
                 ui.card(
