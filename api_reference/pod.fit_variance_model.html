@@ -168,40 +168,68 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Home</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">Getting Started</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/install.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Installation</span></a>
+ <span class="menu-text">Installation &amp; Setup</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">PoD Generalisation</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/qs_class.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Quick Start</span></a>
+ <span class="menu-text">Python Quick Start</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/gui.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">GUI - Shiny App</span></a>
+ <span class="menu-text">Launch the App</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">Detailed Manuals &amp; Theory</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/gui_manual.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GUI Desktop Manual</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/optimisation.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Automation &amp; Engines</span></a>
+ <span class="menu-text">Automated Optimisation</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Generalised PoD Theory</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../api_reference/index.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">All Functions</span></a>
+ <span class="menu-text">API Reference</span></a>
   </div>
 </li>
     </ul>
@@ -231,14 +259,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="digiqual.pod.fit_variance_model" class="level1">
 <h1>pod.fit_variance_model</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>fit_variance_model(</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    X,</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    y,</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    mean_model,</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    auto_bandwidth<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    bandwidth_ratio<span class="op">=</span><span class="fl">0.1</span>,</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    n_eval_points<span class="op">=</span><span class="dv">100</span>,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>fit_variance_model(X, y, mean_model, auto_bandwidth<span class="op">=</span><span class="va">True</span>, bandwidth_ratio<span class="op">=</span><span class="fl">0.1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Calculates residuals and defines the smoothing bandwidth for variance estimation.</p>
 <p>This function acts as the setup phase for modeling heteroscedasticity. It computes the raw residuals from the provided mean model and establishes the smoothing bandwidth either via automated Cross-Validation or a fixed user-defined ratio. It also generates a linearly spaced evaluation grid over the X domain.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
@@ -293,7 +314,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>n_eval_points</td>
 <td>int</td>
 <td>The number of points to generate for the evaluation grid (<code>X_eval</code>). Defaults to 100.</td>
-<td><code>100</code></td>
+<td><em>required</em></td>
 </tr>
 </tbody>
 </table>
@@ -302,9 +323,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 2%">
-<col style="width: 12%">
-<col style="width: 85%">
+<col style="width: 3%">
+<col style="width: 13%">
+<col style="width: 82%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -316,8 +337,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td></td>
-<td>Tuple[np.ndarray, float, np.ndarray]</td>
-<td>Tuple[np.ndarray, float, np.ndarray]: - residuals: Raw differences between <code>y</code> and the mean model predictions. - bandwidth: The selected smoothing window size (in absolute units of X). - X_eval: A linearly spaced grid over the X domain for downstream plotting/evaluation.</td>
+<td>Tuple[np.ndarray, float]</td>
+<td>Tuple[np.ndarray, float]: - residuals: Raw differences between <code>y</code> and the mean model predictions. - bandwidth: The selected smoothing window size (in absolute units of X).</td>
 </tr>
 </tbody>
 </table>
@@ -335,7 +356,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>model.fit(X.reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>), y)</span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Extract residuals and optimized bandwidth</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>residuals, bandwidth, X_eval <span class="op">=</span> fit_variance_model(</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>residuals, bandwidth <span class="op">=</span> fit_variance_model(</span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    X, y,</span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    mean_model<span class="op">=</span>model,</span>
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    auto_bandwidth<span class="op">=</span><span class="va">True</span></span>

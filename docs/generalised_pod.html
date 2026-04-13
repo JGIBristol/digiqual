@@ -23,41 +23,6 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
 </style>
 
 
@@ -68,8 +33,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../docs/qs_class.html" rel="next">
-<link href="../docs/install.html" rel="prev">
+<link href="../api_reference/index.html" rel="next">
+<link href="../docs/optimisation.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
@@ -173,7 +138,7 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/generalised_pod.html">PoD Generalisation</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">Detailed Manuals &amp; Theory</a></li><li class="breadcrumb-item"><a href="../docs/generalised_pod.html">Generalised PoD Theory</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -199,40 +164,68 @@ window.Quarto = {
  <span class="menu-text">Home</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">Getting Started</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/install.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Installation</span></a>
+ <span class="menu-text">Installation &amp; Setup</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">PoD Generalisation</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/qs_class.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Quick Start</span></a>
+ <span class="menu-text">Python Quick Start</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/gui.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">GUI - Shiny App</span></a>
+ <span class="menu-text">Launch the App</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Detailed Manuals &amp; Theory</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/gui_manual.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GUI Desktop Manual</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/optimisation.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Automation &amp; Engines</span></a>
+ <span class="menu-text">Automated Optimisation</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Generalised PoD Theory</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../api_reference/index.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">All Functions</span></a>
+ <span class="menu-text">API Reference</span></a>
   </div>
 </li>
     </ul>
@@ -245,22 +238,33 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#automated-model-selection-fit_robust_mean_model" id="toc-automated-model-selection-fit_robust_mean_model" class="nav-link active" data-scroll-target="#automated-model-selection-fit_robust_mean_model">1. Automated Model Selection: <code>fit_robust_mean_model()</code></a></li>
-  <li><a href="#modeling-heteroscedasticity-predict_local_std" id="toc-modeling-heteroscedasticity-predict_local_std" class="nav-link" data-scroll-target="#modeling-heteroscedasticity-predict_local_std">2. Modeling Heteroscedasticity: <code>predict_local_std()</code></a></li>
-  <li><a href="#inferring-error-distributions-infer_best_distribution" id="toc-inferring-error-distributions-infer_best_distribution" class="nav-link" data-scroll-target="#inferring-error-distributions-infer_best_distribution">3. Inferring Error Distributions: <code>infer_best_distribution()</code></a></li>
-  <li><a href="#analytical-pod-and-bootstrapping" id="toc-analytical-pod-and-bootstrapping" class="nav-link" data-scroll-target="#analytical-pod-and-bootstrapping">4. Analytical PoD and Bootstrapping</a>
+  <li><a href="#automated-model-selection-relaxing-linearity" id="toc-automated-model-selection-relaxing-linearity" class="nav-link active" data-scroll-target="#automated-model-selection-relaxing-linearity">1. Automated Model Selection (Relaxing Linearity)</a>
   <ul class="collapse">
-  <li><a href="#curve-generation-compute_pod_curve" id="toc-curve-generation-compute_pod_curve" class="nav-link" data-scroll-target="#curve-generation-compute_pod_curve">Curve Generation: <code>compute_pod_curve()</code></a></li>
-  <li><a href="#confidence-bounds-bootstrap_pod_ci" id="toc-confidence-bounds-bootstrap_pod_ci" class="nav-link" data-scroll-target="#confidence-bounds-bootstrap_pod_ci">Confidence Bounds: <code>bootstrap_pod_ci()</code></a></li>
+  <li><a href="#the-mathematics" id="toc-the-mathematics" class="nav-link" data-scroll-target="#the-mathematics">The Mathematics</a></li>
   </ul></li>
-  <li><a href="#example-summary" id="toc-example-summary" class="nav-link" data-scroll-target="#example-summary">Example Summary</a></li>
+  <li><a href="#modeling-heteroscedasticity-relaxing-constant-variance" id="toc-modeling-heteroscedasticity-relaxing-constant-variance" class="nav-link" data-scroll-target="#modeling-heteroscedasticity-relaxing-constant-variance">2. Modeling Heteroscedasticity (Relaxing Constant Variance)</a>
+  <ul class="collapse">
+  <li><a href="#the-mathematics-1" id="toc-the-mathematics-1" class="nav-link" data-scroll-target="#the-mathematics-1">The Mathematics</a></li>
+  </ul></li>
+  <li><a href="#inferring-error-distributions-relaxing-normality" id="toc-inferring-error-distributions-relaxing-normality" class="nav-link" data-scroll-target="#inferring-error-distributions-relaxing-normality">3. Inferring Error Distributions (Relaxing Normality)</a>
+  <ul class="collapse">
+  <li><a href="#the-mathematics-2" id="toc-the-mathematics-2" class="nav-link" data-scroll-target="#the-mathematics-2">The Mathematics</a></li>
+  </ul></li>
+  <li><a href="#multi-dimensional-integration-active-marginalisation" id="toc-multi-dimensional-integration-active-marginalisation" class="nav-link" data-scroll-target="#multi-dimensional-integration-active-marginalisation">4. Multi-Dimensional Integration (Active Marginalisation)</a>
+  <ul class="collapse">
+  <li><a href="#the-mathematics-3" id="toc-the-mathematics-3" class="nav-link" data-scroll-target="#the-mathematics-3">The Mathematics</a></li>
+  </ul></li>
+  <li><a href="#bootstrapping-for-confidence-bounds" id="toc-bootstrapping-for-confidence-bounds" class="nav-link" data-scroll-target="#bootstrapping-for-confidence-bounds">5. Bootstrapping for Confidence Bounds</a>
+  <ul class="collapse">
+  <li><a href="#the-process" id="toc-the-process" class="nav-link" data-scroll-target="#the-process">The Process</a></li>
+  </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/generalised_pod.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">Detailed Manuals &amp; Theory</a></li><li class="breadcrumb-item"><a href="../docs/generalised_pod.html">Generalised PoD Theory</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Generalised Probability of Detection</h1>
 </div>
@@ -279,74 +283,49 @@ window.Quarto = {
 </header>
 
 
-<p>In traditional non-destructive evaluation (NDE), the standard <span class="math inline">\(\hat{a}\)</span> vs <span class="math inline">\(a\)</span> approach relies on several restrictive assumptions: linearity, homoscedasticity (constant variance), and normality of residuals. Interaction with complex physics—such as crack roughness—often breaks these assumptions.</p>
-<p>To address this, <code>digiqual</code> implements a generalized framework based on the work of Malkiel et al.&nbsp;(2025). This article showcases the specific functions used to relax these assumptions.</p>
-<section id="automated-model-selection-fit_robust_mean_model" class="level2">
-<h2 class="anchored" data-anchor-id="automated-model-selection-fit_robust_mean_model">1. Automated Model Selection: <code>fit_robust_mean_model()</code></h2>
-<p>Instead of forcing a linear relationship, <code>digiqual</code> treats the expectation model as a selection problem.</p>
-<ul>
-<li><strong>Functionality</strong>: This function evaluates a pool of candidate models, including polynomials (up to degree 10) and Gaussian Process (Kriging) models.</li>
-<li><strong>The Relaxation</strong>: It uses <strong>10-fold Cross-Validation (CV)</strong> to calculate the Mean Squared Error (MSE) for every candidate.</li>
-<li><strong>Selection Logic</strong>: By identifying the model that minimizes the CV error, the system automatically balances bias and variance without manual tuning.</li>
-</ul>
-<div id="90a0b7bd" class="cell" data-execution_count="1">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># From pod.py: Selecting the best fit among Poly 1-10 and Kriging</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>best_model_info <span class="op">=</span> <span class="bu">min</span>(cv_scores, key<span class="op">=</span>cv_scores.get)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>best_type, best_params <span class="op">=</span> best_model_info</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="modeling-heteroscedasticity-predict_local_std" class="level2">
-<h2 class="anchored" data-anchor-id="modeling-heteroscedasticity-predict_local_std">2. Modeling Heteroscedasticity: <code>predict_local_std()</code></h2>
-<p>In many simulations, signal scatter increases with flaw size. <code>digiqual</code> replaces the “constant variance” assumption with a localized estimation.</p>
-<ul>
-<li><strong>Functionality</strong>: It implements a <strong>Nadaraya-Watson Gaussian kernel average smoother</strong>.</li>
-<li><strong>The Relaxation</strong>: The function calculates the variance at a specific point by taking a weighted average of the surrounding squared residuals.</li>
-<li><strong>Bandwidth Optimisation</strong>: The <code>optimize_bandwidth</code> function uses <strong>Leave-One-Out Cross-Validation (LOO-CV)</strong> to determine the optimal “window” (sigma) for this smoothing.</li>
-</ul>
-<div id="2b6581aa" class="cell" data-execution_count="2">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># From pod.py: Calculating weights for the local variance</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>weights <span class="op">=</span> stats.norm.pdf(diff, loc<span class="op">=</span><span class="dv">0</span>, scale<span class="op">=</span>bandwidth)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>local_std <span class="op">=</span> np.sqrt(weights <span class="op">@</span> sq_residuals)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="inferring-error-distributions-infer_best_distribution" class="level2">
-<h2 class="anchored" data-anchor-id="inferring-error-distributions-infer_best_distribution">3. Inferring Error Distributions: <code>infer_best_distribution()</code></h2>
-<p>The assumption that noise is always Gaussian (Normal) is often inaccurate for safety-critical inspections.</p>
-<ul>
-<li><strong>Functionality</strong>: This function standardizes the residuals (calculating Z-scores) using the local standard deviation estimated above.</li>
-<li><strong>The Relaxation</strong>: It fits the Z-scores against a suite of distributions: <strong>Normal, Gumbel (left/right skewed), Logistic, Laplace, and t-Student</strong>.</li>
-<li><strong>Selection Logic</strong>: The best-fitting distribution is selected using the <strong>Akaike Information Criterion (AIC)</strong>, which rewards likelihood while penalizing overfitting.</li>
-</ul>
-<div id="20ca8355" class="cell" data-execution_count="3">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># pod.py identifies the best analytical distribution to use for PoD</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> dist_name <span class="kw">in</span> candidates:</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    params <span class="op">=</span> dist_obj.fit(z_scores)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    aic <span class="op">=</span> <span class="dv">2</span> <span class="op">*</span> k <span class="op">-</span> <span class="dv">2</span> <span class="op">*</span> log_likelihood  <span class="co"># Lower is better</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="analytical-pod-and-bootstrapping" class="level2">
-<h2 class="anchored" data-anchor-id="analytical-pod-and-bootstrapping">4. Analytical PoD and Bootstrapping</h2>
-<p>Once the models for the mean, variance, and distribution are established, the PoD is calculated.</p>
-<section id="curve-generation-compute_pod_curve" class="level3">
-<h3 class="anchored" data-anchor-id="curve-generation-compute_pod_curve">Curve Generation: <code>compute_pod_curve()</code></h3>
-<p>This function analytically derives the PoD at every point by calculating the probability that the signal exceeds the threshold, based on the inferred distribution and local variance.</p>
-</section>
-<section id="confidence-bounds-bootstrap_pod_ci" class="level3">
-<h3 class="anchored" data-anchor-id="confidence-bounds-bootstrap_pod_ci">Confidence Bounds: <code>bootstrap_pod_ci()</code></h3>
-<p>Because the model is now non-linear and non-normal, traditional analytical confidence bounds are not tractable. <code>digiqual</code> uses <strong>Bootstrap resampling</strong> (typically 1000 iterations) to generate 95% confidence intervals by refitting the models to resampled datasets.</p>
+<p>In traditional non-destructive evaluation (NDE), the standard <span class="math inline">\(\hat{a}\)</span>-versus-<span class="math inline">\(a\)</span> approach relies on several restrictive assumptions: 1. <strong>Linearity</strong> of the signal response to defect size. 2. <strong>Homoscedasticity</strong> (constant variance) of noise across all defect sizes. 3. <strong>Normality</strong> (Gaussian shape) of the residuals.</p>
+<p>Interaction with complex physics—such as crack roughness or angle variations—often breaks these assumptions. <code>digiqual</code> implements a generalized framework based on Malkiel et al.&nbsp;(2025) to relax these constraints.</p>
+<section id="automated-model-selection-relaxing-linearity" class="level2">
+<h2 class="anchored" data-anchor-id="automated-model-selection-relaxing-linearity">1. Automated Model Selection (Relaxing Linearity)</h2>
+<p>Instead of forcing a linear relationship <span class="math inline">\(\hat{a} = \beta_0 + \beta_1 a\)</span>, <code>digiqual</code> treats the expectation model as a selection problem.</p>
+<section id="the-mathematics" class="level3">
+<h3 class="anchored" data-anchor-id="the-mathematics">The Mathematics</h3>
+<p>It evaluates a pool of candidate models <span class="math inline">\(f(x)\)</span> including polynomials up to degree <span class="math inline">\(10\)</span> and Gaussian Process (Kriging) models. For each model, it performs <strong><span class="math inline">\(K\)</span>-fold Cross-Validation (CV)</strong> to estimate the Mean Squared Error (MSE): <span class="math display">\[ MSE_{CV} = \frac{1}{n} \sum_{i=1}^n (y_i - \hat{f}^{-k(i)}(x_i))^2 \]</span> Where <span class="math inline">\(\hat{f}^{-k(i)}\)</span> is the model trained without the <span class="math inline">\(k\)</span>-th fold containing observation <span class="math inline">\(i\)</span>. The model minimizing this error is automatically selected, balancing bias and variance.</p>
 </section>
 </section>
-<section id="example-summary" class="level2">
-<h2 class="anchored" data-anchor-id="example-summary">Example Summary</h2>
-<p>By calling <code>study.pod()</code>, these functions work in sequence:</p>
-<ol type="1">
-<li><p><strong><code>fit_robust_mean_model</code></strong> finds the non-linear trend.</p></li>
-<li><p><strong><code>fit_variance_model</code></strong> and <strong><code>predict_local_std</code></strong> capture the growing noise.</p></li>
-<li><p><strong><code>infer_best_distribution</code></strong> selects the true shape of the error.</p></li>
-<li><p><strong><code>bootstrap_pod_ci</code></strong> quantifies the reliability of the resulting curve.</p></li>
-</ol>
+<section id="modeling-heteroscedasticity-relaxing-constant-variance" class="level2">
+<h2 class="anchored" data-anchor-id="modeling-heteroscedasticity-relaxing-constant-variance">2. Modeling Heteroscedasticity (Relaxing Constant Variance)</h2>
+<p>Signal scatter often increases with flaw size. <code>digiqual</code> abandons the constant variance assumption <span class="math inline">\(\sigma^2 = c\)</span>, replacing it with a localized estimation <span class="math inline">\(\sigma^2(x)\)</span>.</p>
+<section id="the-mathematics-1" class="level3">
+<h3 class="anchored" data-anchor-id="the-mathematics-1">The Mathematics</h3>
+<p>It implements a <strong>Nadaraya-Watson Gaussian kernel average smoother</strong>. The variance at any point <span class="math inline">\(x\)</span> is calculated as a weighted average of the surrounding squared residuals <span class="math inline">\(e_i^2 = (y_i - \hat{y}_i)^2\)</span>: <span class="math display">\[ \hat{\sigma}^2(x) = \frac{\sum_{i=1}^n K_h(x - x_i) e_i^2}{\sum_{i=1}^n K_h(x - x_i)} \]</span> Where <span class="math inline">\(K_h\)</span> is the Gaussian kernel with bandwidth <span class="math inline">\(h\)</span>: <span class="math display">\[ K_h(u) = \frac{1}{\sqrt{2\pi h^2}} \exp\left(-\frac{u^2}{2h^2}\right) \]</span> The optimal bandwidth <span class="math inline">\(h\)</span> is determined automatically via <strong>Leave-One-Out Cross-Validation (LOO-CV)</strong>.</p>
+</section>
+</section>
+<section id="inferring-error-distributions-relaxing-normality" class="level2">
+<h2 class="anchored" data-anchor-id="inferring-error-distributions-relaxing-normality">3. Inferring Error Distributions (Relaxing Normality)</h2>
+<p>Noise is rarely perfectly Gaussian. <code>digiqual</code> infers the true shape of the error.</p>
+<section id="the-mathematics-2" class="level3">
+<h3 class="anchored" data-anchor-id="the-mathematics-2">The Mathematics</h3>
+<p>Residuals are first standardized into <span class="math inline">\(Z\)</span>-scores using the local standard deviation: <span class="math display">\[ Z_i = \frac{y_i - \hat{f}(x_i)}{\hat{\sigma}(x_i)} \]</span> These <span class="math inline">\(Z\)</span>-scores are then fitted against a suite of distributions: Normal, Gumbel, Logistic, Laplace, and t-Student. The best-fitting distribution is selected using the <strong>Akaike Information Criterion (AIC)</strong>: <span class="math display">\[ AIC = 2k - 2\ln(\hat{L}) \]</span> Where <span class="math inline">\(k\)</span> is the number of parameters and <span class="math inline">\(\hat{L}\)</span> is the Maximum Likelihood.</p>
+</section>
+</section>
+<section id="multi-dimensional-integration-active-marginalisation" class="level2">
+<h2 class="anchored" data-anchor-id="multi-dimensional-integration-active-marginalisation">4. Multi-Dimensional Integration (Active Marginalisation)</h2>
+<p>If evaluating multidimensional datasets with nuisance variations (e.g., angle <span class="math inline">\(\theta\)</span>, roughness <span class="math inline">\(R\)</span>), <code>digiqual</code> utilizes Monte Carlo Integration to output a 1D or 2D marginal Probability of Detection.</p>
+<section id="the-mathematics-3" class="level3">
+<h3 class="anchored" data-anchor-id="the-mathematics-3">The Mathematics</h3>
+<p>The expected PoD for a Parameter of Interest (PoI) vector <span class="math inline">\(\mathbf{x}\)</span> is calculated by integrating the conditional PoD over the joint probability density function <span class="math inline">\(p(\mathbf{z})\)</span> of the nuisance variables <span class="math inline">\(\mathbf{z}\)</span>: <span class="math display">\[ PoD(\mathbf{x}) = \int_{\Omega_z} PoD(\mathbf{x}, \mathbf{z}) p(\mathbf{z}) d\mathbf{z} \]</span> <code>digiqual</code> approximates this integral computationally via Latin Hypercube Sampling (LHS) across the continuous physics space.</p>
+</section>
+</section>
+<section id="bootstrapping-for-confidence-bounds" class="level2">
+<h2 class="anchored" data-anchor-id="bootstrapping-for-confidence-bounds">5. Bootstrapping for Confidence Bounds</h2>
+<p>Because the model is non-linear and non-normal, traditional analytical confidence bounds are invalid.</p>
+<section id="the-process" class="level3">
+<h3 class="anchored" data-anchor-id="the-process">The Process</h3>
+<p><code>digiqual</code> uses <strong>Bootstrap resampling</strong>: 1. Draw <span class="math inline">\(N\)</span> samples with replacement from the original dataset. 2. Completely physically re-fit the mean model, variance model, and error distribution. 3. Calculate the PoD curve. 4. Repeat this <span class="math inline">\(B\)</span> times (typically <span class="math inline">\(B=1000\)</span>). 5. Extract the <span class="math inline">\(2.5^{th}\)</span> and <span class="math inline">\(97.5^{th}\)</span> percentiles at every point <span class="math inline">\(a\)</span> to form the robust 95% confidence interval <span class="math inline">\(PoD_{95}\)</span>.</p>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
@@ -752,13 +731,13 @@ window.Quarto = {
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../docs/install.html" class="pagination-link" aria-label="Installation">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Installation</span>
+      <a href="../docs/optimisation.html" class="pagination-link" aria-label="Automated Optimisation">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Automated Optimisation</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../docs/qs_class.html" class="pagination-link" aria-label="Quick Start">
-        <span class="nav-page-text">Quick Start</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../api_reference/index.html" class="pagination-link" aria-label="API Reference">
+        <span class="nav-page-text">API Reference</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

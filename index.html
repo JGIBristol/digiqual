@@ -23,6 +23,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -163,40 +198,68 @@ window.Quarto = {
  <span class="menu-text">Home</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">Getting Started</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./docs/install.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Installation</span></a>
+ <span class="menu-text">Installation &amp; Setup</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./docs/generalised_pod.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">PoD Generalisation</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./docs/qs_class.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Quick Start</span></a>
+ <span class="menu-text">Python Quick Start</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./docs/gui.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">GUI - Shiny App</span></a>
+ <span class="menu-text">Launch the App</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">Detailed Manuals &amp; Theory</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./docs/gui_manual.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GUI Desktop Manual</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./docs/optimisation.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Automation &amp; Engines</span></a>
+ <span class="menu-text">Automated Optimisation</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./docs/generalised_pod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Generalised PoD Theory</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./api_reference/index.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">All Functions</span></a>
+ <span class="menu-text">API Reference</span></a>
   </div>
 </li>
     </ul>
@@ -209,12 +272,10 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#core-features" id="toc-core-features" class="nav-link active" data-scroll-target="#core-features">Core Features</a>
+  <li><a href="#quick-start-paths" id="toc-quick-start-paths" class="nav-link active" data-scroll-target="#quick-start-paths">Quick Start Paths</a>
   <ul class="collapse">
-  <li><a href="#experimental-design" id="toc-experimental-design" class="nav-link" data-scroll-target="#experimental-design">1. Experimental Design</a></li>
-  <li><a href="#data-validation-diagnostics" id="toc-data-validation-diagnostics" class="nav-link" data-scroll-target="#data-validation-diagnostics">2. Data Validation &amp; Diagnostics</a></li>
-  <li><a href="#adaptive-refinement-automated-optimisation" id="toc-adaptive-refinement-automated-optimisation" class="nav-link" data-scroll-target="#adaptive-refinement-automated-optimisation">3. Adaptive Refinement &amp; Automated Optimisation</a></li>
-  <li><a href="#generalised-reliability-analysis" id="toc-generalised-reliability-analysis" class="nav-link" data-scroll-target="#generalised-reliability-analysis">4. Generalised Reliability Analysis</a></li>
+  <li><a href="#the-graphical-interface-recommended" id="toc-the-graphical-interface-recommended" class="nav-link" data-scroll-target="#the-graphical-interface-recommended">1. The Graphical Interface (Recommended)</a></li>
+  <li><a href="#the-python-api" id="toc-the-python-api" class="nav-link" data-scroll-target="#the-python-api">2. The Python API</a></li>
   </ul></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   </ul>
@@ -243,41 +304,31 @@ window.Quarto = {
 </header>
 
 
-<p><code>digiqual</code> is a Python library designed for Non-Destructive Evaluation (NDE) engineers. It provides a robust statistical framework for performing Model-Assisted Probability of Detection (MAPOD) studies and reliability assessments. The package is built to implement the Generalised <span class="math inline">\(\hat{a}\)</span>-versus-<span class="math inline">\(a\)</span> Method, allowing users to assess inspection reliability even when traditional assumptions (linearity, constant variance, Gaussian noise) are not met.</p>
-<section id="core-features" class="level2">
-<h2 class="anchored" data-anchor-id="core-features">Core Features</h2>
-<section id="experimental-design" class="level3">
-<h3 class="anchored" data-anchor-id="experimental-design">1. Experimental Design</h3>
-<p>Before running expensive Finite Element (FE) simulations, <code>digiqual</code> helps you design your experiment efficiently.</p>
-<ul>
-<li><strong>Latin Hypercube Sampling (LHS):</strong> Generate space-filling experimental designs to cover your deterministic parameter space (e.g., defect size) and stochastic nuisance parameters (e.g., roughness, orientation).</li>
-<li><strong>Scale &amp; Bound:</strong> Automatically scale samples to your specific variable bounds.</li>
-</ul>
+<p><code>digiqual</code> is a Python library designed for Non-Destructive Evaluation (NDE) engineers. It provides a robust statistical framework for Model-Assisted Probability of Detection (MAPOD) studies, implementing the Generalised <span class="math inline">\(\hat{a}\)</span>-versus-<span class="math inline">\(a\)</span> Method to allow reliable assessments even when traditional regression assumptions fail.</p>
+<section id="quick-start-paths" class="level2">
+<h2 class="anchored" data-anchor-id="quick-start-paths">Quick Start Paths</h2>
+<section id="the-graphical-interface-recommended" class="level3">
+<h3 class="anchored" data-anchor-id="the-graphical-interface-recommended">1. The Graphical Interface (Recommended)</h3>
+<p>The fastest way to get value from the package is by running the browser-based DigiQual app. No coding is required!</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uvx</span> <span class="at">-v</span> digiqual</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="data-validation-diagnostics" class="level3">
-<h3 class="anchored" data-anchor-id="data-validation-diagnostics">2. Data Validation &amp; Diagnostics</h3>
-<p>Ensure your simulation outputs are statistically valid before processing.</p>
-<ul>
-<li><strong>Sanity Checks:</strong> Detects overlap between variables, type errors, and insufficient sample sizes.</li>
-<li><strong>Sufficiency Diagnostics:</strong> rigorous statistical tests to flag issues like “Input Coverage Gaps” or “Model Instability” before you trust the results.</li>
-</ul>
-</section>
-<section id="adaptive-refinement-automated-optimisation" class="level3">
-<h3 class="anchored" data-anchor-id="adaptive-refinement-automated-optimisation">3. Adaptive Refinement &amp; Automated Optimisation</h3>
-<p><code>digiqual</code> closes the loop between analysis and design.</p>
-<ul>
-<li><strong>Smart Refinement:</strong> Use <code>refine()</code> to identify specific weaknesses in your data. It uses bootstrap committees to find regions of high uncertainty and suggests new points exactly where the model is “confused”.</li>
-<li><strong>Automated Workflows:</strong> Use the <code>optimise()</code> method to run a fully automated “Active Learning” loop. It generates an initial design, executes your external solver, checks diagnostics, and iteratively refines the model until statistical requirements are met.</li>
-</ul>
-</section>
-<section id="generalised-reliability-analysis" class="level3">
-<h3 class="anchored" data-anchor-id="generalised-reliability-analysis">4. Generalised Reliability Analysis</h3>
-<p>The package includes a full statistical engine for calculating Probability of Detection (PoD) curves.</p>
-<ul>
-<li><strong>Relaxed Assumptions:</strong> Moves beyond the rigid constraints of the classical <span class="math inline">\(\hat{a}\)</span>-versus-<span class="math inline">\(a\)</span> method by handling non-linear signal responses and heteroscedastic noise.</li>
-<li><strong>Robust Statistics:</strong> Automatically selects the best polynomial degree and error distribution (e.g., Normal, Gumbel, Logistic) based on data fit (AIC).</li>
-<li><strong>Uncertainty Quantification:</strong> Uses bootstrap resampling to generate robust confidence bounds and <span class="math inline">\(a_{90/95}\)</span> estimates.</li>
-</ul>
+<section id="the-python-api" class="level3">
+<h3 class="anchored" data-anchor-id="the-python-api">2. The Python API</h3>
+<p>If you are building custom workflows or connecting to scripts, add <code>digiqual</code> into your python environment.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add digiqual</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>If you are completely new, head over to the <strong><a href="./docs/install.html">Installation Guide</a></strong> for setup details, or jump straight to the <strong><a href="./docs/gui.html">Launch the App</a></strong> page.</p>
+</div>
+</div>
 </section>
 </section>
 <section id="references" class="level2">
@@ -693,8 +744,8 @@ window.Quarto = {
   <div class="nav-page nav-page-previous">
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./docs/install.html" class="pagination-link" aria-label="Installation">
-        <span class="nav-page-text">Installation</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="./docs/install.html" class="pagination-link" aria-label="Installation &amp; Setup">
+        <span class="nav-page-text">Installation &amp; Setup</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

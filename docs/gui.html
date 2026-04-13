@@ -68,7 +68,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../docs/optimisation.html" rel="next">
+<link href="../docs/gui_manual.html" rel="next">
 <link href="../docs/qs_class.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -144,7 +144,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui.html">GUI - Shiny App</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/install.html">Getting Started</a></li><li class="breadcrumb-item"><a href="../docs/gui.html">Launch the App</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -170,40 +170,68 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Home</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Getting Started</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/install.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Installation</span></a>
+ <span class="menu-text">Installation &amp; Setup</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">PoD Generalisation</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/qs_class.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Quick Start</span></a>
+ <span class="menu-text">Python Quick Start</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/gui.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">GUI - Shiny App</span></a>
+ <span class="menu-text">Launch the App</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">Detailed Manuals &amp; Theory</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/gui_manual.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GUI Desktop Manual</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/optimisation.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Automation &amp; Engines</span></a>
+ <span class="menu-text">Automated Optimisation</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Generalised PoD Theory</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../api_reference/index.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">All Functions</span></a>
+ <span class="menu-text">API Reference</span></a>
   </div>
 </li>
     </ul>
@@ -221,19 +249,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#option-a-using-uv-via-cli-recommended" id="toc-option-a-using-uv-via-cli-recommended" class="nav-link" data-scroll-target="#option-a-using-uv-via-cli-recommended">Option A: Using <code>uv</code> via CLI (Recommended)</a></li>
   <li><a href="#option-b-from-a-python-script" id="toc-option-b-from-a-python-script" class="nav-link" data-scroll-target="#option-b-from-a-python-script">Option B: From a Python Script</a></li>
   </ul></li>
-  <li><a href="#the-app-workflow" id="toc-the-app-workflow" class="nav-link" data-scroll-target="#the-app-workflow">2. The App Workflow</a>
-  <ul class="collapse">
-  <li><a href="#module-1-experimental-design" id="toc-module-1-experimental-design" class="nav-link" data-scroll-target="#module-1-experimental-design">Module 1: Experimental Design</a></li>
-  <li><a href="#module-2-simulation-diagnostics" id="toc-module-2-simulation-diagnostics" class="nav-link" data-scroll-target="#module-2-simulation-diagnostics">Module 2: Simulation Diagnostics</a></li>
-  <li><a href="#module-3-reliability-analysis" id="toc-module-3-reliability-analysis" class="nav-link" data-scroll-target="#module-3-reliability-analysis">Module 3: Reliability Analysis</a></li>
-  </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/gui.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/install.html">Getting Started</a></li><li class="breadcrumb-item"><a href="../docs/gui.html">Launch the App</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Using the GUI</h1>
 </div>
@@ -272,7 +294,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="option-b-from-a-python-script" class="level3">
 <h3 class="anchored" data-anchor-id="option-b-from-a-python-script">Option B: From a Python Script</h3>
 <p>If you are already working inside a Python script or a Jupyter environment, you can launch it locally using the built-in UI function.</p>
-<div id="f3e75c1c" class="cell" data-execution_count="1">
+<div id="3384c1e4" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Launch the local application</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual <span class="im">import</span> dq_ui</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -280,33 +302,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <p>This will spin up a local server and automatically open the DigiQual dashboard in your default web browser.</p>
 <p><strong>Coming Soon: Standalone Executables</strong> We are actively developing standalone, double-click executables for both Windows and macOS. In the near future, you or your colleagues will be able to run the complete DigiQual toolkit as a standard desktop application, without needing to install Python, manage virtual environments, or touch a command line.</p>
-</section>
-</section>
-<section id="the-app-workflow" class="level2">
-<h2 class="anchored" data-anchor-id="the-app-workflow">2. The App Workflow</h2>
-<p>The app is divided into three main modules that mirror the programmatic workflow you are already familiar with.</p>
-<section id="module-1-experimental-design" class="level3">
-<h3 class="anchored" data-anchor-id="module-1-experimental-design">Module 1: Experimental Design</h3>
-<p>Instead of defining arrays or dictionaries in code, you can use the UI to visually define your experimental parameters.</p>
-<ul>
-<li><p>Define your input variables (e.g., Length, Angle) and their minimum/maximum ranges.</p></li>
-<li><p>Specify the number of initial samples you want.</p></li>
-<li><p>Click generate to instantly build a Latin Hypercube Sample (LHS) framework and download the CSV to feed into your external solver (like MATLAB or Abaqus).</p></li>
-</ul>
-</section>
-<section id="module-2-simulation-diagnostics" class="level3">
-<h3 class="anchored" data-anchor-id="module-2-simulation-diagnostics">Module 2: Simulation Diagnostics</h3>
-<p>Once your external physics solver has run, you can upload the resulting CSV back into the app. Use the dropdowns to assign your input columns and your outcome column (e.g., “Signal”). The app will automatically run health checks, such as testing for input coverage gaps.</p>
-<p><strong>Adaptive Refinement:</strong> If the app detects a deliberate gap or flawed data, it will flag an issue. Instead of manually guessing where to add points, the UI provides a remediation tool to automatically generate targeted samples to fill the gap. You can download these new points, run them through your solver, and upload the complete dataset.</p>
-</section>
-<section id="module-3-reliability-analysis" class="level3">
-<h3 class="anchored" data-anchor-id="module-3-reliability-analysis">Module 3: Reliability Analysis</h3>
-<p>With a validated dataset, you can construct your Probability of Detection (PoD) curves.</p>
-<ul>
-<li><p>Select your Parameter of Interest (e.g., “Length”) and set your critical threshold (e.g., 18.0).</p></li>
-<li><p>The app handles the model fitting and bootstrapping in the background.</p></li>
-<li><p>It automatically visualises the results, displaying both the Signal Response Model (Physics) and the Probability of Detection Curve (Reliability) side-by-side.</p></li>
-</ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Looking for a detailed breakdown of the functionality inside the App? Check out the <a href="../docs/gui_manual.html">GUI Desktop Manual</a>.</p>
+</div>
+</div>
 
 
 </section>
@@ -715,13 +723,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../docs/qs_class.html" class="pagination-link" aria-label="Quick Start">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Quick Start</span>
+      <a href="../docs/qs_class.html" class="pagination-link" aria-label="Python Quick Start">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Python Quick Start</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../docs/optimisation.html" class="pagination-link" aria-label="Automation &amp; Engines">
-        <span class="nav-page-text">Automation &amp; Engines</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../docs/gui_manual.html" class="pagination-link" aria-label="GUI Desktop Manual">
+        <span class="nav-page-text">GUI Desktop Manual</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

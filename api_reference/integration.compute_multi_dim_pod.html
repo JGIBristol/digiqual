@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>digiqual.core.simulationstudy.add_data – digiqual</title>
+<title>integration.compute_multi_dim_pod – digiqual</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -242,14 +242,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.core.SimulationStudy.add_data" id="toc-digiqual.core.SimulationStudy.add_data" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.add_data">add_data</a>
+  <li><a href="#digiqual.integration.compute_multi_dim_pod" id="toc-digiqual.integration.compute_multi_dim_pod" class="nav-link active" data-scroll-target="#digiqual.integration.compute_multi_dim_pod">integration.compute_multi_dim_pod</a>
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
-  <li><a href="#raises" id="toc-raises" class="nav-link" data-scroll-target="#raises">Raises</a></li>
-  <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
+  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
   </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.add_data.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/integration.compute_multi_dim_pod.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
@@ -257,14 +256,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<section id="digiqual.core.SimulationStudy.add_data" class="level1">
-<h1>add_data</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>add_data(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Ingests raw simulation data, filtering for relevant columns only.</p>
-<p>This method automatically strips away any columns in <code>df</code> that were not defined in <code>self.inputs</code> or <code>self.outcome</code> during initialization.</p>
+<section id="digiqual.integration.compute_multi_dim_pod" class="level1">
+<h1>integration.compute_multi_dim_pod</h1>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>compute_multi_dim_pod(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    poi_grid,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    nuisance_ranges,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    model,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    X_train,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    residuals,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    bandwidth,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    dist_info,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    threshold,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    n_mc_samples<span class="op">=</span><span class="dv">3000</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Performs Monte Carlo integration over continuous nuisance parameters to calculate the marginal Probability of Detection (PoD) for a grid of Parameters of Interest (PoI).</p>
+<p>Based on the methodology from Malkiel et al.&nbsp;(2026), this function evaluates the flexible multi-dimensional surrogate model across randomly sampled nuisance parameter realizations, calculates the probability of detection at each realization using local variance standardisation, and aggregates them.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 26%">
+<col style="width: 51%">
+<col style="width: 8%">
+</colgroup>
 <thead>
 <tr class="header">
 <th>Name</th>
@@ -275,21 +290,69 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td>df</td>
-<td>pd.DataFrame</td>
-<td>The DataFrame to ingest.</td>
+<td>poi_grid</td>
+<td>np.ndarray</td>
+<td>The evaluation grid of the Parameters of Interest shape (N, n_pois).</td>
 <td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>nuisance_ranges</td>
+<td>Dict[str, Tuple[float, float]]</td>
+<td>The min/max bounds for each nuisance.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>model</td>
+<td>Any</td>
+<td>Fitted multi-dimensional surrogate model (predicts mean response).</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>X_train</td>
+<td>np.ndarray</td>
+<td>Original training data (N_train, n_total_vars).</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>residuals</td>
+<td>np.ndarray</td>
+<td>Residuals from the model fit.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>bandwidth</td>
+<td>float</td>
+<td>Local kernel smoothing bandwidth.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>dist_info</td>
+<td>Tuple[str, Tuple]</td>
+<td>Residual error distribution (name, params).</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>threshold</td>
+<td>float</td>
+<td>Signal detection threshold.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>n_mc_samples</td>
+<td>int</td>
+<td>Number of Monte Carlo draws per PoI grid point.</td>
+<td><code>3000</code></td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="raises" class="level2 doc-section doc-section-raises">
-<h2 class="doc-section doc-section-raises anchored" data-anchor-id="raises">Raises</h2>
+<section id="returns" class="level2 doc-section doc-section-returns">
+<h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 9%">
-<col style="width: 13%">
-<col style="width: 77%">
+<col style="width: 4%">
+<col style="width: 16%">
+<col style="width: 79%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -301,21 +364,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td></td>
-<td>ValueError</td>
-<td>If the new data is missing any required input or outcome columns.</td>
+<td>Tuple[np.ndarray, np.ndarray]</td>
+<td>Tuple[np.ndarray, np.ndarray]: - pod_integrated: Integrated PoD values across the poi_grid. - mean_integrated: Expected mean response across the poi_grid.</td>
 </tr>
 </tbody>
 </table>
-</section>
-<section id="examples" class="level2 doc-section doc-section-examples">
-<h2 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame({</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Length'</span>: [<span class="fl">1.0</span>, <span class="fl">2.5</span>, <span class="fl">5.0</span>],</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Angle'</span>: [<span class="dv">0</span>, <span class="dv">15</span>, <span class="op">-</span><span class="dv">10</span>],</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Signal'</span>: [<span class="fl">0.5</span>, <span class="fl">0.8</span>, <span class="fl">1.2</span>]</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>study.add_data(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 </section>
@@ -727,4 +780,4 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.add_data.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/integration.compute_multi_dim_pod.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

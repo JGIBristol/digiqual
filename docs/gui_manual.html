@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>digiqual.core.simulationstudy.add_data – digiqual</title>
+<title>GUI Desktop Manual – digiqual</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -23,41 +23,6 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
 </style>
 
 
@@ -68,6 +33,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
+<link href="../docs/optimisation.html" rel="next">
+<link href="../docs/gui.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
@@ -106,6 +73,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -142,7 +138,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">Detailed Manuals &amp; Theory</a></li><li class="breadcrumb-item"><a href="../docs/gui_manual.html">GUI Desktop Manual</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -199,16 +195,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
  <span class="menu-text">Detailed Manuals &amp; Theory</span></a>
-          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../docs/gui_manual.html" class="sidebar-item-text sidebar-link">
+  <a href="../docs/gui_manual.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">GUI Desktop Manual</span></a>
   </div>
 </li>
@@ -242,83 +238,120 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.core.SimulationStudy.add_data" id="toc-digiqual.core.SimulationStudy.add_data" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.add_data">add_data</a>
+  <li><a href="#experimental-design" id="toc-experimental-design" class="nav-link active" data-scroll-target="#experimental-design">1. Experimental Design</a></li>
+  <li><a href="#simulation-diagnostics" id="toc-simulation-diagnostics" class="nav-link" data-scroll-target="#simulation-diagnostics">2. Simulation Diagnostics</a>
   <ul class="collapse">
-  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
-  <li><a href="#raises" id="toc-raises" class="nav-link" data-scroll-target="#raises">Raises</a></li>
-  <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
+  <li><a href="#adaptive-remediation" id="toc-adaptive-remediation" class="nav-link" data-scroll-target="#adaptive-remediation">Adaptive Remediation</a></li>
   </ul></li>
+  <li><a href="#data-visualisation" id="toc-data-visualisation" class="nav-link" data-scroll-target="#data-visualisation">3. Data Visualisation</a></li>
+  <li><a href="#pod-analysis" id="toc-pod-analysis" class="nav-link" data-scroll-target="#pod-analysis">4. PoD Analysis</a></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.add_data.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/gui_manual.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">Detailed Manuals &amp; Theory</a></li><li class="breadcrumb-item"><a href="../docs/gui_manual.html">GUI Desktop Manual</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">GUI Desktop Manual</h1>
+</div>
 
 
 
+<div class="quarto-title-meta">
 
-<section id="digiqual.core.SimulationStudy.add_data" class="level1">
-<h1>add_data</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>add_data(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Ingests raw simulation data, filtering for relevant columns only.</p>
-<p>This method automatically strips away any columns in <code>df</code> that were not defined in <code>self.inputs</code> or <code>self.outcome</code> during initialization.</p>
-<section id="parameters" class="level2 doc-section doc-section-parameters">
-<h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>df</td>
-<td>pd.DataFrame</td>
-<td>The DataFrame to ingest.</td>
-<td><em>required</em></td>
-</tr>
-</tbody>
-</table>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>This manual provides a detailed breakdown of the functionality found inside the DigiQual Shiny application. For instructions on how to install or launch the app, see the <a href="../docs/gui.html">Launch the App</a> guide.</p>
+<p>The DigiQual GUI is built with a modern “Fluent” design system and provides a visual alternative to the Python API. It is split into four primary tabs that map directly to the programmatic workflow.</p>
+<hr>
+<section id="experimental-design" class="level2">
+<h2 class="anchored" data-anchor-id="experimental-design">1. Experimental Design</h2>
+<p><strong>Purpose:</strong> Generate a statistically sound framework of sampling points for your physics solvers to evaluate.</p>
+<p>Instead of writing scripts to generate arrays, you can visually define your parameters and automatically export a completed Latin Hypercube Sample (LHS).</p>
+<ol type="1">
+<li><strong>Add Variables:</strong> Click “Add Variable” for each continuous parameter in your simulation (e.g., <code>Length</code>, <code>Angle</code>).</li>
+<li><strong>Define Bounds:</strong> Set the minimum and maximum physical limits for each parameter. The LHS algorithm will ensure these bounds are evenly covered.</li>
+<li><strong>Specify Samples:</strong> Enter the total number of initial simulation runs you plan to execute (<span class="math inline">\(N\)</span>).</li>
+<li><strong>Generate Framework:</strong> The tool will instantly construct the multi-dimensional parameter space, attempting to maximize the minimum distance between points.</li>
+<li><strong>Download CSV:</strong> Save <code>generated_sample.csv</code>. You can now feed this CSV into your external solver tool (e.g., MATLAB, Abaqus, ANSYS) to calculate the actual signal responses.</li>
+</ol>
+<hr>
 </section>
-<section id="raises" class="level2 doc-section doc-section-raises">
-<h2 class="doc-section doc-section-raises anchored" data-anchor-id="raises">Raises</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 9%">
-<col style="width: 13%">
-<col style="width: 77%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td>ValueError</td>
-<td>If the new data is missing any required input or outcome columns.</td>
-</tr>
-</tbody>
-</table>
+<section id="simulation-diagnostics" class="level2">
+<h2 class="anchored" data-anchor-id="simulation-diagnostics">2. Simulation Diagnostics</h2>
+<p><strong>Purpose:</strong> Validate your simulation inputs and catch problematic gaps <em>before</em> performing an expensive reliability analysis.</p>
+<p>Once your external physics solver has calculated the outcomes for your generated framework, you will upload the results back into this tab for validation.</p>
+<ol type="1">
+<li><strong>Upload Data:</strong> Upload the merged CSV containing your input conditions and their resulting output signals.</li>
+<li><strong>Assign Columns:</strong> Identify which columns represent your inputs and which single column represents your outcome.</li>
+<li><strong>Diagnostic Report:</strong> The engine runs sanity checks across your data, testing for sufficient sample sizes and input coverage. A tabular report provides a clear Pass/Fail for every parameter.</li>
+</ol>
+<section id="adaptive-remediation" class="level3">
+<h3 class="anchored" data-anchor-id="adaptive-remediation">Adaptive Remediation</h3>
+<p>If the diagnostic engine detects a large deliberate gap or missing data (a failed <strong>Input Coverage</strong> test), the UI exposes a remediation tool.</p>
+<p>Instead of guessing where to add new points, you can simply input how many new points you’d like to generate. The engine will target the specific empty regions and generate a new CSV containing targeted, gap-filling coordinates. Run these through your solver and merge the new data back into your main set!</p>
+<hr>
 </section>
-<section id="examples" class="level2 doc-section doc-section-examples">
-<h2 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame({</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Length'</span>: [<span class="fl">1.0</span>, <span class="fl">2.5</span>, <span class="fl">5.0</span>],</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Angle'</span>: [<span class="dv">0</span>, <span class="dv">15</span>, <span class="op">-</span><span class="dv">10</span>],</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Signal'</span>: [<span class="fl">0.5</span>, <span class="fl">0.8</span>, <span class="fl">1.2</span>]</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>study.add_data(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="data-visualisation" class="level2">
+<h2 class="anchored" data-anchor-id="data-visualisation">3. Data Visualisation</h2>
+<p><strong>Purpose:</strong> Deep-dive visual inspection of your data distribution and model stability.</p>
+<p>This brand-new tab utilizes the data uploaded in the Simulation Diagnostics pane to generate interactive, exploratory plots.</p>
+<ul>
+<li><strong>Summary Statistics:</strong> A complete breakout of the Min, Median, Max, Mean, and Standard Deviation for every uploaded variable.</li>
+<li><strong>Variable Inspector:</strong>
+<ul>
+<li>Trace any single variable’s distribution (complete with Kernel Density Estimates and rug plots).</li>
+<li>Plot a variable against the outcome to visually inspect underlying trends (with linear projection).</li>
+<li><div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>If a variable failed the coverage check in Tab 2, its specific gap will be shaded in red and orange on these plots!</p>
+</div>
+</div></li>
+</ul></li>
+<li><strong>Input Space Coverage Overview:</strong> A macro-panel that places histograms for <em>all</em> input parameters side-by-side, providing a fast visual confirmation of the entire experimental design’s health.</li>
+<li><strong>Outcome Diagnostic Overview:</strong> Advanced evaluation of the underlying surrogate models:
+<ul>
+<li><strong>Actual vs Predicted (Model Fit CV R²):</strong> Visualises how well a degree-3 polynomial fits your raw data. Points hugging the diagonal indicate strong predictability.</li>
+<li><strong>Bootstrap Convergence Trace:</strong> Traces the running average and maximum Relative Standard Deviation across 100 bootstrap iterations. A line flattening beneath the threshold indicates that your results are stable; a declining trace suggests you need more physical samples.</li>
+</ul></li>
+</ul>
+<hr>
+</section>
+<section id="pod-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="pod-analysis">4. PoD Analysis</h2>
+<p><strong>Purpose:</strong> Constructing the final Probability of Detection curves and surfaces.</p>
+<p>With a validated and well-understood dataset, you define the parameters for the Generalized <span class="math inline">\(a\)</span>-versus-<span class="math inline">\(\hat{a}\)</span> Method.</p>
+<ol type="1">
+<li><strong>Select Modality:</strong> Choose between standard <strong>1D Marginal PoD</strong> or <strong>Multi-Dimensional PoD</strong>.</li>
+<li><strong>Variable Designation:</strong> Select your primary Parameter of Interest (PoI). Any remaining input variables are automatically assigned as Nuisance Parameters and mathematically marginalised out via Monte Carlo Integration.</li>
+<li><strong>Set Threshold:</strong> Define the critical threshold (e.g., a detection limit of <code>18.0</code>).</li>
+<li><strong>Generate Outcomes:</strong> The system automatically identifies the best predictive polynomial structure, infers error distribution, and generates bootstrap confidence intervals.</li>
+<li><strong>Interactive Mapping:</strong> It renders two interactive plots side-by-side:
+<ul>
+<li>The <strong>Signal Response Model</strong> (The underlying Physics).</li>
+<li>The <strong>Probability of Detection Mapping</strong> (The resulting Reliability).</li>
+</ul></li>
+</ol>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->
@@ -722,9 +755,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
   });
   </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../docs/gui.html" class="pagination-link" aria-label="Launch the App">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Launch the App</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../docs/optimisation.html" class="pagination-link" aria-label="Automated Optimisation">
+        <span class="nav-page-text">Automated Optimisation</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
 </div> <!-- /content -->
 
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.add_data.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/gui_manual.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
