@@ -1627,6 +1627,10 @@ def server(input, output, session):
                             class_="text-muted d-block",
                             style="margin-top:-8px; font-size:0.8em;",
                         ),
+                        ui.input_numeric(
+                            "pod_n_boot", "Bootstrap Iterations",
+                            value=1000, min=10, step=100
+                        ),
                     ),
                     col_widths=[6, 6],
                 ),
@@ -1711,6 +1715,7 @@ def server(input, output, session):
                 nuisance_col=nuisance_cols,
                 model_override=model_override,
                 force_degree=force_degree,
+                n_boot=input.pod_n_boot(),
             )
 
             # 3. Calculate a90/95 (Interpolate)
@@ -1799,31 +1804,21 @@ def server(input, output, session):
         study = current_study()
         is_multi_dim = len(study.pod_results.get("poi_cols", [])) > 1
 
-        if is_multi_dim:
-            row2 = ui.layout_columns(
-                ui.card(
-                    ui.card_header("PoD Surface Heatmap"),
-                    ui.output_plot("plot_curve"),
-                    full_screen=True
-                ),
-                col_widths=[12],
-                class_="mb-3"
-            )
-        else:
-            row2 = ui.layout_columns(
-                ui.card(
-                    ui.card_header("Signal Model Fit"),
-                    ui.output_plot("plot_signal"),
-                    full_screen=True
-                ),
-                ui.card(
-                    ui.card_header("PoD Curve (95% CI)"),
-                    ui.output_plot("plot_curve"),
-                    full_screen=True
-                ),
-                col_widths=[6, 6],
-                class_="mb-3"
-            )
+        # Unified 2-column layout for both 1D and Multi-Dimensional
+        row2 = ui.layout_columns(
+            ui.card(
+                ui.card_header("Signal Model Surface" if is_multi_dim else "Signal Model Fit"),
+                ui.output_plot("plot_signal"),
+                full_screen=True
+            ),
+            ui.card(
+                ui.card_header("PoD Surface Heatmap" if is_multi_dim else "PoD Curve (95% CI)"),
+                ui.output_plot("plot_curve"),
+                full_screen=True
+            ),
+            col_widths=[6, 6],
+            class_="mb-3"
+        )
 
         return ui.div(
             # Row 1: Model Selection Plot (Full Width)

@@ -306,14 +306,14 @@ class SimulationStudy:
             poi_cols = [poi_col]
         else:
             poi_cols = poi_col
-            
+
         if nuisance_col is None:
             nuisance_cols = []
         elif isinstance(nuisance_col, str):
             nuisance_cols = [nuisance_col]
         else:
             nuisance_cols = nuisance_col
-            
+
         all_cols = poi_cols + nuisance_cols
         for c in all_cols:
             if c not in self.clean_data.columns:
@@ -352,13 +352,13 @@ class SimulationStudy:
         for col in poi_cols:
             num_points = 100 if len(poi_cols) == 1 else 30
             poi_grids.append(np.linspace(self.clean_data[col].min(), self.clean_data[col].max(), num_points))
-            
+
         if len(poi_cols) == 1:
             X_eval = poi_grids[0].reshape(-1, 1)
         else:
             mesh = np.meshgrid(*poi_grids, indexing='ij')
             X_eval = np.vstack([m.flatten() for m in mesh]).T
-            
+
         nuisance_ranges = {c: (float(self.clean_data[c].min()), float(self.clean_data[c].max())) for c in nuisance_cols}
 
         # 5. Compute PoD Curve
@@ -461,7 +461,7 @@ class SimulationStudy:
                 cv_winner_key=cv_winner_key
             )
 
-        # 1. Signal Model Plot (Only if 1 PoI)
+        # 1. Signal Model Plot
         if len(poi_cols) == 1:
             self.plots["signal_model"] = plot_signal_model(
                 X=res["X"][:, 0],
@@ -471,6 +471,16 @@ class SimulationStudy:
                 threshold=res["threshold"],
                 local_std=local_std,
                 poi_name=poi_cols[0]
+            )
+        else:
+            from digiqual.plotting import plot_signal_surface
+            self.plots["signal_model"] = plot_signal_surface(
+                poi_grids=res["poi_grids"],
+                mean_curve=res["curves"]["mean_response"],
+                X_raw=res["X"],
+                y_raw=res["y"],
+                threshold=res["threshold"],
+                poi_names=poi_cols
             )
 
         # 2. PoD Curve/Surface Plot

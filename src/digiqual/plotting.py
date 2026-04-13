@@ -182,5 +182,52 @@ def plot_pod_surface(
     ax.set_ylabel(poi_names[1])
     ax.set_title(f"PoD Surface ({poi_names[0]} vs {poi_names[1]})")
     ax.legend(loc='lower right')
-    
+
+    return ax
+
+
+def plot_signal_surface(
+    poi_grids: list,
+    mean_curve: np.ndarray,
+    X_raw: np.ndarray,
+    y_raw: np.ndarray,
+    threshold: float,
+    poi_names: list,
+    ax=None
+) -> plt.Axes:
+    """
+    Result Plot 1 (Multi-Dimensional): Signal vs Parameters of Interest.
+
+    Visualizes the raw simulation data in 3D, the fitted mean surface,
+    and the detection threshold plane.
+    """
+    import matplotlib.pyplot as plt
+
+    if ax is None:
+        fig = plt.figure(figsize=(8, 6))
+        ax = fig.add_subplot(111, projection='3d')
+    else:
+        fig = ax.get_figure()
+
+    # 1. Prepare the grids for the surface
+    grid_x, grid_y = np.meshgrid(poi_grids[0], poi_grids[1], indexing='ij')
+    Z = mean_curve.reshape(len(poi_grids[0]), len(poi_grids[1]))
+
+    # 2. Plot the fitted mean surface
+    ax.plot_surface(grid_x, grid_y, Z, cmap='viridis', alpha=0.7, edgecolor='none')
+
+    # 3. Plot the raw simulation data
+    # Assuming X_raw has shape (N, 2) since it's multi-dimensional
+    ax.scatter(X_raw[:, 0], X_raw[:, 1], y_raw, color='grey', s=20, label='Simulation Data')
+
+    # 4. Plot the threshold plane
+    Z_thresh = np.full_like(Z, threshold)
+    ax.plot_surface(grid_x, grid_y, Z_thresh, color='red', alpha=0.3, edgecolor='none')
+
+    # Formatting
+    ax.set_xlabel(poi_names[0])
+    ax.set_ylabel(poi_names[1])
+    ax.set_zlabel("Signal Response")
+    ax.set_title(f"Signal Response Surface ({poi_names[0]} vs {poi_names[1]})")
+
     return ax
