@@ -6,7 +6,7 @@ The `optimise` method allows you to run a complete "Active Learning" loop. DigiQ
 
 When you trigger the `optimise` method, DigiQual acts as an orchestrator, completing the following active learning loop until statistical requirements are satisfied.
 
-```mermaid
+```{mermaid}
 flowchart TD
     A[1. Initialise - Generate LHS Design] --> B(2. Execute Solver)
     B --> C{3. Diagnostics}
