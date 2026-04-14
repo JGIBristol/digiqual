@@ -9,6 +9,9 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 from scipy.optimize import minimize_scalar
 
+import warnings
+from sklearn.exceptions import ConvergenceWarning
+
 #### Mean Model - Robust Regression (Polynomial + Kriging) ####
 
 def fit_robust_mean_model(
@@ -80,7 +83,12 @@ def fit_robust_mean_model(
         alpha=np.var(y) * 0.01,
         random_state=42
     )
-    gpr_scores = cross_val_score(gpr, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        gpr_scores = cross_val_score(gpr, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
+
+
     cv_scores[('Kriging', None)] = -np.mean(gpr_scores)
 
     # Record the CV winner before applying any override
@@ -122,7 +130,12 @@ def fit_robust_mean_model(
             alpha=np.var(y) * 0.01,
             random_state=42
         )
-        final_model.fit(X_2d, y)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=ConvergenceWarning)
+            final_model.fit(X_2d, y)
+
+
         final_model.model_params_ = final_model.kernel_
 
     final_model.model_type_ = best_type
