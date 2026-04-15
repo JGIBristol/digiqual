@@ -1587,17 +1587,17 @@ def server(input, output, session):
                 ui.layout_columns(
                     ui.div(
                         ui.h6("Data Selection", class_="text-muted"),
-                        ui.input_radio_buttons("pod_analysis_type", "Analysis Modality",
-                                                choices=["1D Marginal PoD", "Multi-Dimensional PoD"],
-                                                selected="1D Marginal PoD", inline=True),
-                        ui.panel_conditional(
-                            "input.pod_analysis_type === '1D Marginal PoD'",
-                            ui.input_select("pod_param", "Parameter of Interest", choices=inputs),
+                        ui.input_selectize(
+                            "pod_pois",
+                            "Parameters of Interest (Select 1 or 2)",
+                            choices=inputs,
+                            multiple=True
                         ),
-                        ui.panel_conditional(
-                            "input.pod_analysis_type === 'Multi-Dimensional PoD'",
-                            ui.input_selectize("pod_pois", "Parameters of Interest (Max 2)", choices=inputs, multiple=True),
-                            ui.input_selectize("pod_nuisance", "Nuisance Parameters (Max 2)", choices=inputs, multiple=True),
+                        ui.input_selectize(
+                            "pod_nuisance",
+                            "Nuisance Parameters (Max 2)",
+                            choices=inputs,
+                            multiple=True
                         ),
                     ),
                     ui.div(
@@ -1647,11 +1647,14 @@ def server(input, output, session):
 
 
     # --- ANALYSIS LOGIC ---
+
     @reactive.effect
-    @reactive.event(input.pod_analysis_type)
-    def _clear_results_on_modality_change():
+    @reactive.event(input.pod_pois, input.pod_nuisance)
+    def _clear_results_on_variable_change():
         pod_metrics.set(None)
         pod_export_data.set(None)
+
+
 
     @reactive.effect
     @reactive.event(input.btn_run_pod)
@@ -1680,6 +1683,7 @@ def server(input, output, session):
 
         try:
             # 1. Map UI selection to backend parameters
+            # 1. Map UI selection to backend parameters
             override_map = {
                 "Auto (Best Fit)": "auto",
                 "Polynomial": "polynomial",
@@ -1693,21 +1697,21 @@ def server(input, output, session):
                 except Exception:
                     force_degree = None
 
-            if input.pod_analysis_type() == '1D Marginal PoD':
-                poi_cols = [input.pod_param()]
-                nuisance_cols = []
-            else:
-                poi_cols = list(input.pod_pois())
-                nuisance_cols = list(input.pod_nuisance())
-                if not poi_cols or len(poi_cols) > 2:
-                    ui.notification_show("Please select 1 or 2 Parameters of Interest.", type="error")
-                    return
-                if len(nuisance_cols) > 2:
-                    ui.notification_show("Please select up to 2 Nuisance Parameters.", type="error")
-                    return
-                if set(poi_cols).intersection(set(nuisance_cols)):
-                    ui.notification_show("Parameters of Interest and Nuisance Parameters cannot overlap.", type="error")
-                    return
+            # --- NEW UNIFIED PARAMETER LOGIC ---
+            poi_cols = list(input.pod_pois())
+            nuisance_cols = list(input.pod_nuisance())
+
+            # Validation
+            if not poi_cols or len(poi_cols) > 2:
+                ui.notification_show("Please select exactly 1 or 2 Parameters of Interest.", type="error")
+                return
+            if len(nuisance_cols) > 2:
+                ui.notification_show("Please select up to 2 Nuisance Parameters.", type="error")
+                return
+            if set(poi_cols).intersection(set(nuisance_cols)):
+                ui.notification_show("Parameters of Interest and Nuisance Parameters cannot overlap.", type="error")
+                return
+            # -----------------------------------
 
             # 2. Run the Analysis (Generates models and curves)
             results = study.pod(
