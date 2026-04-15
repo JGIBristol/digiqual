@@ -26,7 +26,7 @@ HOST = '127.0.0.1'
 # Dev mode pathing
 if not getattr(sys, 'frozen', False):
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    sys.path.insert(0, os.path.join(base_dir, "src"))
+    sys.path.insert(0, os.path.join(base_dir, "..", "src"))
 
 # --- 3. Enable Native Downloads ---
 # This entirely replaces the custom JS bridge and fixes the OS dialog bug!

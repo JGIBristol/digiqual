@@ -691,6 +691,8 @@ def server(input, output, session):
 
         if not ranges and not errors:
             errors.append("Please define at least one variable.")
+        if input.num_rows() is None or input.num_rows() < 1:
+            errors.append("Please enter a valid number of samples.")
 
         if errors:
             ui.modal_show(ui.modal(
