@@ -5,6 +5,8 @@ from shiny import App, ui, render, reactive
 from faicons import icon_svg
 import pandas as pd
 import numpy as np
+import asyncio
+import os
 from digiqual.sampling import generate_lhs
 from digiqual import SimulationStudy
 from pathlib import Path
@@ -1634,6 +1636,10 @@ def server(input, output, session):
                             "pod_n_boot", "Bootstrap Iterations",
                             value=1000, min=10, step=100
                         ),
+                        ui.input_checkbox(
+                            "pod_parallel", "Enable Parallel Compute",
+                            value=False # Defaults to single-core as requested
+                        ),
                     ),
                     col_widths=[6, 6],
                 ),
@@ -1657,10 +1663,9 @@ def server(input, output, session):
         pod_export_data.set(None)
 
 
-
     @reactive.effect
     @reactive.event(input.btn_run_pod)
-    def compute_pod_analysis():
+    async def compute_pod_analysis(): # <-- Note the 'async' keyword here!
         """
         Runs .pod(), calculates a90/95, and triggers plotting.
         """
@@ -1681,40 +1686,75 @@ def server(input, output, session):
                 "Threshold is outside the range of the outcome variable — results may be uninformative.",
                 type="warning"
             )
-        # ------
+
+        # 1. Map UI selection to backend parameters
+        override_map = {
+            "Auto (Best Fit)": "auto",
+            "Polynomial": "polynomial",
+            "Kriging": "kriging",
+        }
+        model_override = override_map.get(input.pod_model_override(), "auto")
+        force_degree = None
+        if model_override == "polynomial":
+            try:
+                force_degree = int(input.pod_poly_degree())
+            except Exception:
+                force_degree = None
+
+        # --- UNIFIED PARAMETER LOGIC ---
+        poi_cols = list(input.pod_pois())
+        nuisance_cols = list(input.pod_nuisance())
+
+        # Validation
+        if not poi_cols or len(poi_cols) > 2:
+            ui.notification_show("Please select exactly 1 or 2 Parameters of Interest.", type="error")
+            return
+        if len(nuisance_cols) > 2:
+            ui.notification_show("Please select up to 2 Nuisance Parameters.", type="error")
+            return
+        if set(poi_cols).intersection(set(nuisance_cols)):
+            ui.notification_show("Parameters of Interest and Nuisance Parameters cannot overlap.", type="error")
+            return
+
+        # --- NEW PARALLEL LOGIC & TIME ESTIMATION ---
+        total_cores = os.cpu_count() or 1
+        actual_cores = max(total_cores - 2, 1) if input.pod_parallel() else 1
+        selected_cores = None if input.pod_parallel() else 1
+
+        # Heuristic based on terminal logs:
+        # A 2D Surface evaluates 900 points per iteration (~3.5 sec per iter on 1 core)
+        # A 1D Curve evaluates 100 points per iteration (~0.4 sec per iter on 1 core)
+        base_sec_per_iter = 3.5 if len(poi_cols) > 1 else 0.4
+
+        # Nuisance parameters trigger Monte Carlo integration (1,000 extra samples per point)
+        # This acts as a multiplier on the base execution time
+        if len(nuisance_cols) > 0:
+            base_sec_per_iter *= 3.8
+
+        # Calculate raw estimate and add a 15% safety buffer
+        est_seconds = (input.pod_n_boot() / actual_cores) * base_sec_per_iter
+        est_seconds *= 1.15
+
+        # Format cleanly into seconds or minutes
+        if est_seconds < 90:
+            time_str = f"~{int(est_seconds)} seconds"
+        else:
+            time_str = f"~{int(est_seconds / 60)} minutes"
+
+        # Show the sticky notification
+        ui.notification_show(
+            f"Running Analysis on {actual_cores} core(s). Estimated time: {time_str}. Please wait...",
+            id="pod_progress_toast", # ID allows us to remove it manually later
+            duration=None,           # Stays on screen indefinitely
+            type="message"
+        )
+
+        # CRITICAL: Yield to the async event loop for a fraction of a second.
+        # This gives Shiny time to actually draw the notification on the user's screen
+        # before the heavy math completely locks up the server.
+        await asyncio.sleep(0.1)
 
         try:
-            # 1. Map UI selection to backend parameters
-            # 1. Map UI selection to backend parameters
-            override_map = {
-                "Auto (Best Fit)": "auto",
-                "Polynomial": "polynomial",
-                "Kriging": "kriging",
-            }
-            model_override = override_map.get(input.pod_model_override(), "auto")
-            force_degree = None
-            if model_override == "polynomial":
-                try:
-                    force_degree = int(input.pod_poly_degree())
-                except Exception:
-                    force_degree = None
-
-            # --- NEW UNIFIED PARAMETER LOGIC ---
-            poi_cols = list(input.pod_pois())
-            nuisance_cols = list(input.pod_nuisance())
-
-            # Validation
-            if not poi_cols or len(poi_cols) > 2:
-                ui.notification_show("Please select exactly 1 or 2 Parameters of Interest.", type="error")
-                return
-            if len(nuisance_cols) > 2:
-                ui.notification_show("Please select up to 2 Nuisance Parameters.", type="error")
-                return
-            if set(poi_cols).intersection(set(nuisance_cols)):
-                ui.notification_show("Parameters of Interest and Nuisance Parameters cannot overlap.", type="error")
-                return
-            # -----------------------------------
-
             # 2. Run the Analysis (Generates models and curves)
             results = study.pod(
                 poi_col=poi_cols,
@@ -1723,6 +1763,7 @@ def server(input, output, session):
                 model_override=model_override,
                 force_degree=force_degree,
                 n_boot=input.pod_n_boot(),
+                n_jobs=selected_cores
             )
 
             # 3. Calculate a90/95 (Interpolate)
@@ -1740,16 +1781,10 @@ def server(input, output, session):
                 model_str = "Kriging (Gaussian Process)"
 
             # 5. Create Metrics Dictionary for the UI
-
-            # Unpack distribution info
             dist_name = results["dist_info"][0].capitalize()
             dist_params = results["dist_info"][1]
             formatted_params = ", ".join([f"{p:.4f}" for p in dist_params])
 
-            # Extract the MSE for the model that was actually used.
-            # Because CV always runs in full now, this is always a real value —
-            # even when the user has forced a model override.
-            mean_model = results["mean_model"]
             cv_scores = mean_model.cv_scores_
             if mean_model.model_type_ == 'Polynomial':
                 used_key = ('Polynomial', mean_model.model_params_)
@@ -1758,10 +1793,9 @@ def server(input, output, session):
             used_mse = cv_scores.get(used_key, np.nan)
             best_mse_str = f"{used_mse:.2e}" if not np.isnan(used_mse) else "N/A"
 
-            # Calculate Sample Size
             n_samples = len(results["X"])
-
             poi_display = ", ".join(results["poi_col"]) if isinstance(results["poi_col"], list) else results["poi_col"]
+
             metrics = {
                 "Parameter of Interest": poi_display,
                 "Threshold": results["threshold"],
@@ -1795,9 +1829,15 @@ def server(input, output, session):
             study.visualise(show=False)
             plot_trigger.set(plot_trigger() + 1)
 
+            # Show completion notification
+            ui.notification_show("Analysis Complete!", type="success")
+
         except Exception as e:
             ui.notification_show(f"Analysis Failed: {str(e)}", type="error")
 
+        finally:
+            # 8. Always remove the "Please wait" notification, even if it errors out
+            ui.notification_remove("pod_progress_toast")
 
 # --- RESULTS DISPLAY ---
     @render.ui

@@ -9,6 +9,9 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 from scipy.optimize import minimize_scalar
 
+import os
+from joblib import Parallel, delayed
+
 import warnings
 from sklearn.exceptions import ConvergenceWarning
 
@@ -601,6 +604,46 @@ def compute_pod_curve(
     return pod_curve, mean_curve
 
 
+
+def _single_bootstrap_step(
+    X_2d, y, X_eval, threshold, model_type, model_params,
+    bandwidth, dist_info, nuisance_ranges, n_samples
+):
+    """Internal helper to process a single bootstrap iteration."""
+    # Resample indices
+    idx = np.random.choice(n_samples, n_samples, replace=True)
+    X_res_2d = X_2d[idx]
+    y_res = y[idx]
+
+    # Fit Mean Model
+    if model_type == 'Polynomial':
+        from sklearn.preprocessing import PolynomialFeatures
+        from sklearn.linear_model import LinearRegression
+        from sklearn.pipeline import make_pipeline
+        mean_model = make_pipeline(PolynomialFeatures(model_params), LinearRegression())
+    elif model_type == 'Kriging':
+        from sklearn.gaussian_process import GaussianProcessRegressor
+        mean_model = GaussianProcessRegressor(
+            kernel=model_params, alpha=np.var(y_res)*0.01, optimizer=None
+        )
+
+    mean_model.fit(X_res_2d, y_res)
+
+    # Calculate Residuals
+    y_pred = mean_model.predict(X_res_2d)
+    res_res = y_res - y_pred
+
+    # Compute PoD for this iteration
+    from digiqual.integration import compute_multi_dim_pod
+    pod_curve, _ = compute_multi_dim_pod(
+        X_eval, nuisance_ranges or {}, mean_model, X_res_2d, res_res,
+        bandwidth, dist_info, threshold, n_mc_samples=1000
+    )
+    return pod_curve
+
+
+
+
 def bootstrap_pod_ci(
     X: np.ndarray,
     y: np.ndarray,
@@ -611,7 +654,8 @@ def bootstrap_pod_ci(
     bandwidth: float,
     dist_info: Tuple[str, Tuple],
     n_boot: int = 1000,
-    nuisance_ranges: dict = None
+    nuisance_ranges: dict = None,
+    n_jobs: int | None = None  # Changed to None for custom logic
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Estimates 95% Confidence Bounds for the PoD curve via Bootstrapping.
@@ -648,42 +692,25 @@ def bootstrap_pod_ci(
         )
         ```
     """
-    n_samples = len(y)
-    pod_matrix = np.zeros((n_boot, len(X_eval)))
 
+    n_samples = len(y)
     X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
 
-    for i in range(n_boot):
-        if (i + 1) % max(1, n_boot // 10) == 0:
-            print(f"      -> [{int((i + 1) / n_boot * 100):3d}%] Completed {i + 1} iterations")
+    if n_jobs is None:
+        total_cores = os.cpu_count() or 1
+        n_jobs = max(total_cores - 2, 1)
 
-        # Resample indices
-        idx = np.random.choice(n_samples, n_samples, replace=True)
-        X_res_2d = X_2d[idx]
-        y_res = y[idx]
+    print(f"      -> Running Parallel Bootstrap ({n_boot} iterations on {n_jobs} cores)...")
 
-        # Conditionally Fit Mean Model based on winning type
-        if model_type == 'Polynomial':
-            mean_model = make_pipeline(PolynomialFeatures(model_params), LinearRegression())
-        elif model_type == 'Kriging':
-            # Use the already optimized kernel (model_params) and turn off optimizer
-            mean_model = GaussianProcessRegressor(
-                kernel=model_params, alpha=np.var(y_res)*0.01, optimizer=None
-            )
+    # Parallel execution via Joblib
+    results = Parallel(n_jobs=n_jobs, verbose=10)(
+        delayed(_single_bootstrap_step)(
+            X_2d, y, X_eval, threshold, model_type, model_params,
+            bandwidth, dist_info, nuisance_ranges, n_samples
+        ) for _ in range(n_boot)
+    )
 
-        mean_model.fit(X_res_2d, y_res)
-
-        # Residuals
-        y_pred = mean_model.predict(X_res_2d)
-        res_res = y_res - y_pred
-
-        # Predict
-        from digiqual.integration import compute_multi_dim_pod
-        pod_curve, _ = compute_multi_dim_pod(
-            X_eval, nuisance_ranges or {}, mean_model, X_res_2d, res_res, bandwidth, dist_info, threshold, n_mc_samples=1000
-        )
-        pod_matrix[i, :] = pod_curve
-
+    pod_matrix = np.array(results)
     return np.percentile(pod_matrix, 2.5, axis=0), np.percentile(pod_matrix, 97.5, axis=0)
 
 

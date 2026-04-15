@@ -1,5 +1,7 @@
 import pandas as pd
+import numpy as np
 from typing import List, Dict, Any, Tuple
+import os
 
 from .diagnostics import validate_simulation, sample_sufficiency, ValidationError
 from .adaptive import generate_targeted_samples, run_adaptive_search
@@ -29,7 +31,7 @@ class SimulationStudy:
         ```
     """
 
-    #### Initialisation ####
+#### Initialisation ####
     def __init__(
         self,
         input_cols: List[str],
@@ -46,7 +48,7 @@ class SimulationStudy:
         self.pod_results: Dict[str, Any] = {}
         self.plots: Dict[str, Any] = {}
 
-    #### Adding Data ####
+#### Adding Data ####
     def add_data(self, df: pd.DataFrame) -> None:
         """
         Ingests raw simulation data, filtering for relevant columns only.
@@ -92,7 +94,7 @@ class SimulationStudy:
         self.pod_results = {}
         self.plots = {}
 
-    #### Validating self.data ####
+#### Validating self.data ####
     def _validate(self) -> None:
         """
         Cleans and validates the raw data stored in `self.data`.
@@ -119,7 +121,7 @@ class SimulationStudy:
             print(f"Validation FAILED: {e}")
             self.clean_data = pd.DataFrame()
 
-    #### Checking Sample Sufficiency ####
+#### Checking Sample Sufficiency ####
     def diagnose(self) -> pd.DataFrame:
         """
         Runs statistical diagnostics to evaluate if the current sample size is sufficient.
@@ -152,7 +154,7 @@ class SimulationStudy:
         )
         return self.sufficiency_results
 
-    #### Adaptive Refinement ####
+#### Adaptive Refinement ####
     def refine(self, n_points: int = 10) -> pd.DataFrame:
         """
         Identifies gaps or high-variance regions and suggests new simulation points.
@@ -187,7 +189,7 @@ class SimulationStudy:
 
         return new_samples
 
-    #### Automated Optimisation ####
+#### Automated Optimisation ####
     def optimise(
         self,
         command: str,
@@ -271,7 +273,8 @@ class SimulationStudy:
         bandwidth_ratio: float = 0.1,
         n_boot: int = 1000,
         model_override: str = "auto",
-        force_degree: int | None = None
+        force_degree: int | None = None,
+        n_jobs: int | None = None
     ) -> Dict[str, Any]:
         """
         Runs the generalized Probability of Detection (PoD) analysis.
@@ -347,7 +350,6 @@ class SimulationStudy:
         print(f"   -> Selected Distribution: {dist_name}")
 
         # Build PoI grid and nuisance ranges
-        import numpy as np
         poi_grids = []
         for col in poi_cols:
             num_points = 100 if len(poi_cols) == 1 else 30
@@ -368,15 +370,18 @@ class SimulationStudy:
             X_eval, nuisance_ranges, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold
         )
 
-        # 6. Bootstrap Confidence Intervals
-        print(f"5. Running Bootstrap ({n_boot} iterations)...")
+        # 6. Bootstrap Confidence Intervals (Parallelized)
+        actual_cores = n_jobs if n_jobs is not None else max((os.cpu_count() or 1) - 2, 1)
+        print(f"5. Running Bootstrap ({n_boot} iterations on {actual_cores} cores)...")
+
         lower_ci, upper_ci = pod.bootstrap_pod_ci(
             X, y, X_eval, threshold,
             mean_model.model_type_, mean_model.model_params_, bandwidth, (dist_name, dist_params),
-            n_boot=n_boot, nuisance_ranges=nuisance_ranges
+            n_boot=n_boot, nuisance_ranges=nuisance_ranges,
+            n_jobs=n_jobs
         )
 
-        # 7.
+        # 7. Calculate Reliability Point
         a90_95 = np.nan
         if len(poi_cols) == 1:
             a90_95 = pod.calculate_reliability_point(X_eval.flatten(), lower_ci, target_pod=0.90)
@@ -409,7 +414,7 @@ class SimulationStudy:
         print("--- Analysis Complete ---")
         return self.pod_results
 
-    #### Visualise Results ####
+#### Visualise Results ####
     def visualise(self, show: bool = True, save_path: str = None) -> None:
         """
         Generates and displays diagnostic plots (Signal Model and PoD Curve).
