@@ -351,7 +351,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="define-a-mock-solver">1. Define a “Mock” Solver</h3>
 <p>For this tutorial, we will use a Python one-liner as our “solver” instead of a complex physics engine. We use <code>python -c</code> to run this as if it were an external Command Line Interface (CLI) tool.</p>
 <p>Notice how the <code>SOLVER_CMD</code> utilises the <code>{input}</code> and <code>{output}</code> placeholders.</p>
-<div id="17d8f4fd" class="cell" data-execution_count="1">
+<div id="3ab3ad46" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># A complex, non-linear physics model to trigger multiple optimisation loops</span></span>
@@ -367,7 +367,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="configure-the-study" class="level3">
 <h3 class="anchored" data-anchor-id="configure-the-study">2. Configure the Study</h3>
 <p>We define our input variables and the ranges we want to explore.</p>
-<div id="34b9fde9" class="cell" data-execution_count="2">
+<div id="5e1be168" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.core <span class="im">import</span> SimulationStudy</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define inputs ranges</span></span>
@@ -380,7 +380,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="run-optimisation" class="level3">
 <h3 class="anchored" data-anchor-id="run-optimisation">3. Run Optimisation</h3>
 <p>This single command handles the entire Active Learning loop:</p>
-<div id="af8f615b" class="cell" data-execution_count="3">
+<div id="fe14b1db" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.optimise(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    command<span class="op">=</span>SOLVER_CMD,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    ranges<span class="op">=</span>ranges,</span>
@@ -413,31 +413,19 @@ Diagnostics flagged issues. Initiating Active Learning...
 
 --- Iteration 3: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
-Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
---- Running Batch 3 (10 points) ---
-   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5 + df["Length"] ** 3 + (df["Length"] * np.random.normal(0, 1, len(df))); df.to_csv("sim_output.csv", index=False)'
+All diagnostic checks passed. No new samples needed.
 
---- Iteration 4: Diagnostics Check ---
-&gt;&gt; Model invalid. Refining design...
-Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
---- Running Batch 4 (10 points) ---
-   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5 + df["Length"] ** 3 + (df["Length"] * np.random.normal(0, 1, len(df))); df.to_csv("sim_output.csv", index=False)'
-
---- Iteration 5: Diagnostics Check ---
-
-&gt;&gt;&gt; CONVERGENCE REACHED! &lt;&lt;&lt;
+&gt;&gt; Refinement algorithm converged (no new valid samples needed).
 
 ----------------------------------------
 &gt;&gt;&gt; SEARCH COMPLETE &lt;&lt;&lt;
-Total Time:      0.03 minutes
-Successful Runs: 60
+Total Time:      0.02 minutes
+Successful Runs: 40
 Failed Runs:     0 (in graveyard)
-Total Attempted: 60
+Total Attempted: 40
 ----------------------------------------
 
-Data updated. Total rows: 60</code></pre>
+Data updated. Total rows: 40</code></pre>
 </div>
 </div>
 </section>
@@ -448,35 +436,56 @@ Data updated. Total rows: 60</code></pre>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># We can evaluate the PoD mapping out the Nuisance Angle!</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>_ <span class="op">=</span> study.pod(poi_col<span class="op">=</span><span class="st">"Length"</span>, nuisance_col<span class="op">=</span>[<span class="st">"Angle"</span>], threshold<span class="op">=</span><span class="dv">20</span>)</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>study.visualise()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>[Parallel(n_jobs=10)]: Using backend LokyBackend with 10 concurrent workers.
+[Parallel(n_jobs=10)]: Done   5 tasks      | elapsed:    1.6s
+[Parallel(n_jobs=10)]: Done  12 tasks      | elapsed:    1.7s
+[Parallel(n_jobs=10)]: Done  21 tasks      | elapsed:    1.7s
+[Parallel(n_jobs=10)]: Done  30 tasks      | elapsed:    1.8s
+[Parallel(n_jobs=10)]: Batch computation too fast (0.18848913027130507s.) Setting batch_size=2.
+[Parallel(n_jobs=10)]: Done  41 tasks      | elapsed:    1.9s
+[Parallel(n_jobs=10)]: Done  52 tasks      | elapsed:    1.9s
+[Parallel(n_jobs=10)]: Batch computation too fast (0.1758739948272705s.) Setting batch_size=4.
+[Parallel(n_jobs=10)]: Done  70 tasks      | elapsed:    2.1s
+[Parallel(n_jobs=10)]: Done  96 tasks      | elapsed:    2.2s
+[Parallel(n_jobs=10)]: Done 152 tasks      | elapsed:    2.6s
+[Parallel(n_jobs=10)]: Done 212 tasks      | elapsed:    2.9s
+[Parallel(n_jobs=10)]: Done 280 tasks      | elapsed:    3.4s
+[Parallel(n_jobs=10)]: Done 348 tasks      | elapsed:    3.8s
+[Parallel(n_jobs=10)]: Done 424 tasks      | elapsed:    4.2s
+[Parallel(n_jobs=10)]: Done 500 tasks      | elapsed:    4.6s
+[Parallel(n_jobs=10)]: Done 584 tasks      | elapsed:    5.2s
+[Parallel(n_jobs=10)]: Done 668 tasks      | elapsed:    5.7s
+[Parallel(n_jobs=10)]: Done 760 tasks      | elapsed:    6.2s
+[Parallel(n_jobs=10)]: Done 852 tasks      | elapsed:    6.7s
+[Parallel(n_jobs=10)]: Done 952 tasks      | elapsed:    7.3s
+[Parallel(n_jobs=10)]: Done 981 out of 1000 | elapsed:    7.4s remaining:    0.1s
+[Parallel(n_jobs=10)]: Done 1000 out of 1000 | elapsed:    7.5s finished</code></pre>
+</div>
 <div id="fig-optimisation-results" class="quarto-layout-panel">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-optimisation-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="quarto-layout-row">
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<pre><code>Total Simulations Run: 60
+<pre><code>Total Simulations Run: 40
 Running validation...
-Validation passed. 60 valid rows ready.
+Validation passed. 40 valid rows ready.
 --- Starting Reliability Analysis (PoIs: ['Length']) ---
 1. Selecting Mean Model (Cross-Validation)...
--&gt; Selected Model: Polynomial (Degree 5)
+-&gt; Selected Model: Polynomial (Degree 3)
 2. Fitting Variance Model (Kernel Smoothing)...
    -&gt; Optimizing bandwidth via LOO-CV...
-   -&gt; Smoothing Bandwidth: 1.6321
+   -&gt; Smoothing Bandwidth: 42.0575
 3. Inferring Error Distribution (AIC)...
-   -&gt; Selected Distribution: norm
+   -&gt; Selected Distribution: gumbel_r
 4. Computing PoD Curve...
-5. Running Bootstrap (1000 iterations)...
-      -&gt; [ 10%] Completed 100 iterations
-      -&gt; [ 20%] Completed 200 iterations
-      -&gt; [ 30%] Completed 300 iterations
-      -&gt; [ 40%] Completed 400 iterations
-      -&gt; [ 50%] Completed 500 iterations
-      -&gt; [ 60%] Completed 600 iterations
-      -&gt; [ 70%] Completed 700 iterations
-      -&gt; [ 80%] Completed 800 iterations
-      -&gt; [ 90%] Completed 900 iterations
-      -&gt; [100%] Completed 1000 iterations
-   -&gt; a90/95 Reliability Index: 3.584
+5. Running Bootstrap (1000 iterations on 10 cores)...
+      -&gt; Running Parallel Bootstrap (1000 iterations on 10 cores)...</code></pre>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
+<pre><code>   -&gt; a90/95 Reliability Index: 3.112
 --- Analysis Complete ---</code></pre>
 </div>
 </div>
@@ -485,7 +494,7 @@ Validation passed. 60 valid rows ready.
 <div id="fig-optimisation-results-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-optimisation-results-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="optimisation_files/figure-html/fig-optimisation-results-output-2.png" data-ref-parent="fig-optimisation-results" width="854" height="471" class="figure-img">
+<img src="optimisation_files/figure-html/fig-optimisation-results-output-4.png" data-ref-parent="fig-optimisation-results" width="854" height="471" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-optimisation-results-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (a) Reliability Analysis Results
@@ -499,7 +508,7 @@ Validation passed. 60 valid rows ready.
 <div id="fig-optimisation-results-2" class="quarto-float quarto-figure quarto-figure-center anchored" height="449" width="593">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-optimisation-results-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="optimisation_files/figure-html/fig-optimisation-results-output-3.png" id="fig-optimisation-results-2" data-ref-parent="fig-optimisation-results" width="593" height="449" class="figure-img">
+<img src="optimisation_files/figure-html/fig-optimisation-results-output-5.png" id="fig-optimisation-results-2" data-ref-parent="fig-optimisation-results" width="593" height="449" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-optimisation-results-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (b)
@@ -513,7 +522,7 @@ Validation passed. 60 valid rows ready.
 <div id="fig-optimisation-results-3" class="quarto-float quarto-figure quarto-figure-center anchored" height="449" width="589">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-optimisation-results-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="optimisation_files/figure-html/fig-optimisation-results-output-4.png" id="fig-optimisation-results-3" data-ref-parent="fig-optimisation-results" width="589" height="449" class="figure-img">
+<img src="optimisation_files/figure-html/fig-optimisation-results-output-6.png" id="fig-optimisation-results-3" data-ref-parent="fig-optimisation-results" width="589" height="449" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-optimisation-results-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (c)
@@ -535,22 +544,22 @@ Figure&nbsp;1
 <p>When connecting DigiQual to external engines like MATLAB or Ansys, you will write wrapper scripts. The script reads the input coordinates generated by DigiQual, triggers the solver, and writes an output CSV. See below for examples.</p>
 <section id="example-a-python-wrapper" class="level3">
 <h3 class="anchored" data-anchor-id="example-a-python-wrapper">Example A: Python Wrapper</h3>
-<div id="5a156412" class="cell" data-execution_count="5">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys, pandas <span class="im">as</span> pd</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> beam_model <span class="im">import</span> simulate_beam</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> main():</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    input_csv, output_csv <span class="op">=</span> sys.argv[<span class="dv">1</span>], sys.argv[<span class="dv">2</span>]</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> pd.read_csv(input_csv)</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Run proprietary solver for each row</span></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">"Signal"</span>] <span class="op">=</span> df.<span class="bu">apply</span>(<span class="kw">lambda</span> row: simulate_beam(row[<span class="st">"Length"</span>], row[<span class="st">"Angle"</span>]), axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Save back for DigiQual</span></span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    df.to_csv(output_csv, index<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">"__main__"</span>:</span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    main()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="11912236" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys, pandas <span class="im">as</span> pd</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> beam_model <span class="im">import</span> simulate_beam</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> main():</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    input_csv, output_csv <span class="op">=</span> sys.argv[<span class="dv">1</span>], sys.argv[<span class="dv">2</span>]</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> pd.read_csv(input_csv)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Run proprietary solver for each row</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">"Signal"</span>] <span class="op">=</span> df.<span class="bu">apply</span>(<span class="kw">lambda</span> row: simulate_beam(row[<span class="st">"Length"</span>], row[<span class="st">"Angle"</span>]), axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Save back for DigiQual</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    df.to_csv(output_csv, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">"__main__"</span>:</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    main()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p><em>Run via: <code>SOLVER_CMD = "python python_wrapper.py {input} {output}"</code></em></p>
 <hr>
@@ -559,40 +568,40 @@ Figure&nbsp;1
 <h3 class="anchored" data-anchor-id="example-b-connecting-to-matlab">Example B: Connecting to MATLAB</h3>
 <p>MATLAB can be run in “batch” mode from the command line, making it perfect for automated Active Learning.</p>
 <p><strong>1. The Existing MATLAB Solver (<code>my_matlab_solver.m</code>)</strong> Your existing MATLAB function that does the heavy lifting.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode matlab code-with-copy"><code class="sourceCode matlab"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">% my_matlab_solver.m</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">signal</span> <span class="op">=</span> <span class="va">my_matlab_solver</span>(<span class="va">L</span><span class="op">,</span> <span class="va">theta</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">% A complex simulation script</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">signal</span> <span class="op">=</span> (<span class="va">L</span><span class="op">^</span><span class="fl">3</span>) <span class="op">*</span> <span class="fl">0.5</span> <span class="op">+</span> <span class="va">theta</span><span class="op">;</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode matlab code-with-copy"><code class="sourceCode matlab"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">% my_matlab_solver.m</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">signal</span> <span class="op">=</span> <span class="va">my_matlab_solver</span>(<span class="va">L</span><span class="op">,</span> <span class="va">theta</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">% A complex simulation script</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">signal</span> <span class="op">=</span> (<span class="va">L</span><span class="op">^</span><span class="fl">3</span>) <span class="op">*</span> <span class="fl">0.5</span> <span class="op">+</span> <span class="va">theta</span><span class="op">;</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>2. The MATLAB Wrapper Function (<code>matlab_wrapper.m</code>)</strong> We write a top-level MATLAB function that reads the CSV, iterates over the design points, and writes the output CSV.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode matlab code-with-copy"><code class="sourceCode matlab"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">% matlab_wrapper.m</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">matlab_wrapper</span>(<span class="va">input_csv</span><span class="op">,</span> <span class="va">output_csv</span>)</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">% 1. Read the input coordinates generated by DigiQual</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">df</span> <span class="op">=</span> <span class="va">readtable</span>(<span class="va">input_csv</span>)<span class="op">;</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">% 2. Initialise an array to hold our results</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">num_rows</span> <span class="op">=</span> <span class="va">height</span>(<span class="va">df</span>)<span class="op">;</span></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">signal_results</span> <span class="op">=</span> <span class="va">zeros</span>(<span class="va">num_rows</span><span class="op">,</span> <span class="fl">1</span>)<span class="op">;</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">% 3. Run the solver for each row</span></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">for</span> <span class="va">i</span> <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="va">num_rows</span></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">L</span> <span class="op">=</span> <span class="va">df</span>.<span class="va">Length</span>(<span class="va">i</span>)<span class="op">;</span></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">theta</span> <span class="op">=</span> <span class="va">df</span>.<span class="va">Angle</span>(<span class="va">i</span>)<span class="op">;</span></span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>        <span class="va">signal_results</span>(<span class="va">i</span>) <span class="op">=</span> <span class="va">my_matlab_solver</span>(<span class="va">L</span><span class="op">,</span> <span class="va">theta</span>)<span class="op">;</span></span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="co">% 4. Append the results to the table and save</span></span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    <span class="va">df</span>.<span class="va">Signal</span> <span class="op">=</span> <span class="va">signal_results</span><span class="op">;</span></span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    <span class="va">writetable</span>(<span class="va">df</span><span class="op">,</span> <span class="va">output_csv</span>)<span class="op">;</span></span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    <span class="co">% Exit MATLAB to hand control back to DigiQual</span></span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    <span class="va">exit</span><span class="op">;</span></span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode matlab code-with-copy"><code class="sourceCode matlab"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">% matlab_wrapper.m</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">matlab_wrapper</span>(<span class="va">input_csv</span><span class="op">,</span> <span class="va">output_csv</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">% 1. Read the input coordinates generated by DigiQual</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">df</span> <span class="op">=</span> <span class="va">readtable</span>(<span class="va">input_csv</span>)<span class="op">;</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">% 2. Initialise an array to hold our results</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">num_rows</span> <span class="op">=</span> <span class="va">height</span>(<span class="va">df</span>)<span class="op">;</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">signal_results</span> <span class="op">=</span> <span class="va">zeros</span>(<span class="va">num_rows</span><span class="op">,</span> <span class="fl">1</span>)<span class="op">;</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">% 3. Run the solver for each row</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">for</span> <span class="va">i</span> <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="va">num_rows</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">L</span> <span class="op">=</span> <span class="va">df</span>.<span class="va">Length</span>(<span class="va">i</span>)<span class="op">;</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">theta</span> <span class="op">=</span> <span class="va">df</span>.<span class="va">Angle</span>(<span class="va">i</span>)<span class="op">;</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>        <span class="va">signal_results</span>(<span class="va">i</span>) <span class="op">=</span> <span class="va">my_matlab_solver</span>(<span class="va">L</span><span class="op">,</span> <span class="va">theta</span>)<span class="op">;</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    <span class="co">% 4. Append the results to the table and save</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    <span class="va">df</span>.<span class="va">Signal</span> <span class="op">=</span> <span class="va">signal_results</span><span class="op">;</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="va">writetable</span>(<span class="va">df</span><span class="op">,</span> <span class="va">output_csv</span>)<span class="op">;</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    <span class="co">% Exit MATLAB to hand control back to DigiQual</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    <span class="va">exit</span><span class="op">;</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>3. The DigiQual Command</strong> We construct a command that launches MATLAB without the graphical interface (<code>-batch</code>), tells it to run our wrapper, and safely injects the <code>{input}</code> and <code>{output}</code> paths as strings.</p>
-<div id="85dc4019" class="cell" data-execution_count="6">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># In your main study script</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>SOLVER_CMD <span class="op">=</span> <span class="st">"matlab -batch </span><span class="ch">\"</span><span class="st">matlab_wrapper('</span><span class="sc">{input}</span><span class="st">', '</span><span class="sc">{output}</span><span class="st">')</span><span class="ch">\"</span><span class="st">"</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># study.optimise(command=SOLVER_CMD, ...)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="b52f9a34" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># In your main study script</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>SOLVER_CMD <span class="op">=</span> <span class="st">"matlab -batch </span><span class="ch">\"</span><span class="st">matlab_wrapper('</span><span class="sc">{input}</span><span class="st">', '</span><span class="sc">{output}</span><span class="st">')</span><span class="ch">\"</span><span class="st">"</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co"># study.optimise(command=SOLVER_CMD, ...)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 
 
