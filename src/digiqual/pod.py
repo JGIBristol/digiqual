@@ -655,7 +655,7 @@ def bootstrap_pod_ci(
     dist_info: Tuple[str, Tuple],
     n_boot: int = 1000,
     nuisance_ranges: dict = None,
-    n_jobs: int | None = None  # Changed to None for custom logic
+    n_jobs: int | None = None
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Estimates 95% Confidence Bounds for the PoD curve via Bootstrapping.
@@ -676,6 +676,9 @@ def bootstrap_pod_ci(
         bandwidth (float): Smoothing bandwidth (fixed from original fit).
         dist_info (Tuple[str, Tuple]): Error distribution (fixed from original fit).
         n_boot (int, optional): Number of bootstrap iterations. Defaults to 1000.
+        n_jobs (int | None, optional): Number of CPU cores to use.
+            ``None`` or ``1`` means single-core execution (no parallelisation).
+            ``-1`` means use all available cores minus two. Defaults to ``None``.
 
     Returns:
         Tuple[np.ndarray, np.ndarray]:
@@ -696,11 +699,19 @@ def bootstrap_pod_ci(
     n_samples = len(y)
     X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
 
-    if n_jobs is None:
+    # Standardize joblib convention: None or 1 = single core, -1 = auto max
+    if n_jobs is None or n_jobs == 1:
+        n_jobs_actual = 1
+    elif n_jobs == -1:
         total_cores = os.cpu_count() or 1
-        n_jobs = max(total_cores - 2, 1)
+        n_jobs_actual = max(total_cores - 2, 1)
+    else:
+        n_jobs_actual = n_jobs
 
-    print(f"      -> Running Parallel Bootstrap ({n_boot} iterations on {n_jobs} cores)...")
+    if n_jobs_actual > 1:
+        print(f"      -> Running Parallel Bootstrap ({n_boot} iterations on {n_jobs_actual} cores)...")
+    else:
+        print(f"      -> Running Bootstrap ({n_boot} iterations on 1 core)...")
 
     # Parallel execution via Joblib
     results = Parallel(n_jobs=n_jobs, verbose=10)(

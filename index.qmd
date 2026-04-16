@@ -11,7 +11,7 @@ subtitle: "Statistical Toolkit for Reliability Assessment in NDT"
 The fastest way to get value from the package is by running the browser-based DigiQual app. No coding is required!
 
 ```bash
-uvx -v digiqual
+uvx -v digiqual@latest
 ```
 
 ### 2. The Python API

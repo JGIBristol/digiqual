@@ -289,6 +289,8 @@ class SimulationStudy:
                 "polynomial", or "kriging". Defaults to "auto".
             force_degree (int | None): When model_override="polynomial",
                 use this degree. Defaults to None (CV selects).
+            n_jobs (int | None): Number of CPU cores for parallel bootstrap execution.
+                Defaults to ``None`` (single-core). Set to ``-1`` to auto-detect and use all available cores.
 
         Returns:
             Dict: Dictionary containing models, curves, and fit statistics.
@@ -371,14 +373,20 @@ class SimulationStudy:
         )
 
         # 6. Bootstrap Confidence Intervals (Parallelized)
-        actual_cores = n_jobs if n_jobs is not None else max((os.cpu_count() or 1) - 2, 1)
+        if n_jobs is None or n_jobs == 1:
+            actual_cores = 1
+        elif n_jobs == -1:
+            actual_cores = max((os.cpu_count() or 1) - 2, 1)
+        else:
+            actual_cores = n_jobs
+
         print(f"5. Running Bootstrap ({n_boot} iterations on {actual_cores} cores)...")
 
         lower_ci, upper_ci = pod.bootstrap_pod_ci(
             X, y, X_eval, threshold,
             mean_model.model_type_, mean_model.model_params_, bandwidth, (dist_name, dist_params),
             n_boot=n_boot, nuisance_ranges=nuisance_ranges,
-            n_jobs=n_jobs
+            n_jobs=n_jobs # Pass the raw variable down; pod.py handles the logic
         )
 
         # 7. Calculate Reliability Point

@@ -14,9 +14,9 @@ If you use `uv` for environment management, you can launch the app directly from
 To run the app instantly without permanently installing it to your environment:
 
 ```bash
-uvx -v digiqual
+uvx -v digiqual@latest
 ```
-*Note: The `-v` (verbose) flag is highly recommended here! Without it, `uvx` runs quietly and the app might appear frozen for a few minutes while it downloads the required statistical packages in the background.*
+*Note: The `-v` (verbose) flag is highly recommended here! Without it, `uvx` runs quietly and the app might appear frozen for a few minutes while it downloads the required statistical packages in the background. Also the '@latest' flag will ensure that you have the most recent release*
 <br>
 
 If you plan to use it frequently, you can install it as a persistent global tool on your machine:

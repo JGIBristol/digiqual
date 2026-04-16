@@ -33,7 +33,7 @@ Once your external physics solver has calculated the outcomes for your generated
 3. **Diagnostic Report:** The engine runs sanity checks across your data, testing for sufficient sample sizes and input coverage. A tabular report provides a clear Pass/Fail for every parameter.
 
 ### Adaptive Remediation
-If the diagnostic engine detects a large deliberate gap or missing data (a failed **Input Coverage** test), the UI exposes a remediation tool. 
+If the diagnostic engine detects a large deliberate gap or missing data (a failed **Input Coverage** test), the UI exposes a remediation tool.
 
 Instead of guessing where to add new points, you can simply input how many new points you'd like to generate. The engine will target the specific empty regions and generate a new CSV containing targeted, gap-filling coordinates. Run these through your solver and merge the new data back into your main set!
 
@@ -46,7 +46,7 @@ Instead of guessing where to add new points, you can simply input how many new p
 This brand-new tab utilizes the data uploaded in the Simulation Diagnostics pane to generate interactive, exploratory plots.
 
 - **Summary Statistics:** A complete breakout of the Min, Median, Max, Mean, and Standard Deviation for every uploaded variable.
-- **Variable Inspector:** 
+- **Variable Inspector:**
   - Trace any single variable's distribution (complete with Kernel Density Estimates and rug plots).
   - Plot a variable against the outcome to visually inspect underlying trends (with linear projection).
   - ::: {.callout-note}
@@ -65,10 +65,9 @@ This brand-new tab utilizes the data uploaded in the Simulation Diagnostics pane
 
 With a validated and well-understood dataset, you define the parameters for the Generalized $a$-versus-$\hat{a}$ Method.
 
-1. **Select Modality:** Choose between standard **1D Marginal PoD** or **Multi-Dimensional PoD**.
-2. **Variable Designation:** Select your primary Parameter of Interest (PoI). Any remaining input variables are automatically assigned as Nuisance Parameters and mathematically marginalised out via Monte Carlo Integration.
-3. **Set Threshold:** Define the critical threshold (e.g., a detection limit of `18.0`).
-4. **Generate Outcomes:** The system automatically identifies the best predictive polynomial structure, infers error distribution, and generates bootstrap confidence intervals.
-5. **Interactive Mapping:** It renders two interactive plots side-by-side:
+1. **Variable Designation:** Select your Parameters of Interest (PoI) & Nuisance Parameters (Optional).  Nuisance Parameters are mathematically marginalised out via Monte Carlo Integration.
+2. **Set Threshold:** Define the critical threshold (e.g., a detection limit of `18.0`).
+3. **Generate Outcomes:** The system automatically identifies the best predictive polynomial structure, infers error distribution, and generates bootstrap confidence intervals.
+4. **Interactive Mapping:** It renders two interactive plots side-by-side:
    - The **Signal Response Model** (The underlying Physics).
    - The **Probability of Detection Mapping** (The resulting Reliability).
