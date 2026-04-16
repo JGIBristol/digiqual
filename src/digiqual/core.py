@@ -376,7 +376,7 @@ class SimulationStudy:
         if n_jobs is None or n_jobs == 1:
             actual_cores = 1
         elif n_jobs == -1:
-            actual_cores = max((os.cpu_count() or 1) - 2, 1)
+            actual_cores = max((os.cpu_count() or 1) - 1, 1)
         else:
             actual_cores = n_jobs
 

@@ -82,7 +82,7 @@ study.diagnose()
 
 ### 3. Adaptive Refinement (The Fix)
 
-Instead of manually guessing where to add new simulations, we use the `refine()` method. 
+Instead of manually guessing where to add new simulations, we use the `refine()` method.
 
 1. **Detect:** It automatically targets the exact region where the gap or uncertainty exists.
 2. **Generate:** It outputs a dataframe of new input coordinates.
@@ -126,7 +126,9 @@ The single `pod()` method automatically handles:
 ```{python}
 #| label: analysis-run
 # 1. Run Analysis (Marginalising noise out across Nuisance Variables)
-_ = study.pod(poi_col="Length", nuisance_col=["Angle", "Roughness"], threshold=18.0)
+_ = study.pod(
+    poi_col="Length", nuisance_col=["Angle", "Roughness"], threshold=18.0, n_jobs=-1
+)
 ```
 
 ```{python}
@@ -197,7 +199,9 @@ study.diagnose()
 study.refine()
 
 # Analyse multi-dimensional PoD (1 PoI, 2 Nuisance)
-_ = study.pod(poi_col="Length", nuisance_col=["Angle", "Roughness"], threshold=15)
+_ = study.pod(
+    poi_col="Length", nuisance_col=["Angle", "Roughness"], threshold=15, n_jobs=-1
+)
 
 study.visualise()
 ```
