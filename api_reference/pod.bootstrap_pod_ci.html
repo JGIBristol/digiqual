@@ -278,10 +278,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 12%">
-<col style="width: 18%">
-<col style="width: 58%">
-<col style="width: 10%">
+<col style="width: 6%">
+<col style="width: 9%">
+<col style="width: 78%">
+<col style="width: 5%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -345,6 +345,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>int</td>
 <td>Number of bootstrap iterations. Defaults to 1000.</td>
 <td><code>1000</code></td>
+</tr>
+<tr class="even">
+<td>n_jobs</td>
+<td>int | None</td>
+<td>Number of CPU cores to use. <code>None</code> or <code>1</code> means single-core execution (no parallelisation). <code>-1</code> means use all available cores minus two. Defaults to <code>None</code>.</td>
+<td><code>None</code></td>
 </tr>
 </tbody>
 </table>

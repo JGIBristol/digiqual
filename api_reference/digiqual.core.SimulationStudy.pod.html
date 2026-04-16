@@ -274,10 +274,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 12%">
-<col style="width: 15%">
-<col style="width: 62%">
 <col style="width: 8%">
+<col style="width: 10%">
+<col style="width: 74%">
+<col style="width: 6%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -328,6 +328,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>force_degree</td>
 <td>int | None</td>
 <td>When model_override=“polynomial”, use this degree. Defaults to None (CV selects).</td>
+<td><code>None</code></td>
+</tr>
+<tr class="even">
+<td>n_jobs</td>
+<td>int | None</td>
+<td>Number of CPU cores for parallel bootstrap execution. Defaults to <code>None</code> (single-core). Set to <code>-1</code> to auto-detect and use all available cores.</td>
 <td><code>None</code></td>
 </tr>
 </tbody>
