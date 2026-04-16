@@ -351,7 +351,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="define-a-mock-solver">1. Define a “Mock” Solver</h3>
 <p>For this tutorial, we will use a Python one-liner as our “solver” instead of a complex physics engine. We use <code>python -c</code> to run this as if it were an external Command Line Interface (CLI) tool.</p>
 <p>Notice how the <code>SOLVER_CMD</code> utilises the <code>{input}</code> and <code>{output}</code> placeholders.</p>
-<div id="7637f8b5" class="cell" data-execution_count="1">
+<div id="9ad29259" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># A complex, non-linear physics model to trigger multiple optimisation loops</span></span>
@@ -367,7 +367,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="configure-the-study" class="level3">
 <h3 class="anchored" data-anchor-id="configure-the-study">2. Configure the Study</h3>
 <p>We define our input variables and the ranges we want to explore.</p>
-<div id="338ce37d" class="cell" data-execution_count="2">
+<div id="637f870b" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.core <span class="im">import</span> SimulationStudy</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define inputs ranges</span></span>
@@ -380,7 +380,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="run-optimisation" class="level3">
 <h3 class="anchored" data-anchor-id="run-optimisation">3. Run Optimisation</h3>
 <p>This single command handles the entire Active Learning loop:</p>
-<div id="b3d1ed0a" class="cell" data-execution_count="3">
+<div id="66603569" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.optimise(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    command<span class="op">=</span>SOLVER_CMD,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    ranges<span class="op">=</span>ranges,</span>
@@ -412,18 +412,32 @@ Diagnostics flagged issues. Initiating Active Learning...
    -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5 + df["Length"] ** 3 + (df["Length"] * np.random.normal(0, 1, len(df))); df.to_csv("sim_output.csv", index=False)'
 
 --- Iteration 3: Diagnostics Check ---
+&gt;&gt; Model invalid. Refining design...
+Diagnostics flagged issues. Initiating Active Learning...
+ -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
+--- Running Batch 3 (10 points) ---
+   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5 + df["Length"] ** 3 + (df["Length"] * np.random.normal(0, 1, len(df))); df.to_csv("sim_output.csv", index=False)'
+
+--- Iteration 4: Diagnostics Check ---
+&gt;&gt; Model invalid. Refining design...
+Diagnostics flagged issues. Initiating Active Learning...
+ -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
+--- Running Batch 4 (10 points) ---
+   -&gt; Executing: /Users/jt17630/Documents/DigiQual/.venv/bin/python3 -c 'import pandas as pd, numpy as np; df=pd.read_csv("sim_input.csv"); df["Signal"] = 5 + df["Length"] ** 3 + (df["Length"] * np.random.normal(0, 1, len(df))); df.to_csv("sim_output.csv", index=False)'
+
+--- Iteration 5: Diagnostics Check ---
 
 &gt;&gt;&gt; CONVERGENCE REACHED! &lt;&lt;&lt;
 
 ----------------------------------------
 &gt;&gt;&gt; SEARCH COMPLETE &lt;&lt;&lt;
-Total Time:      0.02 minutes
-Successful Runs: 40
+Total Time:      0.03 minutes
+Successful Runs: 60
 Failed Runs:     0 (in graveyard)
-Total Attempted: 40
+Total Attempted: 60
 ----------------------------------------
 
-Data updated. Total rows: 40</code></pre>
+Data updated. Total rows: 60</code></pre>
 </div>
 </div>
 </section>
@@ -436,45 +450,51 @@ Data updated. Total rows: 40</code></pre>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>study.visualise()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>[Parallel(n_jobs=10)]: Using backend LokyBackend with 10 concurrent workers.
-[Parallel(n_jobs=10)]: Done   5 tasks      | elapsed:    1.6s
-[Parallel(n_jobs=10)]: Done  12 tasks      | elapsed:    1.7s
+[Parallel(n_jobs=10)]: Done   5 tasks      | elapsed:    1.5s
+[Parallel(n_jobs=10)]: Done  12 tasks      | elapsed:    1.6s
 [Parallel(n_jobs=10)]: Done  21 tasks      | elapsed:    1.7s
-[Parallel(n_jobs=10)]: Done  30 tasks      | elapsed:    1.8s
-[Parallel(n_jobs=10)]: Batch computation too fast (0.19579199755847237s.) Setting batch_size=2.
+[Parallel(n_jobs=10)]: Done  30 tasks      | elapsed:    1.7s
+[Parallel(n_jobs=10)]: Batch computation too fast (0.19460180647282857s.) Setting batch_size=2.
 [Parallel(n_jobs=10)]: Done  41 tasks      | elapsed:    1.8s
 [Parallel(n_jobs=10)]: Done  52 tasks      | elapsed:    1.9s
-[Parallel(n_jobs=10)]: Batch computation too fast (0.17217493057250977s.) Setting batch_size=4.
 [Parallel(n_jobs=10)]: Done  70 tasks      | elapsed:    2.1s
 [Parallel(n_jobs=10)]: Done  96 tasks      | elapsed:    2.2s
-[Parallel(n_jobs=10)]: Done 152 tasks      | elapsed:    2.6s
-[Parallel(n_jobs=10)]: Done 212 tasks      | elapsed:    2.9s
-[Parallel(n_jobs=10)]: Done 280 tasks      | elapsed:    3.4s
-[Parallel(n_jobs=10)]: Done 348 tasks      | elapsed:    3.8s
-[Parallel(n_jobs=10)]: Done 424 tasks      | elapsed:    4.3s
-[Parallel(n_jobs=10)]: Done 500 tasks      | elapsed:    4.6s
-[Parallel(n_jobs=10)]: Done 584 tasks      | elapsed:    5.2s
-[Parallel(n_jobs=10)]: Done 668 tasks      | elapsed:    5.7s
-[Parallel(n_jobs=10)]: Done 760 tasks      | elapsed:    6.3s
-[Parallel(n_jobs=10)]: Done 852 tasks      | elapsed:    6.9s
-[Parallel(n_jobs=10)]: Done 952 tasks      | elapsed:    7.5s</code></pre>
+[Parallel(n_jobs=10)]: Done 126 tasks      | elapsed:    2.5s
+[Parallel(n_jobs=10)]: Done 156 tasks      | elapsed:    2.7s
+[Parallel(n_jobs=10)]: Done 190 tasks      | elapsed:    2.9s
+[Parallel(n_jobs=10)]: Done 224 tasks      | elapsed:    3.2s
+[Parallel(n_jobs=10)]: Done 262 tasks      | elapsed:    3.5s
+[Parallel(n_jobs=10)]: Done 300 tasks      | elapsed:    3.7s
+[Parallel(n_jobs=10)]: Done 342 tasks      | elapsed:    4.1s
+[Parallel(n_jobs=10)]: Done 384 tasks      | elapsed:    4.4s
+[Parallel(n_jobs=10)]: Done 430 tasks      | elapsed:    4.8s
+[Parallel(n_jobs=10)]: Done 476 tasks      | elapsed:    5.2s
+[Parallel(n_jobs=10)]: Done 526 tasks      | elapsed:    5.6s
+[Parallel(n_jobs=10)]: Done 576 tasks      | elapsed:    6.1s
+[Parallel(n_jobs=10)]: Done 630 tasks      | elapsed:    6.6s
+[Parallel(n_jobs=10)]: Done 684 tasks      | elapsed:    7.2s
+[Parallel(n_jobs=10)]: Done 742 tasks      | elapsed:    7.8s
+[Parallel(n_jobs=10)]: Done 800 tasks      | elapsed:    8.3s
+[Parallel(n_jobs=10)]: Done 862 tasks      | elapsed:    8.8s
+[Parallel(n_jobs=10)]: Done 924 tasks      | elapsed:    9.3s</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>[Parallel(n_jobs=10)]: Done 1000 out of 1000 | elapsed:    7.7s finished</code></pre>
+<pre><code>[Parallel(n_jobs=10)]: Done 1000 out of 1000 | elapsed:   10.0s finished</code></pre>
 </div>
 <div id="fig-optimisation-results" class="quarto-layout-panel">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-optimisation-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="quarto-layout-row">
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<pre><code>Total Simulations Run: 40
+<pre><code>Total Simulations Run: 60
 Running validation...
-Validation passed. 40 valid rows ready.
+Validation passed. 60 valid rows ready.
 --- Starting Reliability Analysis (PoIs: ['Length']) ---
 1. Selecting Mean Model (Cross-Validation)...
--&gt; Selected Model: Polynomial (Degree 3)
+-&gt; Selected Model: Polynomial (Degree 2)
 2. Fitting Variance Model (Kernel Smoothing)...
    -&gt; Optimizing bandwidth via LOO-CV...
-   -&gt; Smoothing Bandwidth: 17.2633
+   -&gt; Smoothing Bandwidth: 42.9534
 3. Inferring Error Distribution (AIC)...
    -&gt; Selected Distribution: laplace
 4. Computing PoD Curve...
@@ -484,7 +504,7 @@ Validation passed. 40 valid rows ready.
 </div>
 <div class="quarto-layout-row">
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<pre><code>   -&gt; a90/95 Reliability Index: 3.016
+<pre><code>   -&gt; a90/95 Reliability Index: 2.716
 --- Analysis Complete ---</code></pre>
 </div>
 </div>
@@ -504,7 +524,7 @@ Validation passed. 40 valid rows ready.
 </div>
 <div class="quarto-layout-row">
 <div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-optimisation-results" style="flex-basis: 100.0%;justify-content: flex-start;">
-<div id="fig-optimisation-results-2" class="quarto-float quarto-figure quarto-figure-center anchored" width="593" height="449">
+<div id="fig-optimisation-results-2" class="quarto-float quarto-figure quarto-figure-center anchored" height="449" width="593">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-optimisation-results-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="optimisation_files/figure-html/fig-optimisation-results-output-6.png" id="fig-optimisation-results-2" data-ref-parent="fig-optimisation-results" width="593" height="449" class="figure-img">
@@ -518,7 +538,7 @@ Validation passed. 40 valid rows ready.
 </div>
 <div class="quarto-layout-row">
 <div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-optimisation-results" style="flex-basis: 100.0%;justify-content: flex-start;">
-<div id="fig-optimisation-results-3" class="quarto-float quarto-figure quarto-figure-center anchored" width="589" height="449">
+<div id="fig-optimisation-results-3" class="quarto-float quarto-figure quarto-figure-center anchored" height="449" width="589">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-optimisation-results-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="optimisation_files/figure-html/fig-optimisation-results-output-7.png" id="fig-optimisation-results-3" data-ref-parent="fig-optimisation-results" width="589" height="449" class="figure-img">
@@ -543,7 +563,7 @@ Figure&nbsp;1
 <p>When connecting DigiQual to external engines like MATLAB or Ansys, you will write wrapper scripts. The script reads the input coordinates generated by DigiQual, triggers the solver, and writes an output CSV. See below for examples.</p>
 <section id="example-a-python-wrapper" class="level3">
 <h3 class="anchored" data-anchor-id="example-a-python-wrapper">Example A: Python Wrapper</h3>
-<div id="d22b8e16" class="cell" data-execution_count="5">
+<div id="1e0964b7" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys, pandas <span class="im">as</span> pd</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> beam_model <span class="im">import</span> simulate_beam</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -597,7 +617,7 @@ Figure&nbsp;1
 <span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>    <span class="va">exit</span><span class="op">;</span></span>
 <span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>3. The DigiQual Command</strong> We construct a command that launches MATLAB without the graphical interface (<code>-batch</code>), tells it to run our wrapper, and safely injects the <code>{input}</code> and <code>{output}</code> paths as strings.</p>
-<div id="ed131d0e" class="cell" data-execution_count="6">
+<div id="7fb97e12" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># In your main study script</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>SOLVER_CMD <span class="op">=</span> <span class="st">"matlab -batch </span><span class="ch">\"</span><span class="st">matlab_wrapper('</span><span class="sc">{input}</span><span class="st">', '</span><span class="sc">{output}</span><span class="st">')</span><span class="ch">\"</span><span class="st">"</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co"># study.optimise(command=SOLVER_CMD, ...)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
