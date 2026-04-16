@@ -282,8 +282,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="option-a-using-uv-via-cli-recommended">Option A: Using <code>uv</code> via CLI (Recommended)</h3>
 <p>If you use <code>uv</code> for environment management, you can launch the app directly from your terminal as a Command Line Interface (CLI) tool. This is the fastest way to get started.</p>
 <p>To run the app instantly without permanently installing it to your environment:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uvx</span> <span class="at">-v</span> digiqual</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><em>Note: The <code>-v</code> (verbose) flag is highly recommended here! Without it, <code>uvx</code> runs quietly and the app might appear frozen for a few minutes while it downloads the required statistical packages in the background.</em> <br></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uvx</span> <span class="at">-v</span> digiqual@latest</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Note: The <code>-v</code> (verbose) flag is highly recommended here! Without it, <code>uvx</code> runs quietly and the app might appear frozen for a few minutes while it downloads the required statistical packages in the background. Also the ‘<span class="citation" data-cites="latest">@latest</span>’ flag will ensure that you have the most recent release</em> <br></p>
 <p>If you plan to use it frequently, you can install it as a persistent global tool on your machine:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> tool install digiqual</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Once installed, simply type this from any terminal:</span></span>
@@ -294,7 +294,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="option-b-from-a-python-script" class="level3">
 <h3 class="anchored" data-anchor-id="option-b-from-a-python-script">Option B: From a Python Script</h3>
 <p>If you are already working inside a Python script or a Jupyter environment, you can launch it locally using the built-in UI function.</p>
-<div id="6f30db25" class="cell" data-execution_count="1">
+<div id="9937fff9" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Launch the local application</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual <span class="im">import</span> dq_ui</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>

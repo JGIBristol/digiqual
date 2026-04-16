@@ -10,7 +10,7 @@
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/docs/gui_manual.html</loc>
-    <lastmod>2026-04-13T15:52:36.796Z</lastmod>
+    <lastmod>2026-04-16T08:34:28.212Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/docs/generalised_pod.html</loc>
@@ -18,123 +18,123 @@
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/pod.predict_local_std.html</loc>
-    <lastmod>2026-04-15T12:07:31.982Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.733Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/pod.optimise_bandwidth.html</loc>
-    <lastmod>2026-04-15T12:07:31.973Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.724Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/pod.fit_variance_model.html</loc>
-    <lastmod>2026-04-15T12:07:31.976Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.727Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/pod.compute_pod_curve.html</loc>
-    <lastmod>2026-04-15T12:07:31.985Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.736Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/pod.bootstrap_pod_ci.html</loc>
-    <lastmod>2026-04-15T12:07:31.989Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.739Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/plotting.plot_signal_model.html</loc>
-    <lastmod>2026-04-15T12:07:31.997Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.747Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/plotting.plot_pod_curve.html</loc>
-    <lastmod>2026-04-15T12:07:32.000Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.750Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/index.html</loc>
-    <lastmod>2026-04-15T12:07:31.920Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.675Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/digiqual.core.SimulationStudy.visualise.html</loc>
-    <lastmod>2026-04-15T12:07:31.941Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.698Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/digiqual.core.SimulationStudy.pod.html</loc>
-    <lastmod>2026-04-15T12:07:31.938Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.695Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/digiqual.core.SimulationStudy.diagnose.html</loc>
-    <lastmod>2026-04-15T12:07:31.932Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.689Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/diagnostics.validate_simulation.html</loc>
-    <lastmod>2026-04-15T12:07:31.951Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.707Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/diagnostics.ValidationError.html</loc>
-    <lastmod>2026-04-15T12:07:31.954Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.710Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/adaptive.run_adaptive_search.html</loc>
-    <lastmod>2026-04-15T12:07:31.957Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.714Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/adaptive.generate_targeted_samples.html</loc>
-    <lastmod>2026-04-15T12:07:31.960Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.717Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/core.SimulationStudy.html</loc>
-    <lastmod>2026-04-15T12:07:31.945Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.701Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/diagnostics.sample_sufficiency.html</loc>
-    <lastmod>2026-04-15T12:07:31.953Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.710Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/digiqual.core.SimulationStudy.add_data.html</loc>
-    <lastmod>2026-04-15T12:07:31.930Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.685Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/digiqual.core.SimulationStudy.optimise.html</loc>
-    <lastmod>2026-04-15T12:07:31.935Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.692Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/digiqual.core.SimulationStudy.refine.html</loc>
-    <lastmod>2026-04-15T12:07:31.940Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.696Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/dq_ui.html</loc>
-    <lastmod>2026-04-15T12:07:31.946Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.703Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/integration.compute_multi_dim_pod.html</loc>
-    <lastmod>2026-04-15T12:07:31.994Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.745Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/plotting.plot_pod_surface.html</loc>
-    <lastmod>2026-04-15T12:07:32.001Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.752Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/plotting.plot_signal_surface.html</loc>
-    <lastmod>2026-04-15T12:07:32.003Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.754Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/pod.calculate_reliability_point.html</loc>
-    <lastmod>2026-04-15T12:07:31.991Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.741Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/pod.fit_robust_mean_model.html</loc>
-    <lastmod>2026-04-15T12:07:31.969Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.721Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/pod.infer_best_distribution.html</loc>
-    <lastmod>2026-04-15T12:07:31.978Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.729Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/pod.plot_model_selection.html</loc>
-    <lastmod>2026-04-15T12:07:31.980Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.730Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/api_reference/sampling.generate_lhs.html</loc>
-    <lastmod>2026-04-15T12:07:31.948Z</lastmod>
+    <lastmod>2026-04-16T08:35:26.705Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/docs/gui.html</loc>
-    <lastmod>2026-04-13T15:49:27.027Z</lastmod>
+    <lastmod>2026-04-16T08:33:09.682Z</lastmod>
   </url>
   <url>
     <loc>https://JGIBristol.github.io/digiqual/docs/install.html</loc>
