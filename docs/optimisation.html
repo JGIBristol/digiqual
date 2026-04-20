@@ -345,40 +345,68 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="define-a-solver-and-executor" class="level3">
 <h3 class="anchored" data-anchor-id="define-a-solver-and-executor">1. Define a Solver and Executor</h3>
 <p>For this tutorial, we will write a standard Python function to simulate our physics. We will then wrap it in the <code>PythonExecutor</code>.</p>
-<div id="df0db9e5" class="cell" data-execution_count="1">
+<div id="93695ee1" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> PythonExecutor</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mock_sensor_model(row):</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""A simulated physics model with noise."""</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    length <span class="op">=</span> row[<span class="st">'Length'</span>]</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    angle <span class="op">=</span> row[<span class="st">'Angle'</span>]</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Simulate a non-linear relationship with some noise</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    signal <span class="op">=</span> <span class="fl">5.0</span> <span class="op">+</span> (length <span class="op">**</span> <span class="dv">3</span>) <span class="op">*</span> <span class="fl">0.5</span> <span class="op">+</span> (angle <span class="op">*</span> <span class="fl">0.1</span>) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="fl">1.0</span>)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> signal</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Wrap our function in the Executor</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>executor <span class="op">=</span> PythonExecutor(solver_func<span class="op">=</span>mock_sensor_model, outcome_col<span class="op">=</span><span class="st">"Signal"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mock_sensor_model(row):</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""A simulated physics model with noise."""</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    length <span class="op">=</span> row[<span class="st">"Length"</span>]</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    angle <span class="op">=</span> row[<span class="st">"Angle"</span>]</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    roughness <span class="op">=</span> row[<span class="st">"Roughness"</span>]</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. THE DEAD ZONE (Trigger Graveyard Tracking)</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="fl">4.0</span> <span class="op">&lt;</span> length <span class="op">&lt;</span> <span class="fl">6.0</span> <span class="kw">and</span> <span class="bu">abs</span>(angle) <span class="op">&gt;</span> <span class="dv">30</span>:</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> np.nan</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. BASE SIGNAL (Cubic Trend + Interaction + Attenuation)</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Roughness absorbs and scatters the signal, lowering the mean response.</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    base_signal <span class="op">=</span> (</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>        <span class="fl">5.0</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>        <span class="op">+</span> (<span class="fl">5.0</span> <span class="op">*</span> length)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>        <span class="op">-</span> (<span class="fl">0.8</span> <span class="op">*</span> (length<span class="op">**</span><span class="dv">2</span>))</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>        <span class="op">+</span> (<span class="fl">0.1</span> <span class="op">*</span> (length<span class="op">**</span><span class="dv">3</span>))</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>        <span class="op">+</span> (angle <span class="op">*</span> <span class="fl">0.1</span>)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>        <span class="op">-</span> (<span class="fl">0.05</span> <span class="op">*</span> length <span class="op">*</span> <span class="bu">abs</span>(angle))</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>        <span class="op">-</span> (roughness <span class="op">*</span> <span class="fl">5.0</span>)  <span class="co"># &lt;--- Roughness penalty</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. HETEROSCEDASTIC, NON-NORMAL NOISE</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Roughness also makes the signal noisier and harder to read.</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    noise_scale <span class="op">=</span> <span class="fl">0.5</span> <span class="op">+</span> (length <span class="op">*</span> <span class="fl">0.4</span>) <span class="op">+</span> (roughness <span class="op">*</span> <span class="fl">1.0</span>)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    noise <span class="op">=</span> np.random.gumbel(loc<span class="op">=</span><span class="dv">0</span>, scale<span class="op">=</span>noise_scale)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    noise <span class="op">-=</span> noise_scale <span class="op">*</span> <span class="fl">0.57721</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    signal <span class="op">=</span> base_signal <span class="op">+</span> noise</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> signal</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Wrap our function in the Executor</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>executor <span class="op">=</span> PythonExecutor(solver_func<span class="op">=</span>mock_sensor_model, outcome_col<span class="op">=</span><span class="st">"Signal"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="configure-the-study" class="level3">
 <h3 class="anchored" data-anchor-id="configure-the-study">2. Configure the Study</h3>
 <p>We define our input variables and the ranges we want to explore.</p>
-<div id="582ca24e" class="cell" data-execution_count="2">
+<div id="d93ac26d" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.core <span class="im">import</span> SimulationStudy</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define inputs ranges</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>ranges <span class="op">=</span> {<span class="st">"Length"</span>: (<span class="fl">0.0</span>, <span class="fl">5.0</span>), <span class="st">"Angle"</span>: (<span class="op">-</span><span class="fl">45.0</span>, <span class="fl">45.0</span>)}</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>ranges <span class="op">=</span> {<span class="st">"Length"</span>: (<span class="fl">0.0</span>, <span class="fl">10.0</span>), <span class="st">"Angle"</span>: (<span class="op">-</span><span class="fl">45.0</span>, <span class="fl">45.0</span>), <span class="st">"Roughness"</span>: (<span class="dv">0</span>, <span class="dv">1</span>)}</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialise</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>study <span class="op">=</span> SimulationStudy(input_cols<span class="op">=</span>[<span class="st">"Length"</span>, <span class="st">"Angle"</span>], outcome_col<span class="op">=</span><span class="st">"Signal"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>study <span class="op">=</span> SimulationStudy(</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    input_cols<span class="op">=</span>[<span class="st">"Length"</span>, <span class="st">"Angle"</span>, <span class="st">"Roughness"</span>], outcome_col<span class="op">=</span><span class="st">"Signal"</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="run-optimisation" class="level3">
 <h3 class="anchored" data-anchor-id="run-optimisation">3. Run Optimisation</h3>
 <p>This single command handles the entire Active Learning loop:</p>
-<div id="088fd22d" class="cell" data-execution_count="3">
+<div id="aee8c321" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.optimise(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    executor<span class="op">=</span>executor,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    ranges<span class="op">=</span>ranges,</span>
@@ -398,25 +426,52 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 --- Iteration 1: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
+ -&gt; Active Graveyard Tracker: Protecting against 1 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 1 (10 points) ---
    -&gt; Executing Python model for 10 points...
 
 --- Iteration 2: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
-All diagnostic checks passed. No new samples needed.
+Diagnostics flagged issues. Initiating Active Learning...
+ -&gt; Active Graveyard Tracker: Protecting against 1 known bad regions.
+ -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
+--- Running Batch 2 (10 points) ---
+   -&gt; Executing Python model for 10 points...
 
-&gt;&gt; Refinement algorithm converged (no new valid samples needed).
+--- Iteration 3: Diagnostics Check ---
+&gt;&gt; Model invalid. Refining design...
+Diagnostics flagged issues. Initiating Active Learning...
+ -&gt; Active Graveyard Tracker: Protecting against 1 known bad regions.
+ -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
+--- Running Batch 3 (10 points) ---
+   -&gt; Executing Python model for 10 points...
+
+--- Iteration 4: Diagnostics Check ---
+&gt;&gt; Model invalid. Refining design...
+Diagnostics flagged issues. Initiating Active Learning...
+ -&gt; Active Graveyard Tracker: Protecting against 1 known bad regions.
+ -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
+--- Running Batch 4 (10 points) ---
+   -&gt; Executing Python model for 10 points...
+
+--- Iteration 5: Diagnostics Check ---
+&gt;&gt; Model invalid. Refining design...
+Diagnostics flagged issues. Initiating Active Learning...
+ -&gt; Active Graveyard Tracker: Protecting against 1 known bad regions.
+ -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
+--- Running Batch 5 (10 points) ---
+   -&gt; Executing Python model for 10 points...
 
 ----------------------------------------
 &gt;&gt;&gt; SEARCH COMPLETE &lt;&lt;&lt;
-Total Time:      0.00 minutes
-Successful Runs: 30
-Failed Runs:     0 (in graveyard)
-Total Attempted: 30
+Total Time:      0.01 minutes
+Successful Runs: 68
+Failed Runs:     2 (in graveyard)
+Total Attempted: 70
 ----------------------------------------
 
-Data updated. Total rows: 30</code></pre>
+Data updated. Total rows: 68</code></pre>
 </div>
 </div>
 </section>
@@ -426,75 +481,92 @@ Data updated. Total rows: 30</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total Simulations Run: </span><span class="sc">{</span><span class="bu">len</span>(study.data)<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># We can evaluate the PoD mapping out the Nuisance Angle!</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>_ <span class="op">=</span> study.pod(poi_col<span class="op">=</span><span class="st">"Length"</span>, nuisance_col<span class="op">=</span>[<span class="st">"Angle"</span>], threshold<span class="op">=</span><span class="dv">20</span>, n_jobs<span class="op">=-</span><span class="dv">1</span>)</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>study.visualise()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>_ <span class="op">=</span> study.pod(</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    poi_col<span class="op">=</span>[<span class="st">"Length"</span>, <span class="st">"Angle"</span>], nuisance_col<span class="op">=</span><span class="st">"Roughness"</span>, threshold<span class="op">=</span><span class="dv">15</span>, n_jobs<span class="op">=-</span><span class="dv">1</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>study.visualise()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>[Parallel(n_jobs=11)]: Using backend LokyBackend with 11 concurrent workers.
-[Parallel(n_jobs=11)]: Done  19 tasks      | elapsed:    1.6s
-[Parallel(n_jobs=11)]: Done 318 tasks      | elapsed:    3.0s</code></pre>
+[Parallel(n_jobs=11)]: Done  19 tasks      | elapsed:    3.1s
+[Parallel(n_jobs=11)]: Done 140 tasks      | elapsed:   11.7s
+[Parallel(n_jobs=11)]: Done 343 tasks      | elapsed:   26.7s
+[Parallel(n_jobs=11)]: Done 626 tasks      | elapsed:   49.2s</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>[Parallel(n_jobs=11)]: Done 1000 out of 1000 | elapsed:    6.3s finished</code></pre>
+<pre><code>[Parallel(n_jobs=11)]: Done 1000 out of 1000 | elapsed:  1.3min finished</code></pre>
 </div>
-<div id="905493aa" class="cell quarto-layout-panel" data-execution_count="4" data-layout-ncol="1">
+<div id="fig-results-optim" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-results-optim-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="quarto-layout-row">
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<pre><code>Total Simulations Run: 30
+<pre><code>Total Simulations Run: 68
 Running validation...
-Validation passed. 30 valid rows ready.
---- Starting Reliability Analysis (PoIs: ['Length']) ---
+Validation passed. 68 valid rows ready.
+--- Starting Reliability Analysis (PoIs: ['Length', 'Angle']) ---
 1. Selecting Mean Model (Cross-Validation)...
--&gt; Selected Model: Polynomial (Degree 3)
+-&gt; Selected Model: Polynomial (Degree 2)
 2. Fitting Variance Model (Kernel Smoothing)...
    -&gt; Optimizing bandwidth via LOO-CV...
-   -&gt; Smoothing Bandwidth: 43.4226
+   -&gt; Smoothing Bandwidth: 9.8885
 3. Inferring Error Distribution (AIC)...
-   -&gt; Selected Distribution: gumbel_l
+   -&gt; Selected Distribution: norm
 4. Computing PoD Curve...
 5. Running Bootstrap (1000 iterations on 11 cores)...</code></pre>
 </div>
 </div>
 <div class="quarto-layout-row">
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<pre><code>   -&gt; a90/95 Reliability Index: 3.465
---- Analysis Complete ---</code></pre>
+<pre><code>--- Analysis Complete ---</code></pre>
 </div>
 </div>
 <div class="quarto-layout-row">
-<div class="quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="optimisation_files/figure-html/cell-5-output-5.png" width="854" height="471" class="figure-img"></p>
-<figcaption>Best Fitting Model (Statistics)</figcaption>
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-results-optim" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-results-optim-1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-results-optim-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="optimisation_files/figure-html/fig-results-optim-output-5.png" data-ref-parent="fig-results-optim" width="854" height="471" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-results-optim-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Best Fitting Model (Statistics)
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
 <div class="quarto-layout-row">
-<div class="quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="optimisation_files/figure-html/cell-5-output-6.png" width="585" height="449" class="figure-img"></p>
-<figcaption>Signal Response Model (Physics)</figcaption>
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-results-optim" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-results-optim-2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-results-optim-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="optimisation_files/figure-html/fig-results-optim-output-6.png" data-ref-parent="fig-results-optim" width="475" height="486" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-results-optim-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) Signal Response Model (Physics)
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
 <div class="quarto-layout-row">
-<div class="quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="optimisation_files/figure-html/cell-5-output-7.png" width="589" height="449" class="figure-img"></p>
-<figcaption>Probability of Detection Curve (Reliability)</figcaption>
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-results-optim" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-results-optim-3" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-results-optim-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="optimisation_files/figure-html/fig-results-optim-output-7.png" data-ref-parent="fig-results-optim" width="652" height="523" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-results-optim-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(c) Probability of Detection Curve (Reliability)
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
-<div class="quarto-layout-row">
-<div class="quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<p>Reliability Analysis Results</p>
 </div>
-</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-results-optim-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Reliability Analysis Results
+</figcaption>
+</figure>
 </div>
 </section>
 </section>
@@ -530,7 +602,7 @@ end</code></pre>
 <section id="a2.-the-digiqual-execution" class="level4">
 <h4 class="anchored" data-anchor-id="a2.-the-digiqual-execution">A2. The Digiqual Execution</h4>
 <p>You just provide the name of the MATLAB file. The Executor builds the headless terminal command automatically.</p>
-<div id="fa1b495e" class="cell" data-execution_count="5">
+<div id="0f476c01" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> MatlabExecutor</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>executor <span class="op">=</span> MatlabExecutor(wrapper_name<span class="op">=</span><span class="st">"matlab_wrapper"</span>)</span>
@@ -545,7 +617,7 @@ end</code></pre>
 <section id="b1.-the-external-solver-script-run_ansys_simulation.py" class="level4">
 <h4 class="anchored" data-anchor-id="b1.-the-external-solver-script-run_ansys_simulation.py">B1. The External Solver Script (<code>run_ansys_simulation.py</code>)</h4>
 <p>This script represents your standalone software. It must accept the input and output file paths as command-line arguments, read the input CSV, perform its calculations, and save the output CSV.</p>
-<div id="018c7414" class="cell" data-execution_count="6">
+<div id="d33455c0" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -577,7 +649,7 @@ end</code></pre>
 <section id="b2.-the-digiqual-execution" class="level4">
 <h4 class="anchored" data-anchor-id="b2.-the-digiqual-execution">B2. The DigiQual Execution</h4>
 <p>You define the exact terminal command needed to run the script above, and pass it to the <code>CLIExecutor</code>.</p>
-<div id="589ef01e" class="cell" data-execution_count="7">
+<div id="3f803865" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> CLIExecutor</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co"># The exact command you would type into your terminal</span></span>
