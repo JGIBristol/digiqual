@@ -1718,7 +1718,7 @@ def server(input, output, session):
 
         # --- NEW PARALLEL LOGIC & TIME ESTIMATION ---
         total_cores = os.cpu_count() or 1
-        actual_cores = max(total_cores - 2, 1) if input.pod_parallel() else 1
+        actual_cores = max(total_cores - 1, 1) if input.pod_parallel() else 1
         selected_cores = -1 if input.pod_parallel() else 1
 
         # Heuristic based on terminal logs:
