@@ -708,13 +708,8 @@ def bootstrap_pod_ci(
     else:
         n_jobs_actual = n_jobs
 
-    if n_jobs_actual > 1:
-        print(f"      -> Running Parallel Bootstrap ({n_boot} iterations on {n_jobs_actual} cores)...")
-    else:
-        print(f"      -> Running Bootstrap ({n_boot} iterations on 1 core)...")
-
     # Parallel execution via Joblib
-    results = Parallel(n_jobs=n_jobs_actual, verbose=10)(
+    results = Parallel(n_jobs=n_jobs_actual, verbose=2)(
         delayed(_single_bootstrap_step)(
             X_2d, y, X_eval, threshold, model_type, model_params,
             bandwidth, dist_info, nuisance_ranges, n_samples

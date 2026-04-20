@@ -374,7 +374,7 @@ class SimulationStudy:
         else:
             actual_cores = n_jobs
 
-        print(f"5. Running Bootstrap ({n_boot} iterations on {actual_cores} cores)...")
+        print(f"5. Running Bootstrap ({n_boot} iterations on {actual_cores} cores)...", flush=True)
 
         lower_ci, upper_ci = pod.bootstrap_pod_ci(
             X, y, X_eval, threshold,
