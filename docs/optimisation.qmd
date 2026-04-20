@@ -9,7 +9,7 @@ When you trigger the `optimise` method, DigiQual acts as an orchestrator, comple
 ```{mermaid}
 flowchart TD
     A[1. Initialise - Generate LHS Design] --> B(2. Execute Solver)
-    B --> C{{3. Diagnostics}}
+    B --> C{3. Diagnostics}
     C -->|Healthy| D[(Final Validated Data)]
     C -->|Fails Check| E[4. Refinement - Generate Targeted Samples]
     E --> B
