@@ -1,12 +1,15 @@
 import pandas as pd
 import numpy as np
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Union
 import os
 
 from .diagnostics import validate_simulation, sample_sufficiency, ValidationError
 from .adaptive import generate_targeted_samples, run_adaptive_search
 from .plotting import plot_signal_model, plot_pod_curve
 from . import pod
+from .executors import Executor
+
+
 
 class SimulationStudy:
     """
@@ -192,52 +195,45 @@ class SimulationStudy:
 #### Automated Optimisation ####
     def optimise(
         self,
-        command: str,
+        executor: Union[Executor, str],
         ranges: Dict[str, Tuple[float, float]],
         n_start: int = 20,
         n_step: int = 10,
         max_iter: int = 5,
-        max_hours: float = None,
-        input_file: str = "sim_input.csv",
-        output_file: str = "sim_output.csv"
+        max_hours: float = None
     ) -> None:
         """
         Runs the automated Active Learning loop (Initialize -> Execute -> Diagnose -> Refine).
 
         Args:
-            command (str): Solver command (e.g. "python solver.py {input} {output}").
+            executor (Executor | str): The solver adapter to use (e.g., PythonExecutor, MatlabExecutor).
+                                       Accepts a legacy command string for backward compatibility.
             ranges (Dict): Input bounds, e.g. {"Length": (0, 10)}.
             n_start (int): Initial sample size (only if data is empty).
             n_step (int): Batch size for refinement.
             max_iter (int): Max refinement loops.
             max_hours (float, optional): Physical time limit in hours to safely stop the loop.
-            input_file (str): Temp input filename.
-            output_file (str): Temp output filename.
 
         Examples:
             ```python
+            from digiqual.core import SimulationStudy
+            from digiqual.executors import PythonExecutor
+
             # 1. Define the variable ranges
             ranges = {"Length": (0, 10), "Angle": (-45, 45)}
-
             study = SimulationStudy(input_cols=["Length", "Angle"], outcome_col="Signal")
 
-            # 2. Define a "solver" command.
-            # We use 'python -c' to simulate an external tool (like Ansys/Abaqus)
-            # that reads {input}, does math, and saves to {output}.
-            cmd = (
-            "python -c "
-            "'import pandas as pd; "
-            'df=pd.read_csv("{input}"); '
-            'df["Signal"] = df["Length"]*2; '
-            'df.to_csv("{output}", index=False)'
-            "'"
-            )
+            # 2. Define a simple Python solver
+            def my_solver(row):
+                return row['Length'] * 2 + row['Angle']
+
+            my_exec = PythonExecutor(solver_func=my_solver, outcome_col="Signal")
 
             # 3. Run the automated loop
             study.optimise(
-            command=cmd,
-            ranges=ranges,
-            max_iter=3
+                executor=my_exec,
+                ranges=ranges,
+                max_iter=3
             )
 
             # 4. View the results
@@ -247,17 +243,15 @@ class SimulationStudy:
         """
         # 1. Delegate to the Agnostic Engine
         final_data = run_adaptive_search(
-            command=command,
-            input_cols=self.inputs,       # Pass List[str]
-            outcome_col=self.outcome,     # Pass str
+            executor=executor,            # <-- Passes our new Executor object
+            input_cols=self.inputs,
+            outcome_col=self.outcome,
             ranges=ranges,
-            existing_data=self.data,      # Pass DataFrame (State)
+            existing_data=self.data,
             n_start=n_start,
             n_step=n_step,
             max_iter=max_iter,
-            max_hours=max_hours,
-            input_file=input_file,
-            output_file=output_file
+            max_hours=max_hours
         )
 
         # 2. Update Class State with the result

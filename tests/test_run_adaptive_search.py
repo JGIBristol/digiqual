@@ -1,9 +1,7 @@
 import pytest
 import pandas as pd
-import os
-import subprocess
 from unittest.mock import patch
-from digiqual.adaptive import _execute_simulation, run_adaptive_search
+from digiqual.adaptive import run_adaptive_search
 
 # --- Fixtures ---
 
@@ -19,74 +17,9 @@ def sample_df():
 def ranges():
     return {'Length': (0, 10), 'Angle': (-45, 45)}
 
-# --- Tests for _execute_simulation (The Worker) ---
-
-@patch("subprocess.run")
-def test_execute_simulation_success(mock_subprocess, sample_df, tmp_path):
-    """Test standard successful execution flow."""
-    # Setup paths
-    input_csv = tmp_path / "input.csv"
-    output_csv = tmp_path / "output.csv"
-
-    # Create a dummy output file that the 'simulation' would produce
-    result_df = sample_df.copy()
-    result_df['Signal'] = [0.99, 0.88]
-    result_df.to_csv(output_csv, index=False)
-
-    # Run function
-    df = _execute_simulation(
-        samples=sample_df,
-        command_template="echo {input} {output}",
-        input_cols=['Length', 'Angle'],
-        input_path=str(input_csv),
-        output_path=str(output_csv)
-    )
-
-    # Assertions
-    assert not df.empty
-    # Verify input file was created
-    assert os.path.exists(input_csv)
-    # Verify subprocess was called
-    mock_subprocess.assert_called_once()
-    # Verify results matched the dummy file
-    assert len(df) == 2
-    assert df['Signal'].iloc[0] == 0.99
-
-@patch("subprocess.run")
-def test_execute_simulation_crash(mock_subprocess, sample_df, tmp_path):
-    """Test handling of subprocess crash (non-zero exit code)."""
-    # Simulate a crash
-    mock_subprocess.side_effect = subprocess.CalledProcessError(returncode=1, cmd="fail")
-
-    df = _execute_simulation(
-        samples=sample_df,
-        command_template="fail_command",
-        input_cols=['Length', 'Angle'],
-        input_path=str(tmp_path / "in.csv"),
-        output_path=str(tmp_path / "out.csv")
-    )
-
-    # Should return empty DataFrame gracefully
-    assert df.empty
-
-def test_execute_simulation_missing_output(sample_df, tmp_path):
-    """Test handling where simulation runs but produces no file."""
-    # We don't mock subprocess here, just let it run a harmless echo
-    # But we DON'T create the output file.
-
-    df = _execute_simulation(
-        samples=sample_df,
-        command_template="echo running...",
-        input_cols=['Length', 'Angle'],
-        input_path=str(tmp_path / "in.csv"),
-        output_path=str(tmp_path / "missing.csv")
-    )
-
-    assert df.empty
-
 # --- Tests for run_adaptive_search (The Manager) ---
 
-@patch("digiqual.adaptive._execute_simulation")
+@patch("digiqual.executors.CLIExecutor.run")
 @patch("digiqual.adaptive.generate_lhs")
 @patch("digiqual.adaptive.sample_sufficiency")
 @patch("digiqual.adaptive.validate_simulation")
@@ -101,7 +34,7 @@ def test_adaptive_cold_start(mock_validate, mock_sufficiency, mock_lhs, mock_exe
     mock_sufficiency.return_value = pd.DataFrame({'Pass': [True, True]}) # All pass
 
     result = run_adaptive_search(
-        command="cmd",
+        executor="cmd", # Testing backwards compatibility wrapping
         input_cols=["Length", "Angle"],
         outcome_col="Signal",
         ranges=ranges,
@@ -117,7 +50,7 @@ def test_adaptive_cold_start(mock_validate, mock_sufficiency, mock_lhs, mock_exe
     # Assert result contains the data
     assert len(result) == 1
 
-@patch("digiqual.adaptive._execute_simulation")
+@patch("digiqual.executors.CLIExecutor.run")
 @patch("digiqual.adaptive.generate_lhs")
 @patch("digiqual.adaptive.sample_sufficiency")
 @patch("digiqual.adaptive.validate_simulation")
@@ -128,7 +61,7 @@ def test_adaptive_resume_existing(mock_validate, mock_sufficiency, mock_lhs, moc
     mock_sufficiency.return_value = pd.DataFrame({'Pass': [True]})
 
     run_adaptive_search(
-        command="cmd",
+        executor="cmd",
         input_cols=["Length", "Angle"],
         outcome_col="Signal",
         ranges=ranges,
@@ -139,7 +72,7 @@ def test_adaptive_resume_existing(mock_validate, mock_sufficiency, mock_lhs, moc
     # Assert LHS was NOT called
     mock_lhs.assert_not_called()
 
-@patch("digiqual.adaptive._execute_simulation")
+@patch("digiqual.executors.CLIExecutor.run")
 @patch("digiqual.adaptive.generate_targeted_samples")
 @patch("digiqual.adaptive.sample_sufficiency")
 @patch("digiqual.adaptive.validate_simulation")
@@ -169,7 +102,7 @@ def test_adaptive_refinement_loop(mock_validate, mock_sufficiency, mock_target, 
 
     # --- Run ---
     final_df = run_adaptive_search(
-        command="cmd",
+        executor="cmd",
         input_cols=["Length", "Angle"],
         outcome_col="Signal",
         ranges=ranges,

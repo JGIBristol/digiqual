@@ -10,10 +10,10 @@ from sklearn.utils import resample
 from .diagnostics import sample_sufficiency, validate_simulation
 from .sampling import generate_lhs
 
-import subprocess
-import os
+from typing import Union # Add this to your typing imports
+from .executors import Executor, CLIExecutor # Import our new architecture
+
 import time
-import shlex
 from sklearn.model_selection import cross_val_score
 
 
@@ -314,42 +314,9 @@ def generate_targeted_samples(
     return pd.concat(new_samples_list, ignore_index=True)
 
 
-
-# 1. INTERNAL HELPER: Execution Logistics
-def _execute_simulation(
-    samples: pd.DataFrame,
-    command_template: str,
-    input_cols: List[str],
-    input_path: str,
-    output_path: str
-) -> pd.DataFrame:
-    """
-    Internal helper: writes CSV, runs command, reads CSV.
-    Same implementation as before.
-    """
-    samples[input_cols].to_csv(input_path, index=False)
-    cmd = command_template.format(input=input_path, output=output_path)
-
-    print(f"   -> Executing: {cmd}")
-    cmd_list = shlex.split(cmd)
-    try:
-        subprocess.run(cmd_list, shell=False, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"   -> Simulation FAILED (Exit Code {e.returncode}).")
-        return pd.DataFrame()
-
-    if not os.path.exists(output_path):
-        return pd.DataFrame()
-
-    try:
-        return pd.read_csv(output_path)
-    except Exception:
-        return pd.DataFrame()
-
-
-#MAIN FUNCTION: The Agnostic Adaptive Loop
+#### MAIN FUNCTION: The Agnostic Adaptive Loop ####
 def run_adaptive_search(
-    command: str,
+    executor: Union[Executor, str],
     input_cols: List[str],
     outcome_col: str,
     ranges: Dict[str, Tuple[float, float]],
@@ -357,15 +324,14 @@ def run_adaptive_search(
     n_start: int = 20,
     n_step: int = 10,
     max_iter: int = 5,
-    max_hours: Optional[float] = None,
-    input_file: str = "sim_input.csv",
-    output_file: str = "sim_output.csv"
+    max_hours: Optional[float] = None
 ) -> pd.DataFrame:
     """
-    Orchestrates the Active Learning loop on raw DataFrames.
+    Orchestrates the Active Learning loop on raw DataFrames using the Executor architecture.
 
     Args:
-        command (str): Solver command template.
+        executor (Executor | str): An instance of an Executor (Python, CLI, Matlab).
+                                   Accepts a legacy command string for backward compatibility.
         input_cols (List[str]): Input names.
         outcome_col (str): Outcome name.
         ranges (Dict): Input bounds.
@@ -374,38 +340,9 @@ def run_adaptive_search(
         n_step (int): Points added per refinement step.
         max_iter (int): Max loops.
         max_hours (float, optional): Physical time limit in hours.
-        input_file (str): Temporary file for solver input.
-        output_file (str): Temporary file for solver output.
 
     Returns:
         pd.DataFrame: Final dataset containing all successful runs.
-
-    Examples:
-        ```python
-        # 1. Define bounds
-        ranges = {'Length': (0, 10), 'Angle': (-45, 45)}
-
-        # 2. Define a command that reads {input} and writes {output}
-        cmd = (
-            "python -c "
-            "'import pandas as pd; "
-            'df=pd.read_csv("{input}"); '
-            'df["Signal"] = df["Length"]*2; '
-            'df.to_csv("{output}", index=False)'
-            "'"
-        )
-
-        # 3. Run with a 1.5 hour time limit
-        final_df = run_adaptive_search(
-            command=cmd,
-            input_cols=['Length', 'Angle'],
-            outcome_col='Signal',
-            ranges=ranges,
-            max_iter=10,
-            max_hours=1.5
-        )
-        print(f"Collected {len(final_df)} samples.")
-        ```
     """
     print("\n" + "="*40)
     print("      STARTING ADAPTIVE OPTIMIZATION")
@@ -413,6 +350,12 @@ def run_adaptive_search(
 
     start_time = time.time()
     max_seconds = max_hours * 3600 if max_hours is not None else None
+
+    # --- BACKWARD COMPATIBILITY ---
+    # If the user passed a raw string instead of an Executor object, wrap it automatically!
+    if isinstance(executor, str):
+        print("   -> Legacy command string detected. Wrapping in CLIExecutor.")
+        executor = CLIExecutor(command_template=executor)
 
     current_data = existing_data.copy() if existing_data is not None else pd.DataFrame()
     total_attempted = 0
@@ -424,9 +367,8 @@ def run_adaptive_search(
         initial_samples = generate_lhs(n_start, ranges)
         total_attempted += len(initial_samples)
 
-        results = _execute_simulation(
-            initial_samples, command, input_cols, input_file, output_file
-        )
+        # NEW: Call the executor cleanly
+        results = executor.run(initial_samples)
 
         if results.empty:
             failed_data = pd.concat([failed_data, initial_samples[input_cols]], ignore_index=True)
@@ -474,9 +416,8 @@ def run_adaptive_search(
         print(f"--- Running Batch {i+1} ({len(new_samples)} points) ---")
         total_attempted += len(new_samples)
 
-        new_results = _execute_simulation(
-            new_samples, command, input_cols, input_file, output_file
-        )
+        # NEW: Call the executor cleanly again
+        new_results = executor.run(new_samples)
 
         if new_results.empty:
             failed_data = pd.concat([failed_data, new_samples[input_cols]], ignore_index=True)
