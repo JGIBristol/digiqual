@@ -1,28 +1,78 @@
 ---
 title: "digiqual"
-subtitle: "Statistical Toolkit for Reliability Assessment in NDT"
+subtitle: "High-Fidelity Reliability Assessment for Non-Destructive Evaluation"
+description: "A Python-based implementation of the Generalized a-vs-â framework for Model-Assisted Probability of Detection (MAPOD) studies."
+page-layout: full
 ---
 
-`digiqual` is a Python library designed for Non-Destructive Evaluation (NDE) engineers. It provides a robust statistical framework for Model-Assisted Probability of Detection (MAPOD) studies, implementing the Generalised $\hat{a}$-versus-$a$ Method to allow reliable assessments even when traditional regression assumptions fail.
+::: {.grid .align-items-center}
 
-## Quick Start Paths
+::: {.g-col-12 .g-col-md-7}
+## Advanced NDE Reliability Engineering
 
-### 1. The Graphical Interface (Recommended)
-The fastest way to get value from the package is by running the browser-based DigiQual app. No coding is required!
+`digiqual` is a specialized statistical library developed for Non-Destructive Evaluation (NDE) professionals. It provides a rigorous framework for conducting Model-Assisted Probability of Detection (MAPOD) studies, utilizing the **Generalized $\hat{a}$-versus-$a$ Method**.
 
-```bash
-uvx -v digiqual@latest
-```
+The package is designed to provide robust, conservative reliability assessments in complex scenarios where traditional linear regression, homoscedasticity, and normality assumptions are statistically invalid.
+:::
 
-### 2. The Python API
-If you are building custom workflows or connecting to scripts, add `digiqual` into your python environment.
+::: {.g-col-12 .g-col-md-5 .text-center}
+![](docs/www/hero_pod_surface.png){.rounded .shadow .border .img-fluid width="100%"}
+:::
+
+:::
+
+
+## Core Capabilities
+
+::: {.grid}
+
+::: {.g-col-12 .g-col-md-4}
+### 🔬 Statistical Generalisation
+Supports non-linear signal responses through automated cross-validation model selection and treats noise as a heteroscedastic, non-Gaussian process.
+:::
+
+::: {.g-col-12 .g-col-md-4}
+### 🔄 Adaptive Optimisation
+Utilises an Active Learning lifecycle to orchestrate automated loops of initialisation, execution, and diagnostic-driven refinement.
+:::
+
+::: {.g-col-12 .g-col-md-4}
+### 💻 Multimodal Execution
+Integrates with external physics solvers via specialised Executors for Python, MATLAB, and Command Line Interfaces (CLI), facilitating process isolation.
+:::
+
+:::
+
+
+## Deployment Architectures
+
+::: {.panel-tabset}
+
+### Python API
+For engineers developing custom reliability pipelines or integrating PoD into large-scale Monte Carlo simulation environments.
 
 ```bash
 uv add digiqual
 ```
 
 ::: {.callout-tip}
-If you are completely new, head over to the **[Installation Guide](docs/install.qmd)** for setup details, or jump straight to the **[Launch the App](docs/gui.qmd)** page.
+If you are completely new, head over to the **[Installation Guide](docs/install.qmd)** for setup details.
+:::
+
+### Python GUI
+A browser-based graphical user interface (GUI) built with a modern design system, providing a visual workflow for design, diagnostics, and analysis.
+
+```bash
+uvx -v digiqual@latest
+```
+
+::: {.callout-tip}
+For more information about the GUI, head over to the **[Launch the App](docs/gui.qmd)** page.
+:::
+
+### Standalone Application
+We are actively developing standalone, double-click executables for both Windows and macOS. In the near future, you or your colleagues will be able to run the complete DigiQual toolkit as a standard desktop application, without needing to install Python, manage virtual environments, or touch a command line.
+
 :::
 
 ## References
@@ -31,3 +81,6 @@ This package implements methods described in:
 
 **Malkiel, N., Croxford, A. J., & Wilcox, P. D. (2025).** A generalized method for the reliability assessment of safety–critical inspection.
 Proceedings of the Royal Society A, 481: 20240654. https://doi.org/10.1098/rspa.2024.0654
+
+**Malkiel, N., Croxford, A. J., & Wilcox, P. D. (2026).** A comprehensive investigation of flexible and multi-dimensional simulation-based PoD analysis
+NDT & E International, 159: 103596. https://doi.org/10.1016/j.ndteint.2025.103596
