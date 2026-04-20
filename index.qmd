@@ -48,7 +48,7 @@ Integrates with external physics solvers via specialised Executors for Python, M
 
 ::: {.panel-tabset}
 
-### Python API
+### Python Package
 For engineers developing custom reliability pipelines or integrating PoD into large-scale Monte Carlo simulation environments.
 
 ```bash
@@ -56,14 +56,23 @@ uv add digiqual
 ```
 
 ::: {.callout-tip}
-If you are completely new, head over to the **[Installation Guide](docs/install.qmd)** for setup details.
+If you are completely new, head over to the **[Installation Guide](docs/install.qmd)** for setup details, & the **[Quick Start Guide](docs/qs_class.qmd)** for an intro to the SimulationStudy Class.
 :::
 
 ### Python GUI
 A browser-based graphical user interface (GUI) built with a modern design system, providing a visual workflow for design, diagnostics, and analysis.
 
+`uv` users can use the `uvx` shortcut to load the app directly:
 ```bash
 uvx -v digiqual@latest
+```
+
+Alternatively, once the package is installed, the GUI can be launched from a python command:
+```python
+# Launch the local application
+from digiqual import dq_ui
+
+dq_ui()
 ```
 
 ::: {.callout-tip}
