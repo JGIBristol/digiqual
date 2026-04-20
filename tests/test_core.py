@@ -97,9 +97,9 @@ def test_optimise_delegation(mock_run_adaptive, study, clean_df):
     cmd = "echo dummy"
     ranges = {"Length": (0, 10), "Angle": (-90, 90)}
 
-    # 3. Call the method
+    # 3. Call the method (UPDATED: 'command' is now 'executor')
     study.optimise(
-        command=cmd,
+        executor=cmd,
         ranges=ranges,
         n_start=10,
         max_iter=2
@@ -109,9 +109,9 @@ def test_optimise_delegation(mock_run_adaptive, study, clean_df):
     # A) Check that run_adaptive_search was called with the correct arguments
     mock_run_adaptive.assert_called_once()
 
-    # Check specific args passed to the function
+    # Check specific args passed to the function (UPDATED: 'command' is now 'executor')
     call_kwargs = mock_run_adaptive.call_args.kwargs
-    assert call_kwargs['command'] == cmd
+    assert call_kwargs['executor'] == cmd
     assert call_kwargs['ranges'] == ranges
     assert call_kwargs['input_cols'] == ['Length', 'Angle']
     assert call_kwargs['outcome_col'] == 'Signal'
@@ -206,10 +206,10 @@ def test_visualise(mock_savefig, mock_show, study, clean_df):
         "bandwidth": 0.1,
         "mean_model": mean_model,
         "curves": {
-             "mean_response": np.array([1,2,3]),
-             "pod": np.array([1,2,3]),
-             "ci_lower": np.array([0,0,0]),
-             "ci_upper": np.array([1,1,1])
+                "mean_response": np.array([1,2,3]),
+                "pod": np.array([1,2,3]),
+                "ci_lower": np.array([0,0,0]),
+                "ci_upper": np.array([1,1,1])
         }
     }
     study.visualise(show=True, save_path="test_save")
