@@ -356,7 +356,7 @@ ui.nav_panel(
                             ui.layout_columns(
                                 ui.div(
                                     ui.h5("About", class_="fw-bold mb-2"),
-                                    ui.tags.strong("Version: "), "0.17.1", ui.br(),
+                                    ui.tags.strong("Version: "), "0.18.0", ui.br(),
                                     ui.tags.strong("License: "), "MIT", ui.br(),
                                     ui.tags.strong("Author: "), "Josh Tyler", ui.br(),
                                     ui.tags.strong("Institution: "), "Univ. of Bristol",
