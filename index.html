@@ -2,10 +2,11 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.36">
+<meta name="generator" content="quarto-1.9.37">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="description" content="A Python-based implementation of the Generalized a-vs-â framework for Model-Assisted Probability of Detection (MAPOD) studies.">
 
 <title>digiqual</title>
 <style>
@@ -75,7 +76,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="site_libs/bootstrap/bootstrap-831061df6c70ccdfa1370a25a7cb3c32.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
@@ -182,7 +183,7 @@ window.Quarto = {
   </nav>
 </header>
 <!-- content -->
-<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
 <!-- sidebar -->
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
         <div class="mt-2 flex-shrink-0 align-items-center">
@@ -272,27 +273,29 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#quick-start-paths" id="toc-quick-start-paths" class="nav-link active" data-scroll-target="#quick-start-paths">Quick Start Paths</a>
-  <ul class="collapse">
-  <li><a href="#the-graphical-interface-recommended" id="toc-the-graphical-interface-recommended" class="nav-link" data-scroll-target="#the-graphical-interface-recommended">1. The Graphical Interface (Recommended)</a></li>
-  <li><a href="#the-python-api" id="toc-the-python-api" class="nav-link" data-scroll-target="#the-python-api">2. The Python API</a></li>
-  </ul></li>
+  <li><a href="#core-capabilities" id="toc-core-capabilities" class="nav-link active" data-scroll-target="#core-capabilities">Core Capabilities</a></li>
+  <li><a href="#deployment-architectures" id="toc-deployment-architectures" class="nav-link" data-scroll-target="#deployment-architectures">Deployment Architectures</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
+<main class="content column-body" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">digiqual</h1>
-<p class="subtitle lead">Statistical Toolkit for Reliability Assessment in NDT</p>
+<p class="subtitle lead">High-Fidelity Reliability Assessment for Non-Destructive Evaluation</p>
+</div>
+
+<div>
+  <div class="description">
+    A Python-based implementation of the Generalized a-vs-â framework for Model-Assisted Probability of Detection (MAPOD) studies.
+  </div>
 </div>
 
 
-
-<div class="quarto-title-meta">
+<div class="quarto-title-meta column-body">
 
     
   
@@ -304,18 +307,41 @@ window.Quarto = {
 </header>
 
 
-<p><code>digiqual</code> is a Python library designed for Non-Destructive Evaluation (NDE) engineers. It provides a robust statistical framework for Model-Assisted Probability of Detection (MAPOD) studies, implementing the Generalised <span class="math inline">\(\hat{a}\)</span>-versus-<span class="math inline">\(a\)</span> Method to allow reliable assessments even when traditional regression assumptions fail.</p>
-<section id="quick-start-paths" class="level2">
-<h2 class="anchored" data-anchor-id="quick-start-paths">Quick Start Paths</h2>
-<section id="the-graphical-interface-recommended" class="level3">
-<h3 class="anchored" data-anchor-id="the-graphical-interface-recommended">1. The Graphical Interface (Recommended)</h3>
-<p>The fastest way to get value from the package is by running the browser-based DigiQual app. No coding is required!</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uvx</span> <span class="at">-v</span> digiqual@latest</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="grid align-items-center">
+<section id="advanced-nde-reliability-engineering" class="level2 g-col-12 g-col-md-7">
+<h2 class="anchored" data-anchor-id="advanced-nde-reliability-engineering">Advanced NDE Reliability Engineering</h2>
+<p><code>digiqual</code> is a specialized statistical library developed for Non-Destructive Evaluation (NDE) professionals. It provides a rigorous framework for conducting Model-Assisted Probability of Detection (MAPOD) studies, utilizing the <strong>Generalized <span class="math inline">\(\hat{a}\)</span>-versus-<span class="math inline">\(a\)</span> Method</strong>.</p>
+<p>The package is designed to provide robust, conservative reliability assessments in complex scenarios where traditional linear regression, homoscedasticity, and normality assumptions are statistically invalid.</p>
 </section>
-<section id="the-python-api" class="level3">
-<h3 class="anchored" data-anchor-id="the-python-api">2. The Python API</h3>
-<p>If you are building custom workflows or connecting to scripts, add <code>digiqual</code> into your python environment.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add digiqual</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="g-col-12 g-col-md-5 text-center">
+<p><img src="docs/www/hero_pod_surface.png" class="rounded shadow border img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+<section id="core-capabilities" class="level2">
+<h2 class="anchored" data-anchor-id="core-capabilities">Core Capabilities</h2>
+<div class="grid">
+<section id="statistical-generalisation" class="level3 g-col-12 g-col-md-4">
+<h3 class="anchored" data-anchor-id="statistical-generalisation">🔬 Statistical Generalisation</h3>
+<p>Supports non-linear signal responses through automated cross-validation model selection and treats noise as a heteroscedastic, non-Gaussian process.</p>
+</section>
+<section id="adaptive-optimisation" class="level3 g-col-12 g-col-md-4">
+<h3 class="anchored" data-anchor-id="adaptive-optimisation">🔄 Adaptive Optimisation</h3>
+<p>Utilises an Active Learning lifecycle to orchestrate automated loops of initialisation, execution, and diagnostic-driven refinement.</p>
+</section>
+<section id="multimodal-execution" class="level3 g-col-12 g-col-md-4">
+<h3 class="anchored" data-anchor-id="multimodal-execution">💻 Multimodal Execution</h3>
+<p>Integrates with external physics solvers via specialised Executors for Python, MATLAB, and Command Line Interfaces (CLI), facilitating process isolation.</p>
+</section>
+</div>
+</section>
+<section id="deployment-architectures" class="level2">
+<h2 class="anchored" data-anchor-id="deployment-architectures">Deployment Architectures</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">Python API</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">Python GUI</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false" href="">Standalone Application</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<p>For engineers developing custom reliability pipelines or integrating PoD into large-scale Monte Carlo simulation environments.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add digiqual</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="callout callout-style-default callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -326,15 +352,38 @@ Tip
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>If you are completely new, head over to the <strong><a href="./docs/install.html">Installation Guide</a></strong> for setup details, or jump straight to the <strong><a href="./docs/gui.html">Launch the App</a></strong> page.</p>
+<p>If you are completely new, head over to the <strong><a href="./docs/install.html">Installation Guide</a></strong> for setup details.</p>
 </div>
 </div>
-</section>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<p>A browser-based graphical user interface (GUI) built with a modern design system, providing a visual workflow for design, diagnostics, and analysis.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uvx</span> <span class="at">-v</span> digiqual@latest</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>For more information about the GUI, head over to the <strong><a href="./docs/gui.html">Launch the App</a></strong> page.</p>
+</div>
+</div>
+</div>
+<div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
+<p>We are actively developing standalone, double-click executables for both Windows and macOS. In the near future, you or your colleagues will be able to run the complete DigiQual toolkit as a standard desktop application, without needing to install Python, manage virtual environments, or touch a command line.</p>
+</div>
+</div>
+</div>
 </section>
 <section id="references" class="level2">
 <h2 class="anchored" data-anchor-id="references">References</h2>
 <p>This package implements methods described in:</p>
 <p><strong>Malkiel, N., Croxford, A. J., &amp; Wilcox, P. D. (2025).</strong> A generalized method for the reliability assessment of safety–critical inspection. Proceedings of the Royal Society A, 481: 20240654. https://doi.org/10.1098/rspa.2024.0654</p>
+<p><strong>Malkiel, N., Croxford, A. J., &amp; Wilcox, P. D. (2026).</strong> A comprehensive investigation of flexible and multi-dimensional simulation-based PoD analysis NDT &amp; E International, 159: 103596. https://doi.org/10.1016/j.ndteint.2025.103596</p>
 
 
 </section>
@@ -740,7 +789,7 @@ Tip
     }
   });
   </script>
-<nav class="page-navigation">
+<nav class="page-navigation column-body">
   <div class="nav-page nav-page-previous">
   </div>
   <div class="nav-page nav-page-next">
