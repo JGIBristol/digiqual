@@ -198,7 +198,7 @@ def _sample_uncertainty(
 
 
 
-#### Main Function: generate_targeted_samples() ####
+# MAIN FUNCTION: generate_targeted_samples()
 
 def generate_targeted_samples(
     df: pd.DataFrame,
@@ -314,7 +314,7 @@ def generate_targeted_samples(
     return pd.concat(new_samples_list, ignore_index=True)
 
 
-#### Batch Functionality ####
+
 # 1. INTERNAL HELPER: Execution Logistics
 def _execute_simulation(
     samples: pd.DataFrame,
@@ -347,7 +347,7 @@ def _execute_simulation(
         return pd.DataFrame()
 
 
-# 2. MAIN FUNCTION: The Agnostic Adaptive Loop
+#MAIN FUNCTION: The Agnostic Adaptive Loop
 def run_adaptive_search(
     command: str,
     input_cols: List[str],
