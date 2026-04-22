@@ -26,7 +26,7 @@ def mock_sensor_model(row):
         + (0.1 * (length ** 3))
         + (angle * 0.1)
         - (0.05 * length * abs(angle))
-        - (roughness * 5.0) # <--- Roughness penalty
+        - (roughness * 5.0)
     )
 
     # 3. HETEROSCEDASTIC, NON-NORMAL NOISE

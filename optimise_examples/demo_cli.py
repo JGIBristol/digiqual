@@ -18,7 +18,7 @@ def run_cli_demo():
     dummy_script_path = os.path.join(current_dir, "dummy_fea.py")
 
     # Inject that absolute path into our command template
-    cmd_template = f"python {dummy_script_path} {{input}} {{output}}"
+    cmd_template = f"python3 {dummy_script_path} {{input}} {{output}}"
 
     print(f"Setting up CLI Executor with command: '{cmd_template}'")
     executor = CLIExecutor(command_template=cmd_template)
@@ -30,13 +30,13 @@ def run_cli_demo():
         ranges=ranges,
         n_start=20,
         n_step=10,
-        max_iter=3
+        max_iter=10
     )
 
     # 4. Run PoD Analysis and Visualise
     print("\n--- Optimisation Complete. Running PoD ---")
     try:
-        _ = study.pod(poi_col=["Length", "Angle"], nuisance_col="Roughness", threshold=15.0,n_jobs=-1)
+        _ = study.pod(poi_col=["Length", "Angle"], nuisance_col="Roughness", threshold=15.0, n_jobs=-1)
         study.visualise(show=True)
     except Exception as e:
         print(f"\n[!] PoD Analysis failed. Error: {e}")

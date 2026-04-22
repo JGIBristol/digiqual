@@ -2,6 +2,7 @@ import sys
 import pandas as pd
 import numpy as np
 import time
+import math
 
 def run_simulation(input_csv, output_csv):
     """
@@ -39,9 +40,10 @@ def run_simulation(input_csv, output_csv):
         base_signal = (
             5.0
             + (3.0 * length)
-            - (0.8 * (length ** 2))
+            - (0.5 * (length ** 2))
             + (0.1 * (length ** 3))
             + (angle * 0.1)
+            - (math.sin(math.radians(angle*2))*10)
             - (0.05 * length * abs(angle))
             - (roughness * 5.0)
         )

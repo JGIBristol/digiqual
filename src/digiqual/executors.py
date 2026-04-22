@@ -77,12 +77,15 @@ class PythonExecutor(Executor):
             # It then takes all the answers and creates a brand new column named by 'outcome_col'.
             results[self.outcome_col] = results.apply(self.solver_func, axis=1)
 
-        except Exception as e:
-            # Step 3: If the user's math crashes (e.g., divide by zero), we catch the error gracefully
-            # instead of crashing the whole DigiQual program.
-            print(f"   -> Python simulation FAILED: {e}")
+        except KeyError as e:
+            # --- NEW SAFEGUARD: Catch typos inside the user's custom function ---
+            print(f"   -> Python simulation FAILED due to a missing variable: {e}")
+            print("   -> Tip: Check your solver_func to ensure the column names match exactly!")
+            return pd.DataFrame()
 
-            # Returning an empty DataFrame tells DigiQual "This whole batch failed, send it to the graveyard."
+        except Exception as e:
+            # Step 3: Catch all other mathematical errors gracefully
+            print(f"   -> Python simulation FAILED: {e}")
             return pd.DataFrame()
 
         # Step 4: Return the finished table (Inputs + New Outcome Column) back to DigiQual

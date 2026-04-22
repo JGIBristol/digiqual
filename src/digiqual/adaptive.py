@@ -367,8 +367,15 @@ def run_adaptive_search(
         initial_samples = generate_lhs(n_start, ranges)
         total_attempted += len(initial_samples)
 
-        # NEW: Call the executor cleanly
+        # Call the executor cleanly
         results = executor.run(initial_samples)
+
+        # --- NEW SAFEGUARD: Validate executor output ---
+        if not results.empty and outcome_col not in results.columns:
+            raise ValueError(
+                f"Executor Output Error: The solver failed to return the outcome column '{outcome_col}'. "
+                f"It returned these columns instead: {list(results.columns)}"
+            )
 
         if results.empty:
             failed_data = pd.concat([failed_data, initial_samples[input_cols]], ignore_index=True)
@@ -416,8 +423,15 @@ def run_adaptive_search(
         print(f"--- Running Batch {i+1} ({len(new_samples)} points) ---")
         total_attempted += len(new_samples)
 
-        # NEW: Call the executor cleanly again
+        # Call the executor cleanly again
         new_results = executor.run(new_samples)
+
+        # --- NEW SAFEGUARD: Validate executor output (Refinement Loop) ---
+        if not new_results.empty and outcome_col not in new_results.columns:
+            raise ValueError(
+                f"Executor Output Error: The solver failed to return the outcome column '{outcome_col}'. "
+                f"It returned these columns instead: {list(new_results.columns)}"
+            )
 
         if new_results.empty:
             failed_data = pd.concat([failed_data, new_samples[input_cols]], ignore_index=True)

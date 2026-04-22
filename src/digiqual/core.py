@@ -241,6 +241,17 @@ class SimulationStudy:
             study.visualise()
             ```
         """
+
+        # --- NEW SAFEGUARD: Validate input ranges ---
+        expected_inputs = set(self.inputs)
+        provided_ranges = set(ranges.keys())
+
+        if expected_inputs != provided_ranges:
+            raise ValueError(
+                f"Variable Mismatch! The keys in your 'ranges' dictionary {list(provided_ranges)} "
+                f"do not match the 'input_cols' {list(expected_inputs)} defined in the SimulationStudy."
+            )
+
         # 1. Delegate to the Agnostic Engine
         final_data = run_adaptive_search(
             executor=executor,            # <-- Passes our new Executor object

@@ -1,7 +1,14 @@
 from digiqual.core import SimulationStudy
 from digiqual.executors import MatlabExecutor
+import os
+from pathlib import Path
 
 def run_matlab_demo():
+    # --- NEW: Force Python to run in this script's directory ---
+    script_dir = Path(__file__).parent
+    os.chdir(script_dir)
+
+
     print("Starting DigiQual MATLAB Executor Demo...\n")
 
     # 1. Configure the Study
