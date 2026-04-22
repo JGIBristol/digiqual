@@ -272,7 +272,6 @@ window.Quarto = {
 
 <p>This manual provides a detailed breakdown of the functionality found inside the DigiQual Shiny application. For instructions on how to install or launch the app, see the <a href="../docs/gui.html">Launch the App</a> guide.</p>
 <p>The DigiQual GUI is built with a modern “Fluent” design system and provides a visual alternative to the Python API. It is split into four primary tabs that map directly to the programmatic workflow.</p>
-<hr>
 <section id="experimental-design" class="level2">
 <h2 class="anchored" data-anchor-id="experimental-design">1. Experimental Design</h2>
 <p><strong>Purpose:</strong> Generate a statistically sound framework of sampling points for your physics solvers to evaluate.</p>
@@ -284,7 +283,6 @@ window.Quarto = {
 <li><strong>Generate Framework:</strong> The tool will instantly construct the multi-dimensional parameter space, attempting to maximize the minimum distance between points.</li>
 <li><strong>Download CSV:</strong> Save <code>generated_sample.csv</code>. You can now feed this CSV into your external solver tool (e.g., MATLAB, Abaqus, ANSYS) to calculate the actual signal responses.</li>
 </ol>
-<hr>
 </section>
 <section id="simulation-diagnostics" class="level2">
 <h2 class="anchored" data-anchor-id="simulation-diagnostics">2. Simulation Diagnostics</h2>
@@ -299,7 +297,6 @@ window.Quarto = {
 <h3 class="anchored" data-anchor-id="adaptive-remediation">Adaptive Remediation</h3>
 <p>If the diagnostic engine detects a large deliberate gap or missing data (a failed <strong>Input Coverage</strong> test), the UI exposes a remediation tool.</p>
 <p>Instead of guessing where to add new points, you can simply input how many new points you’d like to generate. The engine will target the specific empty regions and generate a new CSV containing targeted, gap-filling coordinates. Run these through your solver and merge the new data back into your main set!</p>
-<hr>
 </section>
 </section>
 <section id="data-visualisation" class="level2">
@@ -333,7 +330,6 @@ Note
 <li><strong>Bootstrap Convergence Trace:</strong> Traces the running average and maximum Relative Standard Deviation across 100 bootstrap iterations. A line flattening beneath the threshold indicates that your results are stable; a declining trace suggests you need more physical samples.</li>
 </ul></li>
 </ul>
-<hr>
 </section>
 <section id="pod-analysis" class="level2">
 <h2 class="anchored" data-anchor-id="pod-analysis">4. PoD Analysis</h2>

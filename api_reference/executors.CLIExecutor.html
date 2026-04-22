@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>gui – digiqual</title>
+<title>executors.cliexecutor – digiqual</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -68,8 +68,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../docs/gui_manual.html" rel="next">
-<link href="../docs/qs_class.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
@@ -144,7 +142,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/install.html">Getting Started</a></li><li class="breadcrumb-item"><a href="../docs/gui.html">Launch the App</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -172,13 +170,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
  <span class="menu-text">Getting Started</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/install.html" class="sidebar-item-text sidebar-link">
@@ -193,7 +191,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../docs/gui.html" class="sidebar-item-text sidebar-link active">
+  <a href="../docs/gui.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Launch the App</span></a>
   </div>
 </li>
@@ -244,79 +242,59 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#how-to-access-the-app" id="toc-how-to-access-the-app" class="nav-link active" data-scroll-target="#how-to-access-the-app">1. How to Access the App</a>
+  <li><a href="#digiqual.executors.CLIExecutor" id="toc-digiqual.executors.CLIExecutor" class="nav-link active" data-scroll-target="#digiqual.executors.CLIExecutor">executors.CLIExecutor</a>
   <ul class="collapse">
-  <li><a href="#option-a-using-uv-via-cli-recommended" id="toc-option-a-using-uv-via-cli-recommended" class="nav-link" data-scroll-target="#option-a-using-uv-via-cli-recommended">Option A: Using <code>uv</code> via CLI (Recommended)</a></li>
-  <li><a href="#option-b-from-a-python-script" id="toc-option-b-from-a-python-script" class="nav-link" data-scroll-target="#option-b-from-a-python-script">Option B: From a Python Script</a></li>
+  <li><a href="#example-usage" id="toc-example-usage" class="nav-link" data-scroll-target="#example-usage">Example Usage</a></li>
+  <li><a href="#methods" id="toc-methods" class="nav-link" data-scroll-target="#methods">Methods</a>
+  <ul class="collapse">
+  <li><a href="#digiqual.executors.CLIExecutor.run" id="toc-digiqual.executors.CLIExecutor.run" class="nav-link" data-scroll-target="#digiqual.executors.CLIExecutor.run">run</a></li>
+  </ul></li>
   </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/gui.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/executors.CLIExecutor.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
-
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/install.html">Getting Started</a></li><li class="breadcrumb-item"><a href="../docs/gui.html">Launch the App</a></li></ol></nav>
-<div class="quarto-title">
-<h1 class="title">Using the GUI</h1>
-</div>
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
 
 
 
-<div class="quarto-title-meta">
 
-    
-  
-    
-  </div>
-  
-
-
-</header>
-
-
-<p>While the <code>SimulationStudy</code> class offers powerful programmatic control, sometimes you just need a clean visual interface to explore your data without writing scripts. The DigiQual App wraps the core statistical engine into a modern, user-friendly graphical interface, allowing you to run the entire lifecycle—from design to diagnostics to reliability analysis—directly in your browser.</p>
-<section id="how-to-access-the-app" class="level2">
-<h2 class="anchored" data-anchor-id="how-to-access-the-app">1. How to Access the App</h2>
-<p>Currently, the DigiQual app is bundled directly with the Python package. Depending on your workflow, there are a few ways to launch it.</p>
-<section id="option-a-using-uv-via-cli-recommended" class="level3">
-<h3 class="anchored" data-anchor-id="option-a-using-uv-via-cli-recommended">Option A: Using <code>uv</code> via CLI (Recommended)</h3>
-<p>If you use <code>uv</code> for environment management, you can launch the app directly from your terminal as a Command Line Interface (CLI) tool. This is the fastest way to get started.</p>
-<p>To run the app instantly without permanently installing it to your environment:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uvx</span> <span class="at">-v</span> digiqual@latest</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><em>Note: The <code>-v</code> (verbose) flag is highly recommended here! Without it, <code>uvx</code> runs quietly and the app might appear frozen for a few minutes while it downloads the required statistical packages in the background. Also the ‘<span class="citation" data-cites="latest">@latest</span>’ flag will ensure that you have the most recent release</em> <br></p>
-<p>If you plan to use it frequently, you can install it as a persistent global tool on your machine:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> tool install digiqual</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Once installed, simply type this from any terminal:</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">digiqual</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><strong>Linux Users:</strong> To ensure the graphical window renders correctly on Linux distributions, you must include the <code>linux-gui</code> extra during installation:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> tool install <span class="st">"digiqual[linux-gui]"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="digiqual.executors.CLIExecutor" class="level1">
+<h1>executors.CLIExecutor</h1>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>CLIExecutor(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    command_template,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    input_path<span class="op">=</span><span class="st">'temp_in.csv'</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    output_path<span class="op">=</span><span class="st">'temp_out.csv'</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>THE HEAVY-DUTY TRANSLATOR (Process Isolation): This executor acts like a human sitting at a computer terminal. It takes the DigiQual DataFrame, saves it as a CSV file, opens a brand new, isolated terminal command to run your heavy software (like Ansys or a heavy Python FEA script), waits for it to finish, and reads the resulting CSV.</p>
+<p>Because the OS opens and closes a separate process for the solver, 100% of the memory used by the solver is cleared when it finishes. This prevents memory leaks.</p>
+<section id="example-usage" class="level2 doc-section doc-section-example-usage">
+<h2 class="doc-section doc-section-example-usage anchored" data-anchor-id="example-usage">Example Usage</h2>
+<p>cmd = “python run_abaqus.py {input} {output}” executor = CLIExecutor(command_template=cmd)</p>
 </section>
-<section id="option-b-from-a-python-script" class="level3">
-<h3 class="anchored" data-anchor-id="option-b-from-a-python-script">Option B: From a Python Script</h3>
-<p>If you are already working inside a Python script or a Jupyter environment, you can launch it locally using the built-in UI function.</p>
-<div id="5e8206d5" class="cell" data-execution_count="1">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Launch the local application</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual <span class="im">import</span> dq_ui</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>dq_ui()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>This will spin up a local server and automatically open the DigiQual dashboard in your default web browser.</p>
-<p><strong>Coming Soon: Standalone Executables</strong> We are actively developing standalone, double-click executables for both Windows and macOS. In the near future, you or your colleagues will be able to run the complete DigiQual toolkit as a standard desktop application, without needing to install Python, manage virtual environments, or touch a command line.</p>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Note
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>Looking for a detailed breakdown of the functionality inside the App? Check out the <a href="../docs/gui_manual.html">GUI Desktop Manual</a>.</p>
-</div>
-</div>
+<section id="methods" class="level2">
+<h2 class="anchored" data-anchor-id="methods">Methods</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#digiqual.executors.CLIExecutor.run">run</a></td>
+<td>The translation process for heavy, external software.</td>
+</tr>
+</tbody>
+</table>
+<section id="digiqual.executors.CLIExecutor.run" class="level3">
+<h3 class="anchored" data-anchor-id="digiqual.executors.CLIExecutor.run">run</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>run(samples)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The translation process for heavy, external software.</p>
 
 
+</section>
 </section>
 </section>
 
@@ -721,21 +699,9 @@ Note
     }
   });
   </script>
-<nav class="page-navigation">
-  <div class="nav-page nav-page-previous">
-      <a href="../docs/qs_class.html" class="pagination-link" aria-label="Python Quick Start">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Python Quick Start</span>
-      </a>          
-  </div>
-  <div class="nav-page nav-page-next">
-      <a href="../docs/gui_manual.html" class="pagination-link" aria-label="GUI Desktop Manual">
-        <span class="nav-page-text">GUI Desktop Manual</span> <i class="bi bi-arrow-right-short"></i>
-      </a>
-  </div>
-</nav>
 </div> <!-- /content -->
 
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/gui.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/executors.CLIExecutor.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
