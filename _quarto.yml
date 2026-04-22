@@ -1,5 +1,7 @@
 project:
   type: website
+  resources:
+    - "/optimise_examples/"
   output-dir: _site
   render:
     - "*.qmd"
@@ -127,3 +129,9 @@ quartodoc:
         - plotting.plot_pod_curve
         - plotting.plot_pod_surface
         - plotting.plot_signal_surface
+
+        # -- Optimise/Executor --
+        - executors.Executor
+        - executors.PythonExecutor
+        - executors.CLIExecutor
+        - executors.MatlabExecutor

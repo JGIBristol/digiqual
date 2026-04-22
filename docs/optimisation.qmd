@@ -144,11 +144,10 @@ study.visualise()
 
 When connecting DigiQual to external engines like MATLAB or Ansys, you will use the heavy-duty Executors.
 
-### Example A: Pure Python Models
-
-If your physics or math model is already written in Python, you can use the `PythonExecutor`. This is the fastest method, as it runs entirely in memory and completely skips the process of writing and reading temporary CSV files.
-
 ### Example A: Connecting to MATLAB
+
+**📥 [Download MATLAB Executor Demo](../optimise_examples/demo_matlab.py){download="demo_matlab.py"}**
+**📥 [Download Dummy MATLAB Solver](../optimise_examples/dummy_matlab_solver.m){download="dummy_matlab_solver.m"}**
 
 The `MatlabExecutor` makes connecting to MATLAB effortless. You simply write a top-level MATLAB function that reads an input CSV, does the math, writes an output CSV, and exits.
 
@@ -188,6 +187,9 @@ study.optimise(executor=executor, ranges=ranges)
 ---
 
 ### Example B: Command Line Software (Ansys/Abaqus)
+
+**📥 [Download CLI Executor Demo](../optimise_examples/demo_cli.py){download="demo_cli.py"}**
+**📥 [Download Dummy FEA Script](../optimise_examples/dummy_fea.py){download="dummy_fea.py"}**
 
 For software triggered via the command line, use the `CLIExecutor`. You must provide a command template containing `{input}` and `{output}` placeholders. DigiQual will write the design space to a temporary input CSV, spawn the terminal command, and read the resulting output CSV.
 
