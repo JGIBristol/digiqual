@@ -168,15 +168,6 @@ def plot_model_selection(
             lowest MSE is treated as the used model.
         cv_winner_key (tuple | None): The ``(type, params)`` key of the CV winner.
             If ``None``, falls back to the bar with the lowest MSE.
-
-    Examples:
-        ```python
-        fig = plot_model_selection(
-            model.cv_scores_,
-            used_key=('Polynomial', 5),
-            cv_winner_key=model.cv_winner_
-        )
-        ```
     """
     import matplotlib.pyplot as plt
     import matplotlib.patches as mpatches
@@ -213,9 +204,6 @@ def plot_model_selection(
     forced = (used_key != cv_winner_key)
 
     # --- 2. Assign bar colours ---
-    # crimson  = CV winner
-    # #1f77b4  = standard blue (other candidates)
-    # #ff7f0e  = orange (user-forced model, when different from CV winner)
     colours = []
     for k in keys:
         if k == cv_winner_key:
@@ -234,44 +222,64 @@ def plot_model_selection(
 
     # --- 4. Create figure ---
     fig, (ax_plot, ax_table) = plt.subplots(
-        1, 2, figsize=(9, 5), gridspec_kw={'width_ratios': [2.2, 1]}
+        1, 2, figsize=(10, 5.5), gridspec_kw={'width_ratios': [2.2, 1]}
     )
 
     # --- Bar Chart ---
     ax_plot.bar(labels, normalized_mses, color=colours, edgecolor='black', alpha=0.85)
 
+    y_limit = 6
+    ax_plot.set_ylim(0, y_limit)
+
+    # Add arrows for cut-off bars
+    for i, val in enumerate(normalized_mses):
+        if val > y_limit:
+            ax_plot.annotate(
+                '',
+                xy=(i, y_limit),
+                xytext=(i, y_limit - 0.4),
+                arrowprops=dict(
+                    facecolor='black',
+                    shrink=0.05,
+                    width=2,
+                    headwidth=8
+                )
+            )
+
     ax_plot.axhline(1.0, color='red', linestyle='-.', linewidth=1.5, label='Min Error (CV)')
-    ax_plot.set_title('Model Selection: Bias-Variance Tradeoff', fontweight='bold')
+    ax_plot.set_title('Model Selection: Bias-Variance Tradeoff', fontweight='bold', pad=25)
     ax_plot.set_ylabel('Error / Min Error [-]')
     ax_plot.grid(True, axis='y', linestyle=':', alpha=0.7)
     ax_plot.tick_params(axis='x', rotation=45)
 
-    # Build a legend that only shows relevant entries
-    legend_handles = [
-        mpatches.Patch(color='crimson', label='CV Winner'),
-    ]
+    # Legend placed cleanly above the plot
+    legend_handles = [mpatches.Patch(color='crimson', label='CV Winner')]
     if forced:
-        legend_handles.append(
-            mpatches.Patch(color='#ff7f0e', label='Used (User Override)')
-        )
-    legend_handles.append(
-        mpatches.Patch(color='#1f77b4', label='Other Candidates')
+        legend_handles.append(mpatches.Patch(color='#ff7f0e', label='Used (Override)'))
+    legend_handles.append(mpatches.Patch(color='#1f77b4', label='Other Candidates'))
+
+    ax_plot.legend(
+        handles=legend_handles,
+        fontsize=9,
+        loc='lower center',
+        bbox_to_anchor=(0.5, 1.02), # Anchors legend just above the title
+        ncol=3,
+        frameon=False
     )
-    ax_plot.legend(handles=legend_handles, fontsize=8)
 
     # --- Table ---
     ax_table.axis('off')
-    ax_table.set_title('MSE Values\n(Best Fit Order)', fontweight='bold', pad=10)
+    ax_table.set_title('MSE Values\n(Best Fit Order)', fontweight='bold')
 
+    # Bounding box [x0, y0, width, height] prevents table from expanding into the title
     table = ax_table.table(
         cellText=table_data,
         colLabels=["Model", "MSE"],
-        loc='center',
+        bbox=[0, 0, 1, 0.85],
         cellLoc='center'
     )
     table.auto_set_font_size(False)
     table.set_fontsize(10)
-    table.scale(1, 1.8)
 
     # Style table rows: bold headers, highlight CV winner and used model
     cv_winner_name = f"Poly {cv_winner_key[1]}" if cv_winner_key[0] == 'Polynomial' else "Kriging"
@@ -281,11 +289,11 @@ def plot_model_selection(
         if row == 0:
             cell.set_text_props(weight='bold')
             continue
-        cell_label = table_data[row - 1][0]  # row 1 = table_data[0]
+        cell_label = table_data[row - 1][0]
         if cell_label == cv_winner_name:
-            cell.set_facecolor('#ffcccc')  # light red for CV winner
+            cell.set_facecolor('#ffcccc')
         if forced and cell_label == used_name:
-            cell.set_facecolor('#ffe0b2')  # light orange for forced model
+            cell.set_facecolor('#ffe0b2')
 
     fig.tight_layout()
     return fig

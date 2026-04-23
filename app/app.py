@@ -10,6 +10,13 @@ import os
 from digiqual.sampling import generate_lhs
 from digiqual import SimulationStudy
 from pathlib import Path
+import warnings
+
+warnings.filterwarnings(
+    "ignore",
+    message=".*resource_tracker.*",
+    category=UserWarning
+)
 
 #### App CSS ####
 app_css = """
@@ -1796,8 +1803,11 @@ def server(input, output, session):
             n_samples = len(results["X"])
             poi_display = ", ".join(results["poi_col"]) if isinstance(results["poi_col"], list) else results["poi_col"]
 
+            nuisance_display = ", ".join(nuisance_cols) if nuisance_cols else "None"
+
             metrics = {
                 "Parameter of Interest": poi_display,
+                "Nuisance Parameters": nuisance_display,
                 "Threshold": results["threshold"],
                 "a90/95": a9095_str,
                 "Sample Size (N)": n_samples,
