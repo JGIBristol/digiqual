@@ -206,7 +206,11 @@ def generate_targeted_samples(
     outcome_col: str,
     n_new_per_fix: int = 10,
     failed_data: Optional[pd.DataFrame] = None,
-    distance_threshold: float = 0.05
+    distance_threshold: float = 0.05,
+    max_gap_ratio: float = 0.20,
+    min_r2_score: float = 0.50,
+    max_avg_width: float = 0.15,
+    max_tail_width: float = 0.30
 ) -> pd.DataFrame:
     """
     Active Learning Engine: Generates new samples based on diagnostic failures.
@@ -246,7 +250,13 @@ def generate_targeted_samples(
         ```
     """
     # 1. SENSE: Run the diagnostics to get the status report
-    report = sample_sufficiency(df, input_cols, outcome_col)
+    report = sample_sufficiency(
+        df, input_cols, outcome_col,
+        max_gap_ratio=max_gap_ratio,
+        min_r2_score=min_r2_score,
+        max_avg_width=max_avg_width,
+        max_tail_width=max_tail_width
+    )
 
     # Quick exit if everything is green
     if report.empty or report['Pass'].all():
@@ -319,19 +329,24 @@ def run_adaptive_search(
     executor: Union[Executor, str],
     input_cols: List[str],
     outcome_col: str,
-    ranges: Dict[str, Tuple[float, float]],
+    ranges: Union[pd.DataFrame, Dict[str, Tuple[float, float]]],
     existing_data: Optional[pd.DataFrame] = None,
-    n_start: int = 20,
-    n_step: int = 10,
+    n_start: int = 10,
+    n_step: int = 5,
     max_iter: int = 5,
-    max_hours: Optional[float] = None
+    max_hours: Optional[float] = None,
+    # --- The 4 Custom Diagnostic Thresholds ---
+    max_gap_ratio: float = 0.20,
+    min_r2_score: float = 0.50,
+    max_avg_width: float = 0.15,
+    max_tail_width: float = 0.30
 ) -> pd.DataFrame:
     """
     Orchestrates the Active Learning loop on raw DataFrames using the Executor architecture.
 
     Args:
         executor (Executor | str): An instance of an Executor (Python, CLI, Matlab).
-                                   Accepts a legacy command string for backward compatibility.
+                                    Accepts a legacy command string for backward compatibility.
         input_cols (List[str]): Input names.
         outcome_col (str): Outcome name.
         ranges (Dict): Input bounds.
@@ -340,6 +355,10 @@ def run_adaptive_search(
         n_step (int): Points added per refinement step.
         max_iter (int): Max loops.
         max_hours (float, optional): Physical time limit in hours.
+        max_gap_ratio (float): Decimal Percentage threshold for maximum gap diagnostics,
+        min_r2_score (float): Decimal Percentage threshold for minimum r2 diagnostics,
+        max_avg_width (float): Decimal Percentage threshold for average CI diagnostics,
+        max_tail_width (float): Decimal Percentage threshold for maximum CI diagnostics
 
     Returns:
         pd.DataFrame: Final dataset containing all successful runs.
@@ -352,7 +371,6 @@ def run_adaptive_search(
     max_seconds = max_hours * 3600 if max_hours is not None else None
 
     # --- BACKWARD COMPATIBILITY ---
-    # If the user passed a raw string instead of an Executor object, wrap it automatically!
     if isinstance(executor, str):
         print("   -> Legacy command string detected. Wrapping in CLIExecutor.")
         executor = CLIExecutor(command_template=executor)
@@ -367,14 +385,11 @@ def run_adaptive_search(
         initial_samples = generate_lhs(n_start, ranges)
         total_attempted += len(initial_samples)
 
-        # Call the executor cleanly
         results = executor.run(initial_samples)
 
-        # --- NEW SAFEGUARD: Validate executor output ---
         if not results.empty and outcome_col not in results.columns:
             raise ValueError(
-                f"Executor Output Error: The solver failed to return the outcome column '{outcome_col}'. "
-                f"It returned these columns instead: {list(results.columns)}"
+                f"Executor Output Error: The solver failed to return the outcome column '{outcome_col}'."
             )
 
         if results.empty:
@@ -388,7 +403,6 @@ def run_adaptive_search(
 
     # --- STEP 2: REFINEMENT LOOP ---
     for i in range(max_iter):
-        # Time Check
         if max_seconds is not None:
             elapsed = time.time() - start_time
             if elapsed > max_seconds:
@@ -403,7 +417,15 @@ def run_adaptive_search(
         if clean_df.empty:
             diag = pd.DataFrame()
         else:
-            diag = sample_sufficiency(clean_df, input_cols, outcome_col)
+            # --- UPDATED: Pass the custom thresholds into sample_sufficiency ---
+            diag = sample_sufficiency(
+                clean_df, input_cols, outcome_col,
+                skip_validation=True,
+                max_gap_ratio=max_gap_ratio,
+                min_r2_score=min_r2_score,
+                max_avg_width=max_avg_width,
+                max_tail_width=max_tail_width
+            )
 
         # Convergence Check
         if not diag.empty and diag['Pass'].all():
@@ -413,7 +435,11 @@ def run_adaptive_search(
         print(">> Model invalid. Refining design...")
         new_samples = generate_targeted_samples(
             clean_df, input_cols, outcome_col, n_new_per_fix=n_step,
-            failed_data=failed_data, distance_threshold=0.05
+            failed_data=failed_data, distance_threshold=0.05,
+            max_gap_ratio=max_gap_ratio,
+            min_r2_score=min_r2_score,
+            max_avg_width=max_avg_width,
+            max_tail_width=max_tail_width
         )
 
         if new_samples.empty:
@@ -423,14 +449,11 @@ def run_adaptive_search(
         print(f"--- Running Batch {i+1} ({len(new_samples)} points) ---")
         total_attempted += len(new_samples)
 
-        # Call the executor cleanly again
         new_results = executor.run(new_samples)
 
-        # --- NEW SAFEGUARD: Validate executor output (Refinement Loop) ---
         if not new_results.empty and outcome_col not in new_results.columns:
             raise ValueError(
-                f"Executor Output Error: The solver failed to return the outcome column '{outcome_col}'. "
-                f"It returned these columns instead: {list(new_results.columns)}"
+                f"Executor Output Error: The solver failed to return the outcome column '{outcome_col}'."
             )
 
         if new_results.empty:

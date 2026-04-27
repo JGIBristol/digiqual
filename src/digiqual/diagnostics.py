@@ -80,12 +80,13 @@ def validate_simulation(
 
     return df_clean, df_removed
 
+
 #### Helper Functions for sample_sufficiency() ####
 
-def _check_input_coverage(df: pd.DataFrame, input_cols: List[str]) -> Dict:
+def _check_input_coverage(df: pd.DataFrame, input_cols: List[str], max_gap_ratio: float = 0.20) -> Dict:
     """
-    Checks for 'Input Space Coverage' (Uniformity).
-    Ensures there are no large gaps (>20%) in the sampling of predictor variables.
+    Evaluates if the input space is sampled densely enough without excessively large gaps.
+    Calculates the maximum distance between adjacent sorted points as a ratio of the total range.
     """
     results = {}
     for col in input_cols:
@@ -94,21 +95,22 @@ def _check_input_coverage(df: pd.DataFrame, input_cols: List[str]) -> Dict:
         data_range = sorted_vals[-1] - sorted_vals[0]
 
         if data_range == 0:
-            max_gap_ratio = 0.0
+            calc_gap_ratio = 0.0
         else:
-            max_gap_ratio = np.max(gaps) / data_range
+            calc_gap_ratio = np.max(gaps) / data_range
 
         results[col] = {
             "min": float(sorted_vals[0]),
             "max": float(sorted_vals[-1]),
-            "max_gap_ratio": round(max_gap_ratio, 4),
-            "sufficient_coverage": max_gap_ratio < 0.2
+            "max_gap_ratio": round(calc_gap_ratio, 4),
+            "sufficient_coverage": calc_gap_ratio < max_gap_ratio
         }
     return results
 
-def _check_model_fit(df: pd.DataFrame, input_cols: List[str], outcome_col: str) -> Dict:
+def _check_model_fit(df: pd.DataFrame, input_cols: List[str], outcome_col: str, min_r2_score: float = 0.50) -> Dict:
     """
-    Checks 'Model Fit Quality' using k-fold Cross-Validation on a 3rd order polynomial.
+    Checks if a basic surrogate model can capture a meaningful signal-to-noise relationship.
+    Uses a 3rd-degree polynomial and cross-validation to ensure the fit is stable.
     """
     X = df[input_cols]
     y = df[outcome_col]
@@ -123,15 +125,21 @@ def _check_model_fit(df: pd.DataFrame, input_cols: List[str], outcome_col: str) 
         "model_type": "Polynomial (deg=3)",
         "cv_folds": k,
         "mean_r2_score": round(np.mean(scores), 4),
-        "stable_fit": np.mean(scores) > 0.5
+        "stable_fit": np.mean(scores) > min_r2_score
     }
 
-def _check_bootstrap_convergence(df: pd.DataFrame, input_cols: List[str], outcome_col: str, n_bootstraps: int = 100) -> Dict:
+def _check_bootstrap_convergence(
+    df: pd.DataFrame, input_cols: List[str], outcome_col: str,
+    n_bootstraps: int = 100, max_avg_width: float = 0.15, max_tail_width: float = 0.30
+) -> Dict:
+    """
+    Evaluates the stability of model predictions across different random sub-samples of the data.
+    Ensures that adding or removing points does not wildly change the predicted outcome.
+    """
     X = df[input_cols].values
     y = df[outcome_col].values
     n_samples = len(df)
 
-    # 1. Probe Points
     probe_points = np.percentile(X, [10, 50, 90], axis=0)
     all_predictions = []
 
@@ -144,70 +152,83 @@ def _check_bootstrap_convergence(df: pd.DataFrame, input_cols: List[str], outcom
 
     all_predictions = np.array(all_predictions)
 
-    # 2. Calculate Stats
     stds = np.std(all_predictions, axis=0)
     means = np.abs(np.mean(all_predictions, axis=0))
+    relative_widths = stds / (means + 1e-6)
 
-    epsilon = 1e-6
-    relative_widths = stds / (means + epsilon)
-
-    # 3. Determine overall convergence
-    # We use a threshold on the AVERAGE stability across probes
-    # to allow for some heteroskedasticity at the tails.
     avg_rel_width = np.mean(relative_widths)
     max_rel_width = np.max(relative_widths)
 
-    # Logic: Pass if the average stability is good (e.g., < 15%)
-    # and the worst tail isn't totally wild (e.g., < 30%)
-    is_converged = avg_rel_width < 0.15 and max_rel_width < 0.30
+    is_converged = avg_rel_width < max_avg_width and max_rel_width < max_tail_width
 
     return {
         "bootstrap_iterations": n_bootstraps,
         "avg_relative_width": round(avg_rel_width, 4),
         "max_relative_width": round(max_rel_width, 4),
-        "avg_converged": bool(avg_rel_width < 0.15),
-        "max_converged": bool(max_rel_width < 0.30),
+        "avg_converged": bool(avg_rel_width < max_avg_width),
+        "max_converged": bool(max_rel_width < max_tail_width),
         "converged": bool(is_converged)
     }
 
-#### Main Function: sample_sufficiency() ####
 
+#### Main Function: sample_sufficiency() ####
 
 def sample_sufficiency(
     df: pd.DataFrame,
     input_cols: List[str],
     outcome_col: str,
-    skip_validation: bool = False
+    skip_validation: bool = False,
+    max_gap_ratio: float = 0.20,
+    min_r2_score: float = 0.50,
+    max_avg_width: float = 0.15,
+    max_tail_width: float = 0.30
 ) -> pd.DataFrame:
     """
-    Performs statistical tests on sampling sufficiency.
+    Performs a suite of statistical diagnostics to evaluate if the current sample size is sufficient.
 
-    Runs 3 checks:
-        1. **Input Space Coverage** (Gaps)
-        2. **Model Fit Stability** (CV Score)
-        3. **Bootstrap Convergence** (Coefficient of Variation)
+    This function tests input space coverage, basic model fit (signal-to-noise),
+    and prediction stability via bootstrapping. It uses user-defined thresholds
+    to determine if the sampling passes the sufficiency criteria required for reliable PoD analysis.
 
     Args:
-        df (pd.DataFrame): The simulation data. Will be validated via `validate_simulation` internally.
-        input_cols (List[str]): List of input variable names.
-        outcome_col (str): Name of the outcome variable.
+        df (pd.DataFrame): The simulation dataset containing inputs and outcomes.
+        input_cols (List[str]): A list of the input parameter column names.
+        outcome_col (str): The name of the outcome/signal column.
+        skip_validation (bool, optional): If True, skips the initial data cleaning step. Defaults to False.
+        max_gap_ratio (float, optional): The maximum allowable gap between data points as a fraction of the total range. Defaults to 0.20.
+        min_r2_score (float, optional): The minimum cross-validated R-squared score required to pass the fit test. Defaults to 0.50.
+        max_avg_width (float, optional): The maximum allowable average relative width of the bootstrap predictions. Defaults to 0.15.
+        max_tail_width (float, optional): The maximum allowable relative width at the tail ends (10th and 90th percentiles) of the predictions. Defaults to 0.30.
 
     Returns:
-        pd.DataFrame: A table containing pass/fail metrics for each test,
-                        including the threshold values evaluated against.
+        pd.DataFrame: A formatted table detailing the results of each diagnostic test,
+                      including the variable tested, the calculated metric, the target threshold,
+                      and a boolean 'Pass' status.
 
     Examples:
         ```python
         import pandas as pd
+        from digiqual.diagnostics import sample_sufficiency
+
+        # Assume 'df' is a loaded DataFrame of simulation results
         df = pd.DataFrame({
-            'Length': [1.0, 2.5, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0],
-            'Signal': [0.5, 0.8, 1.2, 1.5, 1.8, 2.2, 2.5, 2.8, 3.2, 3.5]
+            'Length': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            'Signal': [2.1, 4.0, 6.2, 8.1, 9.9, 12.0, 14.1, 15.9, 18.2, 20.0]
         })
-        report = sample_sufficiency(df, input_cols=['Length'], outcome_col='Signal')
-        print(report[['Test', 'Pass']])
+
+        # Run diagnostics with custom stricter thresholds
+        results_df = sample_sufficiency(
+            df=df,
+            input_cols=['Length'],
+            outcome_col='Signal',
+            max_gap_ratio=0.15,  # Require tighter spacing
+            min_r2_score=0.70    # Require a stronger signal fit
+        )
+
+        print(results_df)
         ```
     """
-    # 1. Validate simulation data
+
     if not skip_validation:
         df_clean, df_removed = validate_simulation(df, input_cols, outcome_col)
         if not df_removed.empty:
@@ -221,42 +242,38 @@ def sample_sufficiency(
             "Diagnostics require at least 10 valid data points."
         )
 
-    # 2. Run All Checks
-    coverage_res = _check_input_coverage(df_clean, input_cols)
-    fit_res = _check_model_fit(df_clean, input_cols, outcome_col)
-    boot_res = _check_bootstrap_convergence(df_clean, input_cols, outcome_col)
+    # Pass the custom thresholds into the helpers
+    coverage_res = _check_input_coverage(df_clean, input_cols, max_gap_ratio)
+    fit_res = _check_model_fit(df_clean, input_cols, outcome_col, min_r2_score)
+    boot_res = _check_bootstrap_convergence(df_clean, input_cols, outcome_col, 100, max_avg_width, max_tail_width)
 
-    # 3. Format Results Table
     flat_results = []
 
-    # Input Coverage Results
     for col, res in coverage_res.items():
         flat_results.append({
             "Test": "Input Coverage",
             "Variable": col,
             "Metric": "Max Gap Ratio",
             "Value": res['max_gap_ratio'],
-            "Threshold": "< 0.20",
+            "Threshold": f"< {max_gap_ratio:.2f}",
             "Pass": res['sufficient_coverage']
         })
 
-    # Model Fit Results
     flat_results.append({
         "Test": "Model Fit (CV)",
         "Variable": outcome_col,
         "Metric": "Mean R2 Score",
         "Value": fit_res['mean_r2_score'],
-        "Threshold": "> 0.50",
+        "Threshold": f"> {min_r2_score:.2f}",
         "Pass": fit_res['stable_fit']
     })
 
-    # Bootstrap Results
     flat_results.append({
         "Test": "Bootstrap Convergence",
         "Variable": outcome_col,
         "Metric": "Avg CV (Rel Std Dev)",
         "Value": boot_res['avg_relative_width'],
-        "Threshold": "< 0.15",
+        "Threshold": f"< {max_avg_width:.2f}",
         "Pass": boot_res['avg_converged']
     })
 
@@ -265,7 +282,7 @@ def sample_sufficiency(
         "Variable": outcome_col,
         "Metric": "Max CV (Rel Std Dev)",
         "Value": boot_res['max_relative_width'],
-        "Threshold": "< 0.30",
+        "Threshold": f"< {max_tail_width:.2f}",
         "Pass": boot_res['max_converged']
     })
 

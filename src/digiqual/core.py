@@ -16,6 +16,14 @@ class SimulationStudy:
     """
     A workflow manager for simulation reliability assessment.
 
+    Args:
+        input_cols (List[str]): List of input variable names.
+        outcome_col (str): Name of the outcome variable.
+        max_gap_ratio (float, optional): Max allowable gap between data points as a fraction of the total range. Defaults to 0.20.
+        min_r2_score (float, optional): Minimum cross-validated R-squared score required for the signal fit. Defaults to 0.50.
+        max_avg_width (float, optional): Max allowable average relative width of the bootstrap predictions. Defaults to 0.15.
+        max_tail_width (float, optional): Max allowable relative width at the tail ends (10th/90th percentiles). Defaults to 0.30.
+
     Attributes:
         inputs (List[str]): List of input variable names.
         outcome (str): Name of the outcome variable.
@@ -24,13 +32,19 @@ class SimulationStudy:
         sufficiency_results (pd.DataFrame): The latest diagnostic results.
         pod_results (Dict): Results from the latest PoD analysis.
         plots (Dict): Stores the latest generated figures.
+        linear_pod_results (Dict): Results from the classical linear analysis.
+        linear_plots (Dict): Stores figures from the classical linear analysis.
 
     Examples:
         ```python
         from digiqual.core import SimulationStudy
+
+        # Initialize with stricter diagnostic thresholds
         study = SimulationStudy(
             input_cols=['Length', 'Angle'],
-            outcome_col='Signal'
+            outcome_col='Signal',
+            max_gap_ratio=0.10,
+            min_r2_score=0.75
         )
         ```
     """
@@ -39,10 +53,20 @@ class SimulationStudy:
     def __init__(
         self,
         input_cols: List[str],
-        outcome_col: str
+        outcome_col: str,
+        max_gap_ratio: float = 0.20,
+        min_r2_score: float = 0.50,
+        max_avg_width: float = 0.15,
+        max_tail_width: float = 0.30
     ):
         self.inputs = input_cols
         self.outcome = outcome_col
+
+        # Save custom diagnostic thresholds
+        self.max_gap_ratio = max_gap_ratio
+        self.min_r2_score = min_r2_score
+        self.max_avg_width = max_avg_width
+        self.max_tail_width = max_tail_width
 
         # Internal state
         self.data: pd.DataFrame = pd.DataFrame()
@@ -137,17 +161,6 @@ class SimulationStudy:
     def diagnose(self) -> pd.DataFrame:
         """
         Runs statistical diagnostics to evaluate if the current sample size is sufficient.
-
-        Checks for Input Coverage (Gaps), Model Fit Stability, and Bootstrap Convergence.
-
-        Returns:
-            pd.DataFrame: A summary of diagnostic metrics.
-
-        Examples:
-            ```python
-            report = study.diagnose()
-            print(report[['Test', 'Pass']])
-            ```
         """
         if self.clean_data.empty:
             if self.data.empty:
@@ -161,8 +174,14 @@ class SimulationStudy:
                 return pd.DataFrame()
 
         print("Checking sample sufficiency...")
+
+        # Pass the class-level thresholds into the diagnostic function
         self.sufficiency_results = sample_sufficiency(
-            self.clean_data, self.inputs, self.outcome
+            self.clean_data, self.inputs, self.outcome,
+            max_gap_ratio=self.max_gap_ratio,
+            min_r2_score=self.min_r2_score,
+            max_avg_width=self.max_avg_width,
+            max_tail_width=self.max_tail_width
         )
         return self.sufficiency_results
 
@@ -196,7 +215,11 @@ class SimulationStudy:
             df=self.clean_data,
             input_cols=self.inputs,
             outcome_col=self.outcome,
-            n_new_per_fix=n_points
+            n_new_per_fix=n_points,
+            max_gap_ratio=self.max_gap_ratio,
+            min_r2_score=self.min_r2_score,
+            max_avg_width=self.max_avg_width,
+            max_tail_width=self.max_tail_width
         )
 
         return new_samples
@@ -271,7 +294,12 @@ class SimulationStudy:
             n_start=n_start,
             n_step=n_step,
             max_iter=max_iter,
-            max_hours=max_hours
+            max_hours=max_hours,
+            # --- The 4 Custom Diagnostic Thresholds ---
+            max_gap_ratio=self.max_gap_ratio,
+            min_r2_score=self.min_r2_score,
+            max_avg_width=self.max_avg_width,
+            max_tail_width=self.max_tail_width
         )
 
         # 2. Update Class State with the result
