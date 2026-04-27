@@ -51,6 +51,8 @@ website:
             href: docs/optimisation.qmd
           - text: "Generalised PoD Theory"
             href: docs/generalised_pod.qmd
+          - text: "Classical vs Generalised PoD"
+            href: docs/comparison.qmd
 
       - text: "API Reference"
         href: api_reference/index.qmd
@@ -123,6 +125,12 @@ quartodoc:
 
         # -- Integration --
         - integration.compute_multi_dim_pod
+
+        # -- Classical Linear PoD --
+        - ahat.fit_linear_a_hat_model
+        - ahat.compute_linear_pod_curve
+        - ahat.bootstrap_linear_pod_ci
+        - ahat.plot_linear_signal_model
 
         # -- Plotting --
         - plotting.plot_signal_model

@@ -3,6 +3,9 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from typing import Tuple, Optional
+import os
+from joblib import Parallel, delayed
+
 
 def fit_linear_a_hat_model(
     X: np.ndarray,
@@ -114,6 +117,59 @@ def compute_linear_pod_curve(
     mean_curve = np.exp(mean_pred_proc) if ylog else mean_pred_proc
 
     return pod_curve, mean_curve
+
+
+def _single_linear_bootstrap_step(X, y, X_eval, threshold, xlog, ylog):
+    """Internal helper to process a single linear bootstrap iteration."""
+    # 1. Resample the data with replacement
+    n_samples = len(X)
+    idx = np.random.choice(n_samples, n_samples, replace=True)
+    X_res = X[idx]
+    y_res = y[idx]
+
+    # 2. Fit the strict linear model & calculate constant variance (tau)
+    model, tau = fit_linear_a_hat_model(X_res, y_res, xlog=xlog, ylog=ylog)
+
+    # 3. Compute the classical PoD curve for this specific resample
+    pod_curve, _ = compute_linear_pod_curve(
+        X_eval, model, tau, threshold, xlog=xlog, ylog=ylog
+    )
+    return pod_curve
+
+
+def bootstrap_linear_pod_ci(
+    X: np.ndarray,
+    y: np.ndarray,
+    X_eval: np.ndarray,
+    threshold: float,
+    xlog: bool = False,
+    ylog: bool = False,
+    n_boot: int = 1000,
+    n_jobs: int | None = None
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Estimates 95% Confidence Bounds for the classical linear PoD curve via Bootstrapping.
+    Maintains the strict assumptions of constant variance and normally distributed errors.
+    """
+    if n_jobs is None or n_jobs == 1:
+        n_jobs_actual = 1
+    elif n_jobs == -1:
+        n_jobs_actual = max((os.cpu_count() or 1) - 1, 1)
+    else:
+        n_jobs_actual = n_jobs
+
+    # Run the bootstrap steps in parallel
+    results = Parallel(n_jobs=n_jobs_actual, verbose=0)(
+        delayed(_single_linear_bootstrap_step)(
+            X, y, X_eval, threshold, xlog, ylog
+        ) for _ in range(n_boot)
+    )
+
+    pod_matrix = np.array(results)
+
+    # Return the 2.5% (Lower Bound) and 97.5% (Upper Bound) curves
+    return np.percentile(pod_matrix, 2.5, axis=0), np.percentile(pod_matrix, 97.5, axis=0)
+
 
 
 def plot_linear_signal_model(

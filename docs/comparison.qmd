@@ -1,0 +1,181 @@
+---
+title: "Comparing Classical vs. Generalised Reliability"
+description: 'A side-by-side comparison of the linear $\hat{a}$ versus $a$ method and the relaxed generalised method using DigiQual.'
+---
+
+In this tutorial, we will explore the differences between the classical linear PoD approach and the generalised active-learning approach.
+
+The classical method assumes a strictly linear relationship and constant noise (homoskedasticity). When physical reality violates these assumptions—such as signals that curve or noise that scales with defect size—the classical method can produce misleading confidence bounds. We will generate a synthetic dataset that deliberately breaks these rules to see how both methods handle it.
+
+### 1. Setup & Data Generation
+
+First, we will simulate a physics scenario where the signal response grows quadratically and the noise increases with the flaw size.
+
+```{python}
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from digiqual.core import SimulationStudy
+
+# --- Define the Non-Linear Physics ---
+def apply_physics(df):
+    """Simulates a signal with quadratic trends and heteroscedastic noise."""
+    # 1. Base Signal: Quadratic trend
+    signal = 2.0 + (1.5 * df["Length"]) + (0.3 * df["Length"]**2)
+
+    # 2. Heteroscedastic Noise: Larger flaws = More scatter
+    noise_scale = 0.2 + (0.5 * df["Length"])
+    noise = np.random.normal(loc=0, scale=noise_scale, size=len(df))
+
+    return signal + noise
+
+# --- Create the Dataset ---
+# Generate 80 random points between 0.5mm and 10.0mm
+np.random.seed(42) # Set seed for reproducibility
+df = pd.DataFrame({
+    "Length": np.random.uniform(0.5, 10.0, 80)
+})
+
+df["Signal"] = apply_physics(df)
+
+# Initialise Study and Add Data
+study = SimulationStudy(input_cols=["Length"], outcome_col="Signal")
+study.add_data(df)
+```
+
+### 2. The Classical Approach (Linear)
+
+We will start with the traditional $\hat{a}$ versus $a$ method. We will apply a logarithmic transformation to the `Length` axis (`xlog=True`) to give the linear model its best chance at fitting the curved data.
+
+*Note: Instead of using the complex analytical formulas from MIL-HDBK-1823A, we are using modern bootstrapping to evaluate the confidence bounds. This strictly maintains the classical assumptions (constant variance and normal errors) while easily calculating the 95% worst-case curve.*
+
+```{python}
+# | label: fig-classical
+# | fig-cap: "Classical Linear Analysis Results"
+# | fig-subcap:
+# |   - "Linear Signal Response Model (Assuming Constant Variance)"
+# |   - "Classical PoD Curve (With Bootstrapped Confidence Bounds)"
+# | layout-ncol: 1
+
+# Run the classical linear PoD analysis
+linear_results = study.linear_pod(
+    poi_col="Length",
+    threshold=15.0,
+    xlog=True,
+    ylog=False,
+    n_jobs=-1 # Use all CPU cores for fast bootstrapping
+)
+
+# Visualise the standard signal fit and PoD curve
+study.visualise_linear(show=True)
+```
+
+::: {.callout-tip}
+Pay attention to the 95% Prediction Interval in the generated plot. Because the classical method assumes constant variance, the bounds are uniformly wide across the entire axis, completely missing the fact that smaller flaws have much tighter signal responses in our dataset!
+:::
+
+### 3. The Generalised Approach (Relaxed)
+
+Now, we will run the generalised method. This approach uses cross-validation to select the best non-linear model (Polynomial or Kriging) and automatically models the changing variance using kernel smoothing.
+
+```{python}
+# | label: fig-generalised
+# | fig-cap: "Generalised Relaxed Analysis Results"
+# | fig-subcap:
+# |   - "Model Selection (Bias-Variance Tradeoff)"
+# |   - "Signal Response Model (Capturing Heteroscedastic Noise)"
+# |   - "Generalised PoD Curve (With Bootstrapped Confidence Bounds)"
+# | layout-ncol: 1
+# Run the generalised PoD analysis
+# n_jobs=-1 runs the bootstrap process on all available CPU cores
+relaxed_results = study.pod(poi_col="Length", threshold=15.0, n_jobs=-1)
+
+# Visualise the relaxed signal fit and PoD curve
+study.visualise(show=True)
+```
+
+### 4. Custom Comparison: Head-to-Head
+
+To truly understand the impact of these methodological differences, let's extract the calculated PoD curves from the `SimulationStudy` internal state and plot them directly over one another.
+
+```{python}
+# | label: fig-comparison
+# | fig-cap: "Head-to-Head Reliability Comparison"
+
+# Extract the evaluation grids (X) and PoD curves (Y) from the internal class state
+X_linear = study.linear_pod_results["X_eval"]
+pod_linear = study.linear_pod_results["curves"]["pod"]
+ci_lower_linear = study.linear_pod_results["curves"][
+    "ci_lower"
+]  # <-- Extract Linear Bounds!
+
+X_relaxed = study.pod_results["X_eval"].flatten()
+pod_relaxed = study.pod_results["curves"]["pod"]
+ci_lower_relaxed = study.pod_results["curves"]["ci_lower"]
+
+# Set up the comparison plot
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# Plot Classical Linear Method
+ax.plot(
+    X_linear,
+    pod_linear,
+    color="red",
+    linestyle="--",
+    linewidth=2,
+    label="Classical Linear PoD",
+)
+ax.plot(
+    X_linear,
+    ci_lower_linear,
+    color="red",
+    linestyle=":",
+    linewidth=1.5,
+    label="Classical 95% Confidence",
+)  # <-- Plot Linear Bounds!
+
+# Plot Generalised Relaxed Method
+ax.plot(
+    X_relaxed, pod_relaxed, color="black", linewidth=2, label="Generalised Relaxed PoD"
+)
+ax.fill_between(
+    X_relaxed,
+    ci_lower_relaxed,
+    1.0,
+    color="gray",
+    alpha=0.2,
+    label="Generalised 95% Confidence",
+)
+
+# Formatting
+ax.axhline(
+    0.90, color="green", linestyle=":", alpha=0.6, label="90% Target Reliability"
+)
+ax.set_ylim(-0.05, 1.05)
+ax.set_xlabel("Flaw Length (mm)")
+ax.set_ylabel("Probability of Detection")
+ax.set_title("PoD Comparison: Classical vs. Generalised")
+ax.legend(loc="lower right")
+ax.grid(True, alpha=0.3)
+
+plt.show()
+
+# Print a comparative summary
+print("--- Reliability Summary ---")
+print("Target Threshold: 15.0")
+
+# Find the a90 points (where the LOWER bounds cross 0.90)
+try:
+    # Notice we are checking where the lower confidence bounds cross 0.90!
+    a90_linear = X_linear[np.argmax(ci_lower_linear >= 0.90)]
+    a90_relaxed = X_relaxed[np.argmax(ci_lower_relaxed >= 0.90)]
+
+    print(f"Classical a90/95 (Estimated):  {a90_linear:.2f} mm")
+    print(f"Generalised a90/95 (Estimated): {a90_relaxed:.2f} mm")
+
+    diff = abs(a90_relaxed - a90_linear)
+    print(f"\nDifference in critical sizing: {diff:.2f} mm")
+except IndexError:
+    print("Curves did not reach 90% reliability.")
+```

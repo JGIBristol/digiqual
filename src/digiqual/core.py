@@ -8,7 +8,7 @@ from .adaptive import generate_targeted_samples, run_adaptive_search
 from .plotting import plot_signal_model, plot_pod_curve
 from . import pod
 from .executors import Executor
-from .ahat import fit_linear_a_hat_model, compute_linear_pod_curve, plot_linear_signal_model
+from .ahat import fit_linear_a_hat_model, compute_linear_pod_curve, plot_linear_signal_model, bootstrap_linear_pod_ci
 
 
 
@@ -551,24 +551,13 @@ class SimulationStudy:
         poi_col: str,
         threshold: float,
         xlog: bool = False,
-        ylog: bool = False
+        ylog: bool = False,
+        n_boot: int = 1000,
+        n_jobs: int | None = None
     ) -> Dict[str, Any]:
         """
-        Runs the classical linear a-hat vs a PoD analysis.
-
-        This method enforces linearity, constant variance, and normally
-        distributed errors.
-
-        Args:
-            poi_col (str): The single parameter of interest (e.g., 'Length').
-            threshold (float): The failure threshold.
-            xlog (bool): If True, applies a log transform to the parameter of interest.
-            ylog (bool): If True, applies a log transform to the outcome signal.
-
-        Returns:
-            Dict: Dictionary containing the fitted model, tau, and curves.
+        Runs the classical linear a-hat vs a PoD analysis with bootstrapped bounds.
         """
-        # 0. Safety Checks
         if self.clean_data.empty:
             self._validate()
             if self.clean_data.empty:
@@ -579,27 +568,28 @@ class SimulationStudy:
 
         print(f"--- Starting Linear a-hat vs a Analysis (PoI: {poi_col}) ---")
 
-        # 1. Extract raw arrays
         X = self.clean_data[poi_col].values
         y = self.clean_data[self.outcome].values
 
-        # 2. Fit the linear analytical model
+        # 1. Fit Base Model
         model, tau = fit_linear_a_hat_model(X, y, xlog=xlog, ylog=ylog)
-
-        # 3. Automatically generate the evaluation grid (100 points between min and max)
         X_eval = np.linspace(X.min(), X.max(), 100)
-
-        # 4. Compute the PoD and Mean curves
         pod_curve, mean_curve = compute_linear_pod_curve(
-            X_eval=X_eval,
-            model=model,
-            tau=tau,
-            threshold=threshold,
-            xlog=xlog,
-            ylog=ylog
+            X_eval=X_eval, model=model, tau=tau, threshold=threshold, xlog=xlog, ylog=ylog
         )
 
-        # 5. Package and store the results in the class state
+        # 2. Bootstrap Confidence Intervals
+        print(f"Running Bootstrap ({n_boot} iterations) to establish classical confidence bounds...")
+        lower_ci, upper_ci = bootstrap_linear_pod_ci(
+            X, y, X_eval, threshold, xlog, ylog, n_boot, n_jobs
+        )
+
+        # 3. Calculate classical a90/95 point
+        a90_95 = pod.calculate_reliability_point(X_eval, lower_ci, target_pod=0.90)
+        if not np.isnan(a90_95):
+            print(f"   -> Classical a90/95 Reliability Index: {a90_95:.3f} mm")
+
+        # 4. Store Results
         self.linear_pod_results = {
             "poi_col": poi_col,
             "threshold": threshold,
@@ -612,7 +602,9 @@ class SimulationStudy:
             "tau": tau,
             "curves": {
                 "mean_response": mean_curve,
-                "pod": pod_curve
+                "pod": pod_curve,
+                "ci_lower": lower_ci,
+                "ci_upper": upper_ci
             }
         }
 
@@ -621,40 +613,33 @@ class SimulationStudy:
 
 #### Visualise Linear Results ####
     def visualise_linear(self, show: bool = True, save_path: str = None) -> None:
-        """
-        Generates and displays the linear a-hat vs a signal model plot.
-
-        Args:
-            show (bool): If True, calls plt.show().
-            save_path (str, optional): If provided, saves the figure to disk.
-        """
         if not self.linear_pod_results:
             print("No linear PoD results found. Please run .linear_pod() first.")
             return
 
         res = self.linear_pod_results
 
-        # Generate the plot and store it in our dictionary
         self.linear_plots["signal_model"] = plot_linear_signal_model(
-            X=res["X"],
-            y=res["y"],
-            X_eval=res["X_eval"],
-            model=res["model"],
-            threshold=res["threshold"],
-            tau=res["tau"],
-            xlog=res["xlog"],
-            ylog=res["ylog"],
+            X=res["X"], y=res["y"], X_eval=res["X_eval"], model=res["model"],
+            threshold=res["threshold"], tau=res["tau"], xlog=res["xlog"],
+            ylog=res["ylog"], poi_name=res["poi_col"]
+        )
+
+        # Now pass the calculated bounds into the plot!
+        self.linear_plots["pod_curve"] = plot_pod_curve(
+            X_eval=res["X_eval"].flatten(),
+            pod_curve=res["curves"]["pod"],
+            ci_lower=res["curves"]["ci_lower"],
+            ci_upper=res["curves"]["ci_upper"],
+            target_pod=0.90,
             poi_name=res["poi_col"]
         )
 
-        # Handle Saving
         if save_path:
-            # We append _linear_signal to distinguish it from the generalized plots
-            file_name = f"{save_path}_linear_signal.png"
-            self.linear_plots["signal_model"].get_figure().savefig(file_name)
-            print(f"Plot saved to {file_name}")
+            self.linear_plots["signal_model"].get_figure().savefig(f"{save_path}_linear_signal.png")
+            self.linear_plots["pod_curve"].get_figure().savefig(f"{save_path}_linear_pod.png")
+            print(f"Plots saved to {save_path}_linear_*.png")
 
-        # Handle Display
         if show:
             try:
                 import matplotlib.pyplot as plt

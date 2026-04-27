@@ -30,9 +30,9 @@ Once your external physics solver has calculated the outcomes for your generated
 3. **Diagnostic Report:** The engine runs sanity checks across your data, testing for sufficient sample sizes and input coverage. A tabular report provides a clear Pass/Fail for every parameter.
 
 ### Adaptive Remediation
-If the diagnostic engine detects a large deliberate gap or missing data (a failed **Input Coverage** test), the UI exposes a remediation tool.
+If the diagnostic engine detects a large deliberate gap or missing data (a failed **Input Coverage** test) or large uncertainty through k-folds CV, the UI exposes a remediation tool.
 
-Instead of guessing where to add new points, you can simply input how many new points you'd like to generate. The engine will target the specific empty regions and generate a new CSV containing targeted, gap-filling coordinates. Run these through your solver and merge the new data back into your main set!
+Instead of guessing where to add new points, you can simply input how many new points you'd like to generate. The engine will target the specific empty or uncertain regions and generate a new CSV containing targeted coordinates. Run these through your solver and merge the new data back into your main set!
 
 
 ## 3. Data Visualisation
