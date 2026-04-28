@@ -1,17 +1,16 @@
 import numpy as np
-import pandas as pd
 import scipy.stats as stats
-from typing import Any, Tuple, List, Dict
+from typing import Any, Tuple, Dict
 from scipy.stats import qmc
 
 def compute_multi_dim_pod(
-    poi_grid: np.ndarray,      
-    nuisance_ranges: Dict[str, Tuple[float, float]], 
-    model: Any,          
-    X_train: np.ndarray,       
-    residuals: np.ndarray,     
-    bandwidth: float,          
-    dist_info: Tuple[str, Tuple], 
+    poi_grid: np.ndarray,
+    nuisance_ranges: Dict[str, Tuple[float, float]],
+    model: Any,
+    X_train: np.ndarray,
+    residuals: np.ndarray,
+    bandwidth: float,
+    dist_info: Tuple[str, Tuple],
     threshold: float,
     n_mc_samples: int = 3000
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -21,7 +20,7 @@ def compute_multi_dim_pod(
 
     Based on the methodology from Malkiel et al. (2026), this function evaluates the
     flexible multi-dimensional surrogate model across randomly sampled nuisance parameter
-    realizations, calculates the probability of detection at each realization using local 
+    realizations, calculates the probability of detection at each realization using local
     variance standardisation, and aggregates them.
 
     Args:
@@ -39,20 +38,20 @@ def compute_multi_dim_pod(
         Tuple[np.ndarray, np.ndarray]:
             - pod_integrated: Integrated PoD values across the poi_grid.
             - mean_integrated: Expected mean response across the poi_grid.
-    """    
+    """
     n_pois = poi_grid.shape[1]
     n_nuisance = len(nuisance_ranges)
     total_vars = n_pois + n_nuisance
-    
+
     dist_name, dist_params = dist_info
     dist_obj = getattr(stats, dist_name)
-    
+
     # Pre-generate LHS samples for the nuisance space [0, 1]
     # We use a single LHS draw scaled up for every PoI grid point to reduce variance between points
     if n_nuisance > 0:
         sampler = qmc.LatinHypercube(d=n_nuisance, seed=42)
         lhs_01 = sampler.random(n=n_mc_samples)
-        
+
         # Scale to bounds
         nuisance_samples = np.zeros_like(lhs_01)
         for i, (min_val, max_val) in enumerate(nuisance_ranges.values()):
@@ -70,13 +69,13 @@ def compute_multi_dim_pod(
         # Assemble the full input vectors for this grid point
         X_eval = np.zeros((n_mc_samples, total_vars))
         X_eval[:, :n_pois] = poi_point
-        
+
         if n_nuisance > 0:
             X_eval[:, n_pois:] = nuisance_samples
 
         # 1. Predict the mean response from the N-Dimensional model
         mean_resp = model.predict(X_eval)
-        
+
         # 2. Estimate local noise variance using the kernel smoothing
         # Note: We must predict local std dynamically at these N-dimensional points
         sigma_resp = predict_local_std(X_train, residuals, X_eval, bandwidth)
@@ -84,7 +83,7 @@ def compute_multi_dim_pod(
         # 3. Calculate probability of exceedance
         z_scores = (threshold - mean_resp) / sigma_resp
         probs = 1 - dist_obj.cdf(z_scores, *dist_params)
-        
+
         # 4. Integrate / Aggregate (Monte Carlo expectation)
         pod_integrated[i] = np.mean(probs)
         mean_integrated[i] = np.mean(mean_resp)

@@ -71,3 +71,40 @@ def test_matlab_executor_initialization():
     # Check if the command template was formatted correctly
     expected_cmd = 'matlab -batch "my_script(\'{input}\', \'{output}\')" -nosplash -nodesktop'
     assert executor.command_template == expected_cmd
+
+
+@patch("subprocess.run")
+def test_cli_executor_auto_stitching(mock_subprocess, sample_df, tmp_path):
+    """Test that CLIExecutor stitches input columns back if the solver drops them."""
+    input_csv = str(tmp_path / "in.csv")
+    output_csv = str(tmp_path / "out.csv")
+
+    # Simulate solver output that ONLY has the 'Signal' column (dropped Length & Angle)
+    result_df = pd.DataFrame({'Signal': [0.99, 0.88]})
+    result_df.to_csv(output_csv, index=False)
+
+    executor = CLIExecutor("echo {input} {output}", input_csv, output_csv)
+    df = executor.run(sample_df)
+
+    # Assertions
+    assert not df.empty
+    assert 'Signal' in df.columns
+    assert 'Length' in df.columns # Proves auto-stitching worked!
+    assert 'Angle' in df.columns
+    assert df['Length'].iloc[0] == 1.0 # Proves the data matches the original inputs
+
+@patch("subprocess.run")
+def test_cli_executor_mismatch_failure(mock_subprocess, sample_df, tmp_path):
+    """Test that CLIExecutor fails gracefully if row counts mismatch and inputs are missing."""
+    input_csv = str(tmp_path / "in.csv")
+    output_csv = str(tmp_path / "out.csv")
+
+    # Simulate solver output missing inputs AND returning 3 rows instead of 2
+    result_df = pd.DataFrame({'Signal': [0.99, 0.88, 0.77]})
+    result_df.to_csv(output_csv, index=False)
+
+    executor = CLIExecutor("echo {input} {output}", input_csv, output_csv)
+    df = executor.run(sample_df)
+
+    # Proves it aborted safely and returned an empty DataFrame instead of crashing
+    assert df.empty

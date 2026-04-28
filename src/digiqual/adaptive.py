@@ -323,8 +323,34 @@ def generate_targeted_samples(
 
     return pd.concat(new_samples_list, ignore_index=True)
 
+#### Helper Function for Adaptive Search
 
-#### MAIN FUNCTION: The Agnostic Adaptive Loop ####
+def _validate_executor_output(results: pd.DataFrame, expected_samples: pd.DataFrame, input_cols: List[str], outcome_col: str) -> None:
+    """Validates that the executor returned a properly formatted table."""
+    if results.empty:
+        return # Empty is allowed (means 100% failure, which the loop handles gracefully)
+
+    if outcome_col not in results.columns:
+        raise ValueError(
+            f"Executor Output Error: The solver failed to return the outcome column '{outcome_col}'. "
+            f"Returned columns were: {list(results.columns)}"
+        )
+
+    missing_inputs = [col for col in input_cols if col not in results.columns]
+    if missing_inputs:
+        raise ValueError(
+            f"Executor Output Error: The solver dropped required input columns: {missing_inputs}. "
+            f"The Executor must return both inputs and outcomes."
+        )
+
+    if len(results) != len(expected_samples):
+        raise ValueError(
+            f"Executor Output Error: Row mismatch! We sent {len(expected_samples)} samples, "
+            f"but the solver returned {len(results)} rows."
+        )
+
+
+### MAIN FUNCTION: Adaptive Search
 def run_adaptive_search(
     executor: Union[Executor, str],
     input_cols: List[str],
@@ -387,10 +413,7 @@ def run_adaptive_search(
 
         results = executor.run(initial_samples)
 
-        if not results.empty and outcome_col not in results.columns:
-            raise ValueError(
-                f"Executor Output Error: The solver failed to return the outcome column '{outcome_col}'."
-            )
+        _validate_executor_output(results, initial_samples, input_cols, outcome_col)
 
         if results.empty:
             failed_data = pd.concat([failed_data, initial_samples[input_cols]], ignore_index=True)
@@ -451,10 +474,7 @@ def run_adaptive_search(
 
         new_results = executor.run(new_samples)
 
-        if not new_results.empty and outcome_col not in new_results.columns:
-            raise ValueError(
-                f"Executor Output Error: The solver failed to return the outcome column '{outcome_col}'."
-            )
+        _validate_executor_output(new_results, new_samples, input_cols, outcome_col)
 
         if new_results.empty:
             failed_data = pd.concat([failed_data, new_samples[input_cols]], ignore_index=True)

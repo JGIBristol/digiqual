@@ -6,8 +6,11 @@ from digiqual.adaptive import (
     _fill_gaps,
     _sample_uncertainty,
     generate_targeted_samples,
-    run_adaptive_search
+    run_adaptive_search,
+    _validate_executor_output
 )
+
+import pytest
 
 def test_filter_by_graveyard():
     cands = pd.DataFrame({'A': [1.0, 5.0, 9.0]})
@@ -133,3 +136,26 @@ def test_run_adaptive_search_edge_cases(mock_exec, mock_lhs):
                 executor=cmd, input_cols=['A'], outcome_col='Signal', ranges=ranges,
                 existing_data=valid_data_df, max_iter=1
         )
+
+def test_validate_executor_output():
+    """Test the 'Hard Stop' enforcer catches badly formatted executor data."""
+    expected_samples = pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
+    input_cols = ['A', 'B']
+    outcome_col = 'Signal'
+
+    # 1. Empty DataFrame is allowed (returns without error)
+    _validate_executor_output(pd.DataFrame(), expected_samples, input_cols, outcome_col)
+
+    # 2. Missing outcome column
+    with pytest.raises(ValueError, match="failed to return the outcome column"):
+        _validate_executor_output(expected_samples, expected_samples, input_cols, outcome_col)
+
+    # 3. Missing input columns
+    res_missing_in = pd.DataFrame({'Signal': [1, 2]})
+    with pytest.raises(ValueError, match="dropped required input columns"):
+        _validate_executor_output(res_missing_in, expected_samples, input_cols, outcome_col)
+
+    # 4. Row mismatch
+    res_mismatch = pd.DataFrame({'A': [1], 'B': [3], 'Signal': [0.5]})
+    with pytest.raises(ValueError, match="Row mismatch"):
+        _validate_executor_output(res_mismatch, expected_samples, input_cols, outcome_col)

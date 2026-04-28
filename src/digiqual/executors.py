@@ -127,42 +127,48 @@ class CLIExecutor(Executor):
         """
         The translation process for heavy, external software.
         """
-        # Step 1: Write the current batch of inputs to the hard drive as a CSV.
-        # The external software will read this file.
+        # Step 1: Write inputs to CSV
         samples.to_csv(self.input_path, index=False)
 
-        # Step 2: Fill in the blanks of our command string.
-        # If template is "run.exe {input} {output}", it becomes "run.exe temp_in.csv temp_out.csv"
+        # Step 2 & 3: Format and split the command
         cmd = self.command_template.format(input=self.input_path, output=self.output_path)
         print(f"   -> Executing Isolated Process: {cmd}")
-
-        # Step 3: shlex.split safely breaks the string into a list of words.
-        # The Operating System prefers lists over strings to prevent hacking/errors.
         cmd_list = shlex.split(cmd)
 
         try:
-            # Step 4: Spawn the isolated process.
-            # 'subprocess.run' effectively opens a terminal, types the command, and hits enter.
-            # 'check=True' means "If the solver crashes, raise an error immediately in Python."
+            # Step 4: Spawn the isolated process
             subprocess.run(cmd_list, shell=False, check=True)
-
         except subprocess.CalledProcessError as e:
-            # If the external solver crashes (e.g., Ansys fails to mesh), we catch it here.
             print(f"   -> Simulation FAILED (Exit Code {e.returncode}).")
             return pd.DataFrame()
 
-        # Step 5: The terminal command finished! Now we verify the solver actually did its job
-        # by checking if it successfully created the output file we asked for.
+        # Step 5: Check if output file exists
         if not os.path.exists(self.output_path):
             print("   -> Simulation failed to produce an output file.")
             return pd.DataFrame()
 
-        # Step 6: Read that new output CSV back into a Pandas DataFrame
+        # Step 6: Read CSV and Apply Auto-Stitching
         try:
             results = pd.read_csv(self.output_path)
+
+            # --- NEW PROTECTION: Enforce Executor Contract ---
+            missing_cols = [c for c in samples.columns if c not in results.columns]
+
+            if missing_cols:
+                # If row counts match, safely stitch the inputs back on!
+                if len(results) == len(samples):
+                    print(f"   -> Info: Auto-stitching missing input columns {missing_cols} back to results.")
+                    for col in missing_cols:
+                        results[col] = samples[col].values
+                else:
+                    # If row counts don't match, we cannot safely align the data
+                    print(f"   -> ERROR: External solver returned {len(results)} rows, but we sent {len(samples)}.")
+                    print(f"   -> Cannot safely align missing input columns {missing_cols}.")
+                    return pd.DataFrame() # Fail gracefully
+
             return results
+
         except Exception as e:
-            # If the file exists but is corrupted or empty
             print(f"   -> Failed to read output file: {e}")
             return pd.DataFrame()
 
