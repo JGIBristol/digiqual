@@ -262,7 +262,7 @@ def plot_linear_signal_model(
     # Formatting and Styling
     ax.set_xlabel(poi_name)
     ax.set_ylabel("Signal Response")
-    ax.set_title(f"Standard $\hat{{a}}$ vs $a$ Model ({poi_name})")
+    ax.set_title(rf"Standard $\hat{{a}}$ vs $a$ Model ({poi_name})")
     ax.legend(loc='lower right')
     ax.grid(True, alpha=0.3, which="both", ls="--")
 
