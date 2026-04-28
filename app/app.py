@@ -547,6 +547,22 @@ ui.nav_panel(
                         # Permanent Error Display for selection conflicts
                         ui.output_ui("selection_error_display"),
 
+                        ui.accordion(
+                            ui.accordion_panel(
+                                "Advanced Diagnostic Thresholds",
+                                ui.input_numeric("ui_max_gap", "Max Gap Ratio", value=0.20, step=0.01),
+                                ui.input_numeric("ui_min_r2", "Min R² Score", value=0.50, step=0.01),
+                                ui.input_numeric("ui_avg_width", "Max Avg CI Width", value=0.15, step=0.01),
+                                ui.input_numeric("ui_tail_width", "Max Tail CI Width", value=0.30, step=0.01),
+                            ),
+                            open=False # Keeps it collapsed by default so it doesn't clutter the UI
+                        ),
+
+                        ui.input_task_button(
+                            "btn_run_diagnostics", "Run Diagnostics",
+                            class_="btn-primary w-100", icon=icon_svg("stethoscope")
+                        ),
+
                         # This is the primary status alert (Success/Failure)
                         ui.output_ui("validation_status"),
                         class_="config-container"
@@ -816,9 +832,15 @@ def server(input, output, session):
         selected_outcome = input.outcome_col()
         conflict = selected_outcome in selected_inputs
 
+        # 1. Missing selections or conflict
         if uploaded_data() is None or not selected_inputs or conflict:
             return ui.div(ui.p("Configure selections to run diagnostics.", class_="text-muted fst-italic"))
 
+        # 2. NEW: Ready, but the button hasn't been clicked yet!
+        if diagnostic_table() is None:
+            return ui.div(ui.p("Ready to run diagnostics. Click the button above.", class_="text-primary fw-bold mt-3"))
+
+        # 3. Button was clicked, show actual results
         if validation_passed():
             return ui.div(
                 ui.h5(icon_svg("circle-check"), " Validation Passed"),
@@ -832,7 +854,22 @@ def server(input, output, session):
             )
 
     @reactive.effect
-    @reactive.event(uploaded_data, input.input_cols, input.outcome_col)
+    @reactive.event(
+        uploaded_data,
+        input.input_cols,
+        input.outcome_col,
+        input.ui_max_gap,
+        input.ui_min_r2,
+        input.ui_avg_width,
+        input.ui_tail_width
+    )
+    def reset_diagnostics_on_change():
+        """Clears the diagnostic results if the user changes any settings before clicking Run."""
+        diagnostic_table.set(None)
+        validation_passed.set(False)
+
+    @reactive.effect
+    @reactive.event(input.btn_run_diagnostics)
     def run_validation_diagnostics():
         df = uploaded_data()
         new_samples.set(None)
@@ -847,7 +884,14 @@ def server(input, output, session):
             return
 
         try:
-            study = SimulationStudy(input_cols=selected_inputs, outcome_col=selected_outcome)
+            study = SimulationStudy(
+                input_cols=selected_inputs,
+                outcome_col=selected_outcome,
+                max_gap_ratio=input.ui_max_gap(),
+                min_r2_score=input.ui_min_r2(),
+                max_avg_width=input.ui_avg_width(),
+                max_tail_width=input.ui_tail_width()
+            )
             study.add_data(df)
             diag_df = study.diagnose()
 
@@ -1251,8 +1295,15 @@ def server(input, output, session):
         if not input_cols_list:
             return None
 
+        # --- Fetch the dynamic gap threshold from the UI ---
         try:
-            coverage_res = _check_input_coverage(df, input_cols_list)
+            thresh_gap = input.ui_max_gap()
+        except Exception:
+            thresh_gap = 0.20  # Safe fallback during initialization
+
+        try:
+            # --- Pass the custom threshold to the diagnostic helper ---
+            coverage_res = _check_input_coverage(df, input_cols_list, thresh_gap)
         except Exception:
             coverage_res = {}
 
@@ -1374,6 +1425,11 @@ def server(input, output, session):
         X = df_num[input_cols_list].values
         y = df_num[outcome].values
 
+        # --- NEW: Fetch dynamic thresholds from the UI ---
+        thresh_r2 = input.ui_min_r2()
+        thresh_avg = input.ui_avg_width()
+        thresh_max = input.ui_tail_width()
+
         # Pull pass/fail status from existing diagnostic_table
         fit_row  = diag[diag["Test"] == "Model Fit (CV)"]
         boot_row = diag[diag["Test"] == "Bootstrap Convergence"]
@@ -1419,7 +1475,8 @@ def server(input, output, session):
 
         if r2_val is not None:
             ax_fit.annotate(
-                f"CV R² = {r2_val:.3f}\nThreshold > 0.50",
+                # --- CHANGED: Dynamic annotation ---
+                f"CV R² = {r2_val:.3f}\nThreshold > {thresh_r2:.2f}",
                 xy=(0.05, 0.95), xycoords="axes fraction",
                 va="top", ha="left", fontsize=9,
                 bbox=dict(boxstyle="round,pad=0.4", facecolor="white",
@@ -1460,14 +1517,14 @@ def server(input, output, session):
         ax_boot.plot(iters, running_max, color="#1f77b4", linewidth=1.5,
                         linestyle=":", alpha=0.75, label="Running Max CV")
 
-        # Threshold lines
-        ax_boot.axhline(0.15, color="#107c10", linewidth=1.2, linestyle="--",
-                        alpha=0.85, label="Avg Threshold (0.15)")
-        ax_boot.axhline(0.30, color="#ffb900", linewidth=1.2, linestyle="--",
-                        alpha=0.85, label="Max Threshold (0.30)")
+        # --- CHANGED: Dynamic Threshold lines ---
+        ax_boot.axhline(thresh_avg, color="#107c10", linewidth=1.2, linestyle="--",
+                        alpha=0.85, label=f"Avg Threshold ({thresh_avg:.2f})")
+        ax_boot.axhline(thresh_max, color="#ffb900", linewidth=1.2, linestyle="--",
+                        alpha=0.85, label=f"Max Threshold ({thresh_max:.2f})")
 
-        # Shade the converged zone
-        ax_boot.fill_between(iters, 0, 0.15, color="#107c10", alpha=0.04)
+        # --- CHANGED: Dynamic Shading ---
+        ax_boot.fill_between(iters, 0, thresh_avg, color="#107c10", alpha=0.04)
 
         boot_colour = "#107c10" if boot_passed else "#d13438"
         boot_status = "✓ Pass" if boot_passed else "✗ Fail"
@@ -1480,8 +1537,9 @@ def server(input, output, session):
 
         if avg_cv_val is not None and max_cv_val is not None:
             ax_boot.annotate(
-                f"Final Avg CV = {avg_cv_val:.3f}  (< 0.15)\n"
-                f"Final Max CV = {max_cv_val:.3f}  (< 0.30)",
+                # --- CHANGED: Dynamic Annotations ---
+                f"Final Avg CV = {avg_cv_val:.3f}  (< {thresh_avg:.2f})\n"
+                f"Final Max CV = {max_cv_val:.3f}  (< {thresh_max:.2f})",
                 xy=(0.97, 0.97), xycoords="axes fraction",
                 va="top", ha="right", fontsize=9,
                 bbox=dict(boxstyle="round,pad=0.4", facecolor="white",
@@ -1504,13 +1562,21 @@ def server(input, output, session):
     @reactive.effect
     @reactive.event(uploaded_data, input.input_cols, input.outcome_col)
     def update_study():
-        if uploaded_data() is None or not input.input_cols() or not input.outcome_col():
+        selected_inputs = list(input.input_cols())
+        selected_outcome = input.outcome_col()
+
+        # Added the conflict guard (selected_outcome in selected_inputs)
+        if uploaded_data() is None or not selected_inputs or not selected_outcome or (selected_outcome in selected_inputs):
             study_instance.set(None)
             return
 
         study = SimulationStudy(
-            input_cols=list(input.input_cols()),
-            outcome_col=input.outcome_col()
+            input_cols=selected_inputs,
+            outcome_col=selected_outcome,
+            max_gap_ratio=input.ui_max_gap(),
+            min_r2_score=input.ui_min_r2(),
+            max_avg_width=input.ui_avg_width(),
+            max_tail_width=input.ui_tail_width()
         )
         study.add_data(uploaded_data())
         study_instance.set(study)

@@ -352,7 +352,7 @@ def _validate_executor_output(results: pd.DataFrame, expected_samples: pd.DataFr
 
 ### MAIN FUNCTION: Adaptive Search
 def run_adaptive_search(
-    executor: Union[Executor, str],
+    executor: Executor | str,
     input_cols: List[str],
     outcome_col: str,
     ranges: Union[pd.DataFrame, Dict[str, Tuple[float, float]]],

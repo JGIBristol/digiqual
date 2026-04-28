@@ -178,6 +178,7 @@ class SimulationStudy:
         # Pass the class-level thresholds into the diagnostic function
         self.sufficiency_results = sample_sufficiency(
             self.clean_data, self.inputs, self.outcome,
+            skip_validation=True,
             max_gap_ratio=self.max_gap_ratio,
             min_r2_score=self.min_r2_score,
             max_avg_width=self.max_avg_width,
@@ -216,6 +217,7 @@ class SimulationStudy:
             input_cols=self.inputs,
             outcome_col=self.outcome,
             n_new_per_fix=n_points,
+            failed_data=self.removed_data,
             max_gap_ratio=self.max_gap_ratio,
             min_r2_score=self.min_r2_score,
             max_avg_width=self.max_avg_width,
