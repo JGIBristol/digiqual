@@ -209,8 +209,8 @@ def generate_targeted_samples(
     distance_threshold: float = 0.05,
     max_gap_ratio: float = 0.20,
     min_r2_score: float = 0.50,
-    max_avg_width: float = 0.15,
-    max_tail_width: float = 0.30
+    max_avg_cv: float = 0.15,
+    max_max_cv: float = 0.30
 ) -> pd.DataFrame:
     """
     Active Learning Engine: Generates new samples based on diagnostic failures.
@@ -254,8 +254,8 @@ def generate_targeted_samples(
         df, input_cols, outcome_col,
         max_gap_ratio=max_gap_ratio,
         min_r2_score=min_r2_score,
-        max_avg_width=max_avg_width,
-        max_tail_width=max_tail_width
+        max_avg_cv=max_avg_cv,
+        max_max_cv=max_max_cv
     )
 
     # Quick exit if everything is green
@@ -364,8 +364,8 @@ def run_adaptive_search(
     # --- The 4 Custom Diagnostic Thresholds ---
     max_gap_ratio: float = 0.20,
     min_r2_score: float = 0.50,
-    max_avg_width: float = 0.15,
-    max_tail_width: float = 0.30
+    max_avg_cv: float = 0.15,
+    max_max_cv: float = 0.30
 ) -> pd.DataFrame:
     """
     Orchestrates the Active Learning loop on raw DataFrames using the Executor architecture.
@@ -383,8 +383,8 @@ def run_adaptive_search(
         max_hours (float, optional): Physical time limit in hours.
         max_gap_ratio (float): Decimal Percentage threshold for maximum gap diagnostics,
         min_r2_score (float): Decimal Percentage threshold for minimum r2 diagnostics,
-        max_avg_width (float): Decimal Percentage threshold for average CI diagnostics,
-        max_tail_width (float): Decimal Percentage threshold for maximum CI diagnostics
+        max_avg_cv (float): Decimal Percentage threshold for average CI diagnostics,
+        max_max_cv (float): Decimal Percentage threshold for maximum CI diagnostics
 
     Returns:
         pd.DataFrame: Final dataset containing all successful runs.
@@ -446,8 +446,8 @@ def run_adaptive_search(
                 skip_validation=True,
                 max_gap_ratio=max_gap_ratio,
                 min_r2_score=min_r2_score,
-                max_avg_width=max_avg_width,
-                max_tail_width=max_tail_width
+                max_avg_cv=max_avg_cv,
+                max_max_cv=max_max_cv
             )
 
         # Convergence Check
@@ -461,8 +461,8 @@ def run_adaptive_search(
             failed_data=failed_data, distance_threshold=0.05,
             max_gap_ratio=max_gap_ratio,
             min_r2_score=min_r2_score,
-            max_avg_width=max_avg_width,
-            max_tail_width=max_tail_width
+            max_avg_cv=max_avg_cv,
+            max_max_cv=max_max_cv
         )
 
         if new_samples.empty:

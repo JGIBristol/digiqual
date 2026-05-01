@@ -552,8 +552,8 @@ ui.nav_panel(
                                 "Advanced Diagnostic Thresholds",
                                 ui.input_numeric("ui_max_gap", "Max Gap Ratio", value=0.20, step=0.01),
                                 ui.input_numeric("ui_min_r2", "Min R² Score", value=0.50, step=0.01),
-                                ui.input_numeric("ui_avg_width", "Max Avg CI Width", value=0.15, step=0.01),
-                                ui.input_numeric("ui_tail_width", "Max Tail CI Width", value=0.30, step=0.01),
+                                ui.input_numeric("ui_avg_cv", "Max Allowed Avg CV", value=0.15, step=0.01),
+                                ui.input_numeric("ui_max_cv", "Max Allowed Peak CV", value=0.30, step=0.01),
                             ),
                             open=False # Keeps it collapsed by default so it doesn't clutter the UI
                         ),
@@ -860,8 +860,8 @@ def server(input, output, session):
         input.outcome_col,
         input.ui_max_gap,
         input.ui_min_r2,
-        input.ui_avg_width,
-        input.ui_tail_width
+        input.ui_avg_cv,
+        input.ui_max_cv
     )
     def reset_diagnostics_on_change():
         """Clears the diagnostic results if the user changes any settings before clicking Run."""
@@ -889,8 +889,8 @@ def server(input, output, session):
                 outcome_col=selected_outcome,
                 max_gap_ratio=input.ui_max_gap(),
                 min_r2_score=input.ui_min_r2(),
-                max_avg_width=input.ui_avg_width(),
-                max_tail_width=input.ui_tail_width()
+                max_avg_cv=input.ui_avg_cv(),
+                max_max_cv=input.ui_max_cv()
             )
             study.add_data(df)
             diag_df = study.diagnose()
@@ -1427,8 +1427,8 @@ def server(input, output, session):
 
         # --- NEW: Fetch dynamic thresholds from the UI ---
         thresh_r2 = input.ui_min_r2()
-        thresh_avg = input.ui_avg_width()
-        thresh_max = input.ui_tail_width()
+        thresh_avg = input.ui_avg_cv()
+        thresh_max = input.ui_max_cv()
 
         # Pull pass/fail status from existing diagnostic_table
         fit_row  = diag[diag["Test"] == "Model Fit (CV)"]
@@ -1575,8 +1575,8 @@ def server(input, output, session):
             outcome_col=selected_outcome,
             max_gap_ratio=input.ui_max_gap(),
             min_r2_score=input.ui_min_r2(),
-            max_avg_width=input.ui_avg_width(),
-            max_tail_width=input.ui_tail_width()
+            max_avg_cv=input.ui_avg_cv(),
+            max_max_cv=input.ui_max_cv()
         )
         study.add_data(uploaded_data())
         study_instance.set(study)

@@ -21,8 +21,8 @@ class SimulationStudy:
         outcome_col (str): Name of the outcome variable.
         max_gap_ratio (float, optional): Max allowable gap between data points as a fraction of the total range. Defaults to 0.20.
         min_r2_score (float, optional): Minimum cross-validated R-squared score required for the signal fit. Defaults to 0.50.
-        max_avg_width (float, optional): Max allowable average relative width of the bootstrap predictions. Defaults to 0.15.
-        max_tail_width (float, optional): Max allowable relative width at the tail ends (10th/90th percentiles). Defaults to 0.30.
+        max_avg_cv (float, optional): Max allowable average relative width of the bootstrap predictions. Defaults to 0.15.
+        max_max_cv (float, optional): Max allowable relative width at the tail ends (10th/90th percentiles). Defaults to 0.30.
 
     Attributes:
         inputs (List[str]): List of input variable names.
@@ -56,8 +56,8 @@ class SimulationStudy:
         outcome_col: str,
         max_gap_ratio: float = 0.20,
         min_r2_score: float = 0.50,
-        max_avg_width: float = 0.15,
-        max_tail_width: float = 0.30
+        max_avg_cv: float = 0.15,
+        max_max_cv: float = 0.30
     ):
         self.inputs = input_cols
         self.outcome = outcome_col
@@ -65,8 +65,8 @@ class SimulationStudy:
         # Save custom diagnostic thresholds
         self.max_gap_ratio = max_gap_ratio
         self.min_r2_score = min_r2_score
-        self.max_avg_width = max_avg_width
-        self.max_tail_width = max_tail_width
+        self.max_avg_cv = max_avg_cv
+        self.max_max_cv = max_max_cv
 
         # Internal state
         self.data: pd.DataFrame = pd.DataFrame()
@@ -181,8 +181,8 @@ class SimulationStudy:
             skip_validation=True,
             max_gap_ratio=self.max_gap_ratio,
             min_r2_score=self.min_r2_score,
-            max_avg_width=self.max_avg_width,
-            max_tail_width=self.max_tail_width
+            max_avg_cv=self.max_avg_cv,
+            max_max_cv=self.max_max_cv
         )
         return self.sufficiency_results
 
@@ -220,8 +220,8 @@ class SimulationStudy:
             failed_data=self.removed_data,
             max_gap_ratio=self.max_gap_ratio,
             min_r2_score=self.min_r2_score,
-            max_avg_width=self.max_avg_width,
-            max_tail_width=self.max_tail_width
+            max_avg_cv=self.max_avg_cv,
+            max_max_cv=self.max_max_cv
         )
 
         return new_samples
@@ -300,8 +300,8 @@ class SimulationStudy:
             # --- The 4 Custom Diagnostic Thresholds ---
             max_gap_ratio=self.max_gap_ratio,
             min_r2_score=self.min_r2_score,
-            max_avg_width=self.max_avg_width,
-            max_tail_width=self.max_tail_width
+            max_avg_cv=self.max_avg_cv,
+            max_max_cv=self.max_max_cv
         )
 
         # 2. Update Class State with the result

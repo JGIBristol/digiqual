@@ -130,7 +130,7 @@ def _check_model_fit(df: pd.DataFrame, input_cols: List[str], outcome_col: str, 
 
 def _check_bootstrap_convergence(
     df: pd.DataFrame, input_cols: List[str], outcome_col: str,
-    n_bootstraps: int = 100, max_avg_width: float = 0.15, max_tail_width: float = 0.30
+    n_bootstraps: int = 100, max_avg_cv: float = 0.15, max_max_cv: float = 0.30
 ) -> Dict:
     """
     Evaluates the stability of model predictions across different random sub-samples of the data.
@@ -159,14 +159,14 @@ def _check_bootstrap_convergence(
     avg_rel_width = np.mean(relative_widths)
     max_rel_width = np.max(relative_widths)
 
-    is_converged = avg_rel_width < max_avg_width and max_rel_width < max_tail_width
+    is_converged = avg_rel_width < max_avg_cv and max_rel_width < max_max_cv
 
     return {
         "bootstrap_iterations": n_bootstraps,
         "avg_relative_width": round(avg_rel_width, 4),
         "max_relative_width": round(max_rel_width, 4),
-        "avg_converged": bool(avg_rel_width < max_avg_width),
-        "max_converged": bool(max_rel_width < max_tail_width),
+        "avg_converged": bool(avg_rel_width < max_avg_cv),
+        "max_converged": bool(max_rel_width < max_max_cv),
         "converged": bool(is_converged)
     }
 
@@ -180,8 +180,8 @@ def sample_sufficiency(
     skip_validation: bool = False,
     max_gap_ratio: float = 0.20,
     min_r2_score: float = 0.50,
-    max_avg_width: float = 0.15,
-    max_tail_width: float = 0.30
+    max_avg_cv: float = 0.15,
+    max_max_cv: float = 0.30
 ) -> pd.DataFrame:
     """
     Performs a suite of statistical diagnostics to evaluate if the current sample size is sufficient.
@@ -197,8 +197,8 @@ def sample_sufficiency(
         skip_validation (bool, optional): If True, skips the initial data cleaning step. Defaults to False.
         max_gap_ratio (float, optional): The maximum allowable gap between data points as a fraction of the total range. Defaults to 0.20.
         min_r2_score (float, optional): The minimum cross-validated R-squared score required to pass the fit test. Defaults to 0.50.
-        max_avg_width (float, optional): The maximum allowable average relative width of the bootstrap predictions. Defaults to 0.15.
-        max_tail_width (float, optional): The maximum allowable relative width at the tail ends (10th and 90th percentiles) of the predictions. Defaults to 0.30.
+        max_avg_cv (float, optional): The maximum allowable average relative width of the bootstrap predictions. Defaults to 0.15.
+        max_max_cv (float, optional): The maximum allowable relative width at the tail ends (10th and 90th percentiles) of the predictions. Defaults to 0.30.
 
     Returns:
         pd.DataFrame: A formatted table detailing the results of each diagnostic test,
@@ -245,7 +245,7 @@ def sample_sufficiency(
     # Pass the custom thresholds into the helpers
     coverage_res = _check_input_coverage(df_clean, input_cols, max_gap_ratio)
     fit_res = _check_model_fit(df_clean, input_cols, outcome_col, min_r2_score)
-    boot_res = _check_bootstrap_convergence(df_clean, input_cols, outcome_col, 100, max_avg_width, max_tail_width)
+    boot_res = _check_bootstrap_convergence(df_clean, input_cols, outcome_col, 100, max_avg_cv, max_max_cv)
 
     flat_results = []
 
@@ -273,7 +273,7 @@ def sample_sufficiency(
         "Variable": outcome_col,
         "Metric": "Avg CV (Rel Std Dev)",
         "Value": boot_res['avg_relative_width'],
-        "Threshold": f"< {max_avg_width:.2f}",
+        "Threshold": f"< {max_avg_cv:.2f}",
         "Pass": boot_res['avg_converged']
     })
 
@@ -282,7 +282,7 @@ def sample_sufficiency(
         "Variable": outcome_col,
         "Metric": "Max CV (Rel Std Dev)",
         "Value": boot_res['max_relative_width'],
-        "Threshold": f"< {max_tail_width:.2f}",
+        "Threshold": f"< {max_max_cv:.2f}",
         "Pass": boot_res['max_converged']
     })
 
