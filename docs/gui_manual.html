@@ -220,6 +220,12 @@ window.Quarto = {
  <span class="menu-text">Generalised PoD Theory</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Classical vs Generalised PoD</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item">
@@ -295,8 +301,8 @@ window.Quarto = {
 </ol>
 <section id="adaptive-remediation" class="level3">
 <h3 class="anchored" data-anchor-id="adaptive-remediation">Adaptive Remediation</h3>
-<p>If the diagnostic engine detects a large deliberate gap or missing data (a failed <strong>Input Coverage</strong> test), the UI exposes a remediation tool.</p>
-<p>Instead of guessing where to add new points, you can simply input how many new points you’d like to generate. The engine will target the specific empty regions and generate a new CSV containing targeted, gap-filling coordinates. Run these through your solver and merge the new data back into your main set!</p>
+<p>If the diagnostic engine detects a large deliberate gap or missing data (a failed <strong>Input Coverage</strong> test) or large uncertainty through k-folds CV, the UI exposes a remediation tool.</p>
+<p>Instead of guessing where to add new points, you can simply input how many new points you’d like to generate. The engine will target the specific empty or uncertain regions and generate a new CSV containing targeted coordinates. Run these through your solver and merge the new data back into your main set!</p>
 </section>
 </section>
 <section id="data-visualisation" class="level2">

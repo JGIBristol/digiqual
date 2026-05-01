@@ -229,6 +229,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Generalised PoD Theory</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Classical vs Generalised PoD</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item">
@@ -344,7 +350,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="define-a-solver-and-executor" class="level3">
 <h3 class="anchored" data-anchor-id="define-a-solver-and-executor">1. Define a Solver and Executor</h3>
 <p>For this tutorial, we will write a standard Python function to simulate our physics. We will then wrap it in the <code>PythonExecutor</code>.</p>
-<div id="5503287e" class="cell" data-execution_count="1">
+<div id="6a11eaac" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> PythonExecutor</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -390,7 +396,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="configure-the-study" class="level3">
 <h3 class="anchored" data-anchor-id="configure-the-study">2. Configure the Study</h3>
 <p>We define our input variables and the ranges we want to explore.</p>
-<div id="5165e788" class="cell" data-execution_count="2">
+<div id="a2dd0b9a" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.core <span class="im">import</span> SimulationStudy</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define inputs ranges</span></span>
@@ -405,7 +411,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="run-optimisation" class="level3">
 <h3 class="anchored" data-anchor-id="run-optimisation">3. Run Optimisation</h3>
 <p>This single command handles the entire Active Learning loop:</p>
-<div id="51f49ef7" class="cell" data-execution_count="3">
+<div id="2971ddb3" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.optimise(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    executor<span class="op">=</span>executor,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    ranges<span class="op">=</span>ranges,</span>
@@ -425,7 +431,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 --- Iteration 1: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Active Graveyard Tracker: Protecting against 1 known bad regions.
+ -&gt; Active Graveyard Tracker: Protecting against 2 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 1 (10 points) ---
    -&gt; Executing Python model for 10 points...
@@ -433,7 +439,7 @@ Diagnostics flagged issues. Initiating Active Learning...
 --- Iteration 2: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Active Graveyard Tracker: Protecting against 1 known bad regions.
+ -&gt; Active Graveyard Tracker: Protecting against 3 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 2 (10 points) ---
    -&gt; Executing Python model for 10 points...
@@ -441,7 +447,7 @@ Diagnostics flagged issues. Initiating Active Learning...
 --- Iteration 3: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Active Graveyard Tracker: Protecting against 1 known bad regions.
+ -&gt; Active Graveyard Tracker: Protecting against 3 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 3 (10 points) ---
    -&gt; Executing Python model for 10 points...
@@ -449,7 +455,7 @@ Diagnostics flagged issues. Initiating Active Learning...
 --- Iteration 4: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Active Graveyard Tracker: Protecting against 1 known bad regions.
+ -&gt; Active Graveyard Tracker: Protecting against 6 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 4 (10 points) ---
    -&gt; Executing Python model for 10 points...
@@ -457,7 +463,7 @@ Diagnostics flagged issues. Initiating Active Learning...
 --- Iteration 5: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Active Graveyard Tracker: Protecting against 1 known bad regions.
+ -&gt; Active Graveyard Tracker: Protecting against 8 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 5 (10 points) ---
    -&gt; Executing Python model for 10 points...
@@ -465,12 +471,12 @@ Diagnostics flagged issues. Initiating Active Learning...
 ----------------------------------------
 &gt;&gt;&gt; SEARCH COMPLETE &lt;&lt;&lt;
 Total Time:      0.01 minutes
-Successful Runs: 69
-Failed Runs:     1 (in graveyard)
+Successful Runs: 62
+Failed Runs:     8 (in graveyard)
 Total Attempted: 70
 ----------------------------------------
 
-Data updated. Total rows: 69</code></pre>
+Data updated. Total rows: 62</code></pre>
 </div>
 </div>
 </section>
@@ -486,28 +492,28 @@ Data updated. Total rows: 69</code></pre>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>study.visualise()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>[Parallel(n_jobs=11)]: Using backend LokyBackend with 11 concurrent workers.
-[Parallel(n_jobs=11)]: Done  19 tasks      | elapsed:    3.1s
-[Parallel(n_jobs=11)]: Done 140 tasks      | elapsed:   12.2s
-[Parallel(n_jobs=11)]: Done 343 tasks      | elapsed:   27.5s
-[Parallel(n_jobs=11)]: Done 626 tasks      | elapsed:   49.0s
-[Parallel(n_jobs=11)]: Done 1000 out of 1000 | elapsed:  1.3min finished</code></pre>
+[Parallel(n_jobs=11)]: Done  19 tasks      | elapsed:    3.0s
+[Parallel(n_jobs=11)]: Done 140 tasks      | elapsed:   11.5s
+[Parallel(n_jobs=11)]: Done 343 tasks      | elapsed:   26.0s
+[Parallel(n_jobs=11)]: Done 626 tasks      | elapsed:   46.4s
+[Parallel(n_jobs=11)]: Done 1000 out of 1000 | elapsed:  1.2min finished</code></pre>
 </div>
 <div id="fig-results-optim" class="quarto-layout-panel">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-results-optim-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="quarto-layout-row">
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<pre><code>Total Simulations Run: 69
+<pre><code>Total Simulations Run: 62
 Running validation...
-Validation passed. 69 valid rows ready.
+Validation passed. 62 valid rows ready.
 --- Starting Reliability Analysis (PoIs: ['Length', 'Angle']) ---
 1. Selecting Mean Model (Cross-Validation)...
 -&gt; Selected Model: Polynomial (Degree 3)
 2. Fitting Variance Model (Kernel Smoothing)...
    -&gt; Optimizing bandwidth via LOO-CV...
-   -&gt; Smoothing Bandwidth: 8.5837
+   -&gt; Smoothing Bandwidth: 4.9389
 3. Inferring Error Distribution (AIC)...
-   -&gt; Selected Distribution: laplace
+   -&gt; Selected Distribution: norm
 4. Computing PoD Curve...
 5. Running Bootstrap (1000 iterations on 11 cores)...</code></pre>
 </div>
@@ -522,7 +528,7 @@ Validation passed. 69 valid rows ready.
 <div id="fig-results-optim-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-results-optim-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="optimisation_files/figure-html/fig-results-optim-output-4.png" data-ref-parent="fig-results-optim" width="854" height="471" class="figure-img">
+<img src="optimisation_files/figure-html/fig-results-optim-output-4.png" data-ref-parent="fig-results-optim" width="950" height="518" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-results-optim-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (a) Best Fitting Model (Statistics)
@@ -536,7 +542,7 @@ Validation passed. 69 valid rows ready.
 <div id="fig-results-optim-2" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-results-optim-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="optimisation_files/figure-html/fig-results-optim-output-5.png" data-ref-parent="fig-results-optim" width="475" height="486" class="figure-img">
+<img src="optimisation_files/figure-html/fig-results-optim-output-5.png" data-ref-parent="fig-results-optim" width="476" height="485" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-results-optim-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (b) Signal Response Model (Physics)
@@ -596,7 +602,7 @@ end</code></pre>
 <section id="a2.-the-digiqual-execution" class="level4">
 <h4 class="anchored" data-anchor-id="a2.-the-digiqual-execution">A2. The Digiqual Execution</h4>
 <p>You just provide the name of the MATLAB file. The Executor builds the headless terminal command automatically.</p>
-<div id="58ff34e5" class="cell" data-execution_count="5">
+<div id="8d9c50da" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> MatlabExecutor</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>executor <span class="op">=</span> MatlabExecutor(wrapper_name<span class="op">=</span><span class="st">"matlab_wrapper"</span>)</span>
@@ -612,7 +618,7 @@ end</code></pre>
 <section id="b1.-the-external-solver-script-run_ansys_simulation.py" class="level4">
 <h4 class="anchored" data-anchor-id="b1.-the-external-solver-script-run_ansys_simulation.py">B1. The External Solver Script (<code>run_ansys_simulation.py</code>)</h4>
 <p>This script represents your standalone software. It must accept the input and output file paths as command-line arguments, read the input CSV, perform its calculations, and save the output CSV.</p>
-<div id="bf2900e7" class="cell" data-execution_count="6">
+<div id="1ec30750" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -644,7 +650,7 @@ end</code></pre>
 <section id="b2.-the-digiqual-execution" class="level4">
 <h4 class="anchored" data-anchor-id="b2.-the-digiqual-execution">B2. The DigiQual Execution</h4>
 <p>You define the exact terminal command needed to run the script above, and pass it to the <code>CLIExecutor</code>.</p>
-<div id="8f9d5e94" class="cell" data-execution_count="7">
+<div id="d58c6aee" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> CLIExecutor</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co"># The exact command you would type into your terminal</span></span>

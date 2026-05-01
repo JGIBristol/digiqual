@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>digiqual.core.simulationstudy.refine – digiqual</title>
+<title>ahat.fit_linear_a_hat_model – digiqual</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -248,14 +248,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.core.SimulationStudy.refine" id="toc-digiqual.core.SimulationStudy.refine" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.refine">refine</a>
+  <li><a href="#digiqual.ahat.fit_linear_a_hat_model" id="toc-digiqual.ahat.fit_linear_a_hat_model" class="nav-link active" data-scroll-target="#digiqual.ahat.fit_linear_a_hat_model">ahat.fit_linear_a_hat_model</a>
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
   <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
   <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
   </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.refine.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/ahat.fit_linear_a_hat_model.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
@@ -263,18 +263,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<section id="digiqual.core.SimulationStudy.refine" class="level1">
-<h1>refine</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>refine(n_points<span class="op">=</span><span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Identifies gaps or high-variance regions and suggests new simulation points.</p>
+<section id="digiqual.ahat.fit_linear_a_hat_model" class="level1">
+<h1>ahat.fit_linear_a_hat_model</h1>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>fit_linear_a_hat_model(X, y, xlog<span class="op">=</span><span class="va">False</span>, ylog<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Fits a simple linear regression model according to the standard a-hat vs a method.</p>
+<p>Enforces a linear fit and a constant variance (homoskedasticity) assumption across all inputs. It allows for optional logarithmic transformations to help linearize the data.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
+<col style="width: 8%">
 <col style="width: 12%">
-<col style="width: 9%">
-<col style="width: 65%">
-<col style="width: 13%">
+<col style="width: 67%">
+<col style="width: 12%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -286,10 +287,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td>n_points</td>
-<td>int</td>
-<td>Number of new samples to suggest per detected issue.</td>
-<td><code>10</code></td>
+<td>X</td>
+<td>np.ndarray</td>
+<td>1D array of input parameter values (e.g., flaw size, a).</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>y</td>
+<td>np.ndarray</td>
+<td>1D array of observed responses (e.g., signal amplitude, a-hat).</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>xlog</td>
+<td>bool</td>
+<td>If True, applies a natural logarithm transformation to X.</td>
+<td><code>False</code></td>
+</tr>
+<tr class="even">
+<td>ylog</td>
+<td>bool</td>
+<td>If True, applies a natural logarithm transformation to y.</td>
+<td><code>False</code></td>
 </tr>
 </tbody>
 </table>
@@ -298,9 +317,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 9%">
-<col style="width: 16%">
-<col style="width: 74%">
+<col style="width: 4%">
+<col style="width: 18%">
+<col style="width: 77%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -312,17 +331,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td></td>
-<td>pd.DataFrame</td>
-<td>pd.DataFrame: A DataFrame of recommended new input coordinates.</td>
+<td>Tuple[LinearRegression, float]</td>
+<td>Tuple[LinearRegression, float]: - model: The fitted sklearn LinearRegression object. - tau: The constant standard deviation of the residuals.</td>
 </tr>
 </tbody>
 </table>
 </section>
 <section id="examples" class="level2 doc-section doc-section-examples">
 <h2 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># If diagnostics fail, ask for 10 new points to fix it</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>new_samples <span class="op">=</span> study.refine(n_points<span class="op">=</span><span class="dv">10</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(new_samples.head())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> np.linspace(<span class="dv">1</span>, <span class="dv">10</span>, <span class="dv">50</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> <span class="fl">2.5</span> <span class="op">*</span> np.log(X) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="dv">50</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit the standard model, taking the log of X to achieve linearity</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>model, tau <span class="op">=</span> fit_linear_a_hat_model(X, y, xlog<span class="op">=</span><span class="va">True</span>, ylog<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Constant Standard Deviation: </span><span class="sc">{</span>tau<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 </section>
@@ -734,4 +757,4 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.refine.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/ahat.fit_linear_a_hat_model.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

@@ -224,6 +224,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Generalised PoD Theory</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Classical vs Generalised PoD</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item">
@@ -266,7 +272,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    n_new_per_fix<span class="op">=</span><span class="dv">10</span>,</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    failed_data<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    distance_threshold<span class="op">=</span><span class="fl">0.05</span>,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    max_gap_ratio<span class="op">=</span><span class="fl">0.2</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    min_r2_score<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    max_avg_cv<span class="op">=</span><span class="fl">0.15</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    max_max_cv<span class="op">=</span><span class="fl">0.3</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Active Learning Engine: Generates new samples based on diagnostic failures.</p>
 <p>It consumes the results table from <code>sample_sufficiency</code>. - If <code>Input Coverage</code> fails -&gt; Triggers <code>_fill_gaps</code> (Exploration). - If <code>Model Fit</code> or <code>Bootstrap</code> fails -&gt; Triggers <code>_sample_uncertainty</code> (Exploitation).</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">

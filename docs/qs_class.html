@@ -230,6 +230,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Generalised PoD Theory</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Classical vs Generalised PoD</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item">
@@ -300,7 +306,7 @@ Note
 <section id="setup-data-generation" class="level3">
 <h3 class="anchored" data-anchor-id="setup-data-generation">1. Setup &amp; Data Generation</h3>
 <p>We’ll define a simulated physics function with heteroscedastic noise and generate an initial design containing a deliberate gap between 3mm and 7mm.</p>
-<div id="55df692c" class="cell" data-execution_count="1">
+<div id="c96d0c45" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -373,7 +379,7 @@ Warning
 <p>Because of our deliberate gap, we expect the diagnostic engine to flag the <strong>Input Coverage</strong> test as failed.</p>
 </div>
 </div>
-<div id="1720b2e2" class="cell" data-execution_count="2">
+<div id="aa551e5b" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Running validation...
@@ -402,7 +408,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.4359</td>
+<td>0.4274</td>
 <td>&lt; 0.20</td>
 <td>False</td>
 </tr>
@@ -411,7 +417,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.0845</td>
+<td>0.0515</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -420,7 +426,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.0650</td>
+<td>0.0453</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -429,7 +435,7 @@ Checking sample sufficiency...</code></pre>
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9968</td>
+<td>0.9978</td>
 <td>&gt; 0.50</td>
 <td>True</td>
 </tr>
@@ -438,7 +444,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Avg CV (Rel Std Dev)</td>
-<td>0.0168</td>
+<td>0.0206</td>
 <td>&lt; 0.15</td>
 <td>True</td>
 </tr>
@@ -447,7 +453,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Max CV (Rel Std Dev)</td>
-<td>0.0314</td>
+<td>0.0443</td>
 <td>&lt; 0.30</td>
 <td>True</td>
 </tr>
@@ -466,7 +472,7 @@ Checking sample sufficiency...</code></pre>
 <li><strong>Generate:</strong> It outputs a dataframe of new input coordinates.</li>
 <li><strong>Execute &amp; Store:</strong> You run your external simulation on these points and append the results back using <code>add_data()</code>.</li>
 </ol>
-<div id="40bf67f5" class="cell" data-execution_count="3">
+<div id="4b53f206" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate active learning samples (20 points to fill the gap)</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>new_samples <span class="op">=</span> study.refine(n_points<span class="op">=</span><span class="dv">20</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -483,7 +489,7 @@ Data updated. Total rows: 100</code></pre>
 </div>
 </div>
 <p>Now we verify that the issue is resolved:</p>
-<div id="13264c64" class="cell" data-execution_count="4">
+<div id="aba41029" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-run diagnostics to confirm the green light</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -513,7 +519,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.0811</td>
+<td>0.0705</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -522,7 +528,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.0608</td>
+<td>0.0477</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -531,7 +537,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.0650</td>
+<td>0.0453</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -540,7 +546,7 @@ Checking sample sufficiency...</code></pre>
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9965</td>
+<td>0.9975</td>
 <td>&gt; 0.50</td>
 <td>True</td>
 </tr>
@@ -549,7 +555,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Avg CV (Rel Std Dev)</td>
-<td>0.0159</td>
+<td>0.0164</td>
 <td>&lt; 0.15</td>
 <td>True</td>
 </tr>
@@ -558,7 +564,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Max CV (Rel Std Dev)</td>
-<td>0.0332</td>
+<td>0.0351</td>
 <td>&lt; 0.30</td>
 <td>True</td>
 </tr>
@@ -599,10 +605,10 @@ Tip
 <div class="cell-output cell-output-stdout">
 <pre><code>--- Starting Reliability Analysis (PoIs: ['Length']) ---
 1. Selecting Mean Model (Cross-Validation)...
--&gt; Selected Model: Kriging (Gaussian Process)
+-&gt; Selected Model: Polynomial (Degree 2)
 2. Fitting Variance Model (Kernel Smoothing)...
    -&gt; Optimizing bandwidth via LOO-CV...
-   -&gt; Smoothing Bandwidth: 9.7815
+   -&gt; Smoothing Bandwidth: 9.7654
 3. Inferring Error Distribution (AIC)...
    -&gt; Selected Distribution: logistic
 4. Computing PoD Curve...
@@ -610,17 +616,17 @@ Tip
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>[Parallel(n_jobs=11)]: Using backend LokyBackend with 11 concurrent workers.
-[Parallel(n_jobs=11)]: Done  19 tasks      | elapsed:    1.8s
-[Parallel(n_jobs=11)]: Done 140 tasks      | elapsed:    3.4s
-[Parallel(n_jobs=11)]: Done 343 tasks      | elapsed:    6.2s
-[Parallel(n_jobs=11)]: Done 626 tasks      | elapsed:   10.1s</code></pre>
+[Parallel(n_jobs=11)]: Done  19 tasks      | elapsed:    1.7s
+[Parallel(n_jobs=11)]: Done 140 tasks      | elapsed:    3.0s
+[Parallel(n_jobs=11)]: Done 343 tasks      | elapsed:    5.2s
+[Parallel(n_jobs=11)]: Done 626 tasks      | elapsed:    8.3s</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   -&gt; a90/95 Reliability Index: 2.886
+<pre><code>   -&gt; a90/95 Reliability Index: 2.929
 --- Analysis Complete ---</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>[Parallel(n_jobs=11)]: Done 1000 out of 1000 | elapsed:   15.4s finished</code></pre>
+<pre><code>[Parallel(n_jobs=11)]: Done 1000 out of 1000 | elapsed:   12.4s finished</code></pre>
 </div>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Visualise Results</span></span>
@@ -633,7 +639,7 @@ Tip
 <div id="fig-results-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-results-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="qs_class_files/figure-html/fig-results-output-1.png" data-ref-parent="fig-results" width="854" height="471" class="figure-img">
+<img src="qs_class_files/figure-html/fig-results-output-1.png" data-ref-parent="fig-results" width="950" height="518" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-results-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (a) Best Fitting Model (Statistics)

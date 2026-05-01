@@ -224,6 +224,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Generalised PoD Theory</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Classical vs Generalised PoD</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item">
@@ -244,7 +250,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#digiqual.diagnostics.sample_sufficiency" id="toc-digiqual.diagnostics.sample_sufficiency" class="nav-link active" data-scroll-target="#digiqual.diagnostics.sample_sufficiency">diagnostics.sample_sufficiency</a>
   <ul class="collapse">
-  <li><a href="#runs-3-checks" id="toc-runs-3-checks" class="nav-link" data-scroll-target="#runs-3-checks">Runs 3 checks</a></li>
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
   <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
   <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
@@ -260,24 +265,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="digiqual.diagnostics.sample_sufficiency" class="level1">
 <h1>diagnostics.sample_sufficiency</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>sample_sufficiency(df, input_cols, outcome_col, skip_validation<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Performs statistical tests on sampling sufficiency.</p>
-<section id="runs-3-checks" class="level2 doc-section doc-section-runs-3-checks">
-<h2 class="doc-section doc-section-runs-3-checks anchored" data-anchor-id="runs-3-checks">Runs 3 checks</h2>
-<ol type="1">
-<li><strong>Input Space Coverage</strong> (Gaps)</li>
-<li><strong>Model Fit Stability</strong> (CV Score)</li>
-<li><strong>Bootstrap Convergence</strong> (Coefficient of Variation)</li>
-</ol>
-</section>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>sample_sufficiency(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    df,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    input_cols,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    outcome_col,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    skip_validation<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    max_gap_ratio<span class="op">=</span><span class="fl">0.2</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    min_r2_score<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    max_avg_cv<span class="op">=</span><span class="fl">0.15</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    max_max_cv<span class="op">=</span><span class="fl">0.3</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Performs a suite of statistical diagnostics to evaluate if the current sample size is sufficient.</p>
+<p>This function tests input space coverage, basic model fit (signal-to-noise), and prediction stability via bootstrapping. It uses user-defined thresholds to determine if the sampling passes the sufficiency criteria required for reliable PoD analysis.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 66%">
 <col style="width: 10%">
+<col style="width: 8%">
+<col style="width: 73%">
+<col style="width: 7%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -291,20 +298,50 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td>df</td>
 <td>pd.DataFrame</td>
-<td>The simulation data. Will be validated via <code>validate_simulation</code> internally.</td>
+<td>The simulation dataset containing inputs and outcomes.</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>input_cols</td>
 <td>List[str]</td>
-<td>List of input variable names.</td>
+<td>A list of the input parameter column names.</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
 <td>outcome_col</td>
 <td>str</td>
-<td>Name of the outcome variable.</td>
+<td>The name of the outcome/signal column.</td>
 <td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>skip_validation</td>
+<td>bool</td>
+<td>If True, skips the initial data cleaning step. Defaults to False.</td>
+<td><code>False</code></td>
+</tr>
+<tr class="odd">
+<td>max_gap_ratio</td>
+<td>float</td>
+<td>The maximum allowable gap between data points as a fraction of the total range. Defaults to 0.20.</td>
+<td><code>0.2</code></td>
+</tr>
+<tr class="even">
+<td>min_r2_score</td>
+<td>float</td>
+<td>The minimum cross-validated R-squared score required to pass the fit test. Defaults to 0.50.</td>
+<td><code>0.5</code></td>
+</tr>
+<tr class="odd">
+<td>max_avg_cv</td>
+<td>float</td>
+<td>The maximum allowable average relative width of the bootstrap predictions. Defaults to 0.15.</td>
+<td><code>0.15</code></td>
+</tr>
+<tr class="even">
+<td>max_max_cv</td>
+<td>float</td>
+<td>The maximum allowable relative width at the tail ends (10th and 90th percentiles) of the predictions. Defaults to 0.30.</td>
+<td><code>0.3</code></td>
 </tr>
 </tbody>
 </table>
@@ -313,9 +350,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 5%">
-<col style="width: 9%">
-<col style="width: 85%">
+<col style="width: 3%">
+<col style="width: 6%">
+<col style="width: 90%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -328,7 +365,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td></td>
 <td>pd.DataFrame</td>
-<td>pd.DataFrame: A table containing pass/fail metrics for each test, including the threshold values evaluated against.</td>
+<td>pd.DataFrame: A formatted table detailing the results of each diagnostic test, including the variable tested, the calculated metric, the target threshold, and a boolean ‘Pass’ status.</td>
 </tr>
 </tbody>
 </table>
@@ -336,12 +373,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="examples" class="level2 doc-section doc-section-examples">
 <h2 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h2>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame({</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Length'</span>: [<span class="fl">1.0</span>, <span class="fl">2.5</span>, <span class="fl">5.0</span>, <span class="fl">10.0</span>, <span class="fl">15.0</span>, <span class="fl">20.0</span>, <span class="fl">25.0</span>, <span class="fl">30.0</span>, <span class="fl">35.0</span>, <span class="fl">40.0</span>],</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Signal'</span>: [<span class="fl">0.5</span>, <span class="fl">0.8</span>, <span class="fl">1.2</span>, <span class="fl">1.5</span>, <span class="fl">1.8</span>, <span class="fl">2.2</span>, <span class="fl">2.5</span>, <span class="fl">2.8</span>, <span class="fl">3.2</span>, <span class="fl">3.5</span>]</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>report <span class="op">=</span> sample_sufficiency(df, input_cols<span class="op">=</span>[<span class="st">'Length'</span>], outcome_col<span class="op">=</span><span class="st">'Signal'</span>)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(report[[<span class="st">'Test'</span>, <span class="st">'Pass'</span>]])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.diagnostics <span class="im">import</span> sample_sufficiency</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Assume 'df' is a loaded DataFrame of simulation results</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Length'</span>: [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">9</span>, <span class="dv">10</span>],</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Signal'</span>: [<span class="fl">2.1</span>, <span class="fl">4.0</span>, <span class="fl">6.2</span>, <span class="fl">8.1</span>, <span class="fl">9.9</span>, <span class="fl">12.0</span>, <span class="fl">14.1</span>, <span class="fl">15.9</span>, <span class="fl">18.2</span>, <span class="fl">20.0</span>]</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Run diagnostics with custom stricter thresholds</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>results_df <span class="op">=</span> sample_sufficiency(</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    df<span class="op">=</span>df,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    input_cols<span class="op">=</span>[<span class="st">'Length'</span>],</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    outcome_col<span class="op">=</span><span class="st">'Signal'</span>,</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    max_gap_ratio<span class="op">=</span><span class="fl">0.15</span>,  <span class="co"># Require tighter spacing</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    min_r2_score<span class="op">=</span><span class="fl">0.70</span>    <span class="co"># Require a stronger signal fit</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(results_df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 </section>

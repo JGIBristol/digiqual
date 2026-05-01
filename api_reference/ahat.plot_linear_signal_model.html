@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>digiqual.core.simulationstudy.refine – digiqual</title>
+<title>ahat.plot_linear_signal_model – digiqual</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -248,14 +248,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.core.SimulationStudy.refine" id="toc-digiqual.core.SimulationStudy.refine" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.refine">refine</a>
+  <li><a href="#digiqual.ahat.plot_linear_signal_model" id="toc-digiqual.ahat.plot_linear_signal_model" class="nav-link active" data-scroll-target="#digiqual.ahat.plot_linear_signal_model">ahat.plot_linear_signal_model</a>
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
   <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
   <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
   </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.refine.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/ahat.plot_linear_signal_model.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
@@ -263,18 +263,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<section id="digiqual.core.SimulationStudy.refine" class="level1">
-<h1>refine</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>refine(n_points<span class="op">=</span><span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Identifies gaps or high-variance regions and suggests new simulation points.</p>
+<section id="digiqual.ahat.plot_linear_signal_model" class="level1">
+<h1>ahat.plot_linear_signal_model</h1>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>plot_linear_signal_model(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    X,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    y,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    X_eval,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    model,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    threshold,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    tau,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    xlog<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    ylog<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    poi_name<span class="op">=</span><span class="st">'Parameter of Interest'</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Diagnostic Plot: Visualizes the standard linear a-hat vs a model.</p>
+<p>Plots the raw data, the linear expectation model, the constant 95% prediction interval (calculated using tau), and the target threshold. It automatically scales the plot axes based on the chosen log transformations.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 12%">
 <col style="width: 9%">
-<col style="width: 65%">
-<col style="width: 13%">
+<col style="width: 18%">
+<col style="width: 50%">
+<col style="width: 22%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -286,10 +298,64 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td>n_points</td>
-<td>int</td>
-<td>Number of new samples to suggest per detected issue.</td>
-<td><code>10</code></td>
+<td>X</td>
+<td>np.ndarray</td>
+<td>Original simulation inputs.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>y</td>
+<td>np.ndarray</td>
+<td>Original simulation outcomes.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>X_eval</td>
+<td>np.ndarray</td>
+<td>Grid used for curve evaluation.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>model</td>
+<td>LinearRegression</td>
+<td>The fitted linear expectation model.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>threshold</td>
+<td>float</td>
+<td>The detection threshold limit.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>tau</td>
+<td>float</td>
+<td>The constant standard deviation of the residuals.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>xlog</td>
+<td>bool</td>
+<td>Set to True if the model used log-transformed X.</td>
+<td><code>False</code></td>
+</tr>
+<tr class="even">
+<td>ylog</td>
+<td>bool</td>
+<td>Set to True if the model used log-transformed y.</td>
+<td><code>False</code></td>
+</tr>
+<tr class="odd">
+<td>poi_name</td>
+<td>str</td>
+<td>Label for the x-axis. Defaults to “Parameter of Interest”.</td>
+<td><code>'Parameter of Interest'</code></td>
+</tr>
+<tr class="even">
+<td>ax</td>
+<td>Optional[plt.Axes]</td>
+<td>Existing Matplotlib axes. Created if None.</td>
+<td><code>None</code></td>
 </tr>
 </tbody>
 </table>
@@ -299,8 +365,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <table class="caption-top table">
 <colgroup>
 <col style="width: 9%">
-<col style="width: 16%">
-<col style="width: 74%">
+<col style="width: 12%">
+<col style="width: 77%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -312,17 +378,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td></td>
-<td>pd.DataFrame</td>
-<td>pd.DataFrame: A DataFrame of recommended new input coordinates.</td>
+<td>plt.Axes</td>
+<td>plt.Axes: The configured Matplotlib axis containing the plot.</td>
 </tr>
 </tbody>
 </table>
 </section>
 <section id="examples" class="level2 doc-section doc-section-examples">
 <h2 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># If diagnostics fail, ask for 10 new points to fix it</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>new_samples <span class="op">=</span> study.refine(n_points<span class="op">=</span><span class="dv">10</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(new_samples.head())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> plot_linear_signal_model(</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    X, y, X_eval, model, threshold<span class="op">=</span><span class="fl">3.5</span>, tau<span class="op">=</span>tau,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    xlog<span class="op">=</span><span class="va">True</span>, ylog<span class="op">=</span><span class="va">False</span>, poi_name<span class="op">=</span><span class="st">"Crack Length (mm)"</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 </section>
@@ -734,4 +804,4 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.refine.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/ahat.plot_linear_signal_model.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

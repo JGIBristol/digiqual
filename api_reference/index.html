@@ -33,7 +33,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../docs/generalised_pod.html" rel="prev">
+<link href="../docs/comparison.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
@@ -190,6 +190,12 @@ ul.task-list li input[type="checkbox"] {
  <span class="menu-text">Generalised PoD Theory</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Classical vs Generalised PoD</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item">
@@ -264,7 +270,7 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 <tr class="odd">
 <td><a href="../api_reference/diagnostics.sample_sufficiency.html#digiqual.diagnostics.sample_sufficiency">diagnostics.sample_sufficiency</a></td>
-<td>Performs statistical tests on sampling sufficiency.</td>
+<td>Performs a suite of statistical diagnostics to evaluate if the current sample size is sufficient.</td>
 </tr>
 <tr class="even">
 <td><a href="../api_reference/diagnostics.ValidationError.html#digiqual.diagnostics.ValidationError">diagnostics.ValidationError</a></td>
@@ -317,6 +323,22 @@ ul.task-list li input[type="checkbox"] {
 <tr class="even">
 <td><a href="../api_reference/integration.compute_multi_dim_pod.html#digiqual.integration.compute_multi_dim_pod">integration.compute_multi_dim_pod</a></td>
 <td>Performs Monte Carlo integration over continuous nuisance parameters to calculate</td>
+</tr>
+<tr class="odd">
+<td><a href="../api_reference/ahat.fit_linear_a_hat_model.html#digiqual.ahat.fit_linear_a_hat_model">ahat.fit_linear_a_hat_model</a></td>
+<td>Fits a simple linear regression model according to the standard a-hat vs a method.</td>
+</tr>
+<tr class="even">
+<td><a href="../api_reference/ahat.compute_linear_pod_curve.html#digiqual.ahat.compute_linear_pod_curve">ahat.compute_linear_pod_curve</a></td>
+<td>Calculates the PoD curve using the standard a-hat vs a analytical assumptions.</td>
+</tr>
+<tr class="odd">
+<td><a href="../api_reference/ahat.bootstrap_linear_pod_ci.html#digiqual.ahat.bootstrap_linear_pod_ci">ahat.bootstrap_linear_pod_ci</a></td>
+<td>Estimates 95% Confidence Bounds for the classical linear PoD curve via Bootstrapping.</td>
+</tr>
+<tr class="even">
+<td><a href="../api_reference/ahat.plot_linear_signal_model.html#digiqual.ahat.plot_linear_signal_model">ahat.plot_linear_signal_model</a></td>
+<td>Diagnostic Plot: Visualizes the standard linear a-hat vs a model.</td>
 </tr>
 <tr class="odd">
 <td><a href="../api_reference/plotting.plot_signal_model.html#digiqual.plotting.plot_signal_model">plotting.plot_signal_model</a></td>
@@ -760,8 +782,8 @@ ul.task-list li input[type="checkbox"] {
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../docs/generalised_pod.html" class="pagination-link" aria-label="Generalised PoD Theory">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Generalised PoD Theory</span>
+      <a href="../docs/comparison.html" class="pagination-link" aria-label="Classical vs Generalised PoD">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Classical vs Generalised PoD</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">

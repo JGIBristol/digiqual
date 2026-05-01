@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>digiqual.core.simulationstudy.refine – digiqual</title>
+<title>ahat.compute_linear_pod_curve – digiqual</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -248,14 +248,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.core.SimulationStudy.refine" id="toc-digiqual.core.SimulationStudy.refine" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.refine">refine</a>
+  <li><a href="#digiqual.ahat.compute_linear_pod_curve" id="toc-digiqual.ahat.compute_linear_pod_curve" class="nav-link active" data-scroll-target="#digiqual.ahat.compute_linear_pod_curve">ahat.compute_linear_pod_curve</a>
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
   <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
   <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
   </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.refine.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/ahat.compute_linear_pod_curve.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
@@ -263,18 +263,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<section id="digiqual.core.SimulationStudy.refine" class="level1">
-<h1>refine</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>refine(n_points<span class="op">=</span><span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Identifies gaps or high-variance regions and suggests new simulation points.</p>
+<section id="digiqual.ahat.compute_linear_pod_curve" class="level1">
+<h1>ahat.compute_linear_pod_curve</h1>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>compute_linear_pod_curve(X_eval, model, tau, threshold, xlog<span class="op">=</span><span class="va">False</span>, ylog<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Calculates the PoD curve using the standard a-hat vs a analytical assumptions.</p>
+<p>Assumes that the residual errors are perfectly normally distributed with a constant standard deviation (tau).</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 12%">
-<col style="width: 9%">
-<col style="width: 65%">
-<col style="width: 13%">
+<col style="width: 10%">
+<col style="width: 17%">
+<col style="width: 59%">
+<col style="width: 11%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -286,10 +287,40 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td>n_points</td>
-<td>int</td>
-<td>Number of new samples to suggest per detected issue.</td>
-<td><code>10</code></td>
+<td>X_eval</td>
+<td>np.ndarray</td>
+<td>The 1D grid of points to evaluate the PoD curve.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>model</td>
+<td>LinearRegression</td>
+<td>The fitted linear expectation model.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>tau</td>
+<td>float</td>
+<td>The constant standard deviation of the residuals.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>threshold</td>
+<td>float</td>
+<td>The detection threshold in original (untransformed) units.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>xlog</td>
+<td>bool</td>
+<td>Indicates if the model was trained with log-transformed X.</td>
+<td><code>False</code></td>
+</tr>
+<tr class="even">
+<td>ylog</td>
+<td>bool</td>
+<td>Indicates if the model was trained with log-transformed y.</td>
+<td><code>False</code></td>
 </tr>
 </tbody>
 </table>
@@ -298,9 +329,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 9%">
-<col style="width: 16%">
-<col style="width: 74%">
+<col style="width: 3%">
+<col style="width: 15%">
+<col style="width: 80%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -312,17 +343,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td></td>
-<td>pd.DataFrame</td>
-<td>pd.DataFrame: A DataFrame of recommended new input coordinates.</td>
+<td>Tuple[np.ndarray, np.ndarray]</td>
+<td>Tuple[np.ndarray, np.ndarray]: - pod_curve: Array of probabilities [0, 1] for each point in X_eval. - mean_curve: Array of expected mean signal responses in original units.</td>
 </tr>
 </tbody>
 </table>
 </section>
 <section id="examples" class="level2 doc-section doc-section-examples">
 <h2 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># If diagnostics fail, ask for 10 new points to fix it</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>new_samples <span class="op">=</span> study.refine(n_points<span class="op">=</span><span class="dv">10</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(new_samples.head())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Assuming we have the model and tau from the fitting step</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>X_eval <span class="op">=</span> np.linspace(<span class="dv">1</span>, <span class="dv">10</span>, <span class="dv">100</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>pod, mean_response <span class="op">=</span> compute_linear_pod_curve(</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    X_eval, model, tau, threshold<span class="op">=</span><span class="fl">3.5</span>, xlog<span class="op">=</span><span class="va">True</span>, ylog<span class="op">=</span><span class="va">False</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 </section>
@@ -734,4 +767,4 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.refine.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/ahat.compute_linear_pod_curve.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

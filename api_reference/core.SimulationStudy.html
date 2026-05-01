@@ -224,6 +224,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Generalised PoD Theory</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Classical vs Generalised PoD</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item">
@@ -244,6 +250,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#digiqual.core.SimulationStudy" id="toc-digiqual.core.SimulationStudy" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy">core.SimulationStudy</a>
   <ul class="collapse">
+  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
   <li><a href="#attributes" id="toc-attributes" class="nav-link" data-scroll-target="#attributes">Attributes</a></li>
   <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
   <li><a href="#methods" id="toc-methods" class="nav-link" data-scroll-target="#methods">Methods</a></li>
@@ -259,15 +266,79 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="digiqual.core.SimulationStudy" class="level1">
 <h1>core.SimulationStudy</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>SimulationStudy(input_cols, outcome_col)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>SimulationStudy(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    input_cols,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    outcome_col,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    max_gap_ratio<span class="op">=</span><span class="fl">0.2</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    min_r2_score<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    max_avg_cv<span class="op">=</span><span class="fl">0.15</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    max_max_cv<span class="op">=</span><span class="fl">0.3</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>A workflow manager for simulation reliability assessment.</p>
+<section id="parameters" class="level2 doc-section doc-section-parameters">
+<h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 9%">
+<col style="width: 69%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>input_cols</td>
+<td>List[str]</td>
+<td>List of input variable names.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>outcome_col</td>
+<td>str</td>
+<td>Name of the outcome variable.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>max_gap_ratio</td>
+<td>float</td>
+<td>Max allowable gap between data points as a fraction of the total range. Defaults to 0.20.</td>
+<td><code>0.2</code></td>
+</tr>
+<tr class="even">
+<td>min_r2_score</td>
+<td>float</td>
+<td>Minimum cross-validated R-squared score required for the signal fit. Defaults to 0.50.</td>
+<td><code>0.5</code></td>
+</tr>
+<tr class="odd">
+<td>max_avg_cv</td>
+<td>float</td>
+<td>Max allowable average relative width of the bootstrap predictions. Defaults to 0.15.</td>
+<td><code>0.15</code></td>
+</tr>
+<tr class="even">
+<td>max_max_cv</td>
+<td>float</td>
+<td>Max allowable relative width at the tail ends (10th/90th percentiles). Defaults to 0.30.</td>
+<td><code>0.3</code></td>
+</tr>
+</tbody>
+</table>
+</section>
 <section id="attributes" class="level2 doc-section doc-section-attributes">
 <h2 class="doc-section doc-section-attributes anchored" data-anchor-id="attributes">Attributes</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 28%">
-<col style="width: 18%">
-<col style="width: 52%">
+<col style="width: 24%">
+<col style="width: 16%">
+<col style="width: 59%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -312,16 +383,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>Dict</td>
 <td>Stores the latest generated figures.</td>
 </tr>
+<tr class="even">
+<td>linear_pod_results</td>
+<td>Dict</td>
+<td>Results from the classical linear analysis.</td>
+</tr>
+<tr class="odd">
+<td>linear_plots</td>
+<td>Dict</td>
+<td>Stores figures from the classical linear analysis.</td>
+</tr>
 </tbody>
 </table>
 </section>
 <section id="examples" class="level2 doc-section doc-section-examples">
 <h2 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h2>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.core <span class="im">import</span> SimulationStudy</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>study <span class="op">=</span> SimulationStudy(</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    input_cols<span class="op">=</span>[<span class="st">'Length'</span>, <span class="st">'Angle'</span>],</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    outcome_col<span class="op">=</span><span class="st">'Signal'</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize with stricter diagnostic thresholds</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>study <span class="op">=</span> SimulationStudy(</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    input_cols<span class="op">=</span>[<span class="st">'Length'</span>, <span class="st">'Angle'</span>],</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    outcome_col<span class="op">=</span><span class="st">'Signal'</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    max_gap_ratio<span class="op">=</span><span class="fl">0.10</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    min_r2_score<span class="op">=</span><span class="fl">0.75</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="methods" class="level2">
 <h2 class="anchored" data-anchor-id="methods">Methods</h2>
@@ -342,18 +427,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>Runs statistical diagnostics to evaluate if the current sample size is sufficient.</td>
 </tr>
 <tr class="odd">
+<td><a href="../api_reference/digiqual.core.SimulationStudy.linear_pod.html#digiqual.core.SimulationStudy.linear_pod">linear_pod</a></td>
+<td>Runs the classical linear a-hat vs a PoD analysis with bootstrapped bounds.</td>
+</tr>
+<tr class="even">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.optimise.html#digiqual.core.SimulationStudy.optimise">optimise</a></td>
 <td>Runs the automated Active Learning loop (Initialize -&gt; Execute -&gt; Diagnose -&gt; Refine).</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.pod.html#digiqual.core.SimulationStudy.pod">pod</a></td>
 <td>Runs the generalized Probability of Detection (PoD) analysis.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.refine.html#digiqual.core.SimulationStudy.refine">refine</a></td>
 <td>Identifies gaps or high-variance regions and suggests new simulation points.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.visualise.html#digiqual.core.SimulationStudy.visualise">visualise</a></td>
 <td>Generates and displays diagnostic plots (Signal Model and PoD Curve).</td>
 </tr>
