@@ -18,24 +18,24 @@ import matplotlib.pyplot as plt
 
 from digiqual.core import SimulationStudy
 
+
 # --- Define the Non-Linear Physics ---
 def apply_physics(df):
     """Simulates a signal with quadratic trends and heteroscedastic noise."""
     # 1. Base Signal: Quadratic trend
-    signal = 2.0 + (1.5 * df["Length"]) + (0.3 * df["Length"]**2)
+    signal = 2.0 + (1.5 * df["Length"]) + (0.5 * df["Length"] ** 2)
 
     # 2. Heteroscedastic Noise: Larger flaws = More scatter
-    noise_scale = 0.2 + (0.5 * df["Length"])
+    noise_scale = 0.2 + (0.75 * df["Length"])
     noise = np.random.normal(loc=0, scale=noise_scale, size=len(df))
 
     return signal + noise
 
+
 # --- Create the Dataset ---
 # Generate 80 random points between 0.5mm and 10.0mm
-np.random.seed(42) # Set seed for reproducibility
-df = pd.DataFrame({
-    "Length": np.random.uniform(0.5, 10.0, 80)
-})
+np.random.seed(42)  # Set seed for reproducibility
+df = pd.DataFrame({"Length": np.random.uniform(0.5, 10.0, 80)})
 
 df["Signal"] = apply_physics(df)
 
@@ -61,10 +61,10 @@ We will start with the traditional $\hat{a}$ versus $a$ method. We will apply a 
 # Run the classical linear PoD analysis
 linear_results = study.linear_pod(
     poi_col="Length",
-    threshold=15.0,
+    threshold=15,
     xlog=True,
     ylog=False,
-    n_jobs=-1 # Use all CPU cores for fast bootstrapping
+    n_jobs=-1,  # Use all CPU cores for fast bootstrapping
 )
 
 # Visualise the standard signal fit and PoD curve
@@ -89,7 +89,7 @@ Now, we will run the generalised method. This approach uses cross-validation to 
 # | layout-ncol: 1
 # Run the generalised PoD analysis
 # n_jobs=-1 runs the bootstrap process on all available CPU cores
-relaxed_results = study.pod(poi_col="Length", threshold=15.0, n_jobs=-1)
+relaxed_results = study.pod(poi_col="Length", threshold=15, n_jobs=-1)
 
 # Visualise the relaxed signal fit and PoD curve
 study.visualise(show=True)
@@ -163,7 +163,7 @@ plt.show()
 
 # Print a comparative summary
 print("--- Reliability Summary ---")
-print("Target Threshold: 15.0")
+print("Target Threshold: 15")
 
 # Find the a90 points (where the LOWER bounds cross 0.90)
 try:
