@@ -17,30 +17,45 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from digiqual.core import SimulationStudy
+from digiqual.sampling import generate_lhs
 
 
 # --- Define the Non-Linear Physics ---
 def apply_physics(df):
-    """Simulates a signal with quadratic trends and heteroscedastic noise."""
-    # 1. Base Signal: Quadratic trend
-    signal = 2.0 + (1.5 * df["Length"]) + (0.5 * df["Length"] ** 2)
+    """Simulates a multidimensional signal with nuisance parameters."""
+    # Base Signal: Quadratic trend (2*L + 0.5*L^2)
+    # Angle Penalty: Misalignment (-0.1*Angle) reduces signal
+    signal = (
+        10.0
+        + (2.0 * df["Length"])
+        + (0.5 * df["Length"] ** 2)
+        - (0.1 * np.abs(df["Angle"]))
+    )
 
-    # 2. Heteroscedastic Noise: Larger flaws = More scatter
-    noise_scale = 0.2 + (0.75 * df["Length"])
+    # Heteroscedastic Noise: Higher roughness = More scatter
+    noise_scale = 0.5 + (1.5 * df["Roughness"])
     noise = np.random.normal(loc=0, scale=noise_scale, size=len(df))
 
     return signal + noise
 
 
-# --- Create the Dataset ---
-# Generate 80 random points between 0.5mm and 10.0mm
-np.random.seed(42)  # Set seed for reproducibility
-df = pd.DataFrame({"Length": np.random.uniform(0.5, 10.0, 80)})
+# --- 2. Create the Dataset ---
+# We use Latin Hypercube Sampling to efficiently cover the 3D space
+vars_df = pd.DataFrame(
+    [
+        {"Name": "Length", "Min": 0.1, "Max": 10.0},
+        {"Name": "Angle", "Min": -45.0, "Max": 45.0},
+        {"Name": "Roughness", "Min": 0.0, "Max": 1.0},
+    ]
+)
 
+np.random.seed(42)
+df = generate_lhs(ranges=vars_df, n=150)  # 150 points for 3D space
 df["Signal"] = apply_physics(df)
 
-# Initialise Study and Add Data
-study = SimulationStudy(input_cols=["Length"], outcome_col="Signal")
+study = SimulationStudy(
+    input_cols=["Length", "Angle", "Roughness"], outcome_col="Signal"
+)
 study.add_data(df)
 ```
 
@@ -61,7 +76,7 @@ We will start with the traditional $\hat{a}$ versus $a$ method. We will apply a 
 # Run the classical linear PoD analysis
 linear_results = study.linear_pod(
     poi_col="Length",
-    threshold=15,
+    threshold=30,
     xlog=True,
     ylog=False,
     n_jobs=-1,  # Use all CPU cores for fast bootstrapping
@@ -89,7 +104,9 @@ Now, we will run the generalised method. This approach uses cross-validation to 
 # | layout-ncol: 1
 # Run the generalised PoD analysis
 # n_jobs=-1 runs the bootstrap process on all available CPU cores
-relaxed_results = study.pod(poi_col="Length", threshold=15, n_jobs=-1)
+study.pod(
+    poi_col="Length", nuisance_col=["Angle", "Roughness"], threshold=30.0, n_jobs=-1
+)
 
 # Visualise the relaxed signal fit and PoD curve
 study.visualise(show=True)
@@ -102,22 +119,23 @@ To truly understand the impact of these methodological differences, let's extrac
 ```{python}
 # | label: fig-comparison
 # | fig-cap: "Head-to-Head Reliability Comparison"
+# | layout-ncol: 1
 
-# Extract the evaluation grids (X) and PoD curves (Y) from the internal class state
+# 1. Extract the evaluation grids (X) and PoD curves (Y) from the internal class state
 X_linear = study.linear_pod_results["X_eval"]
 pod_linear = study.linear_pod_results["curves"]["pod"]
-ci_lower_linear = study.linear_pod_results["curves"][
-    "ci_lower"
-]  # <-- Extract Linear Bounds!
+ci_lower_linear = study.linear_pod_results["curves"]["ci_lower"]
+ci_upper_linear = study.linear_pod_results["curves"]["ci_upper"]
 
 X_relaxed = study.pod_results["X_eval"].flatten()
 pod_relaxed = study.pod_results["curves"]["pod"]
 ci_lower_relaxed = study.pod_results["curves"]["ci_lower"]
+ci_upper_relaxed = study.pod_results["curves"]["ci_upper"]
 
 # Set up the comparison plot
 fig, ax = plt.subplots(figsize=(10, 6))
 
-# Plot Classical Linear Method
+# 2. Plot Classical Linear Method
 ax.plot(
     X_linear,
     pod_linear,
@@ -126,26 +144,28 @@ ax.plot(
     linewidth=2,
     label="Classical Linear PoD",
 )
-ax.plot(
+# Shade Classical Bounds instead of plotting a single line
+ax.fill_between(
     X_linear,
     ci_lower_linear,
+    ci_upper_linear,
     color="red",
-    linestyle=":",
-    linewidth=1.5,
-    label="Classical 95% Confidence",
-)  # <-- Plot Linear Bounds!
+    alpha=0.1,  # Keep alpha low so we can see overlaps
+    label="Classical 95% Confidence Bounds",
+)
 
-# Plot Generalised Relaxed Method
+# 3. Plot Generalised Relaxed Method
 ax.plot(
     X_relaxed, pod_relaxed, color="black", linewidth=2, label="Generalised Relaxed PoD"
 )
+# Shade Generalised Bounds between lower and upper
 ax.fill_between(
     X_relaxed,
     ci_lower_relaxed,
-    1.0,
+    ci_upper_relaxed,
     color="gray",
     alpha=0.2,
-    label="Generalised 95% Confidence",
+    label="Generalised 95% Confidence Bounds",
 )
 
 # Formatting
@@ -167,7 +187,6 @@ print("Target Threshold: 15")
 
 # Find the a90 points (where the LOWER bounds cross 0.90)
 try:
-    # Notice we are checking where the lower confidence bounds cross 0.90!
     a90_linear = X_linear[np.argmax(ci_lower_linear >= 0.90)]
     a90_relaxed = X_relaxed[np.argmax(ci_lower_relaxed >= 0.90)]
 
