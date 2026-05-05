@@ -78,7 +78,7 @@ linear_results = study.linear_pod(
     poi_col="Length",
     threshold=30,
     xlog=True,
-    ylog=False,
+    ylog=True,
     n_jobs=-1,  # Use all CPU cores for fast bootstrapping
 )
 
