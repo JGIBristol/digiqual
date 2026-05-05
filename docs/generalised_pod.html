@@ -328,7 +328,14 @@ window.Quarto = {
 <p>Because the model is non-linear and non-normal, traditional analytical confidence bounds are invalid.</p>
 <section id="the-process" class="level3">
 <h3 class="anchored" data-anchor-id="the-process">The Process</h3>
-<p><code>digiqual</code> uses <strong>Bootstrap resampling</strong>: 1. Draw <span class="math inline">\(N\)</span> samples with replacement from the original dataset. 2. Completely physically re-fit the mean model, variance model, and error distribution. 3. Calculate the PoD curve. 4. Repeat this <span class="math inline">\(B\)</span> times (typically <span class="math inline">\(B=1000\)</span>). 5. Extract the <span class="math inline">\(2.5^{th}\)</span> and <span class="math inline">\(97.5^{th}\)</span> percentiles at every point <span class="math inline">\(a\)</span> to form the robust 95% confidence interval <span class="math inline">\(PoD_{95}\)</span>.</p>
+<p><code>digiqual</code> uses <strong>Bootstrap resampling</strong>:</p>
+<ol type="1">
+<li>Draw <span class="math inline">\(N\)</span> samples with replacement from the original dataset.</li>
+<li>Completely physically re-fit the mean model, variance model, and error distribution.</li>
+<li>Calculate the PoD curve.</li>
+<li>Repeat this <span class="math inline">\(B\)</span> times (typically <span class="math inline">\(B=1000\)</span>).</li>
+<li>Extract the <span class="math inline">\(2.5^{th}\)</span> and <span class="math inline">\(97.5^{th}\)</span> percentiles at every point <span class="math inline">\(a\)</span> to form the robust 95% confidence interval <span class="math inline">\(PoD_{95}\)</span>.</li>
+</ol>
 
 
 </section>

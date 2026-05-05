@@ -319,7 +319,7 @@ window.Quarto = {
 <section id="setup-data-generation" class="level3">
 <h3 class="anchored" data-anchor-id="setup-data-generation">1. Setup &amp; Data Generation</h3>
 <p>First, we will simulate a physics scenario where the signal response grows quadratically and the noise increases with the flaw size.</p>
-<div id="e28267dc" class="cell" data-execution_count="1">
+<div id="69c77ba4" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -394,7 +394,7 @@ window.Quarto = {
 Validation passed. 150 valid rows ready.
 --- Starting Linear a-hat vs a Analysis (PoI: Length) ---
 Running Bootstrap (1000 iterations) to establish classical confidence bounds...
-   -&gt; Classical a90/95 Reliability Index: 7.506 mm
+   -&gt; Classical a90/95 Reliability Index: 7.102 mm
 --- Linear Analysis Complete ---</code></pre>
 </div>
 </div>
@@ -460,12 +460,12 @@ Tip
 <div class="cell-output cell-output-stderr">
 <pre><code>[Parallel(n_jobs=11)]: Using backend LokyBackend with 11 concurrent workers.
 [Parallel(n_jobs=11)]: Done  19 tasks      | elapsed:    0.5s
-[Parallel(n_jobs=11)]: Done 140 tasks      | elapsed:    2.9s
-[Parallel(n_jobs=11)]: Done 343 tasks      | elapsed:    7.0s
-[Parallel(n_jobs=11)]: Done 626 tasks      | elapsed:   12.8s</code></pre>
+[Parallel(n_jobs=11)]: Done 140 tasks      | elapsed:    2.6s
+[Parallel(n_jobs=11)]: Done 343 tasks      | elapsed:    5.9s
+[Parallel(n_jobs=11)]: Done 626 tasks      | elapsed:   10.4s</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>[Parallel(n_jobs=11)]: Done 1000 out of 1000 | elapsed:   20.6s finished</code></pre>
+<pre><code>[Parallel(n_jobs=11)]: Done 1000 out of 1000 | elapsed:   16.6s finished</code></pre>
 </div>
 <div id="fig-generalised" class="quarto-layout-panel">
 <figure class="quarto-float quarto-float-fig figure">
@@ -474,19 +474,19 @@ Tip
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
 <pre><code>--- Starting Reliability Analysis (PoIs: ['Length']) ---
 1. Selecting Mean Model (Cross-Validation)...
--&gt; Selected Model: Kriging (Gaussian Process)
+-&gt; Selected Model: Polynomial (Degree 2)
 2. Fitting Variance Model (Kernel Smoothing)...
    -&gt; Optimizing bandwidth via LOO-CV...
-   -&gt; Smoothing Bandwidth: 31.0166
+   -&gt; Smoothing Bandwidth: 44.7650
 3. Inferring Error Distribution (AIC)...
-   -&gt; Selected Distribution: laplace
+   -&gt; Selected Distribution: logistic
 4. Computing PoD Curve...
 5. Running Bootstrap (1000 iterations on 11 cores)...</code></pre>
 </div>
 </div>
 <div class="quarto-layout-row">
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<pre><code>   -&gt; a90/95 Reliability Index: 5.291
+<pre><code>   -&gt; a90/95 Reliability Index: 5.370
 --- Analysis Complete ---</code></pre>
 </div>
 </div>
@@ -637,10 +637,10 @@ Figure&nbsp;3: Head-to-Head Reliability Comparison
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
 <pre><code>--- Reliability Summary ---
 Target Threshold: 15
-Classical a90/95 (Estimated):  7.58 mm
-Generalised a90/95 (Estimated): 5.30 mm
+Classical a90/95 (Estimated):  7.19 mm
+Generalised a90/95 (Estimated): 5.40 mm
 
-Difference in critical sizing: 2.28 mm</code></pre>
+Difference in critical sizing: 1.79 mm</code></pre>
 </div>
 </div>
 </div>
