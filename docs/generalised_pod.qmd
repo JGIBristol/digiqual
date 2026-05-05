@@ -2,7 +2,7 @@
 title: "Generalised Probability of Detection"
 ---
 
-In traditional non-destructive evaluation (NDE), the standard $\hat{a}$-versus-$a$ approach relies on several restrictive assumptions: 
+In traditional non-destructive evaluation (NDE), the standard $\hat{a}$-versus-$a$ approach relies on several restrictive assumptions:
 1. **Linearity** of the signal response to defect size.
 2. **Homoscedasticity** (constant variance) of noise across all defect sizes.
 3. **Normality** (Gaussian shape) of the residuals.
@@ -46,10 +46,11 @@ $$ PoD(\mathbf{x}) = \int_{\Omega_z} PoD(\mathbf{x}, \mathbf{z}) p(\mathbf{z}) d
 `digiqual` approximates this integral computationally via Latin Hypercube Sampling (LHS) across the continuous physics space.
 
 ## 5. Bootstrapping for Confidence Bounds
-Because the model is non-linear and non-normal, traditional analytical confidence bounds are invalid. 
+Because the model is non-linear and non-normal, traditional analytical confidence bounds are invalid.
 
 ### The Process
 `digiqual` uses **Bootstrap resampling**:
+
 1. Draw $N$ samples with replacement from the original dataset.
 2. Completely physically re-fit the mean model, variance model, and error distribution.
 3. Calculate the PoD curve.
