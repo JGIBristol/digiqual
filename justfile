@@ -81,34 +81,6 @@ build_app: clean
     @echo "Build complete. App is located at app/dist/Digiqual.app"
 
 
-# --- WINDOWS BUILD ---
-
-# Builds the .exe for Windows using Python for cross-platform file handling
-build_windows:
-    # 1. Clean old artifacts using Python to avoid 'rm' errors on Windows
-    @python -c "import shutil, os, glob; [shutil.rmtree(p, ignore_errors=True) for p in ['app/dist', 'app/build'] + glob.glob('app/*.spec')]"
-
-    # 2. Run pyinstaller via uv to create the executable
-    cd app && uv run pyinstaller --name "Digiqual" \
-        --noconfirm \
-        --windowed \
-        --collect-all digiqual \
-        --collect-all shiny \
-        --collect-all faicons \
-        --collect-all shinyswatch \
-        --collect-all htmltools \
-        --collect-all pywebview \
-        --hidden-import="uvicorn.loops.auto" \
-        --hidden-import="uvicorn.protocols.http.auto" \
-        --hidden-import="uvicorn.lifespan.on" \
-        --hidden-import="engineio.async_drivers.threading" \
-        run_app.py
-
-    @echo "Build complete. The Windows executable is located in: app/dist/Digiqual/Digiqual.exe"
-
-
-
-
 # Uploads the package to PyPI (bump version before)
 build_pypi: clean
     # uv publish takes everything in your custom package/ directory
