@@ -3,7 +3,7 @@ import os
 import threading
 import socket
 import webview
-import multiprocessing  # 1. Add this import
+import multiprocessing
 from webview.menu import Menu, MenuAction, MenuSeparator
 from shiny import run_app
 from app import app
@@ -60,19 +60,27 @@ def start_server():
     run_app(app, port=SELECTED_PORT, host=HOST, launch_browser=False, reload=False)
 
 if __name__ == '__main__':
-    # 2. ADD THIS CRITICAL LINE HERE
+    # 1. Standard PyInstaller intercept for workers
     multiprocessing.freeze_support()
 
-    t = threading.Thread(target=start_server)
-    t.daemon = True
-    t.start()
+    # 2. THE ULTIMATE FAILSAFE: Environment Variable Inheritance
+    # If a process sees this flag already exists, it knows it is a child and skips the GUI!
+    if os.environ.get('DIGIQUAL_IS_SPAWNED') == '1':
+        pass # We are a stray background process. Do nothing and let it quietly exit.
+    else:
+        # We are the true main process! Set the flag for any future children.
+        os.environ['DIGIQUAL_IS_SPAWNED'] = '1'
+        
+        t = threading.Thread(target=start_server)
+        t.daemon = True
+        t.start()
 
-    window = webview.create_window(
-        'DigiQual',
-        f'http://{HOST}:{SELECTED_PORT}',
-        width=1200,
-        height=800,
-        resizable=True
-    )
+        window = webview.create_window(
+            'DigiQual',
+            f'http://{HOST}:{SELECTED_PORT}',
+            width=1200,
+            height=800,
+            resizable=True
+        )
 
-    webview.start(private_mode=False, menu=menu_items)
+        webview.start(private_mode=False, menu=menu_items)
