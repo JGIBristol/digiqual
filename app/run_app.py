@@ -3,6 +3,7 @@ import os
 import threading
 import socket
 import webview
+import multiprocessing  # 1. Add this import
 from webview.menu import Menu, MenuAction, MenuSeparator
 from shiny import run_app
 from app import app
@@ -29,7 +30,6 @@ if not getattr(sys, 'frozen', False):
     sys.path.insert(0, os.path.join(base_dir, "..", "src"))
 
 # --- 3. Enable Native Downloads ---
-# This entirely replaces the custom JS bridge and fixes the OS dialog bug!
 webview.settings['ALLOW_DOWNLOADS'] = True
 
 # --- 4. Menu Bar Actions ---
@@ -47,7 +47,6 @@ def open_documentation():
             'window.open("https://jgibristol.github.io/digiqual/", "_blank");'
         )
 
-# Define the menu structure
 menu_items = [
     Menu('Help', [
         MenuAction('View Documentation', open_documentation),
@@ -61,11 +60,13 @@ def start_server():
     run_app(app, port=SELECTED_PORT, host=HOST, launch_browser=False, reload=False)
 
 if __name__ == '__main__':
+    # 2. ADD THIS CRITICAL LINE HERE
+    multiprocessing.freeze_support()
+
     t = threading.Thread(target=start_server)
     t.daemon = True
     t.start()
 
-    # Note: js_api parameter has been cleanly removed
     window = webview.create_window(
         'DigiQual',
         f'http://{HOST}:{SELECTED_PORT}',
@@ -74,5 +75,4 @@ if __name__ == '__main__':
         resizable=True
     )
 
-    # Note: func=inject_js has been cleanly removed
     webview.start(private_mode=False, menu=menu_items)
