@@ -52,7 +52,11 @@ Because the model is non-linear and non-normal, traditional analytical confidenc
 `digiqual` uses **Bootstrap resampling**:
 
 1. Draw $N$ samples with replacement from the original dataset.
+
 2. Completely physically re-fit the mean model, variance model, and error distribution.
+
 3. Calculate the PoD curve.
+
 4. Repeat this $B$ times (typically $B=1000$).
+
 5. Extract the $2.5^{th}$ and $97.5^{th}$ percentiles at every point $a$ to form the robust 95% confidence interval $PoD_{95}$.
