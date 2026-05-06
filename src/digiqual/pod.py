@@ -717,7 +717,7 @@ def bootstrap_pod_ci(
         n_jobs_actual = n_jobs
 
     # Parallel execution via Joblib
-    results = Parallel(n_jobs=n_jobs_actual, verbose=2)(
+    results = Parallel(n_jobs=n_jobs_actual,backend="multiprocessing", verbose=2)(
         delayed(_single_bootstrap_step)(
             X_2d, y, X_eval, threshold, model_type, model_params,
             bandwidth, dist_info, nuisance_ranges, n_samples

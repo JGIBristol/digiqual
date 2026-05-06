@@ -18,6 +18,7 @@ uv run pyinstaller --name "Digiqual" `
     --collect-all shinyswatch `
     --collect-all htmltools `
     --collect-all pywebview `
+    --collect-all matplotlib `
     --hidden-import="uvicorn.loops.auto" `
     --hidden-import="uvicorn.protocols.http.auto" `
     --hidden-import="uvicorn.lifespan.on" `
