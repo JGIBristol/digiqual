@@ -27,6 +27,7 @@ dependencies = [
     "shinyswatch",
     "faicons",
     "pywebview",
+    "openpyxl>=3.1.5",
 ]
 
 [build-system]

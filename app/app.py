@@ -317,19 +317,35 @@ ui.nav_panel(
                             ),
                             ui.hr(class_="my-4"),
 
-                            # Module 3: Analysis
+                            # Module 3: Analysis (Step 1)
                             ui.div(
                                 ui.h5(
-                                    ui.span(icon_svg("chart-line"), class_="text-success me-2"),
-                                    "3. PoD Analysis", class_="fw-bold mb-2"
+                                    ui.span(icon_svg("chart-area"), class_="text-success me-2"),
+                                    "3. Model Fit (PoD Step 1)", class_="fw-bold mb-2"
                                 ),
-                                ui.p("Construct Generalized Probability of Detection (PoD) curves.", class_="fw-semibold mb-2"),
+                                ui.p("Determine the statistical structure of your parameters rapidly without heavy computation.", class_="fw-semibold mb-2"),
                                 ui.tags.ul(
-                                    ui.tags.li("Robust statistics using the Generalized a-versus-a Method."),
-                                    ui.tags.li("Uncertainty quantification with bootstrap resampling."),
+                                    ui.tags.li("Automated model selection (Cross-Validation)."),
+                                    ui.tags.li("Extract mathematical equations and visualize the mean response surface."),
                                     class_="mb-0 ps-3 text-muted"
                                 ),
-                                class_="border-start border-3 border-success ps-3 mb-1"
+                                class_="border-start border-3 border-success ps-3 mb-3"
+                            ),
+                            ui.hr(class_="my-4"),
+
+                            # Module 4: Uncertainty Quantification (Step 2)
+                            ui.div(
+                                ui.h5(
+                                    ui.span(icon_svg("chart-line"), class_="text-danger me-2"),
+                                    "4. Uncertainty Quantification (PoD Step 2)", class_="fw-bold mb-2"
+                                ),
+                                ui.p("Lock the mathematical model and construct Generalised Probability of Detection (PoD) bounds.", class_="fw-semibold mb-2"),
+                                ui.tags.ul(
+                                    ui.tags.li("Parallelized bootstrap resampling for robust 95% Confidence Intervals."),
+                                    ui.tags.li("Monte Carlo integration to marginalize over nuisance parameters."),
+                                    class_="mb-0 ps-3 text-muted"
+                                ),
+                                class_="border-start border-3 border-danger ps-3 mb-1"
                             ),
                             class_="p-3"
                         )
@@ -594,18 +610,63 @@ ui.nav_panel(
     ),
 
 
-#### UI - PoD Analysis (Tab 4) ####
+#### UI - Model Fit & Response (Tab 4) ####
     ui.nav_panel(
-        "PoD Analysis",
+        "Model Fit",
         ui.div(
-            ui.h3("PoD Analysis", class_="mb-4 text-center"),
+            ui.h3("Model Fit & Response", class_="mb-4 text-center"),
+            ui.output_ui("fit_warnings_ui"),
             ui.layout_columns(
                 ui.card(
-                    ui.card_header("Analysis Results"),
-                    ui.output_ui("analysis_output"),
+                    ui.card_header("Model Configuration"),
+                    ui.layout_columns(
+                        ui.div(
+                            ui.input_selectize("pod_pois", "Parameters of Interest (Select 1 or 2)", choices=[], multiple=True),
+                            ui.input_selectize("pod_nuisance", "Nuisance Parameters (Max 2)", choices=[], multiple=True),
+                        ),
+                        ui.div(
+                            ui.input_select("pod_model_override", "Model Override", choices=["Auto (Best Fit)", "Polynomial", "Kriging"], selected="Auto (Best Fit)"),
+                            ui.panel_conditional("input.pod_model_override === 'Polynomial'",
+                                ui.input_slider("pod_poly_degree", "Polynomial Degree", min=1, max=10, value=3, step=1),
+                            ),
+                            ui.input_numeric("pod_threshold", "Detection Threshold", value=0, step=0.1),
+                        ),
+                        col_widths=[6, 6],
+                        style="overflow: visible;" # Lets dropdowns escape the columns
+                    ),
+                    ui.input_task_button("btn_run_fit", "Fit Model (Fast)", class_="btn-primary w-100", icon=icon_svg("bolt")),
+                    style="min-height: 280px; overflow: visible;" # Lets dropdowns escape the card and guarantees minimum space
                 ),
                 col_widths=[-1,10,-1]
             ),
+            ui.output_ui("fit_results_ui"),
+            class_="container-fluid py-3"
+        ),
+        icon=icon_svg("chart-area")
+    ),
+
+#### UI - Uncertainty Quantification (Tab 5) ####
+    ui.nav_panel(
+        "Uncertainty Quantification",
+        ui.div(
+            ui.h3("Uncertainty Quantification (PoD)", class_="mb-4 text-center"),
+            ui.output_ui("uq_warnings_ui"),
+            ui.layout_columns(
+                ui.card(
+                    ui.card_header("Bootstrap Configuration"),
+                    ui.layout_columns(
+                        ui.input_numeric("pod_n_boot", "Bootstrap Iterations", value=1000, min=10, step=100),
+                        ui.div(
+                            ui.input_checkbox("pod_parallel", "Enable Parallel Compute (Faster)", value=True),
+                            class_="pt-4"
+                        ),
+                        col_widths=[6, 6]
+                    ),
+                    ui.input_task_button("btn_run_uq", "Run Uncertainty Quantification", class_="btn-danger w-100", icon=icon_svg("layer-group")),
+                ),
+                col_widths=[-1,10,-1]
+            ),
+            ui.output_ui("uq_results_ui"),
             class_="container-fluid py-3"
         ),
         icon=icon_svg("chart-line")
@@ -613,7 +674,11 @@ ui.nav_panel(
     title="DigiQual",
     id="navbar",
     fillable=True,
-    header=ui.tags.style(app_css)
+    # --- ADDED MATHJAX SCRIPT TO HEADER ---
+    header=ui.tags.head(
+        ui.tags.style(app_css),
+        ui.tags.script(src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js")
+    )
 )
 
 #### Server Definition ####
@@ -1523,11 +1588,18 @@ def server(input, output, session):
         fig.tight_layout()
         return fig
 
-#### Server - PoD Generation (Tab 4) ####
+#### Server - Model Fit & UQ Logic (Tabs 4 & 5) ####
 
     # --- SHARED CALCULATOR ---
-
     study_instance = reactive.value(None)
+    locked_model_type = reactive.value(None)
+    locked_model_degree = reactive.value(None)
+
+    fit_metrics = reactive.value(None)
+    uq_metrics = reactive.value(None)
+    pod_export_data = reactive.value(None)
+    plot_trigger_fit = reactive.value(0)
+    plot_trigger_uq = reactive.value(0)
 
     @reactive.effect
     @reactive.event(uploaded_data, input.input_cols, input.outcome_col)
@@ -1535,474 +1607,499 @@ def server(input, output, session):
         selected_inputs = list(input.input_cols())
         selected_outcome = input.outcome_col()
 
-        # Added the conflict guard (selected_outcome in selected_inputs)
         if uploaded_data() is None or not selected_inputs or not selected_outcome or (selected_outcome in selected_inputs):
             study_instance.set(None)
             return
 
         study = SimulationStudy(
-            input_cols=selected_inputs,
-            outcome_col=selected_outcome,
-            max_gap_ratio=input.ui_max_gap(),
-            min_r2_score=input.ui_min_r2(),
-            max_avg_cv=input.ui_avg_cv(),
-            max_max_cv=input.ui_max_cv()
+            input_cols=selected_inputs, outcome_col=selected_outcome,
+            max_gap_ratio=input.ui_max_gap(), min_r2_score=input.ui_min_r2(),
+            max_avg_cv=input.ui_avg_cv(), max_max_cv=input.ui_max_cv()
         )
         study.add_data(uploaded_data())
         study_instance.set(study)
 
     @reactive.calc
-    def current_study():
-        """
-        Returns the cached study object.
-        """
-        return study_instance()
-
+    def current_study(): return study_instance()
 
     @reactive.calc
     def outcome_stats():
-        """Centrally managed outcome statistics to prevent NameErrors."""
         df = uploaded_data()
         if df is None or not input.outcome_col():
             return None
-
         vals = pd.to_numeric(df[input.outcome_col()], errors="coerce").dropna()
         if vals.empty:
             return None
-
-        return {
-            "min": float(vals.min()),
-            "median": float(vals.median()),
-            "max": float(vals.max()),
-        }
-
-    # --- REACTIVE VALUES ---
-    # Store scalar results for the table (e.g., a90/95, bandwidth)
-    pod_metrics = reactive.value(None)
-    # Store the full curve data for downloading
-    pod_export_data = reactive.value(None)
-    # Trigger to refresh plots when analysis runs
-    plot_trigger = reactive.value(0)
-
-
-    # --- MAIN UI ---
-    @reactive.effect
-    @reactive.event(uploaded_data)
-    def _reset_pod_on_new_data():
-        pod_metrics.set(None)
-        pod_export_data.set(None)
-
-    @render.ui
-    def analysis_output():
-        """
-        Renders the Analysis UI with conditional warnings.
-        """
-        # 1. Hard Lock: No Data
-        if uploaded_data() is None:
-            return ui.div(
-                ui.div(
-                    ui.h4("No Data Available", class_="text-muted"),
-                    ui.p("Please upload data in the 'Simulation Diagnostics' tab to begin."),
-                    class_="text-center p-5 bg-light border rounded"
-                )
-            )
-
-        # 2. Build UI Elements
-        ui_elements = []
-
-        # -- Conditional Warning Banner --
-        if not validation_passed():
-            ui_elements.append(
-                ui.div(
-                    ui.h5(icon_svg("triangle-exclamation"), " Caution: Validation Issues Detected"),
-                    ui.p("The diagnostic tests found potential issues (e.g., coverage gaps). Results may be unreliable."),
-                    class_="alert alert-warning"
-                )
-            )
-
-        # -- Input Controls --
-        inputs = list(input.input_cols())
-
-        # Get outcome summary stats from our shared reactive calculator
-        stats = outcome_stats()
-        if stats is None:
-            return ui.div(ui.p("Processing data...", class_="text-muted text-center p-3"))
-
-        ui_elements.append(
-            ui.card(
-                ui.card_header("Probability of Detection (PoD) Settings"),
-                ui.layout_columns(
-                    ui.div(
-                        ui.h6("Data Selection", class_="text-muted"),
-                        ui.input_selectize(
-                            "pod_pois",
-                            "Parameters of Interest (Select 1 or 2)",
-                            choices=inputs,
-                            multiple=True
-                        ),
-                        ui.input_selectize(
-                            "pod_nuisance",
-                            "Nuisance Parameters (Max 2)",
-                            choices=inputs,
-                            multiple=True
-                        ),
-                    ),
-                    ui.div(
-                        ui.h6("Model Configuration", class_="text-muted"),
-                        ui.input_select(
-                            "pod_model_override", "Model Override",
-                            choices=["Auto (Best Fit)", "Polynomial", "Kriging"],
-                            selected="Auto (Best Fit)"
-                        ),
-                        ui.panel_conditional(
-                            "input.pod_model_override === 'Polynomial'",
-                            ui.input_slider("pod_poly_degree", "Polynomial Degree", min=1, max=10, value=3, step=1),
-                        ),
-                        ui.input_numeric(
-                                "pod_threshold",
-                                f"Detection Threshold ({input.outcome_col()})",
-                                value=round(stats['median'], 1),
-                                min=round(stats['min'], 3),
-                                max=round(stats['max'], 3),
-                            ),
-                        ui.tags.small(
-                            ui.tags.span("Min ", style="color:#6c757d;"),
-                            ui.tags.span(f"{stats['min']:.3g}", style="font-weight:600;"),
-                            ui.tags.span("  ·  Median ", style="color:#6c757d; margin-left:4px;"),
-                            ui.tags.span(f"{stats['median']:.3g}", style="font-weight:600;"),
-                            ui.tags.span("  ·  Max ", style="color:#6c757d; margin-left:4px;"),
-                            ui.tags.span(f"{stats['max']:.3g}", style="font-weight:600;"),
-                            class_="text-muted d-block",
-                            style="margin-top:-8px; font-size:0.8em;",
-                        ),
-                        ui.input_numeric(
-                            "pod_n_boot", "Bootstrap Iterations",
-                            value=1000, min=10, step=100
-                        ),
-                        ui.input_checkbox(
-                            "pod_parallel", "Enable Parallel Compute",
-                            value=False # Defaults to single-core as requested
-                        ),
-                    ),
-                    col_widths=[6, 6],
-                ),
-                ui.input_task_button("btn_run_pod", "Run Analysis", class_="btn-primary w-100", icon=icon_svg("chart-line")),
-            )
-        )
-
-        # -- Results Container --
-        ui_elements.append(ui.br())
-        ui_elements.append(ui.output_ui("pod_results_container"))
-
-        return ui.div(*ui_elements)
-
-
-    # --- ANALYSIS LOGIC ---
+        return {"min": float(vals.min()), "median": float(vals.median()), "max": float(vals.max())}
 
     @reactive.effect
     @reactive.event(input.pod_pois, input.pod_nuisance)
     def _clear_results_on_variable_change():
-        pod_metrics.set(None)
-        pod_export_data.set(None)
+        fit_metrics.set(None)
+        uq_metrics.set(None)
+        locked_model_type.set(None)
 
-
+    # ─────────────────────────────────────────────────────────────────
+    # DYNAMIC UI UPDATERS (Prevents resetting)
+    # ─────────────────────────────────────────────────────────────────
     @reactive.effect
-    @reactive.event(input.btn_run_pod)
-    async def compute_pod_analysis(): # <-- Note the 'async' keyword here!
-        """
-        Runs .pod(), calculates a90/95, and triggers plotting.
-        """
-        pod_metrics.set(None)
-        pod_export_data.set(None)
+    @reactive.event(uploaded_data, input.outcome_col)
+    def update_pod_ui_choices():
+        df = uploaded_data()
+        if df is not None:
+            cols = list(df.columns)
+            outcome = input.outcome_col()
+            inputs = [c for c in cols if c != outcome] if outcome else cols
 
-        study = current_study()
-        if study is None:
-            return
+            ui.update_selectize("pod_pois", choices=inputs)
+            ui.update_selectize("pod_nuisance", choices=inputs)
 
-        stats = outcome_stats()
-        if stats is None:
-            return
+            if outcome and outcome in df.columns:
+                vals = pd.to_numeric(df[outcome], errors="coerce").dropna()
+                if not vals.empty:
+                    ui.update_numeric("pod_threshold",
+                                      label=f"Detection Threshold ({outcome})",
+                                      value=round(float(vals.median()), 1),
+                                      min=round(float(vals.min()), 3),
+                                      max=round(float(vals.max()), 3))
 
-        threshold = input.pod_threshold()
-        if not (stats['min'] <= threshold <= stats['max']):
-            ui.notification_show(
-                "Threshold is outside the range of the outcome variable — results may be uninformative.",
-                type="warning"
-            )
-
-        # 1. Map UI selection to backend parameters
-        override_map = {
-            "Auto (Best Fit)": "auto",
-            "Polynomial": "polynomial",
-            "Kriging": "kriging",
-        }
-        model_override = override_map.get(input.pod_model_override(), "auto")
-        force_degree = None
-        if model_override == "polynomial":
-            try:
-                force_degree = int(input.pod_poly_degree())
-            except Exception:
-                force_degree = None
-
-        # --- UNIFIED PARAMETER LOGIC ---
-        poi_cols = list(input.pod_pois())
-        nuisance_cols = list(input.pod_nuisance())
-
-        # Validation
-        if not poi_cols or len(poi_cols) > 2:
-            ui.notification_show("Please select exactly 1 or 2 Parameters of Interest.", type="error")
-            return
-        if len(nuisance_cols) > 2:
-            ui.notification_show("Please select up to 2 Nuisance Parameters.", type="error")
-            return
-        if set(poi_cols).intersection(set(nuisance_cols)):
-            ui.notification_show("Parameters of Interest and Nuisance Parameters cannot overlap.", type="error")
-            return
-
-        # --- NEW PARALLEL LOGIC & TIME ESTIMATION ---
-        total_cores = os.cpu_count() or 1
-        actual_cores = max(total_cores - 1, 1) if input.pod_parallel() else 1
-        selected_cores = -1 if input.pod_parallel() else 1
-
-        # Heuristic based on terminal logs:
-        # A 2D Surface evaluates 900 points per iteration (~3.5 sec per iter on 1 core)
-        # A 1D Curve evaluates 100 points per iteration (~0.4 sec per iter on 1 core)
-        base_sec_per_iter = 3.5 if len(poi_cols) > 1 else 0.4
-
-        # Nuisance parameters trigger Monte Carlo integration (1,000 extra samples per point)
-        # This acts as a multiplier on the base execution time
-        if len(nuisance_cols) > 0:
-            base_sec_per_iter *= 3.8
-
-        # Calculate raw estimate and add a 15% safety buffer
-        est_seconds = (input.pod_n_boot() / actual_cores) * base_sec_per_iter
-        est_seconds *= 1.15
-
-        # Format cleanly into seconds or minutes
-        if est_seconds < 90:
-            time_str = f"~{int(est_seconds)} seconds"
-        else:
-            time_str = f"~{int(est_seconds / 60)} minutes"
-
-        # Show the sticky notification
-        ui.notification_show(
-            f"Running Analysis on {actual_cores} core(s). Estimated time: {time_str}. Please wait...",
-            id="pod_progress_toast", # ID allows us to remove it manually later
-            duration=None,           # Stays on screen indefinitely
-            type="message"
-        )
-
-        # CRITICAL: Yield to the async event loop for a fraction of a second.
-        # This gives Shiny time to actually draw the notification on the user's screen
-        # before the heavy math completely locks up the server.
-        await asyncio.sleep(0.1)
-
-        try:
-            # 2. Run the Analysis (Generates models and curves)
-            results = study.pod(
-                poi_col=poi_cols,
-                threshold=input.pod_threshold(),
-                nuisance_col=nuisance_cols,
-                model_override=model_override,
-                force_degree=force_degree,
-                n_boot=input.pod_n_boot(),
-                n_jobs=selected_cores
-            )
-
-            # 3. Calculate a90/95 (Interpolate)
-            val = results["a90_95"]
-            if len(poi_cols) > 1:
-                a9095_str = "N/A (Surface)"
-            else:
-                a9095_str = f"{val:.3f}" if not np.isnan(val) else "Not Reached"
-
-            # 4. Format the Mean Model string based on the new architecture
-            mean_model = results["mean_model"]
-            if mean_model.model_type_ == 'Polynomial':
-                model_str = f"Polynomial (Degree {mean_model.model_params_})"
-            else:
-                model_str = "Kriging (Gaussian Process)"
-
-            # 5. Create Metrics Dictionary for the UI
-            dist_name = results["dist_info"][0].capitalize()
-            dist_params = results["dist_info"][1]
-            formatted_params = ", ".join([f"{p:.4f}" for p in dist_params])
-
-            cv_scores = mean_model.cv_scores_
-            if mean_model.model_type_ == 'Polynomial':
-                used_key = ('Polynomial', mean_model.model_params_)
-            else:
-                used_key = ('Kriging', None)
-            used_mse = cv_scores.get(used_key, np.nan)
-            best_mse_str = f"{used_mse:.2e}" if not np.isnan(used_mse) else "N/A"
-
-            n_samples = len(results["X"])
-            poi_display = ", ".join(results["poi_col"]) if isinstance(results["poi_col"], list) else results["poi_col"]
-
-            nuisance_display = ", ".join(nuisance_cols) if nuisance_cols else "None"
-
-            metrics = {
-                "Parameter of Interest": poi_display,
-                "Nuisance Parameters": nuisance_display,
-                "Threshold": results["threshold"],
-                "a90/95": a9095_str,
-                "Sample Size (N)": n_samples,
-                "Mean Model": model_str,
-                "Model Fit (MSE)": best_mse_str,
-                "Smoothing Bandwidth": f"{results['bandwidth']:.4f}",
-                "Error Distribution": dist_name,
-                "Distribution Parameters": formatted_params,
-                "Bootstrap Iterations": results["n_boot"]
-            }
-            pod_metrics.set(metrics)
-
-            # 6. Prepare Data for Download
-            export_data = {}
-            if isinstance(results["poi_col"], str) or len(poi_cols) == 1:
-                export_data["x_defect_size"] = results["X_eval"].flatten()
-            else:
-                for i, col in enumerate(poi_cols):
-                    export_data[col] = results["X_eval"][:, i]
-
-            export_data["pod_mean"] = results["curves"]["pod"]
-            export_data["ci_lower"] = results["curves"]["ci_lower"]
-            export_data["ci_upper"] = results["curves"]["ci_upper"]
-
-            export_df = pd.DataFrame(export_data)
-            pod_export_data.set(export_df)
-
-            # 7. Generate Plots (Visualise draws them internally)
-            study.visualise(show=False)
-            plot_trigger.set(plot_trigger() + 1)
-
-            # Show completion notification
-            ui.notification_show("Analysis Complete!", type="success")
-
-        except Exception as e:
-            ui.notification_show(f"Analysis Failed: {str(e)}", type="error")
-
-        finally:
-            # 8. Always remove the "Please wait" notification, even if it errors out
-            ui.notification_remove("pod_progress_toast")
-
-# --- RESULTS DISPLAY ---
+    # ─────────────────────────────────────────────────────────────────
+    # TAB 4: MODEL FIT LOGIC
+    # ─────────────────────────────────────────────────────────────────
     @render.ui
-    def pod_results_container():
-        """
-        Renders the model selection plot, side-by-side analysis plots, and the metrics table.
-        """
-        if pod_metrics() is None:
+    def fit_warnings_ui():
+        if uploaded_data() is None:
+            return ui.layout_columns(ui.div(ui.p("Please upload data in the 'Simulation Diagnostics' tab.", class_="text-center p-4 text-muted bg-light rounded border")), col_widths=[-1,10,-1])
+
+        if not validation_passed():
+            return ui.layout_columns(ui.div(ui.h5(icon_svg("triangle-exclamation"), " Caution: Validation Issues"),
+                       ui.p("The diagnostic tests found potential issues. Results may be unreliable.", class_="mb-0"), class_="alert alert-warning shadow-sm"), col_widths=[-1,10,-1])
+        return ui.div()
+
+    @render.ui
+    def fit_results_ui():
+        if fit_metrics() is None:
             return ui.div()
 
         study = current_study()
         is_multi_dim = len(study.pod_results.get("poi_cols", [])) > 1
 
-        outcome_label = input.outcome_col()
-
-        # Unified 2-column layout for both 1D and Multi-Dimensional
-        row2 = ui.layout_columns(
-            ui.card(
-                # Use dynamic naming based on the outcome label
-                ui.card_header(f"{outcome_label} Surface" if is_multi_dim else f"{outcome_label} Model Fit"),
-                ui.output_plot("plot_signal"),
-                full_screen=True
-            ),
-            ui.card(
-                ui.card_header("PoD Surface Heatmap" if is_multi_dim else "PoD Curve (95% CI)"),
-                ui.output_plot("plot_curve"),
-                full_screen=True
-            ),
-            col_widths=[6, 6],
-            class_="mb-3"
-        )
-
-        return ui.div(
-            # Row 1: Model Selection Plot (Full Width)
-            ui.card(
-                ui.card_header("Model Selection (Bias-Variance Tradeoff)"),
-                ui.output_plot("plot_model_selection", height="400px"),
-                full_screen=True,
-                class_="mb-3"
-            ),
-            # Row 2: Dynamic Signal Model and PoD Plots
-            row2,
-            # Row 3: Table and Download Actions
-            ui.layout_columns(
-                ui.card(
-                    ui.card_header("Key Reliability Metrics"),
-                    ui.output_data_frame("pod_stats_table")
+        return ui.layout_columns(
+            ui.div(
+                ui.layout_columns(
+                    ui.card(ui.card_header("Model Selection"), ui.output_plot("plot_model_selection"), full_screen=True),
+                    ui.card(ui.card_header(f"{input.outcome_col()} Surface" if is_multi_dim else "Model Fit"), ui.output_plot("plot_signal"), full_screen=True),
+                    col_widths=[6, 6]
                 ),
-                ui.card(
-                    ui.card_header("Export Results"),
-                    ui.div(
-                        # Updated text explaining the two download options
-                        ui.p("Download the key reliability metrics or the full curve data (PoD, CI) for external reporting.", class_="small text-muted mb-3"),
+                ui.layout_columns(
+                        ui.card(
+                            ui.card_header("Fit Statistics"),
 
-                        # New button for metrics
-                        ui.download_button("download_pod_metrics", "Download Metrics", class_="btn-primary w-100 mb-2", icon=icon_svg("file-csv")),
-
-                        # Updated existing button for the curve
-                        ui.download_button("download_pod_results", "Download Full Curve", class_="btn-success w-100", icon=icon_svg("download"))
+                            ui.output_ui("mathjax_equation_ui"),
+                            ui.output_data_frame("fit_stats_table")
+                        ),
+                    ui.card(
+                        ui.card_header("Export Preliminary Results"),
+                        ui.p("Download the configuration metrics and the mean response curve. Run UQ in Tab 5 to include confidence bounds.", class_="small text-muted mb-3"),
+                        ui.download_button("download_excel_fit", "Download Excel Report", class_="btn-success w-100", icon=icon_svg("file-excel")),
+                        class_="text-center"
                     ),
-                    # Changed to flex-column to stack the buttons and text nicely
-                    class_="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3"
-                ),
-                col_widths=[8, 4]
-            )
+                    col_widths=[8, 4]
+                )
+            ),
+            col_widths=[-1,10,-1]
         )
+
+    @reactive.effect
+    @reactive.event(input.btn_run_fit)
+    async def compute_model_fit():
+        fit_metrics.set(None)
+        uq_metrics.set(None)
+        locked_model_type.set(None)
+
+        study = current_study()
+        if study is None:
+            return
+
+        poi_cols, nuisance_cols = list(input.pod_pois()), list(input.pod_nuisance())
+        if not poi_cols or len(poi_cols) > 2:
+            ui.notification_show("Select 1 or 2 Parameters of Interest.", type="error")
+            return
+
+        override_map = {"Auto (Best Fit)": "auto", "Polynomial": "polynomial", "Kriging": "kriging"}
+        model_override = override_map.get(input.pod_model_override(), "auto")
+        force_degree = int(input.pod_poly_degree()) if model_override == "polynomial" else None
+
+        # --- TAB 4 TIME ESTIMATION HEURISTIC ---
+        n_samples = len(study.clean_data)
+        est_sec = 0.5 # base UI overhead
+
+        # 1. Cross-Validation Time
+        if model_override == "auto":
+            est_sec += (n_samples / 1000.0) * 0.5
+            if n_samples <= 1000:
+                est_sec += (n_samples / 500.0)**3 * 0.8
+        elif model_override == "kriging":
+            est_sec += (n_samples / 500.0)**3 * 0.8
+        else:
+            est_sec += (n_samples / 1000.0) * 0.5
+
+        # 2. Single MC Integration Time (Runs once to generate the mean curve)
+        n_grid_points = 900 if len(poi_cols) > 1 else 100
+        n_mc_samples = 3000 if len(nuisance_cols) > 0 else 1 # Default is 3000 outside bootstrap
+        est_sec += (n_grid_points * n_mc_samples * n_samples) * 2e-9
+
+        time_str = f"~{max(1, int(est_sec))} seconds" if est_sec < 90 else f"~{int(est_sec / 60)} minutes"
+        ui.notification_show(f"Fitting Models (Cross-Validation)... Estimated time: {time_str}", id="fit_toast", duration=None, type="message")
+        await asyncio.sleep(0.1)
+
+        try:
+            results = study.pod(
+                poi_col=poi_cols, threshold=input.pod_threshold(), nuisance_col=nuisance_cols,
+                model_override=model_override, force_degree=force_degree, n_boot=0
+            )
+
+            mean_model = results["mean_model"]
+            locked_model_type.set(mean_model.model_type_)
+
+            # --- EXTRACT POLYNOMIAL EQUATION ---
+            if mean_model.model_type_ == 'Polynomial':
+                locked_model_degree.set(mean_model.model_params_)
+                model_str = f"Polynomial (Degree {mean_model.model_params_})"
+                try:
+                    poly = mean_model.named_steps['polynomialfeatures']
+                    lr = mean_model.named_steps['linearregression']
+
+                    # 1. Format names for beautiful LaTeX (\mathrm prevents italics)
+                    latex_features = [f"\\mathrm{{{col}}}" for col in poi_cols + nuisance_cols]
+                    latex_terms = poly.get_feature_names_out(latex_features)
+
+                    # 2. Extract coefficients
+                    coefs = np.atleast_1d(lr.coef_).flatten()
+                    intercept = float(lr.intercept_[0] if isinstance(lr.intercept_, np.ndarray) else lr.intercept_)
+
+                    # 3. Build LaTeX Equation
+                    eq_parts = [f"{intercept:.4g}"]
+                    for c, t in zip(coefs, latex_terms):
+                        if c == 0 or t == "1":
+                            continue
+                        sign = "+" if c > 0 else "-"
+                        clean_term = t.replace(" ", " \\cdot ")
+                        eq_parts.append(f"{sign} {abs(c):.4g} {clean_term}")
+                    equation_latex = f"$$ \\mathrm{{{input.outcome_col()}}} = {' '.join(eq_parts)} $$"
+
+                    # 4. Build Plain Text Equation for Excel
+                    plain_terms = poly.get_feature_names_out(poi_cols + nuisance_cols)
+                    plain_parts = [f"{intercept:.4g}"]
+                    for c, t in zip(coefs, plain_terms):
+                        if c == 0 or t == "1":
+                            continue
+                        sign = "+" if c > 0 else "-"
+                        plain_parts.append(f"{sign} {abs(c):.4g} * {t.replace(' ', ' * ')}")
+                    equation_plain = " ".join(plain_parts)
+
+                except Exception:
+                    equation_latex = "$$ \\text{Equation Extraction Failed} $$"
+                    equation_plain = "Extraction Failed"
+            else:
+                locked_model_degree.set(None)
+                model_str = "Kriging (Gaussian Process)"
+                equation_latex = "$$ \\text{Gaussian Process (Non-parametric)} $$"
+                equation_plain = "Gaussian Process (Non-parametric)"
+
+            cv_scores = mean_model.cv_scores_
+            used_key = ('Polynomial', mean_model.model_params_) if mean_model.model_type_ == 'Polynomial' else ('Kriging', None)
+            best_mse_str = f"{cv_scores.get(used_key, np.nan):.2e}"
+
+            dist_name = results['dist_info'][0].capitalize()
+            dist_params = [round(p, 4) for p in results['dist_info'][1]]
+
+            metrics = {
+                "Parameter(s) of Interest": ", ".join(poi_cols),
+                "Nuisance Parameter(s)": ", ".join(nuisance_cols) if nuisance_cols else "None",
+                "Total Samples (N)": len(study.clean_data),
+                "Selected Model": model_str,
+                "Model Equation": equation_plain, # Stays here for Excel
+                "LaTeX Equation": equation_latex, # Used for UI
+                "Model Fit (CV MSE)": best_mse_str,
+                "Smoothing Bandwidth": f"{results['bandwidth']:.4f}",
+                "Error Distribution": f"{dist_name} (Params: {tuple(dist_params)})",
+            }
+            fit_metrics.set(metrics)
+
+            # --- EXPORT PRELIMINARY DATA ---
+            export_data = {}
+            if len(poi_cols) == 1:
+                export_data["x_defect_size"] = results["X_eval"].flatten()
+            else:
+                for i, col in enumerate(poi_cols):
+                    export_data[col] = results["X_eval"][:, i]
+            export_data["pod_mean"] = results["curves"]["pod"]
+            export_data["ci_lower"] = np.nan
+            export_data["ci_upper"] = np.nan
+            pod_export_data.set(pd.DataFrame(export_data))
+
+            study.visualise(show=False)
+            plot_trigger_fit.set(plot_trigger_fit() + 1)
+            ui.notification_show("Model Fit Complete. Proceed to Uncertainty Quantification.", type="success")
+
+        except Exception as e:
+            ui.notification_show(f"Fit Failed: {str(e)}", type="error")
+        finally:
+            ui.notification_remove("fit_toast")
+
+    # ─────────────────────────────────────────────────────────────────
+    # TAB 5: UQ LOGIC
+    # ─────────────────────────────────────────────────────────────────
+    @render.ui
+    def uq_warnings_ui():
+        if locked_model_type() is None:
+            return ui.layout_columns(ui.div(ui.p("Please fit a model in the 'Model Fit' tab first.", class_="text-center p-4 text-muted bg-light rounded border")), col_widths=[-1,10,-1])
+
+        model_str = f"Polynomial (Degree {locked_model_degree()})" if locked_model_type() == 'Polynomial' else "Kriging"
+        return ui.layout_columns(
+            ui.div(
+                ui.h5(icon_svg("lock"), f" Structural Shape Locked: {model_str}"),
+                ui.p("Note: The confidence bounds generated here reflect parameter uncertainty assuming the mathematical shape chosen in Tab 4 is correct. If you add more data later, the 'Auto' selector may choose a different shape, causing new curves to fall outside these bounds.", class_="small mb-0"),
+                class_="alert alert-info shadow-sm"
+            ),
+            col_widths=[-1,10,-1]
+        )
+
+    @render.ui
+    def uq_results_ui():
+        if uq_metrics() is None:
+            return ui.div()
+
+        study = current_study()
+        is_multi_dim = len(study.pod_results.get("poi_cols", [])) > 1
+
+        return ui.layout_columns(
+            ui.div(
+                # --- NEW SIDE-BY-SIDE PLOT LAYOUT ---
+                ui.layout_columns(
+                    ui.card(
+                        ui.card_header(f"{input.outcome_col()} Surface" if is_multi_dim else "Model Fit"),
+                        ui.output_plot("plot_signal_uq", height="400px"),
+                        full_screen=True, class_="mt-3"
+                    ),
+                    ui.card(
+                        ui.card_header("PoD Surface Heatmap" if is_multi_dim else "PoD Curve (95% CI)"),
+                        ui.output_plot("plot_curve", height="400px"),
+                        full_screen=True, class_="mt-3"
+                    ),
+                    col_widths=[6, 6]
+                ),
+                # --- METRICS & EXPORT ---
+                ui.layout_columns(
+                    ui.card(ui.card_header("Reliability Metrics"), ui.output_data_frame("uq_stats_table")),
+                    ui.card(
+                        ui.card_header("Export Results"),
+                        ui.p("Download a comprehensive Excel workbook containing all configuration metrics and full curve data across separate tabs.", class_="small text-muted mb-3"),
+                        ui.download_button("download_excel_report", "Download Excel Report", class_="btn-success w-100", icon=icon_svg("file-excel")),
+                        class_="text-center"
+                    ),
+                    col_widths=[8, 4]
+                )
+            ),
+            col_widths=[-1,10,-1]
+        )
+
+    @reactive.effect
+    @reactive.event(input.btn_run_uq)
+    async def compute_uq():
+        uq_metrics.set(None)
+        study = current_study()
+        if study is None:
+            return
+
+        poi_cols, nuisance_cols = list(input.pod_pois()), list(input.pod_nuisance())
+        actual_cores = max((os.cpu_count() or 1) - 1, 1) if input.pod_parallel() else 1
+
+        # --- TAB 5 TIME ESTIMATION HEURISTIC ---
+        n_samples = len(study.clean_data)
+
+        # 1. Model Refitting Time (Per Iteration)
+        if locked_model_type() == 'Kriging':
+            base_fit_sec = 0.05 + (n_samples / 500.0)**3 * 0.1
+        else:
+            base_fit_sec = 0.005
+
+        # 2. Monte Carlo Integration & Variance Prediction Time (Per Iteration)
+        n_grid_points = 900 if len(poi_cols) > 1 else 100
+        n_mc_samples = 1000 if len(nuisance_cols) > 0 else 1 # Hardcoded to 1000 in bootstrap loop
+
+        # Complexity is driven by distance matrix: grid_points * mc_samples * training_samples
+        eval_sec = (n_grid_points * n_mc_samples * n_samples) * 2e-9
+
+        est_seconds = (input.pod_n_boot() / actual_cores) * (base_fit_sec + eval_sec) * 1.15
+        time_str = f"~{max(1, int(est_seconds))} seconds" if est_seconds < 90 else f"~{int(est_seconds / 60)} minutes"
+
+        ui.notification_show(f"Running Bootstrap on {actual_cores} core(s). Estimated time: {time_str}...", id="uq_toast", duration=None, type="message")
+        await asyncio.sleep(0.1)
+
+        try:
+            override = "polynomial" if locked_model_type() == "Polynomial" else "kriging"
+            results = study.pod(
+                poi_col=poi_cols, threshold=input.pod_threshold(), nuisance_col=nuisance_cols,
+                model_override=override, force_degree=locked_model_degree(),
+                n_boot=input.pod_n_boot(), n_jobs=-1 if input.pod_parallel() else 1
+            )
+
+            val = results["a90_95"]
+            a9095_str = "N/A (Surface)" if len(poi_cols) > 1 else (f"{val:.3f}" if not np.isnan(val) else "Not Reached")
+
+            # --- EXPANDED UQ METRICS ---
+            metrics = {
+                "Detection Threshold": results["threshold"],
+                "Bootstrap Iterations": results["n_boot"],
+                "a90/95 Reliability Index": a9095_str
+            }
+            uq_metrics.set(metrics)
+
+            export_data = {}
+            if len(poi_cols) == 1:
+                export_data["x_defect_size"] = results["X_eval"].flatten()
+            else:
+                for i, col in enumerate(poi_cols):
+                    export_data[col] = results["X_eval"][:, i]
+            export_data["pod_mean"] = results["curves"]["pod"]
+            export_data["ci_lower"] = results["curves"]["ci_lower"]
+            export_data["ci_upper"] = results["curves"]["ci_upper"]
+            pod_export_data.set(pd.DataFrame(export_data))
+
+            study.visualise(show=False)
+            plot_trigger_uq.set(plot_trigger_uq() + 1)
+            ui.notification_show("Uncertainty Quantification Complete!", type="success")
+
+        except Exception as e:
+            ui.notification_show(f"UQ Failed: {str(e)}", type="error")
+        finally:
+            ui.notification_remove("uq_toast")
+
+# --- RESULTS DISPLAY ---
+
+    @render.ui
+    def mathjax_equation_ui():
+        data = fit_metrics()
+        if data and "LaTeX Equation" in data:
+            return ui.div(
+                # Use HTML to inject the equation AND a tiny script to trigger MathJax
+                ui.HTML(f"""
+                    <div style="font-size: 1.15em; padding: 10px 0;">
+                        {data['LaTeX Equation']}
+                    </div>
+                    <script>
+                        if (window.MathJax) {{
+                            MathJax.typesetPromise();
+                        }}
+                    </script>
+                """),
+                class_="text-center mb-3 px-2 py-2 bg-light rounded border",
+                style="overflow-x: auto;"
+            )
+        return ui.div()
+
 
     @render.plot
     def plot_model_selection():
-        _ = plot_trigger() # Dependency on button click
+        _ = plot_trigger_fit()
         study = current_study()
-        if study and "model_selection" in study.plots:
-            return study.plots["model_selection"]
-        return None
+        return study.plots["model_selection"] if study and "model_selection" in study.plots else None
 
     @render.plot
     def plot_signal():
-        _ = plot_trigger() # Dependency on button click
+        _ = plot_trigger_fit()
         study = current_study()
-        if study and "signal_model" in study.plots:
-            return study.plots["signal_model"]
-        return None
+        return study.plots["signal_model"] if study and "signal_model" in study.plots else None
+
+    @render.plot
+    def plot_signal_uq():
+        _ = plot_trigger_uq()
+        study = current_study()
+        return study.plots["signal_model"] if study and "signal_model" in study.plots else None
 
     @render.plot
     def plot_curve():
-        _ = plot_trigger() # Dependency on button click
+        _ = plot_trigger_uq()
         study = current_study()
-        if study and "pod_curve" in study.plots:
-            return study.plots["pod_curve"]
-        return None
+        return study.plots["pod_curve"] if study and "pod_curve" in study.plots else None
 
     @render.data_frame
-    def pod_stats_table():
-        data = pod_metrics()
+    def fit_stats_table():
+        data = fit_metrics()
         if data is None:
             return None
-        # Convert dictionary to DataFrame for display
-        df = pd.DataFrame(list(data.items()), columns=["Metric", "Value"])
-        return render.DataGrid(df, width="100%", filters=False)
+        # Hide the equations from the generic UI table
+        display_data = {k: v for k, v in data.items() if k not in ["LaTeX Equation", "Model Equation"]}
+        return render.DataGrid(pd.DataFrame(list(display_data.items()), columns=["Metric", "Value"]), width="100%", filters=False)
 
-    @render.download(filename="pod_results.csv")
-    def download_pod_results():
-        """
-        Downloads the curve data.
-        """
-        df = pod_export_data()
-        if df is not None:
-            yield df.to_csv(index=False).encode('utf-8')
+    @render.data_frame
+    def uq_stats_table():
+        data = uq_metrics()
+        return render.DataGrid(pd.DataFrame(list(data.items()), columns=["Metric", "Value"]), width="100%", filters=False) if data else None
 
-    @render.download(filename="pod_metrics_summary.csv")
-    def download_pod_metrics():
+    @render.download(filename="digiqual_pod_report.xlsx")
+    def download_excel_report():
         """
-        Downloads the scalar key reliability metrics as a CSV.
+        Generates an in-memory Excel workbook containing multiple tabs
+        for both the configuration metrics and the raw curve data.
         """
-        metrics_dict = pod_metrics()
-        if metrics_dict is not None:
-            # Convert the stored dictionary into a DataFrame just like we do for the UI table
-            df = pd.DataFrame(list(metrics_dict.items()), columns=["Metric", "Value"])
-            yield df.to_csv(index=False).encode('utf-8')
+        import io
+
+        output = io.BytesIO()
+
+        # Use pandas ExcelWriter to create multiple sheets
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+
+            # --- TAB 1: Summary Metrics ---
+            combined_metrics = {}
+            fit_data = fit_metrics()
+            if fit_data is not None:
+                # Strip out the LaTeX, but keep "Model Equation" (the plain text)
+                excel_data = {k: v for k, v in fit_data.items() if k != "LaTeX Equation"}
+                combined_metrics.update(excel_data) # Note: For download_excel_fit, this line is df_metrics = pd.DataFrame(list(excel_data.items())...)
+            uq_data = uq_metrics()
+            if uq_data is not None:
+                combined_metrics.update(uq_data)
+
+            if combined_metrics:
+                df_metrics = pd.DataFrame(list(combined_metrics.items()), columns=["Metric", "Value"])
+                df_metrics.to_excel(writer, sheet_name="Summary Metrics", index=False)
+
+            # --- TAB 2: Full Curve Data ---
+            df_curve = pod_export_data()
+            if df_curve is not None:
+                df_curve.to_excel(writer, sheet_name="PoD Curve Data", index=False)
+
+        # Return the bytes to trigger the download
+        yield output.getvalue()
+
+    @render.download(filename="digiqual_preliminary_report.xlsx")
+    def download_excel_fit():
+        """
+        Generates the Excel workbook for Tab 4 (without UQ metrics).
+        """
+        import io
+        output = io.BytesIO()
+
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            # --- TAB 1: Summary Metrics ---
+            fit_data = fit_metrics()
+            if fit_data:
+                # Strip out the LaTeX, but keep "Model Equation" (the plain text)
+                excel_data = {k: v for k, v in fit_data.items() if k != "LaTeX Equation"}
+
+                # Use the filtered excel_data to build the DataFrame
+                df_metrics = pd.DataFrame(list(excel_data.items()), columns=["Metric", "Value"])
+                df_metrics.to_excel(writer, sheet_name="Summary Metrics", index=False)
+
+            # --- TAB 2: Full Curve Data ---
+            df_curve = pod_export_data()
+            if df_curve is not None:
+                df_curve.to_excel(writer, sheet_name="PoD Curve Data", index=False)
+
+        yield output.getvalue()
 
 #### App ####
 # 1. Define the absolute path to your www directory

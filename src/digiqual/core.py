@@ -417,25 +417,29 @@ class SimulationStudy:
         )
 
         # 6. Bootstrap Confidence Intervals (Parallelized)
-        if n_jobs is None or n_jobs == 1:
-            actual_cores = 1
-        elif n_jobs == -1:
-            actual_cores = max((os.cpu_count() or 1) - 1, 1)
+        if n_boot > 0:
+            if n_jobs is None or n_jobs == 1:
+                actual_cores = 1
+            elif n_jobs == -1:
+                actual_cores = max((os.cpu_count() or 1) - 1, 1)
+            else:
+                actual_cores = n_jobs
+
+            print(f"5. Running Bootstrap ({n_boot} iterations on {actual_cores} cores)...", flush=True)
+
+            lower_ci, upper_ci = pod.bootstrap_pod_ci(
+                X, y, X_eval, threshold,
+                mean_model.model_type_, mean_model.model_params_, bandwidth, (dist_name, dist_params),
+                n_boot=n_boot, nuisance_ranges=nuisance_ranges,
+                n_jobs=n_jobs
+            )
         else:
-            actual_cores = n_jobs
-
-        print(f"5. Running Bootstrap ({n_boot} iterations on {actual_cores} cores)...", flush=True)
-
-        lower_ci, upper_ci = pod.bootstrap_pod_ci(
-            X, y, X_eval, threshold,
-            mean_model.model_type_, mean_model.model_params_, bandwidth, (dist_name, dist_params),
-            n_boot=n_boot, nuisance_ranges=nuisance_ranges,
-            n_jobs=n_jobs # Pass the raw variable down; pod.py handles the logic
-        )
+            print("5. Skipping Bootstrap (n_boot=0)...", flush=True)
+            lower_ci, upper_ci = None, None
 
         # 7. Calculate Reliability Point
         a90_95 = np.nan
-        if len(poi_cols) == 1:
+        if len(poi_cols) == 1 and lower_ci is not None:
             a90_95 = pod.calculate_reliability_point(X_eval.flatten(), lower_ci, target_pod=0.90)
             print(f"   -> a90/95 Reliability Index: {a90_95:.3f}")
 
@@ -542,22 +546,23 @@ class SimulationStudy:
             )
 
         # 2. PoD Curve/Surface Plot
-        if len(poi_cols) == 1:
-            self.plots["pod_curve"] = plot_pod_curve(
-                X_eval=res["X_eval"].flatten(),
-                pod_curve=res["curves"]["pod"],
-                ci_lower=res["curves"]["ci_lower"],
-                ci_upper=res["curves"]["ci_upper"],
-                target_pod=0.90,
-                poi_name=poi_cols[0]
-            )
-        else:
-            from digiqual.plotting import plot_pod_surface
-            self.plots["pod_curve"] = plot_pod_surface(
-                poi_grids=res["poi_grids"],
-                pod_curve=res["curves"]["pod"],
-                poi_names=poi_cols
-            )
+        if res["curves"]["ci_lower"] is not None:
+            if len(poi_cols) == 1:
+                self.plots["pod_curve"] = plot_pod_curve(
+                    X_eval=res["X_eval"].flatten(),
+                    pod_curve=res["curves"]["pod"],
+                    ci_lower=res["curves"]["ci_lower"],
+                    ci_upper=res["curves"]["ci_upper"],
+                    target_pod=0.90,
+                    poi_name=poi_cols[0]
+                )
+            else:
+                from digiqual.plotting import plot_pod_surface
+                self.plots["pod_curve"] = plot_pod_surface(
+                    poi_grids=res["poi_grids"],
+                    pod_curve=res["curves"]["pod"],
+                    poi_names=poi_cols
+                )
 
         # Handle Saving
         if save_path:

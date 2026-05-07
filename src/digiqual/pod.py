@@ -74,25 +74,30 @@ def fit_robust_mean_model(
     # -----------------------------------------------------------------------
     cv = KFold(n_splits=n_folds, shuffle=True, random_state=42)
 
+    # 1A. Evaluate Polynomials
     for d in range(1, max_degree + 1):
         model = make_pipeline(PolynomialFeatures(degree=d), LinearRegression())
         scores = cross_val_score(model, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
         cv_scores[('Polynomial', d)] = -np.mean(scores)
 
-    kernel = C(1.0, (1e-5, 1e6)) * RBF(1.0, (1e-3, 1e5))
-    gpr = GaussianProcessRegressor(
-        kernel=kernel,
-        n_restarts_optimizer=10,
-        alpha=np.var(y) * 0.01,
-        random_state=42
-    )
+    # 1B. Evaluate Kriging (WITH SAFEGUARD)
+    n_samples = len(y)
+    if n_samples <= 1000 or override == "kriging":
+        kernel = C(1.0, (1e-5, 1e6)) * RBF(1.0, (1e-3, 1e5))
+        gpr = GaussianProcessRegressor(
+            kernel=kernel,
+            n_restarts_optimizer=10,
+            alpha=np.var(y) * 0.01,
+            random_state=42
+        )
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=ConvergenceWarning)
-        gpr_scores = cross_val_score(gpr, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=ConvergenceWarning)
+            gpr_scores = cross_val_score(gpr, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
 
-
-    cv_scores[('Kriging', None)] = -np.mean(gpr_scores)
+        cv_scores[('Kriging', None)] = -np.mean(gpr_scores)
+    else:
+        print(f"Skipping Kriging CV evaluation to prevent timeout (Dataset N={n_samples} > 1000).")
 
     # Record the CV winner before applying any override
     cv_winner = min(cv_scores, key=cv_scores.get)
@@ -295,7 +300,7 @@ def plot_model_selection(
         if forced and cell_label == used_name:
             cell.set_facecolor('#ffe0b2')
 
-    fig.tight_layout()
+    fig.tight_layout(rect=[0, 0, 1, 0.90]) # Leaves a 10% margin at the top for the title and legend
     return fig
 
 
