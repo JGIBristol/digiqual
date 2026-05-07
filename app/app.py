@@ -617,27 +617,32 @@ ui.nav_panel(
             ui.h3("Model Fit & Response", class_="mb-4 text-center"),
             ui.output_ui("fit_warnings_ui"),
             ui.layout_columns(
-                ui.card(
-                    ui.card_header("Model Configuration"),
-                    ui.output_ui("model_context_note"),
-                    ui.layout_columns(
-                        ui.div(
-                            ui.input_selectize("pod_pois", "Parameters to plot (Select 1 or 2)", choices=[], multiple=True),
-                            ui.input_selectize("pod_nuisance", "Parameters to integrate over (Max 2) (Nuisance Parameters)", choices=[], multiple=True),
-                            ui.output_ui("dynamic_slice_sliders"),
-                        ),
-                        ui.div(
-                            ui.input_select("pod_model_override", "Model Override", choices=["Auto (Best Fit)", "Polynomial", "Kriging"], selected="Auto (Best Fit)"),
-                            ui.panel_conditional("input.pod_model_override === 'Polynomial'",
-                                ui.input_slider("pod_poly_degree", "Polynomial Degree", min=1, max=10, value=3, step=1),
+                # Wrap the existing card and our new dynamic UI inside a div
+                ui.div(
+                    ui.card(
+                        ui.card_header("Model Configuration"),
+                        ui.output_ui("model_context_note"),
+                        ui.layout_columns(
+                            ui.div(
+                                ui.input_selectize("pod_pois", "Parameters to plot (Select 1 or 2)", choices=[], multiple=True),
+                                ui.input_selectize("pod_nuisance", "Parameters to integrate over (Max 2)", choices=[], multiple=True),
                             ),
-                            ui.input_numeric("pod_threshold", "Detection Threshold", value=0, step=0.1),
+                            ui.div(
+                                ui.input_select("pod_model_override", "Model Override", choices=["Auto (Best Fit)", "Polynomial", "Kriging"], selected="Auto (Best Fit)"),
+                                ui.panel_conditional("input.pod_model_override === 'Polynomial'",
+                                    ui.input_slider("pod_poly_degree", "Polynomial Degree", min=1, max=10, value=3, step=1),
+                                ),
+                                ui.input_numeric("pod_threshold", "Detection Threshold", value=0, step=0.1),
+                            ),
+                            col_widths=[6, 6],
+                            style="overflow: visible;"
                         ),
-                        col_widths=[6, 6],
-                        style="overflow: visible;" # Lets dropdowns escape the columns
+                        ui.input_task_button("btn_run_fit", "Fit Model (Fast)", class_="btn-primary w-100", icon=icon_svg("bolt")),
+                        style="min-height: 280px; overflow: visible;"
                     ),
-                    ui.input_task_button("btn_run_fit", "Fit Model (Fast)", class_="btn-primary w-100", icon=icon_svg("bolt")),
-                    style="min-height: 280px; overflow: visible;" # Lets dropdowns escape the card and guarantees minimum space
+
+                    # ---> MOVED HERE: It will stack directly below the main card <---
+                    ui.output_ui("dynamic_slice_sliders"),
                 ),
                 col_widths=[-1,10,-1]
             ),
@@ -1669,7 +1674,7 @@ def server(input, output, session):
     def dynamic_slice_sliders():
         study = current_study()
 
-        # ---> 1. LAZY RENDER: Only show if a model has been successfully fitted!
+        # LAZY RENDER: Only show if a model has been successfully fitted!
         if study is None or fit_metrics() is None:
             return ui.div()
 
@@ -1702,14 +1707,20 @@ def server(input, output, session):
                 ui.input_slider(f"slice_{col}", col, min=col_min, max=col_max, value=col_med, step=step_size)
             )
 
-        # ---> 2. SIDE-BY-SIDE GRID: col_widths=6 forces 2 columns!
-        return ui.div(
-            ui.hr(),
-            ui.p("Slice Parameters (Held Constant):", class_="fw-bold mb-2 small text-muted"),
+        # ---> RETURN A DEDICATED CARD FOR LIVE EXPLORATION <---
+        return ui.card(
+            ui.card_header(
+                ui.span(icon_svg("sliders"), class_="text-primary me-2"),
+                "Real-Time Slice Explorer"
+            ),
+            ui.p(
+                "Adjust these constant parameters to instantly update the surface plot below. "
+                "There is no need to re-fit the model.",
+                class_="small text-muted mb-3"
+            ),
             ui.layout_columns(*sliders, col_widths=6),
-            class_="mt-3"
+            class_="mt-3 shadow-sm" # Adds a slight shadow to make the active element pop
         )
-
 
     @render.ui
     def model_context_note():
