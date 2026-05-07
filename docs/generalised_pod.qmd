@@ -37,13 +37,17 @@ These $Z$-scores are then fitted against a suite of distributions: Normal, Gumbe
 $$ AIC = 2k - 2\ln(\hat{L}) $$
 Where $k$ is the number of parameters and $\hat{L}$ is the Maximum Likelihood.
 
-## 4. Multi-Dimensional Integration (Active Marginalisation)
-If evaluating multidimensional datasets with nuisance variations (e.g., angle $\theta$, roughness $R$), `digiqual` utilizes Monte Carlo Integration to output a 1D or 2D marginal Probability of Detection.
+## 4. Multi-Dimensional Evaluation (Marginalisation & Slicing)
+When evaluating multidimensional datasets with additional variables (e.g., angle $\theta$, roughness $R$), `digiqual` fits the surrogate model to the *entire* $n$-dimensional parameter space. To project this down to a 1D or 2D Probability of Detection curve, it uses two distinct techniques:
 
-### The Mathematics
-The expected PoD for a Parameter of Interest (PoI) vector $\mathbf{x}$ is calculated by integrating the conditional PoD over the joint probability density function $p(\mathbf{z})$ of the nuisance variables $\mathbf{z}$:
-$$ PoD(\mathbf{x}) = \int_{\Omega_z} PoD(\mathbf{x}, \mathbf{z}) p(\mathbf{z}) d\mathbf{z} $$
-`digiqual` approximates this integral computationally via Latin Hypercube Sampling (LHS) across the continuous physics space.
+### Active Marginalisation (Nuisance Parameters)
+For parameters treated as random noise, the expected PoD for a Parameter of Interest (PoI) vector $\mathbf{x}$ is calculated by integrating the conditional PoD over the probability density function $p(\mathbf{z})$ of the nuisance variables $\mathbf{z}$:
+$$PoD(\mathbf{x}) = \int_{\Omega_z} PoD(\mathbf{x}, \mathbf{z}) p(\mathbf{z}) d\mathbf{z}$$
+
+`digiqual` approximates this integral computationally via Monte Carlo integration (Latin Hypercube Sampling) to average the signal response across the noise spectrum.
+
+### Parameter Slicing (Constant Parameters)
+For parameters that are neither plotted nor integrated out, `digiqual` treats them as strict mathematical constants. The evaluation grid takes a "slice" through the $n$-dimensional response surface at these specific values (defaulting to the parameter's median), allowing you to explore specific physical scenarios without retraining the underlying model.
 
 ## 5. Bootstrapping for Confidence Bounds
 Because the model is non-linear and non-normal, traditional analytical confidence bounds are invalid.

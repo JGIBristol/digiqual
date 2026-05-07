@@ -35,11 +35,9 @@ If the diagnostic engine detects a large deliberate gap or missing data (a faile
 Instead of guessing where to add new points, you can simply input how many new points you'd like to generate. The engine will target the specific empty or uncertain regions and generate a new CSV containing targeted coordinates. Run these through your solver and merge the new data back into your main set!
 
 
-## 3. Data Visualisation
+### Parameter Visualisation
 
-**Purpose:** Deep-dive visual inspection of your data distribution and model stability.
-
-This brand-new tab utilizes the data uploaded in the Simulation Diagnostics pane to generate interactive, exploratory plots.
+Deep-dive visual inspection of your data distribution and model stability.
 
 - **Summary Statistics:** A complete breakout of the Min, Median, Max, Mean, and Standard Deviation for every uploaded variable.
 - **Variable Inspector:**
@@ -54,15 +52,28 @@ This brand-new tab utilizes the data uploaded in the Simulation Diagnostics pane
   - **Bootstrap Convergence Trace:** Traces the running average and maximum Relative Standard Deviation across 100 bootstrap iterations. A line flattening beneath the threshold indicates that your results are stable; a declining trace suggests you need more physical samples.
 
 
-## 4. PoD Analysis
+## 4. Model Fit & Response
 
-**Purpose:** Constructing the final Probability of Detection curves and surfaces.
+**Purpose:** Configure your $n$-dimensional evaluation space and explore the underlying physics model in real-time.
 
-With a validated and well-understood dataset, you define the parameters for the Generalized $a$-versus-$\hat{a}$ Method.
+With a validated dataset, you define the rules for how the multi-dimensional surrogate model will be sliced and projected for visualisation.
 
-1. **Variable Designation:** Select your Parameters of Interest (PoI) & Nuisance Parameters (Optional).  Nuisance Parameters are mathematically marginalised out via Monte Carlo Integration.
-2. **Set Threshold:** Define the critical threshold (e.g., a detection limit of `18.0`).
-3. **Generate Outcomes:** The system automatically identifies the best predictive polynomial structure, infers error distribution, and generates bootstrap confidence intervals.
-4. **Interactive Mapping:** It renders two interactive plots side-by-side:
-   - The **Signal Response Model** (The underlying Physics).
-   - The **Probability of Detection Mapping** (The resulting Reliability).
+1. **Global Model Fit:** The underlying surrogate model is automatically trained on *all* initialized parameters.
+2. **Variable Designation:** - **Parameters to plot:** Select 1 or 2 variables to act as the axes of your plots.
+   - **Parameters to integrate over:** Select variables to act as "Nuisance Parameters". These are mathematically marginalised out via Monte Carlo Integration.
+3. **Set Threshold:** Define the critical threshold (e.g., a detection limit of `18.0`).
+4. **Fit Model (Fast):** The system automatically identifies the best predictive polynomial structure and extracts the LaTeX equation.
+5. **Real-Time Slice Explorer:** Any parameters not plotted or integrated automatically appear as sliders. You can drag these sliders to hold them at constant values, instantly updating the Signal Response plot in real-time without needing to re-fit the model!
+
+## 5. Uncertainty Quantification
+
+**Purpose:** Constructing the final Probability of Detection curves with robust confidence bounds.
+
+Once you are happy with the slice of the universe you configured in Tab 4, you move here to generate the heavy statistical bounds.
+
+1. **Bootstrap Configuration:** Define the number of resampling iterations (typically 1000). Ensure Parallel Compute is enabled for speed.
+2. **Run UQ:** The system locks the mathematical shape chosen in Tab 4, infers the best error distribution, and runs parallelized bootstrapping.
+3. **Interactive Mapping:** It renders two interactive plots side-by-side:
+   - The **Signal Response Model** (The underlying Physics with 95% Prediction Intervals).
+   - The **Probability of Detection Mapping** (The resulting Reliability curve with 95% Confidence Bounds).
+4. **Export Results:** Download a comprehensive Excel workbook containing your configuration metrics, mathematical equations, and the raw numerical curve data.
