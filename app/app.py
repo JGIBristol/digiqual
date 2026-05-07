@@ -619,10 +619,12 @@ ui.nav_panel(
             ui.layout_columns(
                 ui.card(
                     ui.card_header("Model Configuration"),
+                    ui.output_ui("model_context_note"),
                     ui.layout_columns(
                         ui.div(
-                            ui.input_selectize("pod_pois", "Parameters of Interest (Select 1 or 2)", choices=[], multiple=True),
-                            ui.input_selectize("pod_nuisance", "Nuisance Parameters (Max 2)", choices=[], multiple=True),
+                            ui.input_selectize("pod_pois", "Parameters to plot (Select 1 or 2)", choices=[], multiple=True),
+                            ui.input_selectize("pod_nuisance", "Parameters to integrate over (Max 2) (Nuisance Parameters)", choices=[], multiple=True),
+                            ui.output_ui("dynamic_slice_sliders"),
                         ),
                         ui.div(
                             ui.input_select("pod_model_override", "Model Override", choices=["Auto (Best Fit)", "Polynomial", "Kriging"], selected="Auto (Best Fit)"),
@@ -1663,6 +1665,76 @@ def server(input, output, session):
                                       min=round(float(vals.min()), 3),
                                       max=round(float(vals.max()), 3))
 
+    @render.ui
+    def dynamic_slice_sliders():
+        study = current_study()
+
+        # ---> 1. LAZY RENDER: Only show if a model has been successfully fitted!
+        if study is None or fit_metrics() is None:
+            return ui.div()
+
+        df = study.clean_data if not study.clean_data.empty else study.data
+        if df is None or df.empty:
+            return ui.div()
+
+        all_inputs = study.inputs
+        selected_pois = list(input.pod_pois())
+        selected_nuis = list(input.pod_nuisance())
+
+        leftovers = [c for c in all_inputs if c not in selected_pois and c not in selected_nuis]
+
+        if not leftovers:
+            return ui.div()
+
+        sliders = []
+        for col in leftovers:
+            if col not in df.columns:
+                continue
+
+            col_min = round(float(df[col].min(skipna=True)), 3)
+            col_max = round(float(df[col].max(skipna=True)), 3)
+            col_med = round(float(df[col].median(skipna=True)), 3)
+            step_size = round((col_max - col_min) / 100, 3)
+            if step_size == 0:
+                step_size = 0.001
+
+            sliders.append(
+                ui.input_slider(f"slice_{col}", col, min=col_min, max=col_max, value=col_med, step=step_size)
+            )
+
+        # ---> 2. SIDE-BY-SIDE GRID: col_widths=6 forces 2 columns!
+        return ui.div(
+            ui.hr(),
+            ui.p("Slice Parameters (Held Constant):", class_="fw-bold mb-2 small text-muted"),
+            ui.layout_columns(*sliders, col_widths=6),
+            class_="mt-3"
+        )
+
+
+    @render.ui
+    def model_context_note():
+        study = current_study()
+        if study is None:
+            return ui.div()
+
+        # Get all variables the model will be trained on
+        all_vars = study.inputs
+        var_list_str = ", ".join(all_vars)
+        n_vars = len(all_vars)
+
+        # Build a clean, styled banner
+        return ui.div(
+            ui.p(
+                ui.span(icon_svg("circle-info"), class_="text-primary me-2"),
+                ui.tags.strong("Global Model Fit: "),
+                f"The underlying surrogate model is always trained on all {n_vars} initialized parameters ({var_list_str}). "
+                "Use the controls below to dictate how this multi-dimensional surface is sliced and projected for visualisation.",
+                class_="small text-muted mb-0"
+            ),
+            class_="bg-light border rounded p-2 mb-4"
+        )
+
+
     # ─────────────────────────────────────────────────────────────────
     # TAB 4: MODEL FIT LOGIC
     # ─────────────────────────────────────────────────────────────────
@@ -1723,12 +1795,21 @@ def server(input, output, session):
 
         poi_cols, nuisance_cols = list(input.pod_pois()), list(input.pod_nuisance())
         if not poi_cols or len(poi_cols) > 2:
-            ui.notification_show("Select 1 or 2 Parameters of Interest.", type="error")
+            ui.notification_show("Select 1 or 2 Parameters to visualise.", type="error")
             return
 
         override_map = {"Auto (Best Fit)": "auto", "Polynomial": "polynomial", "Kriging": "kriging"}
         model_override = override_map.get(input.pod_model_override(), "auto")
         force_degree = int(input.pod_poly_degree()) if model_override == "polynomial" else None
+
+        slice_values = {}
+        leftovers = [c for c in study.inputs if c not in poi_cols and c not in nuisance_cols]
+        for col in leftovers:
+            try:
+                # Attempt to get the dynamic slider value
+                slice_values[col] = input[f"slice_{col}"]()
+            except Exception:
+                pass # If it hasn't rendered yet, core.py will safely default to the median!
 
         # --- TAB 4 TIME ESTIMATION HEURISTIC ---
         n_samples = len(study.clean_data)
@@ -1756,6 +1837,7 @@ def server(input, output, session):
         try:
             results = study.pod(
                 poi_col=poi_cols, threshold=input.pod_threshold(), nuisance_col=nuisance_cols,
+                slice_values=slice_values,
                 model_override=model_override, force_degree=force_degree, n_boot=0
             )
 
@@ -1770,8 +1852,11 @@ def server(input, output, session):
                     poly = mean_model.named_steps['polynomialfeatures']
                     lr = mean_model.named_steps['linearregression']
 
+                    # ---> FIX: Use ALL inputs the model was trained on <---
+                    all_model_cols = study.inputs
+
                     # 1. Format names for beautiful LaTeX (\mathrm prevents italics)
-                    latex_features = [f"\\mathrm{{{col}}}" for col in poi_cols + nuisance_cols]
+                    latex_features = [f"\\mathrm{{{col}}}" for col in all_model_cols]
                     latex_terms = poly.get_feature_names_out(latex_features)
 
                     # 2. Extract coefficients
@@ -1789,7 +1874,7 @@ def server(input, output, session):
                     equation_latex = f"$$ \\mathrm{{{input.outcome_col()}}} = {' '.join(eq_parts)} $$"
 
                     # 4. Build Plain Text Equation for Excel
-                    plain_terms = poly.get_feature_names_out(poi_cols + nuisance_cols)
+                    plain_terms = poly.get_feature_names_out(all_model_cols)
                     plain_parts = [f"{intercept:.4g}"]
                     for c, t in zip(coefs, plain_terms):
                         if c == 0 or t == "1":
@@ -1798,7 +1883,8 @@ def server(input, output, session):
                         plain_parts.append(f"{sign} {abs(c):.4g} * {t.replace(' ', ' * ')}")
                     equation_plain = " ".join(plain_parts)
 
-                except Exception:
+                except Exception as e:
+                    print(f"Equation extraction error: {e}") # Added a print statement to catch future bugs in terminal
                     equation_latex = "$$ \\text{Equation Extraction Failed} $$"
                     equation_plain = "Extraction Failed"
             else:
@@ -1847,6 +1933,47 @@ def server(input, output, session):
             ui.notification_show(f"Fit Failed: {str(e)}", type="error")
         finally:
             ui.notification_remove("fit_toast")
+
+
+    @reactive.effect
+    def realtime_slice_update():
+        """Listens to the dynamic sliders and instantly updates the plots without refitting."""
+        study = current_study()
+        # Only run if the model has already been fitted
+        if study is None or fit_metrics() is None:
+            return
+
+        all_inputs = study.inputs
+        poi_cols = study.pod_results.get("poi_cols", [])
+        nuis_cols = study.pod_results.get("nuisance_cols", [])
+
+        leftovers = [c for c in all_inputs if c not in poi_cols and c not in nuis_cols]
+        if not leftovers:
+            return
+
+        slice_values = {}
+        for col in leftovers:
+            try:
+                # Reading the input creates the reactive trigger!
+                slice_values[col] = input[f"slice_{col}"]()
+            except Exception:
+                pass
+
+        if not slice_values:
+            return
+
+        # 1. Update the math instantly (takes ~5 milliseconds)
+        study.update_slice(slice_values)
+
+        # 2. Re-generate the visualisations in memory
+        study.visualise(show=False)
+
+        # 3. Trigger the UI to redraw the updated plots
+        plot_trigger_fit.set(plot_trigger_fit() + 1)
+
+        # 4. Clear UQ bounds (protects the user from looking at stale bounds for a new slice)
+        uq_metrics.set(None)
+
 
     # ─────────────────────────────────────────────────────────────────
     # TAB 5: UQ LOGIC
@@ -1916,6 +2043,14 @@ def server(input, output, session):
         poi_cols, nuisance_cols = list(input.pod_pois()), list(input.pod_nuisance())
         actual_cores = max((os.cpu_count() or 1) - 1, 1) if input.pod_parallel() else 1
 
+        slice_values = {}
+        leftovers = [c for c in study.inputs if c not in poi_cols and c not in nuisance_cols]
+        for col in leftovers:
+            try:
+                slice_values[col] = input[f"slice_{col}"]()
+            except Exception:
+                pass
+
         # --- TAB 5 TIME ESTIMATION HEURISTIC ---
         n_samples = len(study.clean_data)
 
@@ -1942,6 +2077,7 @@ def server(input, output, session):
             override = "polynomial" if locked_model_type() == "Polynomial" else "kriging"
             results = study.pod(
                 poi_col=poi_cols, threshold=input.pod_threshold(), nuisance_col=nuisance_cols,
+                slice_values=slice_values,
                 model_override=override, force_degree=locked_model_degree(),
                 n_boot=input.pod_n_boot(), n_jobs=-1 if input.pod_parallel() else 1
             )

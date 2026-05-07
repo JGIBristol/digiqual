@@ -314,6 +314,7 @@ class SimulationStudy:
         poi_col: list | str,
         threshold: float,
         nuisance_col: list | str | None = None,
+        slice_values: dict | None = None,  # <--- User can still override defaults
         bandwidth_ratio: float = 0.1,
         n_boot: int = 1000,
         model_override: str = "auto",
@@ -327,6 +328,7 @@ class SimulationStudy:
             poi_col (list | str): The parameter(s) of interest (e.g., 'Crack Length', ['Angle', 'Depth']).
             threshold (float): The failure threshold (e.g., 4.0 dB).
             nuisance_col (list | str | None): The nuisance parameters to marginalize over via MC integration.
+            sliced_values (dict | None): The sliced parameters and their values.
             bandwidth_ratio (float): Smoothing bandwidth fraction (default 0.1).
             n_boot (int): Bootstrap iterations for confidence bounds.
             model_override (str): Force a model type. One of "auto",
@@ -363,17 +365,36 @@ class SimulationStudy:
         else:
             nuisance_cols = nuisance_col
 
-        all_cols = poi_cols + nuisance_cols
-        for c in all_cols:
-            if c not in self.clean_data.columns:
-                raise ValueError(f"Variable '{c}' not found in data columns.")
+        slice_values = slice_values or {}
 
-        # 1. Prepare Data Vectors
+        # 1. The model is ALWAYS trained on all initialized inputs
+        all_cols = self.inputs
+
+        # Validate that requested PoIs and Nuisances are actually in the dataset
+        for c in poi_cols + nuisance_cols:
+            if c not in all_cols:
+                raise ValueError(f"Variable '{c}' is not in the initialized input_cols.")
+
+        # 2. Automatically handle sliced parameters (Leftovers)
+        final_slice_values = {}
+        for c in all_cols:
+            if c not in poi_cols and c not in nuisance_cols:
+                if c in slice_values:
+                    # Use the specific value the user provided
+                    final_slice_values[c] = float(slice_values[c])
+                else:
+                    # Default to the median of the dataset
+                    final_slice_values[c] = float(self.clean_data[c].median())
+
+        # 3. Prepare Data Vectors
         print(f"--- Starting Reliability Analysis (PoIs: {poi_cols}) ---")
+        if final_slice_values:
+            print(f"-> Slicing surface at: {final_slice_values}")
+
         X = self.clean_data[all_cols].values
         y = self.clean_data[self.outcome].values
 
-        # 2. Fit Mean Model (Robust Regression)
+        # 4. Fit Mean Model (Robust Regression)
         print("1. Selecting Mean Model (Cross-Validation)...")
         mean_model = pod.fit_robust_mean_model(
             X, y, model_override=model_override, force_degree=force_degree
@@ -383,14 +404,14 @@ class SimulationStudy:
         else:
             print("-> Selected Model: Kriging (Gaussian Process)")
 
-        # 3. Fit Variance Model & Generate Grid
+        # 5. Fit Variance Model & Generate Grid
         print("2. Fitting Variance Model (Kernel Smoothing)...")
         residuals, bandwidth = pod.fit_variance_model(
             X, y, mean_model, bandwidth_ratio=bandwidth_ratio
         )
         print(f"   -> Smoothing Bandwidth: {bandwidth:.4f}")
 
-        # 4. Infer Distribution
+        # 6. Infer Distribution
         print("3. Inferring Error Distribution (AIC)...")
         dist_name, dist_params = pod.infer_best_distribution(residuals, X, bandwidth)
         print(f"   -> Selected Distribution: {dist_name}")
@@ -407,16 +428,21 @@ class SimulationStudy:
             mesh = np.meshgrid(*poi_grids, indexing='ij')
             X_eval = np.vstack([m.flatten() for m in mesh]).T
 
+        # Build nuisance ranges for true nuisances
         nuisance_ranges = {c: (float(self.clean_data[c].min()), float(self.clean_data[c].max())) for c in nuisance_cols}
 
-        # 5. Compute PoD Curve
+        # Inject the sliced parameters into the integrator with Min == Max
+        for c, val in final_slice_values.items():
+            nuisance_ranges[c] = (val, val)
+
+        # 7. Compute PoD Curve
         print("4. Computing PoD Curve...")
         from digiqual.integration import compute_multi_dim_pod
         pod_curve, mean_curve = compute_multi_dim_pod(
             X_eval, nuisance_ranges, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold
         )
 
-        # 6. Bootstrap Confidence Intervals (Parallelized)
+        # 8. Bootstrap Confidence Intervals (Parallelized)
         if n_boot > 0:
             if n_jobs is None or n_jobs == 1:
                 actual_cores = 1
@@ -437,17 +463,18 @@ class SimulationStudy:
             print("5. Skipping Bootstrap (n_boot=0)...", flush=True)
             lower_ci, upper_ci = None, None
 
-        # 7. Calculate Reliability Point
+        # 9. Calculate Reliability Point
         a90_95 = np.nan
         if len(poi_cols) == 1 and lower_ci is not None:
             a90_95 = pod.calculate_reliability_point(X_eval.flatten(), lower_ci, target_pod=0.90)
             print(f"   -> a90/95 Reliability Index: {a90_95:.3f}")
 
-        # 8. Package Results
+        # 10. Package Results
         self.pod_results = {
             "poi_col": poi_cols[0] if len(poi_cols) == 1 else poi_cols,
             "poi_cols": poi_cols,
             "nuisance_cols": nuisance_cols,
+            "slice_values": final_slice_values,
             "threshold": threshold,
             "n_boot" : n_boot,
             "a90_95": a90_95,
@@ -468,6 +495,59 @@ class SimulationStudy:
         }
 
         print("--- Analysis Complete ---")
+        return self.pod_results
+
+#### Real-Time Slice Evaluation ####
+    def update_slice(self, slice_values: dict) -> Dict[str, Any]:
+        """
+        Updates the evaluated slice for the PoD surface without re-fitting the surrogate model.
+        This allows for real-time plot updates when changing constant parameters.
+        """
+        if not self.pod_results:
+            return {}
+
+        # 1. Retrieve the frozen n-dimensional model and state
+        mean_model = self.pod_results["mean_model"]
+        bandwidth = self.pod_results["bandwidth"]
+        residuals = self.pod_results["residuals"]
+        dist_info = self.pod_results["dist_info"]
+        poi_cols = self.pod_results["poi_cols"]
+        nuisance_cols = self.pod_results["nuisance_cols"]
+        threshold = self.pod_results["threshold"]
+        X_eval = self.pod_results["X_eval"]
+        X = self.pod_results["X"]
+        y = self.pod_results["y"]
+
+        # 2. Build the final slice values using median fallbacks
+        final_slice_values = {}
+        for c in self.inputs:
+            if c not in poi_cols and c not in nuisance_cols:
+                if c in slice_values:
+                    final_slice_values[c] = float(slice_values[c])
+                else:
+                    final_slice_values[c] = float(self.clean_data[c].median())
+
+        # 3. Inject the new sliced parameters into the nuisance ranges
+        nuisance_ranges = {c: (float(self.clean_data[c].min()), float(self.clean_data[c].max())) for c in nuisance_cols}
+        for c, val in final_slice_values.items():
+            nuisance_ranges[c] = (val, val)
+
+        # 4. Re-calculate the PoD and Mean curves instantly
+        from digiqual.integration import compute_multi_dim_pod
+        pod_curve, mean_curve = compute_multi_dim_pod(
+            X_eval, nuisance_ranges, mean_model, X, residuals, bandwidth, dist_info, threshold
+        )
+
+        # 5. Update the internal results dictionary
+        self.pod_results["slice_values"] = final_slice_values
+        self.pod_results["curves"]["mean_response"] = mean_curve
+        self.pod_results["curves"]["pod"] = pod_curve
+
+        # Invalidate CI bounds as they apply to the previous slice
+        self.pod_results["curves"]["ci_lower"] = None
+        self.pod_results["curves"]["ci_upper"] = None
+        self.pod_results["a90_95"] = np.nan
+
         return self.pod_results
 
 #### Visualise Results ####
