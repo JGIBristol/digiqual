@@ -301,45 +301,27 @@ ui.nav_panel(
                             ),
                             ui.hr(class_="my-4"),
 
-                            # Module 2: Diagnostics
+                            # Module 2: Diagnostics & Visualisation
                             ui.div(
                                 ui.h5(
                                     ui.span(icon_svg("check-double"), class_="text-warning me-2"),
                                     "2. Simulation Diagnostics", class_="fw-bold mb-2"
                                 ),
-                                ui.p("Validate dataset integrity and simulation outputs.", class_="fw-semibold mb-2"),
+                                ui.p("Validate dataset integrity, inspect coverage gaps, and visualise model fit.", class_="fw-semibold mb-2"),
                                 ui.tags.ul(
-                                    ui.tags.li("Detect input coverage gaps and sanity checks."),
                                     ui.tags.li("Identify model instability or insufficient samples."),
+                                    ui.tags.li("Per-variable distribution and gap inspection."),
                                     class_="mb-0 ps-3 text-muted"
                                 ),
                                 class_="border-start border-3 border-warning ps-3 mb-3"
                             ),
                             ui.hr(class_="my-4"),
 
-
-                            # Module 3: Visualisation
-                            ui.div(
-                                ui.h5(
-                                    ui.span(icon_svg("display"), class_="text-info me-2"),
-                                    "3. Data Visualisation", class_="fw-bold mb-2"
-                                ),
-                                ui.p("Inspect simulation variables and results.", class_="fw-semibold mb-2"),
-                                ui.tags.ul(
-                                    ui.tags.li("Per-variable distribution and gap inspection."),
-                                    ui.tags.li("Model fit and bootstrap convergence visualised."),
-                                    class_="mb-0 ps-3 text-muted"
-                                ),
-                                class_="border-start border-3 border-info ps-3 mb-3"
-                            ),
-                            ui.hr(class_="my-4"),
-
-
-                            # Module 4: Analysis
+                            # Module 3: Analysis
                             ui.div(
                                 ui.h5(
                                     ui.span(icon_svg("chart-line"), class_="text-success me-2"),
-                                    "4. PoD Analysis", class_="fw-bold mb-2"
+                                    "3. PoD Analysis", class_="fw-bold mb-2"
                                 ),
                                 ui.p("Construct Generalized Probability of Detection (PoD) curves.", class_="fw-semibold mb-2"),
                                 ui.tags.ul(
@@ -423,13 +405,28 @@ ui.nav_panel(
                             ui.div(
                                 ui.p("Development supported by:", class_="fw-bold text-center text-muted mb-3"),
                                 ui.div(
-                                    ui.img(
-                                        src="ukri-epsrc-square-logo.png",
-                                        height="60px",
-                                        alt="UKRI EPSRC Logo"
+                                    # UKRI EPSRC Logo
+                                    ui.div(
+                                        ui.img(
+                                            src="ukri-epsrc-square-logo.png",
+                                            height="60px",
+                                            alt="UKRI EPSRC Logo"
+                                        ),
+                                        ui.span("UKRI EPSRC", class_="text-muted d-block mt-2 fw-semibold"),
                                     ),
-                                    ui.span("UKRI EPSRC", class_="text-muted d-block mt-2 fw-semibold"),
-                                    class_="bg-light border rounded p-3 text-center"
+                                    # RCNDE Logo
+                                    ui.div(
+                                        ui.img(
+                                            # Ensure the filename matches what you save in the www folder
+                                            src="RCNDE-Logo-100.png",
+                                            height="60px",
+                                            alt="RCNDE Logo",
+                                            # Adding a slight top margin if the aspect ratio makes it look misaligned next to the square EPSRC logo
+                                            class_="mt-1"
+                                        ),
+                                        ui.span("RCNDE", class_="text-muted d-block mt-2 fw-semibold"),
+                                    ),
+                                    class_="bg-light border rounded p-3 d-flex justify-content-center align-items-center gap-5 text-center"
                                 )
                             ),
                             class_="p-3"
@@ -529,7 +526,6 @@ ui.nav_panel(
         icon=icon_svg("table")
     ),
 
-
 #### UI - Simulation Diagnostics (Tab 3) ####
     ui.nav_panel(
         "Simulation Diagnostics",
@@ -537,6 +533,7 @@ ui.nav_panel(
             ui.h3("Simulation Diagnostics", class_="mb-4 text-center"),
             ui.layout_columns(
                 # --- LEFT: CONFIGURATION ---
+                # Removed the wrapping div and added h-100 to the card so it stretches to match the right column
                 ui.card(
                     ui.card_header("Diagnostic Configuration"),
                     ui.div(
@@ -544,7 +541,6 @@ ui.nav_panel(
                         ui.input_selectize("input_cols", "Select Input Variables", choices=[], multiple=True),
                         ui.input_selectize("outcome_col", "Select Outcome Variable", choices=[], multiple=False),
 
-                        # Permanent Error Display for selection conflicts
                         ui.output_ui("selection_error_display"),
 
                         ui.accordion(
@@ -555,55 +551,48 @@ ui.nav_panel(
                                 ui.input_numeric("ui_avg_cv", "Max Allowed Avg CV", value=0.15, step=0.01),
                                 ui.input_numeric("ui_max_cv", "Max Allowed Peak CV", value=0.30, step=0.01),
                             ),
-                            open=False # Keeps it collapsed by default so it doesn't clutter the UI
+                            open=False
                         ),
 
                         ui.input_task_button(
                             "btn_run_diagnostics", "Run Diagnostics",
                             class_="btn-primary w-100", icon=icon_svg("stethoscope")
                         ),
-
-                        # This is the primary status alert (Success/Failure)
                         ui.output_ui("validation_status"),
                         class_="config-container"
                     ),
-                    class_="mb-0"
+                    class_="h-100 mb-0"
                 ),
 
-                # --- RIGHT: PREVIEWS & REPORTS ---
+                # --- RIGHT: PREVIEWS, REPORTS & REMEDIATION ---
                 ui.div(
-                    # Dynamic Preview (Hides when no data is present)
                     ui.output_ui("dynamic_preview_card"),
-
                     ui.card(
                         ui.card_header("Validation Report"),
                         ui.output_data_frame("validation_results_table"),
                         full_screen=True,
-                        class_="mb-3"
+                        class_="mb-0"
                     ),
-                    # Remediation logic is now anchored to the results
                     ui.output_ui("remediation_ui"),
-                    class_="d-flex flex-column"
+                    class_="d-flex flex-column gap-3 h-100"
                 ),
-                col_widths=[-1,3,7,-1]
+                col_widths=[-1, 3, 7, -1]
             ),
-            class_="container-fluid py-3"
+
+            # --- BOTTOM: VISUALISATION ---
+            # Wrapped in layout_columns to ensure perfectly matched left/right padding
+            ui.layout_columns(
+                ui.div(
+                    ui.output_ui("viz_content"),
+                    class_="mt-3"
+                ),
+                col_widths=[-1, 10, -1]
+            ),
+            class_="container-fluid py-3 overflow-auto h-100"
         ),
         icon=icon_svg("check-double")
     ),
 
-
-
-#### UI - Data Visualisation (Tab 3.5) ####
-    ui.nav_panel(
-        "Data Visualisation",
-        ui.div(
-            ui.h3("Data Visualisation", class_="mb-4 text-center"),
-            ui.output_ui("viz_content"),
-            class_="container-fluid py-3 overflow-auto h-100"
-        ),
-        icon=icon_svg("display")
-    ),
 
 #### UI - PoD Analysis (Tab 4) ####
     ui.nav_panel(
@@ -849,7 +838,7 @@ def server(input, output, session):
         else:
             return ui.div(
                 ui.h5(icon_svg("triangle-exclamation"), " Issues Detected"),
-                ui.p("See Data Visualisation Tab for more information and the Remediation options to the right for next steps.", class_="small mb-0"),
+                ui.p("See the visualisations below and the Remediation options for next steps.", class_="small mb-0"),
                 class_="alert alert-danger mt-3"
             )
 
@@ -992,23 +981,18 @@ def server(input, output, session):
             yield df.to_csv(index=False).encode('utf-8')
 
 
-#### Server - Visualisation (Tab 3.5) ####
+#### Server - Visualisation (Tab 3) ####
 
     @render.ui
     def viz_content():
         """
         Master render for the entire viz tab.
-        Reads uploaded_data() and diagnostic_table() from the Diagnostics tab —
-        no separate upload is needed here.
+        Hides completely until diagnostics have been run.
         """
-        if uploaded_data() is None:
-            return ui.div(
-                ui.div(
-                    ui.h4("No Data Available", class_="text-muted"),
-                    ui.p("Upload a CSV in the 'Simulation Diagnostics' tab to begin."),
-                    class_="text-center p-5 bg-light border rounded"
-                )
-            )
+        diag = diagnostic_table()
+        if diag is None or diag.empty:
+            # Return an empty div so the UI stays clean until 'Run Diagnostics' is pressed
+            return ui.div()
 
         df = uploaded_data()
         all_cols = list(df.columns)
@@ -1152,7 +1136,6 @@ def server(input, output, session):
     @render.plot
     def viz_variable_plot():
         import matplotlib.pyplot as plt
-        from matplotlib.transforms import blended_transform_factory
 
         df = uploaded_data()
         if df is None:
@@ -1208,14 +1191,6 @@ def server(input, output, session):
                             linewidth=2, label="KDE")
                 except Exception:
                     pass
-
-            # Rug plot along the x-axis (blended transform: data x, axes y)
-            trans = blended_transform_factory(ax.transData, ax.transAxes)
-            ax.plot(
-                vals, np.full(len(vals), -0.04), "|",
-                color="#242424", alpha=0.35, markersize=10,
-                transform=trans, clip_on=False
-            )
 
             # Gap overlay
             if coverage_failed and gap_start is not None:
@@ -1346,7 +1321,6 @@ def server(input, output, session):
                 color="#107c10" if passed else "#d13438",
                 fontweight="bold", fontsize=10
             )
-            ax.set_xlabel(col, fontsize=9)
             ax.set_ylabel("Count", fontsize=9)
             ax.grid(True, alpha=0.3)
 
@@ -1355,11 +1329,7 @@ def server(input, output, session):
             row, c = divmod(idx, ncols)
             axes[row][c].set_visible(False)
 
-        fig.suptitle(
-            "Input Space Coverage  (✓ Pass  ✗ Fail)",
-            fontsize=12, fontweight="bold"
-        )
-        fig.tight_layout()
+        fig.tight_layout(pad=2.0, h_pad=3.0)
         return fig
 
     @render.ui
