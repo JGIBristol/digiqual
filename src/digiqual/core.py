@@ -516,7 +516,6 @@ class SimulationStudy:
         threshold = self.pod_results["threshold"]
         X_eval = self.pod_results["X_eval"]
         X = self.pod_results["X"]
-        y = self.pod_results["y"]
 
         # 2. Build the final slice values using median fallbacks
         final_slice_values = {}
@@ -576,10 +575,9 @@ class SimulationStudy:
         poi_label = res.get("poi_col", "Parameter of Interest")
 
         poi_cols = res.get("poi_cols", [poi_label])
-        nuisance_cols = res.get("nuisance_cols", [])
 
         local_std = None
-        if len(poi_cols) == 1 and len(nuisance_cols) == 0:
+        if len(poi_cols) == 1 and len(self.inputs) == 1:
             local_std = pod.predict_local_std(
                 res["X"], res["residuals"], res["X_eval"], res["bandwidth"]
             )
@@ -604,8 +602,9 @@ class SimulationStudy:
 
         # 1. Signal Model Plot
         if len(poi_cols) == 1:
+            poi_idx = self.inputs.index(poi_cols[0])
             self.plots["signal_model"] = plot_signal_model(
-                X=res["X"][:, 0],
+                X=res["X"][:, poi_idx],  # Safely grabbed the correct column!
                 y=res["y"],
                 X_eval=res["X_eval"].flatten(),
                 mean_curve=res["curves"]["mean_response"],
@@ -615,10 +614,13 @@ class SimulationStudy:
             )
         else:
             from digiqual.plotting import plot_signal_surface
+            poi_idx_0 = self.inputs.index(poi_cols[0])
+            poi_idx_1 = self.inputs.index(poi_cols[1])
+
             self.plots["signal_model"] = plot_signal_surface(
                 poi_grids=res["poi_grids"],
                 mean_curve=res["curves"]["mean_response"],
-                X_raw=res["X"],
+                X_raw=res["X"][:, [poi_idx_0, poi_idx_1]], # Safely grabbed the 2 columns!
                 y_raw=res["y"],
                 threshold=res["threshold"],
                 poi_names=poi_cols,

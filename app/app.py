@@ -1939,7 +1939,6 @@ def server(input, output, session):
     def realtime_slice_update():
         """Listens to the dynamic sliders and instantly updates the plots without refitting."""
         study = current_study()
-        # Only run if the model has already been fitted
         if study is None or fit_metrics() is None:
             return
 
@@ -1954,26 +1953,29 @@ def server(input, output, session):
         slice_values = {}
         for col in leftovers:
             try:
-                # Reading the input creates the reactive trigger!
-                slice_values[col] = input[f"slice_{col}"]()
+                # Reading the input creates the reactive trigger
+                val = input[f"slice_{col}"]()
+                if val is not None:
+                    slice_values[col] = val
             except Exception:
                 pass
 
         if not slice_values:
             return
 
-        # 1. Update the math instantly (takes ~5 milliseconds)
+        # 1. Update the math instantly
         study.update_slice(slice_values)
 
         # 2. Re-generate the visualisations in memory
         study.visualise(show=False)
 
-        # 3. Trigger the UI to redraw the updated plots
-        plot_trigger_fit.set(plot_trigger_fit() + 1)
+        # 3. Trigger the UI to redraw (Isolated to prevent infinite loops!)
+        with reactive.isolate():
+            current_trigger = plot_trigger_fit()
+        plot_trigger_fit.set(current_trigger + 1)
 
-        # 4. Clear UQ bounds (protects the user from looking at stale bounds for a new slice)
+        # 4. Clear UQ bounds
         uq_metrics.set(None)
-
 
     # ─────────────────────────────────────────────────────────────────
     # TAB 5: UQ LOGIC
