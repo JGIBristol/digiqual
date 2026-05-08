@@ -392,7 +392,7 @@ class SimulationStudy:
                     final_slice_values[c] = float(self.clean_data[c].median())
 
         # 3. Prepare Data Vectors
-        print(f"--- Starting Reliability Analysis (PoIs: {poi_cols}) ---")
+        print(f"--- Starting Reliability Analysis (PoIs: {poi_cols} - Nuisance: {nuisance_cols}) ---")
         if final_slice_values:
             print(f"-> Slicing surface at: {final_slice_values}")
 

@@ -1948,9 +1948,13 @@ def server(input, output, session):
             # Force the parameters to standard floats so they look clean in the UI and Excel
             dist_params = [round(float(p), 4) for p in results['dist_info'][1]]
 
+            # ---> NEW: Build the string showing ONLY the names of the sliced parameters <---
+            slice_display = ", ".join(leftovers) if leftovers else "None"
+
             metrics = {
                 "Parameter(s) of Interest": ", ".join(poi_cols),
                 "Nuisance Parameter(s)": ", ".join(nuisance_cols) if nuisance_cols else "None",
+                "Sliced Parameter(s)": slice_display, # <--- Added back (names only!)
                 "Total Samples (N)": len(study.clean_data),
                 "Selected Model": model_str,
                 "Model Equation": equation_plain, # Stays here for Excel
@@ -2001,12 +2005,12 @@ def server(input, output, session):
         slice_values = {}
         for col in leftovers:
             try:
-                # Reading the input creates the reactive trigger
+                # Check if the slider exists; if not, we still want the name for the table
                 val = input[f"slice_{col}"]()
-                if val is not None:
-                    slice_values[col] = val
+                slice_values[col] = val if val is not None else study.data[col].median()
             except Exception:
-                pass
+                # Default to median if slider doesn't exist yet
+                slice_values[col] = study.data[col].median()
 
         if not slice_values:
             return
