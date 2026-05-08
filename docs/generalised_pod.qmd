@@ -64,3 +64,13 @@ Because the model is non-linear and non-normal, traditional analytical confidenc
 4. Repeat this $B$ times (typically $B=1000$).
 
 5. Extract the $2.5^{th}$ and $97.5^{th}$ percentiles at every point $a$ to form the robust 95% confidence interval $PoD_{95}$.
+
+### Summary: The 3-Tier Parameter Taxonomy
+
+To understand how `digiqual` handles high-dimensional data, it is helpful to see exactly how each parameter type is treated during the three phases of reliability assessment:
+
+| Parameter Type | 1. Model Fit (Training Phase) | 2. Evaluation Phase (Mean Curve) | 3. PoD Generation (Bootstrapping) |
+| :--- | :--- | :--- | :--- |
+| **Parameter(s) of Interest (PoI)** | Treated as a standard geometric dimension to train the n-dimensional surrogate model. | Defines the evaluation grid. Steps evenly from its minimum to maximum value to form the plot axes. | Forms the primary axes for the final Probability of Detection confidence bounds. |
+| **Sliced Parameter (Constant)** | Treated as a standard geometric dimension. The model learns its physical impact globally. | Held **strictly constant** at a user-defined value. Acts as a targeted, multi-dimensional "laser beam" slice. | Remains rigidly locked at the exact same constant value across all bootstrap resamples. |
+| **Nuisance Parameter (Marginalised)** | Treated as a standard geometric dimension. The model learns its physical impact globally. | **Randomly sampled** via Monte Carlo integration across its physical bounds. Results are averaged out. | Re-sampled and averaged inside *every single* bootstrap iteration to capture real-world uncertainty. |

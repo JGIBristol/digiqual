@@ -314,7 +314,7 @@ class SimulationStudy:
         poi_col: list | str,
         threshold: float,
         nuisance_col: list | str | None = None,
-        slice_values: dict | None = None,  # <--- User can still override defaults
+        slice_values: dict | None = None,
         bandwidth_ratio: float = 0.1,
         n_boot: int = 1000,
         model_override: str = "auto",
@@ -328,7 +328,7 @@ class SimulationStudy:
             poi_col (list | str): The parameter(s) of interest (e.g., 'Crack Length', ['Angle', 'Depth']).
             threshold (float): The failure threshold (e.g., 4.0 dB).
             nuisance_col (list | str | None): The nuisance parameters to marginalize over via MC integration.
-            sliced_values (dict | None): The sliced parameters and their values.
+            slice_values (dict | None): The sliced parameters and their values.
             bandwidth_ratio (float): Smoothing bandwidth fraction (default 0.1).
             n_boot (int): Bootstrap iterations for confidence bounds.
             model_override (str): Force a model type. One of "auto",
@@ -357,6 +357,11 @@ class SimulationStudy:
             poi_cols = [poi_col]
         else:
             poi_cols = poi_col
+
+        # --- ADD THIS SAFETY CHECK ---
+        if len(poi_cols) > 2:
+            raise ValueError("digiqual currently only supports plotting 1 or 2 Parameters of Interest. "
+                                "Please move additional variables to 'nuisance_col' or 'slice_values'.")
 
         if nuisance_col is None:
             nuisance_cols = []
@@ -399,8 +404,11 @@ class SimulationStudy:
         mean_model = pod.fit_robust_mean_model(
             X, y, model_override=model_override, force_degree=force_degree
         )
+        equation = pod.generate_latex_equation(mean_model, all_cols, self.outcome)
+
         if mean_model.model_type_ == 'Polynomial':
             print(f"-> Selected Model: Polynomial (Degree {mean_model.model_params_})")
+            print("-> Equation extracted.")
         else:
             print("-> Selected Model: Kriging (Gaussian Process)")
 
@@ -471,7 +479,6 @@ class SimulationStudy:
 
         # 10. Package Results
         self.pod_results = {
-            "poi_col": poi_cols[0] if len(poi_cols) == 1 else poi_cols,
             "poi_cols": poi_cols,
             "nuisance_cols": nuisance_cols,
             "slice_values": final_slice_values,
@@ -483,6 +490,7 @@ class SimulationStudy:
             "X_eval": X_eval,
             "poi_grids": poi_grids,
             "mean_model": mean_model,
+            "equation": equation,
             "bandwidth": bandwidth,
             "residuals": residuals,
             "dist_info": (dist_name, dist_params),
@@ -572,15 +580,36 @@ class SimulationStudy:
             return
 
         res = self.pod_results
-        poi_label = res.get("poi_col", "Parameter of Interest")
+        poi_cols = res.get("poi_cols", ["Parameter of Interest"])
 
-        poi_cols = res.get("poi_cols", [poi_label])
-
+        # --- FIXED BLOCK: Multidimensional Local SD Calculation ---
         local_std = None
-        if len(poi_cols) == 1 and len(self.inputs) == 1:
+        if len(poi_cols) == 1:
+            # 1. Create a full-dimension evaluation grid that matches the training data (e.g., 7 columns)
+            n_samples_eval = len(res["X_eval"])
+            n_total_vars = len(self.inputs)
+            X_eval_full = np.zeros((n_samples_eval, n_total_vars))
+
+            # 2. Gather the fixed values for this specific plot slice
+            # We use the current slice values, and fallback to medians for nuisances
+            current_view_values = res["slice_values"].copy()
+            for c in res["nuisance_cols"]:
+                current_view_values[c] = float(self.clean_data[c].median())
+
+            # 3. Populate the high-dimensional grid for the noise estimator
+            for i, col_name in enumerate(self.inputs):
+                if col_name == poi_cols[0]:
+                    # This column gets the sliding PoI values (x-axis)
+                    X_eval_full[:, i] = res["X_eval"].flatten()
+                else:
+                    # These columns get the constant slice/nuisance values
+                    X_eval_full[:, i] = current_view_values[col_name]
+
+            # 4. Now the dimensions match (7 columns vs 7 columns)!
             local_std = pod.predict_local_std(
-                res["X"], res["residuals"], res["X_eval"], res["bandwidth"]
+                res["X"], res["residuals"], X_eval_full, res["bandwidth"]
             )
+
         if hasattr(res["mean_model"], "cv_scores_"):
             mean_model = res["mean_model"]
             model_type = getattr(mean_model, 'model_type_', None)

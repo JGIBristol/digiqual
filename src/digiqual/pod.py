@@ -153,6 +153,43 @@ def fit_robust_mean_model(
 
     return final_model
 
+
+def generate_latex_equation(model: Any, feature_names: list, outcome_name: str = "y") -> str:
+    """
+    Extracts a LaTeX formatted equation from a fitted Polynomial Pipeline.
+    """
+    if getattr(model, 'model_type_', None) != 'Polynomial':
+        return "Equation not available for Kriging models (Gaussian Process)."
+
+    poly = model.named_steps['polynomialfeatures']
+    lr = model.named_steps['linearregression']
+
+    terms = poly.get_feature_names_out(feature_names)
+    # Ensure coefs and intercept are flattened correctly
+    import numpy as np
+    coefs = lr.coef_[0] if lr.coef_.ndim > 1 else lr.coef_
+    intercept = lr.intercept_[0] if np.ndim(lr.intercept_) > 0 else lr.intercept_
+
+    # Format outcome name for LaTeX (escape underscores)
+    latex_outcome = outcome_name.replace("_", "\\_")
+    equation = f"{latex_outcome} = {intercept:.4g}"
+
+    import re
+    for coef, term in zip(coefs, terms):
+        # Skip the constant term (intercept is already added) or zero coefficients
+        if term == "1" or coef == 0:
+            continue
+
+        # Format the feature names for LaTeX
+        formatted_term = term.replace(" ", " \\cdot ")
+        formatted_term = re.sub(r'\^(\d+)', r'^{\1}', formatted_term)
+        formatted_term = formatted_term.replace("_", "\\_")
+
+        sign = "+" if coef > 0 else "-"
+        equation += f" {sign} {abs(coef):.4g} \\cdot {formatted_term}"
+
+    return equation
+
 def plot_model_selection(
     cv_scores: dict,
     used_key: tuple | None = None,
