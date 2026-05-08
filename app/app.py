@@ -626,6 +626,7 @@ ui.nav_panel(
                             ui.div(
                                 ui.input_selectize("pod_pois", "Parameters to plot (Select 1 or 2)", choices=[], multiple=True),
                                 ui.input_selectize("pod_nuisance", "Parameters to integrate over (Max 2)", choices=[], multiple=True),
+                                ui.output_ui("leftover_params_note"),
                             ),
                             ui.div(
                                 ui.input_select("pod_model_override", "Model Override", choices=["Auto (Best Fit)", "Polynomial", "Kriging"], selected="Auto (Best Fit)"),
@@ -1671,6 +1672,50 @@ def server(input, output, session):
                                       max=round(float(vals.max()), 3))
 
     @render.ui
+    def leftover_params_note():
+        """
+        Dynamically calculates which input variables are not assigned to axes
+        or integration, and notifies the user that they will become sliders.
+        """
+        study = current_study()
+        if study is None:
+            return ui.div() # Hide if nothing is configured yet
+
+        all_inputs = study.inputs
+        if not all_inputs:
+            return ui.div()
+        # 1. Get the currently assigned variables
+        selected_pois = list(input.pod_pois()) if input.pod_pois() else []
+        selected_nuis = list(input.pod_nuisance()) if input.pod_nuisance() else []
+
+        # 2. Calculate leftovers
+        leftovers = [c for c in all_inputs if c not in selected_pois and c not in selected_nuis]
+
+        # 3. Render the appropriate informative message
+        if leftovers:
+            # Format the leftover names nicely (e.g., 'Length', 'Width')
+            leftovers_str = ", ".join([f"'{c}'" for c in leftovers])
+
+            return ui.div(
+                ui.span(icon_svg("sliders"), class_="text-primary me-2", style="font-size: 1.1em;"),
+                ui.div(
+                    ui.tags.strong("Interactive Sliders: ", class_="d-block"),
+                    ui.span(f"Unassigned parameters ({leftovers_str}) will appear as interactive sliders after fitting to let you slice the surface.", class_="small text-muted")
+                ),
+                class_="mt-3 p-2 bg-light border rounded d-flex align-items-start shadow-sm"
+            )
+        else:
+            return ui.div(
+                ui.span(icon_svg("check"), class_="text-success me-2", style="font-size: 1.1em;"),
+                ui.div(
+                    ui.tags.strong("All Parameters Assigned", class_="d-block text-success"),
+                    ui.span("No slice sliders will be generated.", class_="small text-muted")
+                ),
+                class_="mt-3 p-2 bg-light border rounded d-flex align-items-start shadow-sm"
+            )
+
+
+    @render.ui
     def dynamic_slice_sliders():
         study = current_study()
 
@@ -1774,20 +1819,11 @@ def server(input, output, session):
                     ui.card(ui.card_header(f"{input.outcome_col()} Surface" if is_multi_dim else "Model Fit"), ui.output_plot("plot_signal"), full_screen=True),
                     col_widths=[6, 6]
                 ),
-                ui.layout_columns(
-                        ui.card(
-                            ui.card_header("Fit Statistics"),
-
-                            ui.output_ui("mathjax_equation_ui"),
-                            ui.output_data_frame("fit_stats_table")
-                        ),
-                    ui.card(
-                        ui.card_header("Export Preliminary Results"),
-                        ui.p("Download the configuration metrics and the mean response curve. Run UQ in Tab 5 to include confidence bounds.", class_="small text-muted mb-3"),
-                        ui.download_button("download_excel_fit", "Download Excel Report", class_="btn-success w-100", icon=icon_svg("file-excel")),
-                        class_="text-center"
-                    ),
-                    col_widths=[8, 4]
+                # --- CHANGED: Removed the Export card and let Fit Statistics take full width ---
+                ui.card(
+                    ui.card_header("Fit Statistics"),
+                    ui.output_ui("mathjax_equation_ui"),
+                    ui.output_data_frame("fit_stats_table")
                 )
             ),
             col_widths=[-1,10,-1]
@@ -1909,7 +1945,8 @@ def server(input, output, session):
             best_mse_str = f"{cv_scores.get(used_key, np.nan):.2e}"
 
             dist_name = results['dist_info'][0].capitalize()
-            dist_params = [round(p, 4) for p in results['dist_info'][1]]
+            # Force the parameters to standard floats so they look clean in the UI and Excel
+            dist_params = [round(float(p), 4) for p in results['dist_info'][1]]
 
             metrics = {
                 "Parameter(s) of Interest": ", ".join(poi_cols),
@@ -2222,32 +2259,6 @@ def server(input, output, session):
                 df_curve.to_excel(writer, sheet_name="PoD Curve Data", index=False)
 
         # Return the bytes to trigger the download
-        yield output.getvalue()
-
-    @render.download(filename="digiqual_preliminary_report.xlsx")
-    def download_excel_fit():
-        """
-        Generates the Excel workbook for Tab 4 (without UQ metrics).
-        """
-        import io
-        output = io.BytesIO()
-
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            # --- TAB 1: Summary Metrics ---
-            fit_data = fit_metrics()
-            if fit_data:
-                # Strip out the LaTeX, but keep "Model Equation" (the plain text)
-                excel_data = {k: v for k, v in fit_data.items() if k != "LaTeX Equation"}
-
-                # Use the filtered excel_data to build the DataFrame
-                df_metrics = pd.DataFrame(list(excel_data.items()), columns=["Metric", "Value"])
-                df_metrics.to_excel(writer, sheet_name="Summary Metrics", index=False)
-
-            # --- TAB 2: Full Curve Data ---
-            df_curve = pod_export_data()
-            if df_curve is not None:
-                df_curve.to_excel(writer, sheet_name="PoD Curve Data", index=False)
-
         yield output.getvalue()
 
 #### App ####
