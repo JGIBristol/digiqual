@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.stats as stats
-from typing import Any, Tuple, Dict
+from typing import Any, Tuple, Dict, Union
 from scipy.stats import qmc
 
 def compute_multi_dim_pod(
@@ -11,17 +11,15 @@ def compute_multi_dim_pod(
     residuals: np.ndarray,
     bandwidth: float,
     dist_info: Tuple[str, Tuple],
-    threshold: float,
+    thresholds: Union[float, np.ndarray, list],
     n_mc_samples: int = 3000
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Performs Monte Carlo integration over continuous nuisance parameters to calculate
     the marginal Probability of Detection (PoD) for a grid of Parameters of Interest (PoI).
 
-    Based on the methodology from Malkiel et al. (2026), this function evaluates the
-    flexible multi-dimensional surrogate model across randomly sampled nuisance parameter
-    realizations, calculates the probability of detection at each realization using local
-    variance standardisation, and aggregates them.
+    Now supports vectorized 'thresholds', allowing for the simultaneous calculation
+    of a PoD spectrum across a range of signal detection levels.
 
     Args:
         poi_grid (np.ndarray): The evaluation grid of the Parameters of Interest shape (N, n_pois).
@@ -31,12 +29,13 @@ def compute_multi_dim_pod(
         residuals (np.ndarray): Residuals from the model fit.
         bandwidth (float): Local kernel smoothing bandwidth.
         dist_info (Tuple[str, Tuple]): Residual error distribution (name, params).
-        threshold (float): Signal detection threshold.
+        thresholds (Union[float, np.ndarray, list]): One or more signal detection thresholds.
         n_mc_samples (int): Number of Monte Carlo draws per PoI grid point.
 
     Returns:
         Tuple[np.ndarray, np.ndarray]:
-            - pod_integrated: Integrated PoD values across the poi_grid.
+            - pod_integrated: Integrated PoD values. If 'thresholds' was a vector,
+              this is shape (n_grid_points, n_thresholds). Otherwise, shape (n_grid_points,).
             - mean_integrated: Expected mean response across the poi_grid.
     """
     n_pois = poi_grid.shape[1]
@@ -46,8 +45,12 @@ def compute_multi_dim_pod(
     dist_name, dist_params = dist_info
     dist_obj = getattr(stats, dist_name)
 
-    # Pre-generate LHS samples for the nuisance space [0, 1]
-    # We use a single LHS draw scaled up for every PoI grid point to reduce variance between points
+    # 1. Handle Threshold Vectorization
+    is_vector = isinstance(thresholds, (np.ndarray, list))
+    thresh_array = np.atleast_1d(thresholds)
+    n_thresholds = len(thresh_array)
+
+    # 2. Pre-generate LHS samples for the nuisance space [0, 1]
     if n_nuisance > 0:
         sampler = qmc.LatinHypercube(d=n_nuisance, seed=42)
         lhs_01 = sampler.random(n=n_mc_samples)
@@ -57,14 +60,19 @@ def compute_multi_dim_pod(
         for i, (min_val, max_val) in enumerate(nuisance_ranges.values()):
             nuisance_samples[:, i] = lhs_01[:, i] * (max_val - min_val) + min_val
     else:
-        # If no nuisance variables are provided, gracefully degenerate to standard 1D PoD
         n_mc_samples = 1
 
     from digiqual.pod import predict_local_std
 
-    pod_integrated = np.zeros(len(poi_grid))
+    # Prepare storage based on whether we are calculating a spectrum or a single curve
+    if is_vector:
+        pod_integrated = np.zeros((len(poi_grid), n_thresholds))
+    else:
+        pod_integrated = np.zeros(len(poi_grid))
+
     mean_integrated = np.zeros(len(poi_grid))
 
+    # 3. Main Integration Loop
     for i, poi_point in enumerate(poi_grid):
         # Assemble the full input vectors for this grid point
         X_eval = np.zeros((n_mc_samples, total_vars))
@@ -73,19 +81,22 @@ def compute_multi_dim_pod(
         if n_nuisance > 0:
             X_eval[:, n_pois:] = nuisance_samples
 
-        # 1. Predict the mean response from the N-Dimensional model
+        # A) Predict mean response and local noise (The heavy lifting)
         mean_resp = model.predict(X_eval)
-
-        # 2. Estimate local noise variance using the kernel smoothing
-        # Note: We must predict local std dynamically at these N-dimensional points
         sigma_resp = predict_local_std(X_train, residuals, X_eval, bandwidth)
 
-        # 3. Calculate probability of exceedance
-        z_scores = (threshold - mean_resp) / sigma_resp
-        probs = 1 - dist_obj.cdf(z_scores, *dist_params)
+        # B) Calculate probability of exceedance
+        if is_vector:
+            # Broadcast thresholds: (N_thresh, 1) - (N_mc,) -> (N_thresh, N_mc)
+            z_scores = (thresh_array[:, np.newaxis] - mean_resp) / sigma_resp
+            probs = 1 - dist_obj.cdf(z_scores, *dist_params)
+            # Take mean across MC samples for each threshold
+            pod_integrated[i, :] = np.mean(probs, axis=1)
+        else:
+            z_scores = (thresholds - mean_resp) / sigma_resp
+            probs = 1 - dist_obj.cdf(z_scores, *dist_params)
+            pod_integrated[i] = np.mean(probs)
 
-        # 4. Integrate / Aggregate (Monte Carlo expectation)
-        pod_integrated[i] = np.mean(probs)
         mean_integrated[i] = np.mean(mean_resp)
 
     return pod_integrated, mean_integrated

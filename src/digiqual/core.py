@@ -89,6 +89,7 @@ class SimulationStudy:
         self.models_cache: Dict[str, Any] = {}       # Stores fitted mean models
         self.variance_cache: Dict[str, Any] = {}     # Stores residuals and bandwidths
         self.pod_curves_cache: Dict[str, Any] = {}   # Stores integrated PoD curves
+        self.threshold_spectrum_cache: Dict[Tuple, Dict] = {} # Stores threshold spectrum
 
 #### Adding Data & Cache Management ####
     def add_data(
@@ -378,6 +379,137 @@ class SimulationStudy:
         self.data = pd.DataFrame() # Clear old state to avoid duplication
         self.add_data(final_data)
 
+
+    def compute_pod_spectrum(
+        self,
+        poi_col: list | str,
+        nuisance_col: list | str | None = None,
+        slice_values: dict | None = None,
+        n_threshold_points: int = 100,
+        bandwidth_ratio: float = 0.1,
+        model_override: str = "auto",
+        force_degree: int | None = None
+    ) -> Dict[str, Any]:
+        """
+        Pre-calculates a spectrum of PoD curves across a range of signal thresholds.
+
+        This method populates the Layer 4 cache by calculating PoD curves for a vector
+        of thresholds spanning the observed signal range. By pre-calculating these
+        values, subsequent calls to `.pod()` for any threshold within this range can
+        be resolved near-instantly via linear interpolation, enabling highly
+        responsive UI sliders.
+
+        Args:
+            poi_col (list | str): The parameter(s) of interest to evaluate on the x-axis.
+            nuisance_col (list | str | None, optional): Parameters to marginalize over
+                via Monte Carlo integration. Defaults to None.
+            slice_values (dict | None, optional): Constant values for parameters not
+                selected as PoIs or Nuisances. Defaults to None (uses medians).
+            n_threshold_points (int, optional): The resolution of the threshold
+                spectrum (number of PoD curves to pre-calculate). Defaults to 100.
+            bandwidth_ratio (float, optional): Fraction of the data range used for
+                local noise estimation. Defaults to 0.1.
+            model_override (str, optional): Force a specific model type ("auto",
+                "polynomial", or "kriging"). Defaults to "auto".
+            force_degree (int | None, optional): If using a polynomial model,
+                forces this specific degree. Defaults to None.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing:
+                - "thresholds": The vector of signal levels evaluated.
+                - "pod_matrix": A 2D array of shape (n_grid_points, n_thresholds).
+                - "mean_curve": The expected mean response across the PoI grid.
+
+        Examples:
+            ```python
+            from digiqual import SimulationStudy
+            study = SimulationStudy()
+            study.add_data(df, outcome_col='Signal')
+
+            # Pre-calculate 100 thresholds for 'Length'
+            # This fills the Layer 4 cache for instant UI interaction
+            spectrum = study.compute_pod_spectrum(
+                poi_col="Length",
+                nuisance_col="Roughness",
+                n_threshold_points=100
+            )
+
+            # Subsequent calls with different thresholds are now near-instant
+            results_1 = study.pod(poi_col="Length", threshold=15.0, n_boot=0)
+            results_2 = study.pod(poi_col="Length", threshold=25.0, n_boot=0)
+            ```
+        """
+        # 1. Standardize column configurations
+        if isinstance(poi_col, str):
+            poi_cols = [poi_col]
+        else:
+            poi_cols = poi_col
+
+        nuisance_cols = [nuisance_col] if isinstance(nuisance_col, str) else (nuisance_col or [])
+        slice_values = slice_values or {}
+
+        # 2. Establish baseline model and variance
+        # We trigger a baseline .pod() run with n_boot=0 to prime Layers 1, 2, and 3 caches
+        print("--- Initiating Threshold Spectrum Generation ---")
+        temp_results = self.pod(
+            poi_col=poi_cols,
+            threshold=float(self.clean_data[self.outcome].median()),
+            nuisance_col=nuisance_cols,
+            slice_values=slice_values,
+            bandwidth_ratio=bandwidth_ratio,
+            n_boot=0,
+            model_override=model_override,
+            force_degree=force_degree
+        )
+
+        # Extract the key for cache indexing
+        mean_model = temp_results['mean_model']
+        selected_key = ('Polynomial', mean_model.model_params_) if mean_model.model_type_ == 'Polynomial' else ('Kriging', None)
+
+        # Create the Spectrum Key (excludes the specific threshold value)
+        spectrum_key = (
+            selected_key,
+            tuple(poi_cols),
+            tuple(nuisance_cols),
+            frozenset(temp_results['slice_values'].items())
+        )
+
+        # 3. Check if this exact spectrum configuration is already cached
+        if spectrum_key in self.threshold_spectrum_cache:
+            print("4. Threshold Spectrum already cached (Layer 4 Hit).")
+            return self.threshold_spectrum_cache[spectrum_key]
+
+        print(f"4. Computing PoD Spectrum for {n_threshold_points} thresholds (Layer 4 Cache Miss)...")
+
+        # 4. Generate Threshold Vector across the observed signal range
+        y_min, y_max = float(self.clean_data[self.outcome].min()), float(self.clean_data[self.outcome].max())
+        thresh_vec = np.linspace(y_min, y_max, n_threshold_points)
+
+        # 5. Execute Vectorized Integration
+        from digiqual.integration import compute_multi_dim_pod
+        pod_matrix, mean_curve = compute_multi_dim_pod(
+            temp_results['X_eval'],
+            temp_results['nuisance_ranges'],
+            temp_results['mean_model'],
+            temp_results['X'],
+            temp_results['residuals'],
+            temp_results['bandwidth'],
+            temp_results['dist_info'],
+            thresholds=thresh_vec
+        )
+
+        # 6. Package and store in Layer 4
+        spectrum_data = {
+            "thresholds": thresh_vec,
+            "pod_matrix": pod_matrix,
+            "mean_curve": mean_curve
+        }
+
+        self.threshold_spectrum_cache[spectrum_key] = spectrum_data
+        print("--- Spectrum Generation Complete ---")
+
+        return spectrum_data
+
 #### PoD Analysis ####
     def pod(
         self,
@@ -537,50 +669,67 @@ class SimulationStudy:
         print(f"   -> Selected Distribution: {dist_name}")
 
         # ---------------------------------------------------------
-        # 6. LAYER 3 CACHE: Integration & Curves
+        # 6. LAYER 3 & 4 CACHE: Integration & Spectrum Interpolation
         # ---------------------------------------------------------
-        # Create a unique signature for this exact plot configuration
-        l3_key = (
-            selected_key,
-            threshold,
-            tuple(poi_cols),
-            tuple(nuisance_cols),
-            frozenset(final_slice_values.items())
-        )
+        # Define keys for the different caching layers
+        spectrum_key = (selected_key, tuple(poi_cols), tuple(nuisance_cols), frozenset(final_slice_values.items()))
+        l3_key = (selected_key, threshold, tuple(poi_cols), tuple(nuisance_cols), frozenset(final_slice_values.items()))
 
-        if l3_key not in self.pod_curves_cache:
-            print("3. Integrating PoD Curve (Cache Miss)...")
+        # A) Setup Evaluation Grid & Nuisance Parameters (Lightweight Setup)
+        poi_grids = []
+        for col in poi_cols:
+            num_points = 100 if len(poi_cols) == 1 else 30
+            poi_grids.append(np.linspace(self.clean_data[col].min(), self.clean_data[col].max(), num_points))
 
-            # Build PoI grid and nuisance ranges
-            poi_grids = []
-            for col in poi_cols:
-                num_points = 100 if len(poi_cols) == 1 else 30
-                poi_grids.append(np.linspace(self.clean_data[col].min(), self.clean_data[col].max(), num_points))
+        if len(poi_cols) == 1:
+            X_eval = poi_grids[0].reshape(-1, 1)
+        else:
+            mesh = np.meshgrid(*poi_grids, indexing='ij')
+            X_eval = np.vstack([m.flatten() for m in mesh]).T
 
+        # Build nuisance ranges (including sliced parameters locked as single-value ranges)
+        nuisance_ranges = {c: (float(self.clean_data[c].min()), float(self.clean_data[c].max())) for c in nuisance_cols}
+        for c, val in final_slice_values.items():
+            nuisance_ranges[c] = (val, val)
+
+        # B) Resolve Analysis (Layer 4 -> Layer 3 -> Miss)
+        if spectrum_key in self.threshold_spectrum_cache and n_boot == 0:
+            print("3. Interpolating PoD Curve from Threshold Spectrum (Layer 4 Hit)...")
+            spec = self.threshold_spectrum_cache[spectrum_key]
+
+            # Linear Interpolation across the pre-calculated threshold spectrum
+            # pod_matrix shape: (n_grid_points, n_thresholds)
+            pod_curve = np.array([
+                np.interp(threshold, spec["thresholds"], spec["pod_matrix"][i, :])
+                for i in range(len(X_eval))
+            ])
+            mean_curve = spec["mean_curve"]
+
+            # Calculate Preliminary Reliability Point (1D only)
+            a90_95 = np.nan
             if len(poi_cols) == 1:
-                X_eval = poi_grids[0].reshape(-1, 1)
-            else:
-                mesh = np.meshgrid(*poi_grids, indexing='ij')
-                X_eval = np.vstack([m.flatten() for m in mesh]).T
+                a90_95 = pod.calculate_reliability_point(X_eval.flatten(), pod_curve, target_pod=0.90)
 
-            # Build nuisance ranges for true nuisances
-            nuisance_ranges = {c: (float(self.clean_data[c].min()), float(self.clean_data[c].max())) for c in nuisance_cols}
+        elif l3_key in self.pod_curves_cache:
+            print("3. Loading PoD Curve from Individual Cache (Layer 3 Hit)...")
+            cached_l3 = self.pod_curves_cache[l3_key]
+            pod_curve = cached_l3["pod_curve"]
+            mean_curve = cached_l3["mean_curve"]
+            a90_95 = cached_l3["a90_95"]
 
-            # Inject the sliced parameters into the integrator with Min == Max
-            for c, val in final_slice_values.items():
-                nuisance_ranges[c] = (val, val)
-
-            # Compute PoD Curve
+        else:
+            print("3. Integrating PoD Curve from Scratch (Cache Miss)...")
             from digiqual.integration import compute_multi_dim_pod
             pod_curve, mean_curve = compute_multi_dim_pod(
                 X_eval, nuisance_ranges, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold
             )
 
-            # Calculate Reliability Point (if 1D)
+            # Calculate Preliminary Reliability Point (1D only)
             a90_95 = np.nan
             if len(poi_cols) == 1:
-                a90_95 = pod.calculate_reliability_point(X_eval.flatten(), pod_curve, target_pod=0.90) # Notice we pass pod_curve here temporarily if no CI
+                a90_95 = pod.calculate_reliability_point(X_eval.flatten(), pod_curve, target_pod=0.90)
 
+            # Store in Layer 3 Cache for fast slicing/parameter swapping
             self.pod_curves_cache[l3_key] = {
                 "X_eval": X_eval,
                 "poi_grids": poi_grids,
@@ -589,15 +738,7 @@ class SimulationStudy:
                 "mean_curve": mean_curve,
                 "a90_95": a90_95
             }
-        else:
-            print("3. Loading PoD Curve from cache (Cache Hit)...")
-            cached_l3 = self.pod_curves_cache[l3_key]
-            X_eval = cached_l3["X_eval"]
-            poi_grids = cached_l3["poi_grids"]
-            nuisance_ranges = cached_l3["nuisance_ranges"]
-            pod_curve = cached_l3["pod_curve"]
-            mean_curve = cached_l3["mean_curve"]
-            a90_95 = cached_l3["a90_95"]
+
 
         # ---------------------------------------------------------
         # 7. Bootstrap Confidence Intervals (Parallelized)
