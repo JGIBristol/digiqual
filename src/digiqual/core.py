@@ -11,14 +11,11 @@ from .executors import Executor
 from .ahat import fit_linear_a_hat_model, compute_linear_pod_curve, plot_linear_signal_model, bootstrap_linear_pod_ci
 
 
-
 class SimulationStudy:
     """
     A workflow manager for simulation reliability assessment.
 
     Args:
-        input_cols (List[str]): List of input variable names.
-        outcome_col (str): Name of the outcome variable.
         max_gap_ratio (float, optional): Max allowable gap between data points as a fraction of the total range. Defaults to 0.20.
         min_r2_score (float, optional): Minimum cross-validated R-squared score required for the signal fit. Defaults to 0.50.
         max_avg_cv (float, optional): Max allowable average relative width of the bootstrap predictions. Defaults to 0.15.
@@ -34,6 +31,9 @@ class SimulationStudy:
         plots (Dict): Stores the latest generated figures.
         linear_pod_results (Dict): Results from the classical linear analysis.
         linear_plots (Dict): Stores figures from the classical linear analysis.
+        models_cache (Dict): Cached mean models to prevent redundant fitting.
+        variance_cache (Dict): Cached variance models (residuals/bandwidth).
+        pod_curves_cache (Dict): Cached integrated PoD curves.
 
     Examples:
         ```python
@@ -41,38 +41,41 @@ class SimulationStudy:
 
         # Initialize with stricter diagnostic thresholds
         study = SimulationStudy(
-            input_cols=['Length', 'Angle'],
-            outcome_col='Signal',
             max_gap_ratio=0.10,
             min_r2_score=0.75
         )
+
+        # Add data (automatically infers input columns)
+        study.add_data(df, outcome_col='Signal')
         ```
     """
 
 #### Initialisation ####
     def __init__(
         self,
-        input_cols: List[str],
-        outcome_col: str,
         max_gap_ratio: float = 0.20,
         min_r2_score: float = 0.50,
         max_avg_cv: float = 0.15,
         max_max_cv: float = 0.30
     ):
-        self.inputs = input_cols
-        self.outcome = outcome_col
-
         # Save custom diagnostic thresholds
         self.max_gap_ratio = max_gap_ratio
         self.min_r2_score = min_r2_score
         self.max_avg_cv = max_avg_cv
         self.max_max_cv = max_max_cv
 
-        # Internal state
+        # Internal Data State
+        self.inputs: List[str] = []
+        self.outcome: str = ""
         self.data: pd.DataFrame = pd.DataFrame()
         self.clean_data: pd.DataFrame = pd.DataFrame()
         self.removed_data: pd.DataFrame = pd.DataFrame()
 
+        # Initialize and clear all caches
+        self._clear_caches()
+
+    def _clear_caches(self) -> None:
+        """Internal method to wipe all cached mathematical results and state."""
         # Generalized method storage
         self.sufficiency_results: pd.DataFrame = pd.DataFrame()
         self.pod_results: Dict[str, Any] = {}
@@ -82,53 +85,120 @@ class SimulationStudy:
         self.linear_pod_results: Dict[str, Any] = {}
         self.linear_plots: Dict[str, Any] = {}
 
-#### Adding Data ####
-    def add_data(self, df: pd.DataFrame) -> None:
-        """
-        Ingests raw simulation data, filtering for relevant columns only.
+        # Layered Caches for performance optimization
+        self.models_cache: Dict[str, Any] = {}       # Stores fitted mean models
+        self.variance_cache: Dict[str, Any] = {}     # Stores residuals and bandwidths
+        self.pod_curves_cache: Dict[str, Any] = {}   # Stores integrated PoD curves
 
-        This method automatically strips away any columns in `df` that were not
-        defined in `self.inputs` or `self.outcome` during initialization.
+#### Adding Data & Cache Management ####
+    def add_data(
+        self,
+        df: pd.DataFrame,
+        outcome_col: str = None,
+        input_cols: List[str] = None,
+        overwrite: bool = False
+    ) -> None:
+        """
+        Ingests raw simulation data, configures columns, and manages the cache.
+
+        This method sets the outcome and input variables, subsets the data
+        accordingly, and automatically clears the mathematical caches whenever
+        new data is ingested to prevent state mismatches. If `input_cols` is not
+        provided, it smartly infers that all columns other than the outcome are inputs.
 
         Args:
             df (pd.DataFrame): The DataFrame to ingest.
-
-        Raises:
-            ValueError: If the new data is missing any required input or outcome columns.
-
-        Examples:
-            ```python
-            import pandas as pd
-            df = pd.DataFrame({
-                'Length': [1.0, 2.5, 5.0],
-                'Angle': [0, 15, -10],
-                'Signal': [0.5, 0.8, 1.2]
-            })
-            study.add_data(df)
-            ```
+            outcome_col (str, optional): The name of the target/outcome variable.
+                Required on first ingestion, optional when appending.
+            input_cols (List[str], optional): Explicit list of input variables.
+                Defaults to None (infers all non-outcome columns).
+            overwrite (bool, optional): If True, replaces existing data.
+                If False, appends to existing data. Defaults to False.
         """
+        # 1. Configure Columns (Only if initializing or overwriting)
+        if self.data.empty or overwrite:
+            if outcome_col is None:
+                raise ValueError("You must provide 'outcome_col' when initializing or overwriting data.")
+            self.outcome = outcome_col
+
+            if input_cols is None:
+                # Smart Inference: Assume all other columns in the DataFrame are inputs
+                self.inputs = [col for col in df.columns if col != outcome_col]
+            else:
+                self.inputs = input_cols
+        else:
+            # If appending, ignore new column definitions and strictly use the established ones
+            if outcome_col is not None and outcome_col != self.outcome:
+                print(f"Note: Using established outcome '{self.outcome}' (ignoring '{outcome_col}').")
+
         required_cols = self.inputs + [self.outcome]
 
         missing = [c for c in required_cols if c not in df.columns]
         if missing:
             raise ValueError(f"New data is missing required columns: {missing}")
 
+        # This cleanly strips away any extra helper metadata (like 'Refinement_Reason')
         df_subset = df[required_cols].copy()
 
-        if self.data.empty:
+        # 2. Append or Overwrite Data
+        if self.data.empty or overwrite:
             self.data = df_subset
+            print(f"Data initialized/overwritten. Total rows: {len(self.data)}")
         else:
             self.data = pd.concat([self.data, df_subset], ignore_index=True)
+            print(f"Data appended. Total rows: {len(self.data)}")
 
-        print(f"Data updated. Total rows: {len(self.data)}")
-
-        # RESET State
+        # 3. Reset validation state
         self.clean_data = pd.DataFrame()
-        self.sufficiency_results = pd.DataFrame()
-        self.pod_results = {}
-        self.plots = {}
-        self.linear_pod_results = {}
-        self.linear_plots = {}
+        self.removed_data = pd.DataFrame()
+
+        # 4. CRITICAL: Data changed, math is invalid. Wipe the caches.
+        self._clear_caches()
+
+
+#### UI Helper Methods ####
+    def get_unassigned_parameters(self, poi_cols: List[str], nuisance_cols: List[str] = None) -> List[str]:
+        """
+        Calculates which input variables are not currently assigned as a Parameter
+        of Interest or a Nuisance parameter.
+
+        Args:
+            poi_cols (List[str]): Currently selected Parameters of Interest.
+            nuisance_cols (List[str], optional): Currently selected Nuisance parameters. Defaults to None.
+
+        Returns:
+            List[str]: A list of unassigned column names.
+        """
+        nuisance_cols = nuisance_cols or []
+        return [c for c in self.inputs if c not in poi_cols and c not in nuisance_cols]
+
+    def get_data_summary(self, col_name: str) -> Dict[str, float]:
+        """
+        Calculates the minimum, maximum, and median values for a given column.
+        Useful for instantly populating UI slider bounds or default thresholds.
+
+        Args:
+            col_name (str): The name of the column to summarize.
+
+        Returns:
+            Dict[str, float]: A dictionary containing 'min', 'median', and 'max'.
+            Returns None values if the data is empty or the column does not exist.
+        """
+        if self.data.empty or col_name not in self.data.columns:
+            return {"min": None, "median": None, "max": None}
+
+        # Prefer cleaned data if validation has run
+        df_target = self.clean_data if not self.clean_data.empty else self.data
+        vals = pd.to_numeric(df_target[col_name], errors="coerce").dropna()
+
+        if vals.empty:
+            return {"min": None, "median": None, "max": None}
+
+        return {
+            "min": float(vals.min()),
+            "median": float(vals.median()),
+            "max": float(vals.max())
+        }
 
 #### Validating self.data ####
     def _validate(self) -> None:
@@ -399,58 +469,140 @@ class SimulationStudy:
         X = self.clean_data[all_cols].values
         y = self.clean_data[self.outcome].values
 
-        # 4. Fit Mean Model (Robust Regression)
-        print("1. Selecting Mean Model (Cross-Validation)...")
-        mean_model = pod.fit_robust_mean_model(
-            X, y, model_override=model_override, force_degree=force_degree
-        )
+        # ---------------------------------------------------------
+        # 4. LAYER 1 CACHE: Mean Models
+        # ---------------------------------------------------------
+        if not self.models_cache:
+            print("1. Training all surrogate models (Cache Miss)...")
+            # Fit everything and save to caches
+            models, scores, winner = pod.fit_all_robust_mean_models(X, y)
+            self.models_cache = models
+            self.cv_scores_cache = scores
+            self.cv_winner_key = winner
+        else:
+            print("1. Loading surrogate models from cache (Cache Hit)...")
+
+        # Select the specific model requested by the user
+        if model_override == "polynomial" and force_degree is not None:
+            selected_key = ('Polynomial', force_degree)
+        elif model_override == "kriging" and ('Kriging', None) in self.models_cache:
+            selected_key = ('Kriging', None)
+        elif model_override == "polynomial":
+            # User wants Poly but didn't force a degree -> Pick the best Poly
+            poly_scores = {k: v for k, v in self.cv_scores_cache.items() if k[0] == 'Polynomial'}
+            selected_key = min(poly_scores, key=poly_scores.get)
+        else:
+            selected_key = self.cv_winner_key
+
+        # Retrieve the selected model!
+        mean_model = self.models_cache[selected_key]
+
+        # Attach the CV data to the model so plotting functions can still read it
+        mean_model.cv_scores_ = self.cv_scores_cache
+        mean_model.cv_winner_ = self.cv_winner_key
+        mean_model.forced_model_ = (selected_key != self.cv_winner_key)
+
         equation = pod.generate_latex_equation(mean_model, all_cols, self.outcome)
 
         if mean_model.model_type_ == 'Polynomial':
             print(f"-> Selected Model: Polynomial (Degree {mean_model.model_params_})")
-            print("-> Equation extracted.")
         else:
             print("-> Selected Model: Kriging (Gaussian Process)")
 
-        # 5. Fit Variance Model & Generate Grid
-        print("2. Fitting Variance Model (Kernel Smoothing)...")
-        residuals, bandwidth = pod.fit_variance_model(
-            X, y, mean_model, bandwidth_ratio=bandwidth_ratio
-        )
-        print(f"   -> Smoothing Bandwidth: {bandwidth:.4f}")
+        # ---------------------------------------------------------
+        # 5. LAYER 2 CACHE: Variance Model & Distribution
+        # ---------------------------------------------------------
+        if selected_key not in self.variance_cache:
+            print("2. Fitting Variance Model & Inferring Distribution (Cache Miss)...")
 
-        # 6. Infer Distribution
-        print("3. Inferring Error Distribution (AIC)...")
-        dist_name, dist_params = pod.infer_best_distribution(residuals, X, bandwidth)
+            residuals, bandwidth = pod.fit_variance_model(
+                X, y, mean_model, bandwidth_ratio=bandwidth_ratio
+            )
+            dist_name, dist_params = pod.infer_best_distribution(residuals, X, bandwidth)
+
+            # Save the heavy lifting to the cache
+            self.variance_cache[selected_key] = {
+                "residuals": residuals,
+                "bandwidth": bandwidth,
+                "dist_info": (dist_name, dist_params)
+            }
+        else:
+            print("2. Loading Variance Model & Distribution from cache (Cache Hit)...")
+            cached_var = self.variance_cache[selected_key]
+            residuals = cached_var["residuals"]
+            bandwidth = cached_var["bandwidth"]
+            dist_name, dist_params = cached_var["dist_info"]
+
+        print(f"   -> Smoothing Bandwidth: {bandwidth:.4f}")
         print(f"   -> Selected Distribution: {dist_name}")
 
-        # Build PoI grid and nuisance ranges
-        poi_grids = []
-        for col in poi_cols:
-            num_points = 100 if len(poi_cols) == 1 else 30
-            poi_grids.append(np.linspace(self.clean_data[col].min(), self.clean_data[col].max(), num_points))
-
-        if len(poi_cols) == 1:
-            X_eval = poi_grids[0].reshape(-1, 1)
-        else:
-            mesh = np.meshgrid(*poi_grids, indexing='ij')
-            X_eval = np.vstack([m.flatten() for m in mesh]).T
-
-        # Build nuisance ranges for true nuisances
-        nuisance_ranges = {c: (float(self.clean_data[c].min()), float(self.clean_data[c].max())) for c in nuisance_cols}
-
-        # Inject the sliced parameters into the integrator with Min == Max
-        for c, val in final_slice_values.items():
-            nuisance_ranges[c] = (val, val)
-
-        # 7. Compute PoD Curve
-        print("4. Computing PoD Curve...")
-        from digiqual.integration import compute_multi_dim_pod
-        pod_curve, mean_curve = compute_multi_dim_pod(
-            X_eval, nuisance_ranges, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold
+        # ---------------------------------------------------------
+        # 6. LAYER 3 CACHE: Integration & Curves
+        # ---------------------------------------------------------
+        # Create a unique signature for this exact plot configuration
+        l3_key = (
+            selected_key,
+            threshold,
+            tuple(poi_cols),
+            tuple(nuisance_cols),
+            frozenset(final_slice_values.items())
         )
 
-        # 8. Bootstrap Confidence Intervals (Parallelized)
+        if l3_key not in self.pod_curves_cache:
+            print("3. Integrating PoD Curve (Cache Miss)...")
+
+            # Build PoI grid and nuisance ranges
+            poi_grids = []
+            for col in poi_cols:
+                num_points = 100 if len(poi_cols) == 1 else 30
+                poi_grids.append(np.linspace(self.clean_data[col].min(), self.clean_data[col].max(), num_points))
+
+            if len(poi_cols) == 1:
+                X_eval = poi_grids[0].reshape(-1, 1)
+            else:
+                mesh = np.meshgrid(*poi_grids, indexing='ij')
+                X_eval = np.vstack([m.flatten() for m in mesh]).T
+
+            # Build nuisance ranges for true nuisances
+            nuisance_ranges = {c: (float(self.clean_data[c].min()), float(self.clean_data[c].max())) for c in nuisance_cols}
+
+            # Inject the sliced parameters into the integrator with Min == Max
+            for c, val in final_slice_values.items():
+                nuisance_ranges[c] = (val, val)
+
+            # Compute PoD Curve
+            from digiqual.integration import compute_multi_dim_pod
+            pod_curve, mean_curve = compute_multi_dim_pod(
+                X_eval, nuisance_ranges, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold
+            )
+
+            # Calculate Reliability Point (if 1D)
+            a90_95 = np.nan
+            if len(poi_cols) == 1:
+                a90_95 = pod.calculate_reliability_point(X_eval.flatten(), pod_curve, target_pod=0.90) # Notice we pass pod_curve here temporarily if no CI
+
+            self.pod_curves_cache[l3_key] = {
+                "X_eval": X_eval,
+                "poi_grids": poi_grids,
+                "nuisance_ranges": nuisance_ranges,
+                "pod_curve": pod_curve,
+                "mean_curve": mean_curve,
+                "a90_95": a90_95
+            }
+        else:
+            print("3. Loading PoD Curve from cache (Cache Hit)...")
+            cached_l3 = self.pod_curves_cache[l3_key]
+            X_eval = cached_l3["X_eval"]
+            poi_grids = cached_l3["poi_grids"]
+            nuisance_ranges = cached_l3["nuisance_ranges"]
+            pod_curve = cached_l3["pod_curve"]
+            mean_curve = cached_l3["mean_curve"]
+            a90_95 = cached_l3["a90_95"]
+
+        # ---------------------------------------------------------
+        # 7. Bootstrap Confidence Intervals (Parallelized)
+        # ---------------------------------------------------------
+        # We don't cache the bootstrap because n_boot can change, and it's heavily intentional when run.
         if n_boot > 0:
             if n_jobs is None or n_jobs == 1:
                 actual_cores = 1
@@ -459,7 +611,7 @@ class SimulationStudy:
             else:
                 actual_cores = n_jobs
 
-            print(f"5. Running Bootstrap ({n_boot} iterations on {actual_cores} cores)...", flush=True)
+            print(f"4. Running Bootstrap ({n_boot} iterations on {actual_cores} cores)...", flush=True)
 
             lower_ci, upper_ci = pod.bootstrap_pod_ci(
                 X, y, X_eval, threshold,
@@ -467,17 +619,17 @@ class SimulationStudy:
                 n_boot=n_boot, nuisance_ranges=nuisance_ranges,
                 n_jobs=n_jobs
             )
+
+            # Recalculate true a90/95 based on the LOWER confidence bound
+            if len(poi_cols) == 1 and lower_ci is not None:
+                a90_95 = pod.calculate_reliability_point(X_eval.flatten(), lower_ci, target_pod=0.90)
+                print(f"   -> a90/95 Reliability Index: {a90_95:.3f}")
+
         else:
-            print("5. Skipping Bootstrap (n_boot=0)...", flush=True)
+            print("4. Skipping Bootstrap (n_boot=0)...", flush=True)
             lower_ci, upper_ci = None, None
 
-        # 9. Calculate Reliability Point
-        a90_95 = np.nan
-        if len(poi_cols) == 1 and lower_ci is not None:
-            a90_95 = pod.calculate_reliability_point(X_eval.flatten(), lower_ci, target_pod=0.90)
-            print(f"   -> a90/95 Reliability Index: {a90_95:.3f}")
-
-        # 10. Package Results
+        # 8. Package Results
         self.pod_results = {
             "poi_cols": poi_cols,
             "nuisance_cols": nuisance_cols,
@@ -508,54 +660,27 @@ class SimulationStudy:
 #### Real-Time Slice Evaluation ####
     def update_slice(self, slice_values: dict) -> Dict[str, Any]:
         """
-        Updates the evaluated slice for the PoD surface without re-fitting the surrogate model.
-        This allows for real-time plot updates when changing constant parameters.
+        Updates the evaluated slice for the PoD surface using Layer 3 Caching.
+        This allows for real-time plot updates when changing constant parameters in the UI.
         """
         if not self.pod_results:
             return {}
 
-        # 1. Retrieve the frozen n-dimensional model and state
-        mean_model = self.pod_results["mean_model"]
-        bandwidth = self.pod_results["bandwidth"]
-        residuals = self.pod_results["residuals"]
-        dist_info = self.pod_results["dist_info"]
-        poi_cols = self.pod_results["poi_cols"]
-        nuisance_cols = self.pod_results["nuisance_cols"]
-        threshold = self.pod_results["threshold"]
-        X_eval = self.pod_results["X_eval"]
-        X = self.pod_results["X"]
+        # Just re-call .pod() with n_boot=0!
+        # Because we built the Layer 1, 2, and 3 caches, this call will resolve in
+        # microseconds if it's cached, or only run the lightweight Layer 3 if it's a new slice.
 
-        # 2. Build the final slice values using median fallbacks
-        final_slice_values = {}
-        for c in self.inputs:
-            if c not in poi_cols and c not in nuisance_cols:
-                if c in slice_values:
-                    final_slice_values[c] = float(slice_values[c])
-                else:
-                    final_slice_values[c] = float(self.clean_data[c].median())
+        return self.pod(
+            poi_col=self.pod_results["poi_cols"],
+            threshold=self.pod_results["threshold"],
+            nuisance_col=self.pod_results["nuisance_cols"],
+            slice_values=slice_values,
+            n_boot=0, # Never run bootstrap during a slider drag!
 
-        # 3. Inject the new sliced parameters into the nuisance ranges
-        nuisance_ranges = {c: (float(self.clean_data[c].min()), float(self.clean_data[c].max())) for c in nuisance_cols}
-        for c, val in final_slice_values.items():
-            nuisance_ranges[c] = (val, val)
-
-        # 4. Re-calculate the PoD and Mean curves instantly
-        from digiqual.integration import compute_multi_dim_pod
-        pod_curve, mean_curve = compute_multi_dim_pod(
-            X_eval, nuisance_ranges, mean_model, X, residuals, bandwidth, dist_info, threshold
+            # Force it to use the exact same model we are currently looking at
+            model_override="polynomial" if self.pod_results["mean_model"].model_type_ == "Polynomial" else "kriging",
+            force_degree=self.pod_results["mean_model"].model_params_ if self.pod_results["mean_model"].model_type_ == "Polynomial" else None
         )
-
-        # 5. Update the internal results dictionary
-        self.pod_results["slice_values"] = final_slice_values
-        self.pod_results["curves"]["mean_response"] = mean_curve
-        self.pod_results["curves"]["pod"] = pod_curve
-
-        # Invalidate CI bounds as they apply to the previous slice
-        self.pod_results["curves"]["ci_lower"] = None
-        self.pod_results["curves"]["ci_upper"] = None
-        self.pod_results["a90_95"] = np.nan
-
-        return self.pod_results
 
 #### Visualise Results ####
     def visualise(self, show: bool = True, save_path: str = None) -> None:

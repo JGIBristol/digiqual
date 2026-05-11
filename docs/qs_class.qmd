@@ -3,68 +3,63 @@ title: "SimulationStudy Class"
 description: "A streamlined guide using the SimulationStudy manager."
 ---
 
-Use the `SimulationStudy` manager to handle the entire lifecycle: storage, diagnostics, active refinement, and analysis.
+Use the `SimulationStudy` manager to handle the entire lifecycle: storage, diagnostics, active refinement, analysis, and intelligent caching.
 
 ::: {.callout-note}
-In this tutorial, we will intentionally feed the study **"bad" data** (with a large gap in the input space) to demonstrate how the active learning module automatically identifies and fixes issues.
+In this tutorial, we will intentionally feed the study **"bad" data** (with a large gap in the input space) to demonstrate how the active learning module automatically identifies and fixes issues. We will also demonstrate how the new **Layered Caching** engine makes exploring multi-dimensional parameter spaces nearly instantaneous.
 :::
 
-### 1. Setup & Data Generation
+### 1. Setup, Generation & Smart Initialization
 
 We'll define a simulated physics function with heteroscedastic noise and generate an initial design containing a deliberate gap between 3mm and 7mm.
+
+Notice that we no longer need to explicitly define our input columns when creating the `SimulationStudy`; the manager will automatically infer them from the data!
 
 ```{python}
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-
+import time
 from digiqual import SimulationStudy
-
 
 # --- Define the Physics ---
 def apply_physics(df):
     """Simulates a signal with quadratic trends and heteroscedastic noise."""
-    # 1. Base Signal: Quadratic trend (2*L + 0.5*L^2)
-    # 2. Angle Penalty: Misalignment (-0.1*Angle) reduces signal
     signal = (
         10.0
         + (2.0 * df["Length"])
         + (0.5 * df["Length"] ** 2)
         - (0.1 * np.abs(df["Angle"]))
     )
-
-    # 3. Heteroscedastic Noise: Higher roughness = More scatter
     noise_scale = 0.5 + (1.5 * df["Roughness"])
     noise = np.random.normal(loc=0, scale=noise_scale, size=len(df))
-
     return signal + noise
 
-
 # --- Create Flawed Data (Gap between 3mm and 7mm) ---
-df1 = pd.DataFrame(
-    {
-        "Length": np.random.uniform(0.1, 3.0, 40),
-        "Angle": np.random.uniform(-10, 10, 40),
-        "Roughness": np.random.uniform(0, 0.5, 40),
-    }
-)
+df1 = pd.DataFrame({
+    "Length": np.random.uniform(0.1, 3.0, 40),
+    "Angle": np.random.uniform(-10, 10, 40),
+    "Roughness": np.random.uniform(0, 0.5, 40),
+})
+df2 = pd.DataFrame({
+    "Length": np.random.uniform(7.0, 10.0, 40),
+    "Angle": np.random.uniform(-10, 10, 40),
+    "Roughness": np.random.uniform(0, 0.5, 40),
+})
 
-df2 = pd.DataFrame(
-    {
-        "Length": np.random.uniform(7.0, 10.0, 40),
-        "Angle": np.random.uniform(-10, 10, 40),
-        "Roughness": np.random.uniform(0, 0.5, 40),
-    }
-)
-
-# Combine and Initialise Study
 df_initial = pd.concat([df1, df2], ignore_index=True)
 df_initial["Signal"] = apply_physics(df_initial)
 
-study = SimulationStudy(
-    input_cols=["Length", "Angle", "Roughness"], outcome_col="Signal"
-)
-study.add_data(df_initial)
+# --- The NEW Smarter Initialization ---
+# 1. Initialize with a clean slate
+study = SimulationStudy(max_gap_ratio=0.15)
+
+# 2. Add data: It automatically infers 'Length', 'Angle', 'Roughness' as inputs!
+study.add_data(df_initial, outcome_col="Signal", overwrite=True)
+
+# Test the UI Helper methods
+print(f"Inferred Inputs: {study.inputs}")
+threshold_defaults = study.get_data_summary("Signal")
+print(f"Auto-Threshold suggestion (Median Signal): {threshold_defaults['median']:.2f}")
 ```
 
 ### 2. Diagnosis (Detecting the Issue)
@@ -86,7 +81,7 @@ Instead of manually guessing where to add new simulations, we use the `refine()`
 
 1. **Detect:** It automatically targets the exact region where the gap or uncertainty exists.
 2. **Generate:** It outputs a dataframe of new input coordinates.
-3. **Execute & Store:** You run your external simulation on these points and append the results back using `add_data()`.
+3. **Execute & Store:** Appending the results back using `add_data()` automatically clears the mathematical caches to ensure your next analysis uses the updated physics!
 
 
 ```{python}
@@ -95,26 +90,26 @@ new_samples = study.refine(n_points=20)
 
 if not new_samples.empty:
     # Apply the exact same physics model to the new points
-    new_samples['Signal'] = apply_physics(new_samples)
+    new_samples["Signal"] = apply_physics(new_samples)
 
-    # Add back to study
+    # Add back to study (This strips metadata and drops the caches!)
     study.add_data(new_samples)
 
-```
-
-Now we verify that the issue is resolved:
-
-
-```{python}
 # Re-run diagnostics to confirm the green light
 study.diagnose()
 ```
 
-### 4. Reliability Analysis
+
+### 4. Reliability Analysis & Layered Caching
 
 With a validated dataset, we can now run the complete PoD pipeline.
 
 ::: {.callout-tip}
+
+The SimulationStudy engine uses a **Layered Caching Architecture**.
+
+When you run `.pod()` for the first time, it evaluates all possible models and stores the mathematical heavy-lifting in memory. If you want to change a parameter slice (e.g., investigating a different 'Angle'), you can use `.update_slice()` to instantly generate a new PoD curve without refitting the model!
+
 The single `pod()` method automatically handles:
 
 - **Monte-Carlo Integration** (marginalising out Nuisance variables)
@@ -125,91 +120,113 @@ The single `pod()` method automatically handles:
 
 ```{python}
 #| label: analysis-run
-# 1. Run Analysis (Marginalising noise, Slicing constants)
+
+# --- RUN 1: Baseline Analysis ---
+# Expect this to take a moment as it trains models and optimizes variance bandwidth
+t0 = time.time()
 _ = study.pod(
     poi_col="Length",
     nuisance_col=["Roughness"],  # Integrate over roughness
     slice_values={"Angle": 0.0},  # Hold Angle strictly at 0.0!
-    threshold=18.0,
-    n_jobs=-1,
+    threshold=34.0,
+    n_boot=0,  # Skipping bootstrap for the speed demonstration
 )
+print(f"Run 1 completed in: {time.time() - t0:.4f} seconds")
+
+
+# --- RUN 2: Interactive Slicing ---
+# Changing the constant 'Angle' slice triggers a Cache Hit for the model and variance!
+t1 = time.time()
+new_results = study.update_slice({"Angle": 5.0})
+print(f"Run 2 completed in: {time.time() - t1:.4f} seconds (Near Instant!)")
+print(f"New a90/95 point at Angle 5.0: {new_results['a90_95']:.3f}")
 ```
 
 ```{python}
-# | label: fig-results
-# | fig-cap: "Reliability Analysis Results"
-# | fig-subcap:
-# |   - "Best Fitting Model (Statistics)"
-# |   - "Signal Response Model (Physics)"
-# |   - "Probability of Detection Curve (Reliability)"
-# | layout-ncol: 1
+#| label: fig-results
+#| fig-cap: "Reliability Analysis Results"
+#| fig-subcap:
+#|   - "Best Fitting Model (Statistics)"
+#|   - "Signal Response Model (Physics)"
+#|   - "Probability of Detection Curve (Reliability)"
+#| layout-ncol: 1
 
-
-# 2. Visualise Results
+# Visualise the results of the final active slice
 study.visualise()
 ```
 
 ### Appendix: Full Script
 
 ```{python}
-# | label: analysis-full
-# | output: false
+#| label: analysis-full
+#| output: false
 import numpy as np
 import pandas as pd
-
+import time
 from digiqual import SimulationStudy
-from digiqual.sampling import generate_lhs
 
 
-# --- Define the Physics ---
+# --- 1. Define the Physics ---
 def apply_physics(df):
     """Simulates a signal with quadratic trends and heteroscedastic noise."""
-    # 1. Base Signal: Quadratic trend (2*L + 0.5*L^2)
-    # 2. Angle Penalty: Misalignment (-0.1*Angle) reduces signal
     signal = (
         10.0
         + (2.0 * df["Length"])
         + (0.5 * df["Length"] ** 2)
         - (0.1 * np.abs(df["Angle"]))
     )
-
-    # 3. Heteroscedastic Noise: Higher roughness = More scatter
     noise_scale = 0.5 + (1.5 * df["Roughness"])
     noise = np.random.normal(loc=0, scale=noise_scale, size=len(df))
-
     return signal + noise
 
 
-# --- Create and analyse a complete dataset ---
-vars_df = pd.DataFrame(
-    [
-        {"Name": "Length", "Min": 0.1, "Max": 10},
-        {"Name": "Angle", "Min": -90, "Max": 90},
-        {"Name": "Roughness", "Min": 0, "Max": 1},
-    ]
+# --- 2. Create Flawed Data ---
+df1 = pd.DataFrame(
+    {
+        "Length": np.random.uniform(0.1, 3.0, 40),
+        "Angle": np.random.uniform(-10, 10, 40),
+        "Roughness": np.random.uniform(0, 0.5, 40),
+    }
 )
-
-df = generate_lhs(ranges=vars_df, n=50)
-
-df["Signal"] = apply_physics(df)
-
-study = SimulationStudy(
-    input_cols=["Length", "Angle", "Roughness"], outcome_col="Signal"
+df2 = pd.DataFrame(
+    {
+        "Length": np.random.uniform(7.0, 10.0, 40),
+        "Angle": np.random.uniform(-10, 10, 40),
+        "Roughness": np.random.uniform(0, 0.5, 40),
+    }
 )
-study.add_data(df)
+df_initial = pd.concat([df1, df2], ignore_index=True)
+df_initial["Signal"] = apply_physics(df_initial)
 
+# --- 3. Initialize & Ingest ---
+study = SimulationStudy(max_gap_ratio=0.15)
+study.add_data(df_initial, outcome_col="Signal", overwrite=True)
+
+# --- 4. Diagnose & Refine ---
 study.diagnose()
+new_samples = study.refine(n_points=20)
 
-study.refine()
+if not new_samples.empty:
+    new_samples["Signal"] = apply_physics(new_samples)
+    study.add_data(new_samples)
 
-# Analyse multi-dimensional PoD (1 PoI, 1 Sliced, 1 Nuisance)
+# --- 5. Reliability Analysis & Caching ---
+print("\n>> RUN 1: Baseline Analysis")
+t0 = time.time()
 _ = study.pod(
     poi_col="Length",
-    nuisance_col=["Roughness"],  # Integrate over roughness
-    slice_values={"Angle": 0.0},  # Hold Angle strictly at 0.0!
-    threshold=18.0,
-    n_jobs=-1,
+    nuisance_col=["Roughness"],
+    slice_values={"Angle": 0.0},
+    threshold=34.0,
+    n_boot=0,
 )
+print(f"Run 1 completed in: {time.time() - t0:.4f} seconds")
 
+print("\n>> RUN 2: Interactive Slicing")
+t1 = time.time()
+new_results = study.update_slice({"Angle": 5.0})
+print(f"Run 2 completed in: {time.time() - t1:.4f} seconds (Near Instant!)")
+
+# --- 6. Visualise ---
 study.visualise()
 ```

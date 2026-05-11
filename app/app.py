@@ -946,15 +946,13 @@ def server(input, output, session):
             return
 
         try:
+            # NEW: Initialize empty, then add_data with overwrite=True
             study = SimulationStudy(
-                input_cols=selected_inputs,
-                outcome_col=selected_outcome,
-                max_gap_ratio=input.ui_max_gap(),
-                min_r2_score=input.ui_min_r2(),
-                max_avg_cv=input.ui_avg_cv(),
-                max_max_cv=input.ui_max_cv()
+            max_gap_ratio=input.ui_max_gap(), min_r2_score=input.ui_min_r2(),
+            max_avg_cv=input.ui_avg_cv(), max_max_cv=input.ui_max_cv()
             )
-            study.add_data(df)
+            study.add_data(uploaded_data(), outcome_col=selected_outcome, input_cols=selected_inputs, overwrite=True)
+            study_instance.set(study)
             diag_df = study.diagnose()
 
             if diag_df is None:
@@ -1619,12 +1617,12 @@ def server(input, output, session):
             study_instance.set(None)
             return
 
+        # NEW: Initialize empty, then add_data with overwrite=True
         study = SimulationStudy(
-            input_cols=selected_inputs, outcome_col=selected_outcome,
             max_gap_ratio=input.ui_max_gap(), min_r2_score=input.ui_min_r2(),
             max_avg_cv=input.ui_avg_cv(), max_max_cv=input.ui_max_cv()
         )
-        study.add_data(uploaded_data())
+        study.add_data(uploaded_data(), outcome_col=selected_outcome, input_cols=selected_inputs, overwrite=True)
         study_instance.set(study)
 
     @reactive.calc
@@ -1653,49 +1651,38 @@ def server(input, output, session):
     @reactive.effect
     @reactive.event(uploaded_data, input.outcome_col)
     def update_pod_ui_choices():
-        df = uploaded_data()
-        if df is not None:
-            cols = list(df.columns)
-            outcome = input.outcome_col()
-            inputs = [c for c in cols if c != outcome] if outcome else cols
+        study = current_study()
+        if study is not None:
+            # We don't need to check df columns anymore, the study knows!
+            ui.update_selectize("pod_pois", choices=study.inputs)
+            ui.update_selectize("pod_nuisance", choices=study.inputs)
 
-            ui.update_selectize("pod_pois", choices=inputs)
-            ui.update_selectize("pod_nuisance", choices=inputs)
-
-            if outcome and outcome in df.columns:
-                vals = pd.to_numeric(df[outcome], errors="coerce").dropna()
-                if not vals.empty:
-                    ui.update_numeric("pod_threshold",
-                                      label=f"Detection Threshold ({outcome})",
-                                      value=round(float(vals.median()), 1),
-                                      min=round(float(vals.min()), 3),
-                                      max=round(float(vals.max()), 3))
+            if study.outcome:
+                # Ask the package for the min/max/median instantly
+                summary = study.get_data_summary(study.outcome)
+                if summary["median"] is not None:
+                    ui.update_numeric(
+                        "pod_threshold",
+                        label=f"Detection Threshold ({study.outcome})",
+                        value=round(summary["median"], 1),
+                        min=round(summary["min"], 3),
+                        max=round(summary["max"], 3)
+                    )
 
     @render.ui
     def leftover_params_note():
-        """
-        Dynamically calculates which input variables are not assigned to axes
-        or integration, and notifies the user that they will become sliders.
-        """
         study = current_study()
-        if study is None:
+        if study is None or not study.inputs:
             return ui.div() # Hide if nothing is configured yet
 
-        all_inputs = study.inputs
-        if not all_inputs:
-            return ui.div()
-        # 1. Get the currently assigned variables
         selected_pois = list(input.pod_pois()) if input.pod_pois() else []
         selected_nuis = list(input.pod_nuisance()) if input.pod_nuisance() else []
 
-        # 2. Calculate leftovers
-        leftovers = [c for c in all_inputs if c not in selected_pois and c not in selected_nuis]
+        # Instantly get unassigned parameters from the package
+        leftovers = study.get_unassigned_parameters(selected_pois, selected_nuis)
 
-        # 3. Render the appropriate informative message
         if leftovers:
-            # Format the leftover names nicely (e.g., 'Length', 'Width')
             leftovers_str = ", ".join([f"'{c}'" for c in leftovers])
-
             return ui.div(
                 ui.span(icon_svg("sliders"), class_="text-primary me-2", style="font-size: 1.1em;"),
                 ui.div(
@@ -1723,27 +1710,25 @@ def server(input, output, session):
         if study is None or fit_metrics() is None:
             return ui.div()
 
-        df = study.clean_data if not study.clean_data.empty else study.data
-        if df is None or df.empty:
-            return ui.div()
+        selected_pois = list(input.pod_pois()) if input.pod_pois() else []
+        selected_nuis = list(input.pod_nuisance()) if input.pod_nuisance() else []
 
-        all_inputs = study.inputs
-        selected_pois = list(input.pod_pois())
-        selected_nuis = list(input.pod_nuisance())
-
-        leftovers = [c for c in all_inputs if c not in selected_pois and c not in selected_nuis]
+        leftovers = study.get_unassigned_parameters(selected_pois, selected_nuis)
 
         if not leftovers:
             return ui.div()
 
         sliders = []
         for col in leftovers:
-            if col not in df.columns:
+            # Get clean bounds from the package
+            summary = study.get_data_summary(col)
+            if summary["min"] is None:
                 continue
 
-            col_min = round(float(df[col].min(skipna=True)), 3)
-            col_max = round(float(df[col].max(skipna=True)), 3)
-            col_med = round(float(df[col].median(skipna=True)), 3)
+            col_min = round(summary["min"], 3)
+            col_max = round(summary["max"], 3)
+            col_med = round(summary["median"], 3)
+
             step_size = round((col_max - col_min) / 100, 3)
             if step_size == 0:
                 step_size = 0.001
@@ -1752,7 +1737,6 @@ def server(input, output, session):
                 ui.input_slider(f"slice_{col}", col, min=col_min, max=col_max, value=col_med, step=step_size)
             )
 
-        # ---> RETURN A DEDICATED CARD FOR LIVE EXPLORATION <---
         return ui.card(
             ui.card_header(
                 ui.span(icon_svg("sliders"), class_="text-primary me-2"),
@@ -1764,7 +1748,7 @@ def server(input, output, session):
                 class_="small text-muted mb-3"
             ),
             ui.layout_columns(*sliders, col_widths=6),
-            class_="mt-3 shadow-sm" # Adds a slight shadow to make the active element pop
+            class_="mt-3 shadow-sm"
         )
 
     @render.ui
@@ -1895,45 +1879,9 @@ def server(input, output, session):
             if mean_model.model_type_ == 'Polynomial':
                 locked_model_degree.set(mean_model.model_params_)
                 model_str = f"Polynomial (Degree {mean_model.model_params_})"
-                try:
-                    poly = mean_model.named_steps['polynomialfeatures']
-                    lr = mean_model.named_steps['linearregression']
-
-                    # ---> FIX: Use ALL inputs the model was trained on <---
-                    all_model_cols = study.inputs
-
-                    # 1. Format names for beautiful LaTeX (\mathrm prevents italics)
-                    latex_features = [f"\\mathrm{{{col}}}" for col in all_model_cols]
-                    latex_terms = poly.get_feature_names_out(latex_features)
-
-                    # 2. Extract coefficients
-                    coefs = np.atleast_1d(lr.coef_).flatten()
-                    intercept = float(lr.intercept_[0] if isinstance(lr.intercept_, np.ndarray) else lr.intercept_)
-
-                    # 3. Build LaTeX Equation
-                    eq_parts = [f"{intercept:.4g}"]
-                    for c, t in zip(coefs, latex_terms):
-                        if c == 0 or t == "1":
-                            continue
-                        sign = "+" if c > 0 else "-"
-                        clean_term = t.replace(" ", " \\cdot ")
-                        eq_parts.append(f"{sign} {abs(c):.4g} {clean_term}")
-                    equation_latex = f"$$ \\mathrm{{{input.outcome_col()}}} = {' '.join(eq_parts)} $$"
-
-                    # 4. Build Plain Text Equation for Excel
-                    plain_terms = poly.get_feature_names_out(all_model_cols)
-                    plain_parts = [f"{intercept:.4g}"]
-                    for c, t in zip(coefs, plain_terms):
-                        if c == 0 or t == "1":
-                            continue
-                        sign = "+" if c > 0 else "-"
-                        plain_parts.append(f"{sign} {abs(c):.4g} * {t.replace(' ', ' * ')}")
-                    equation_plain = " ".join(plain_parts)
-
-                except Exception as e:
-                    print(f"Equation extraction error: {e}") # Added a print statement to catch future bugs in terminal
-                    equation_latex = "$$ \\text{Equation Extraction Failed} $$"
-                    equation_plain = "Extraction Failed"
+                # Core package now provides the formatted string directly!
+                equation_latex = f"$$ {results.get('equation', 'Equation Not Available')} $$"
+                equation_plain = results.get('equation', 'Equation Not Available')
             else:
                 locked_model_degree.set(None)
                 model_str = "Kriging (Gaussian Process)"
@@ -1945,20 +1893,18 @@ def server(input, output, session):
             best_mse_str = f"{cv_scores.get(used_key, np.nan):.2e}"
 
             dist_name = results['dist_info'][0].capitalize()
-            # Force the parameters to standard floats so they look clean in the UI and Excel
             dist_params = [round(float(p), 4) for p in results['dist_info'][1]]
 
-            # ---> NEW: Build the string showing ONLY the names of the sliced parameters <---
             slice_display = ", ".join(leftovers) if leftovers else "None"
 
             metrics = {
                 "Parameter(s) of Interest": ", ".join(poi_cols),
                 "Nuisance Parameter(s)": ", ".join(nuisance_cols) if nuisance_cols else "None",
-                "Sliced Parameter(s)": slice_display, # <--- Added back (names only!)
+                "Sliced Parameter(s)": slice_display,
                 "Total Samples (N)": len(study.clean_data),
                 "Selected Model": model_str,
-                "Model Equation": equation_plain, # Stays here for Excel
-                "LaTeX Equation": equation_latex, # Used for UI
+                "Model Equation": equation_plain,
+                "LaTeX Equation": equation_latex,
                 "Model Fit (CV MSE)": best_mse_str,
                 "Smoothing Bandwidth": f"{results['bandwidth']:.4f}",
                 "Error Distribution": f"{dist_name} (Params: {tuple(dist_params)})",
@@ -1994,28 +1940,25 @@ def server(input, output, session):
         if study is None or fit_metrics() is None:
             return
 
-        all_inputs = study.inputs
         poi_cols = study.pod_results.get("poi_cols", [])
         nuis_cols = study.pod_results.get("nuisance_cols", [])
 
-        leftovers = [c for c in all_inputs if c not in poi_cols and c not in nuis_cols]
+        leftovers = study.get_unassigned_parameters(poi_cols, nuis_cols)
         if not leftovers:
             return
 
         slice_values = {}
         for col in leftovers:
             try:
-                # Check if the slider exists; if not, we still want the name for the table
                 val = input[f"slice_{col}"]()
-                slice_values[col] = val if val is not None else study.data[col].median()
+                slice_values[col] = val if val is not None else study.get_data_summary(col)["median"]
             except Exception:
-                # Default to median if slider doesn't exist yet
-                slice_values[col] = study.data[col].median()
+                slice_values[col] = study.get_data_summary(col)["median"]
 
         if not slice_values:
             return
 
-        # 1. Update the math instantly
+        # 1. Update the math instantly using the Layer 3 Cache
         study.update_slice(slice_values)
 
         # 2. Re-generate the visualisations in memory
