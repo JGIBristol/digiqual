@@ -916,21 +916,6 @@ def server(input, output, session):
             )
 
     @reactive.effect
-    @reactive.event(
-        uploaded_data,
-        input.input_cols,
-        input.outcome_col,
-        input.ui_max_gap,
-        input.ui_min_r2,
-        input.ui_avg_cv,
-        input.ui_max_cv
-    )
-    def reset_diagnostics_on_change():
-        """Clears the diagnostic results if the user changes any settings before clicking Run."""
-        diagnostic_table.set(None)
-        validation_passed.set(False)
-
-    @reactive.effect
     @reactive.event(input.btn_run_diagnostics)
     def run_validation_diagnostics():
         df = uploaded_data()
@@ -1610,21 +1595,58 @@ def server(input, output, session):
     @reactive.effect
     @reactive.event(uploaded_data, input.input_cols, input.outcome_col)
     def update_study():
+        df = uploaded_data()
         selected_inputs = list(input.input_cols())
         selected_outcome = input.outcome_col()
 
-        if uploaded_data() is None or not selected_inputs or not selected_outcome or (selected_outcome in selected_inputs):
+        # Guard 1: Missing basic selections
+        if df is None or not selected_inputs or not selected_outcome or (selected_outcome in selected_inputs):
             study_instance.set(None)
             return
 
-        # NEW: Initialize empty, then add_data with overwrite=True
+        # Guard 2: Reactive Race Condition Guard
+        # Ensure the UI selections actually exist in the CURRENT dataset before processing.
+        required_cols = selected_inputs + [selected_outcome]
+        if not all(col in df.columns for col in required_cols):
+            # The UI hasn't caught up to the newly uploaded data yet. Safely abort.
+            study_instance.set(None)
+            return
+
+        # Initialize empty, then add_data with overwrite=True
         study = SimulationStudy(
             max_gap_ratio=input.ui_max_gap(), min_r2_score=input.ui_min_r2(),
             max_avg_cv=input.ui_avg_cv(), max_max_cv=input.ui_max_cv()
         )
-        study.add_data(uploaded_data(), outcome_col=selected_outcome, input_cols=selected_inputs, overwrite=True)
+        study.add_data(df, outcome_col=selected_outcome, input_cols=selected_inputs, overwrite=True)
         study_instance.set(study)
 
+    # -----------------------------------------------------------------
+    # TWO-TIER RESET LOGIC
+    # -----------------------------------------------------------------
+    @reactive.effect
+    @reactive.event(
+        uploaded_data, input.input_cols, input.outcome_col,
+        input.ui_max_gap, input.ui_min_r2, input.ui_avg_cv, input.ui_max_cv
+    )
+    def reset_core_data_state():
+        """TIER 1: Wipes EVERYTHING when the physical data or core definitions change."""
+        diagnostic_table.set(None)
+        validation_passed.set(False)
+        new_samples.set(None)
+
+        fit_metrics.set(None)
+        uq_metrics.set(None)
+        locked_model_type.set(None)
+        pod_export_data.set(None)
+
+    @reactive.effect
+    @reactive.event(input.pod_pois, input.pod_nuisance)
+    def reset_analysis_results():
+        """TIER 2: Clears just the downstream math when plot targets change, keeping the core study intact."""
+        fit_metrics.set(None)
+        uq_metrics.set(None)
+        locked_model_type.set(None)
+        pod_export_data.set(None)
     @reactive.calc
     def current_study(): return study_instance()
 
@@ -1637,13 +1659,6 @@ def server(input, output, session):
         if vals.empty:
             return None
         return {"min": float(vals.min()), "median": float(vals.median()), "max": float(vals.max())}
-
-    @reactive.effect
-    @reactive.event(input.pod_pois, input.pod_nuisance)
-    def _clear_results_on_variable_change():
-        fit_metrics.set(None)
-        uq_metrics.set(None)
-        locked_model_type.set(None)
 
     # ─────────────────────────────────────────────────────────────────
     # DYNAMIC UI UPDATERS (Prevents resetting)
