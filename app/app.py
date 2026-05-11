@@ -317,15 +317,15 @@ ui.nav_panel(
                             ),
                             ui.hr(class_="my-4"),
 
-                            # Module 3: Analysis (Step 1)
+                            # Module 3: Analysis (Physics)
                             ui.div(
                                 ui.h5(
                                     ui.span(icon_svg("chart-area"), class_="text-success me-2"),
-                                    "3. Model Fit (PoD Step 1)", class_="fw-bold mb-2"
+                                    "3. Model Fit & Response", class_="fw-bold mb-2"
                                 ),
-                                ui.p("Determine the statistical structure of your parameters rapidly without heavy computation.", class_="fw-semibold mb-2"),
+                                ui.p("Determine the statistical structure and physics of your parameters rapidly.", class_="fw-semibold mb-2"),
                                 ui.tags.ul(
-                                    ui.tags.li("Automated model selection (Cross-Validation)."),
+                                    ui.tags.li("Automated model selection via Cross-Validation."),
                                     ui.tags.li("Extract mathematical equations and visualize the mean response surface."),
                                     class_="mb-0 ps-3 text-muted"
                                 ),
@@ -333,13 +333,29 @@ ui.nav_panel(
                             ),
                             ui.hr(class_="my-4"),
 
-                            # Module 4: Uncertainty Quantification (Step 2)
+                            # Module 4: Exploration (Reliability) - NEW
+                            ui.div(
+                                ui.h5(
+                                    ui.span(icon_svg("magnifying-glass-chart"), class_="text-info me-2"),
+                                    "4. PoD Explorer", class_="fw-bold mb-2"
+                                ),
+                                ui.p("Real-time reliability evaluation using pre-calculated Threshold Spectrums.", class_="fw-semibold mb-2"),
+                                ui.tags.ul(
+                                    ui.tags.li("Instantly observe PoD changes across different detection thresholds."),
+                                    ui.tags.li("Interactively slice constant parameters without model refitting."),
+                                    class_="mb-0 ps-3 text-muted"
+                                ),
+                                class_="border-start border-3 border-info ps-3 mb-3"
+                            ),
+                            ui.hr(class_="my-4"),
+
+                            # Module 5: Uncertainty Quantification (Confidence)
                             ui.div(
                                 ui.h5(
                                     ui.span(icon_svg("chart-line"), class_="text-danger me-2"),
-                                    "4. Uncertainty Quantification (PoD Step 2)", class_="fw-bold mb-2"
+                                    "5. Uncertainty Quantification", class_="fw-bold mb-2"
                                 ),
-                                ui.p("Lock the mathematical model and construct Generalised Probability of Detection (PoD) bounds.", class_="fw-semibold mb-2"),
+                                ui.p("Lock the structural shape and construct rigorous Probability of Detection bounds.", class_="fw-semibold mb-2"),
                                 ui.tags.ul(
                                     ui.tags.li("Parallelized bootstrap resampling for robust 95% Confidence Intervals."),
                                     ui.tags.li("Monte Carlo integration to marginalize over nuisance parameters."),
@@ -363,8 +379,8 @@ ui.nav_panel(
                                     ui.h5("About", class_="fw-bold mb-2"),
                                     ui.tags.strong("Version: "), "0.19.1", ui.br(),
                                     ui.tags.strong("License: "), "MIT", ui.br(),
-                                    ui.tags.strong("Author: "), "Josh Tyler", ui.br(),
-                                    ui.tags.strong("Institution: "), "Univ. of Bristol",
+                                    ui.tags.strong("Author: "), "Dr. Josh Tyler", ui.br(),
+                                    ui.tags.strong("Institution: "), "University of Bristol",
                                 ),
                                 ui.div(
                                     ui.h5("Resources", class_="fw-bold mb-2"),
@@ -617,33 +633,23 @@ ui.nav_panel(
             ui.h3("Model Fit & Response", class_="mb-4 text-center"),
             ui.output_ui("fit_warnings_ui"),
             ui.layout_columns(
-                # Wrap the existing card and our new dynamic UI inside a div
-                ui.div(
-                    ui.card(
-                        ui.card_header("Model Configuration"),
-                        ui.output_ui("model_context_note"),
-                        ui.layout_columns(
-                            ui.div(
-                                ui.input_selectize("pod_pois", "Parameters to plot (Select 1 or 2)", choices=[], multiple=True),
-                                ui.input_selectize("pod_nuisance", "Parameters to integrate over (Max 2)", choices=[], multiple=True),
-                                ui.output_ui("leftover_params_note"),
-                            ),
-                            ui.div(
-                                ui.input_select("pod_model_override", "Model Override", choices=["Auto (Best Fit)", "Polynomial", "Kriging"], selected="Auto (Best Fit)"),
-                                ui.panel_conditional("input.pod_model_override === 'Polynomial'",
-                                    ui.input_slider("pod_poly_degree", "Polynomial Degree", min=1, max=10, value=3, step=1),
-                                ),
-                                ui.input_numeric("pod_threshold", "Detection Threshold", value=0, step=0.1),
-                            ),
-                            col_widths=[6, 6],
-                            style="overflow: visible;"
+                ui.card(
+                    ui.card_header("Model Configuration"),
+                    ui.output_ui("model_context_note"),
+                    ui.layout_columns(
+                        ui.div(
+                            ui.input_selectize("pod_pois", "Parameters to plot (Select 1 or 2)", choices=[], multiple=True),
+                            ui.input_selectize("pod_nuisance", "Parameters to integrate over (Max 2)", choices=[], multiple=True),
                         ),
-                        ui.input_task_button("btn_run_fit", "Fit Model (Fast)", class_="btn-primary w-100", icon=icon_svg("bolt")),
-                        style="min-height: 280px; overflow: visible;"
+                        ui.div(
+                            ui.input_select("pod_model_override", "Model Override", choices=["Auto (Best Fit)", "Polynomial", "Kriging"], selected="Auto (Best Fit)"),
+                            ui.panel_conditional("input.pod_model_override === 'Polynomial'",
+                                ui.input_slider("pod_poly_degree", "Polynomial Degree", min=1, max=10, value=3, step=1),
+                            ),
+                        ),
+                        col_widths=[6, 6]
                     ),
-
-                    # ---> MOVED HERE: It will stack directly below the main card <---
-                    ui.output_ui("dynamic_slice_sliders"),
+                    ui.input_task_button("btn_run_fit", "Step 1: Fit Physics Model", class_="btn-primary w-100", icon=icon_svg("bolt")),
                 ),
                 col_widths=[-1,10,-1]
             ),
@@ -653,9 +659,32 @@ ui.nav_panel(
         icon=icon_svg("chart-area")
     ),
 
-#### UI - Uncertainty Quantification (Tab 5) ####
+#### UI - PoD Explorer (Tab 5 - NEW) ####
     ui.nav_panel(
-        "Uncertainty Quantification",
+        "PoD Explorer",
+        ui.div(
+            ui.h3("Reliability Explorer", class_="mb-4 text-center"),
+            ui.output_ui("explorer_warnings_ui"), # Shared warning logic
+            ui.layout_columns(
+                ui.div(
+                    ui.card(
+                        ui.card_header("Real-Time Reliability Configuration"),
+                        ui.p("Adjust the detection threshold to see the impact on reliability across the parameter space.", class_="small text-muted mb-3"),
+                        ui.input_slider("pod_threshold_slider", "Detection Threshold", min=0, max=100, value=50, step=0.1),
+                    ),
+                    ui.output_ui("dynamic_slice_sliders"), # The slice sliders move here
+                ),
+                col_widths=[-1,10,-1]
+            ),
+            ui.output_ui("explorer_results_ui"),
+            class_="container-fluid py-3"
+        ),
+        icon=icon_svg("magnifying-glass-chart")
+    ),
+
+#### UI - Uncertainty Quantification (Tab 6 - Renumbered) ####
+    ui.nav_panel(
+        "UQ Analysis",
         ui.div(
             ui.h3("Uncertainty Quantification (PoD)", class_="mb-4 text-center"),
             ui.output_ui("uq_warnings_ui"),
@@ -1323,6 +1352,11 @@ def server(input, output, session):
         outcome = input.outcome_col()
         if not input_cols_list:
             input_cols_list = [c for c in df.columns if c != outcome]
+
+        # --- ADD THIS NEW SAFETY GUARD ---
+        # Ensure the UI hasn't fallen behind the dataset
+        input_cols_list = [c for c in input_cols_list if c in df.columns]
+
         if not input_cols_list:
             return None
 
@@ -1664,6 +1698,28 @@ def server(input, output, session):
     # DYNAMIC UI UPDATERS (Prevents resetting)
     # ─────────────────────────────────────────────────────────────────
     @reactive.effect
+    @reactive.event(input.pod_pois, input.pod_nuisance)
+    def handle_mutual_exclusivity():
+        """Prevents the same column from being selected as both PoI and Nuisance."""
+        study = current_study()
+        if study is None:
+            return
+
+        all_inputs = study.inputs
+        selected_pois = list(input.pod_pois())
+        selected_nuis = list(input.pod_nuisance())
+
+        # Update Nuisance choices: All inputs MINUS current POIs
+        nuisance_choices = [c for c in all_inputs if c not in selected_pois]
+        ui.update_selectize("pod_nuisance", choices=nuisance_choices, selected=selected_nuis)
+
+        # Update POI choices: All inputs MINUS current Nuisances
+        poi_choices = [c for c in all_inputs if c not in selected_nuis]
+        ui.update_selectize("pod_pois", choices=poi_choices, selected=selected_pois)
+
+
+
+    @reactive.effect
     @reactive.event(uploaded_data, input.outcome_col)
     def update_pod_ui_choices():
         study = current_study()
@@ -1676,12 +1732,12 @@ def server(input, output, session):
                 # Ask the package for the min/max/median instantly
                 summary = study.get_data_summary(study.outcome)
                 if summary["median"] is not None:
-                    ui.update_numeric(
-                        "pod_threshold",
+                    ui.update_slider(
+                        "pod_threshold_slider",
                         label=f"Detection Threshold ({study.outcome})",
-                        value=round(summary["median"], 1),
-                        min=round(summary["min"], 3),
-                        max=round(summary["max"], 3)
+                        value=round(summary["median"], 2),
+                        min=round(summary["min"], 2),
+                        max=round(summary["max"], 2)
                     )
 
     @render.ui
@@ -1828,6 +1884,36 @@ def server(input, output, session):
             col_widths=[-1,10,-1]
         )
 
+    @render.ui
+    def explorer_warnings_ui():
+        if fit_metrics() is None:
+            return ui.layout_columns(ui.div(ui.p("Please fit a model in the 'Model Fit' tab first.", class_="text-center p-4 text-muted bg-light rounded border")), col_widths=[-1,10,-1])
+        return ui.div()
+
+    @render.ui
+    def explorer_results_ui():
+        if fit_metrics() is None:
+            return ui.div()
+
+        study = current_study()
+        is_multi_dim = len(study.pod_results.get("poi_cols", [])) > 1
+
+        return ui.layout_columns(
+            ui.card(
+                ui.card_header("PoD Surface Heatmap" if is_multi_dim else "PoD Reliability Curve"),
+                ui.output_plot("plot_explorer", height="500px"),
+                full_screen=True, class_="mt-3"
+            ),
+            col_widths=[-1,10,-1]
+        )
+
+    @render.plot
+    def plot_explorer():
+        """Dedicated plot renderer for Tab 5 that updates in real-time."""
+        _ = plot_trigger_fit() # Shares the same fast-trigger as Tab 4
+        study = current_study()
+        return study.plots["pod_curve"] if study and "pod_curve" in study.plots else None
+
     @reactive.effect
     @reactive.event(input.btn_run_fit)
     async def compute_model_fit():
@@ -1881,11 +1967,28 @@ def server(input, output, session):
         await asyncio.sleep(0.1)
 
         try:
+            # 1. Run the standard fit (n_boot=0) to establish Layer 1, 2, 3
             results = study.pod(
-                poi_col=poi_cols, threshold=input.pod_threshold(), nuisance_col=nuisance_cols,
-                slice_values=slice_values,
+                poi_col=poi_cols, threshold=float(study.get_data_summary(study.outcome)["median"]),
+                nuisance_col=nuisance_cols, slice_values=slice_values,
                 model_override=model_override, force_degree=force_degree, n_boot=0
             )
+
+            # 2. NEW: Trigger the Threshold Spectrum calculation (Layer 4)
+            ui.notification_show("Generating Instant Threshold Spectrum...", id="spec_toast", duration=None)
+            study.compute_pod_spectrum(
+                poi_col=poi_cols, nuisance_col=nuisance_cols,
+                slice_values=slice_values, n_threshold_points=100,
+                model_override=model_override, force_degree=force_degree
+            )
+            ui.notification_remove("spec_toast")
+
+            # 3. Update the Tab 5 slider range based on actual data
+            summary = study.get_data_summary(study.outcome)
+            ui.update_slider("pod_threshold_slider",
+                             min=round(summary["min"], 2),
+                             max=round(summary["max"], 2),
+                             value=round(summary["median"], 2))
 
             mean_model = results["mean_model"]
             locked_model_type.set(mean_model.model_type_)
@@ -1986,6 +2089,42 @@ def server(input, output, session):
 
         # 4. Clear UQ bounds
         uq_metrics.set(None)
+
+
+    @reactive.effect
+    @reactive.event(input.pod_threshold_slider)
+    def realtime_threshold_update():
+        """Instantly updates plots using Layer 4 Spectrum Interpolation."""
+        study = current_study()
+        if study is None or fit_metrics() is None or not study.pod_results:
+            return
+
+        # 1. Grab the currently active slice values so they don't reset!
+        current_slices = study.pod_results.get("slice_values", {})
+
+        # 2. Lock the model so it doesn't attempt to run auto-CV again
+        current_model = study.pod_results["mean_model"]
+        override = "polynomial" if current_model.model_type_ == "Polynomial" else "kriging"
+        degree = current_model.model_params_ if current_model.model_type_ == "Polynomial" else None
+
+        # 3. Re-run .pod() with the new threshold
+        # Since Layer 4 is primed, this takes microseconds.
+        study.pod(
+            poi_col=list(input.pod_pois()),
+            threshold=input.pod_threshold_slider(),
+            nuisance_col=list(input.pod_nuisance()),
+            slice_values=current_slices,
+            model_override=override,
+            force_degree=degree,
+            n_boot=0
+        )
+
+        study.visualise(show=False)
+
+        with reactive.isolate():
+            current_trigger = plot_trigger_fit()
+        plot_trigger_fit.set(current_trigger + 1)
+
 
     # ─────────────────────────────────────────────────────────────────
     # TAB 5: UQ LOGIC
@@ -2088,7 +2227,9 @@ def server(input, output, session):
         try:
             override = "polynomial" if locked_model_type() == "Polynomial" else "kriging"
             results = study.pod(
-                poi_col=poi_cols, threshold=input.pod_threshold(), nuisance_col=nuisance_cols,
+                poi_col=poi_cols,
+                threshold=input.pod_threshold_slider(),
+                nuisance_col=nuisance_cols,
                 slice_values=slice_values,
                 model_override=override, force_degree=locked_model_degree(),
                 n_boot=input.pod_n_boot(), n_jobs=-1 if input.pod_parallel() else 1
