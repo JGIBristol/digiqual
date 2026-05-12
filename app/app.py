@@ -863,6 +863,15 @@ def server(input, output, session):
             return
         try:
             df = pd.read_csv(file_info[0]["datapath"])
+
+            # --- NEW: Header String Check & Cleaning ---
+            # 1. Strip leading/trailing spaces
+            df.columns = df.columns.str.strip()
+            # 2. Replace any internal spaces with underscores
+            df.columns = df.columns.str.replace(r'\s+', '_', regex=True)
+            # 3. Remove any remaining special characters (keep only letters, numbers, and underscores)
+            df.columns = df.columns.str.replace(r'[^a-zA-Z0-9_]', '', regex=True)
+
             uploaded_data.set(df)
         except Exception:
             uploaded_data.set(None)
