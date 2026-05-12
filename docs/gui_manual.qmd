@@ -4,7 +4,7 @@ title: "GUI Desktop Manual"
 
 This manual provides a detailed breakdown of the functionality found inside the DigiQual Shiny application. For instructions on how to install or launch the app, see the [Launch the App](gui.qmd) guide.
 
-The DigiQual GUI is built with a modern "Fluent" design system and provides a visual alternative to the Python API. It is split into four primary tabs that map directly to the programmatic workflow.
+The DigiQual GUI is built with a modern "Fluent" design system and provides a visual alternative to the Python API. It is split into five functional tabs (alongside a Home dashboard) that map directly to the programmatic workflow.
 
 ## 1. Experimental Design
 
@@ -18,62 +18,41 @@ Instead of writing scripts to generate arrays, you can visually define your para
 4. **Generate Framework:** The tool will instantly construct the multi-dimensional parameter space, attempting to maximize the minimum distance between points.
 5. **Download CSV:** Save `generated_sample.csv`. You can now feed this CSV into your external solver tool (e.g., MATLAB, Abaqus, ANSYS) to calculate the actual signal responses.
 
-
 ## 2. Simulation Diagnostics
 
-**Purpose:** Validate your simulation inputs and catch problematic gaps *before* performing an expensive reliability analysis.
+**Purpose:** Validate your dataset and identify regions where the physics solver failed to provide sufficient coverage or converged poorly.
 
-Once your external physics solver has calculated the outcomes for your generated framework, you will upload the results back into this tab for validation.
+1. **Upload Data:** Upload the CSV containing your completed simulation results.
+2. **Configure Columns:** Select which variables are the inputs (e.g., Flaw Size, Angle) and which is the output (the Signal Response).
+3. **Run Diagnostics:** The engine will evaluate the data against four rigorous statistical tests (Gap Ratio, R² Fit, Average CV, Peak CV).
+4. **Remediation:** If the data fails the coverage checks, the app will offer an Active Learning "Remediation" tool. Enter the number of new samples you want, and it will generate a targeted CSV of new coordinates specifically designed to fill the detected gaps and stabilize the model.
 
-1. **Upload Data:** Upload the merged CSV containing your input conditions and their resulting output signals.
-2. **Assign Columns:** Identify which columns represent your inputs and which single column represents your outcome.
-3. **Diagnostic Report:** The engine runs sanity checks across your data, testing for sufficient sample sizes and input coverage. A tabular report provides a clear Pass/Fail for every parameter.
+## 3. Model Fit (Physics)
 
-### Adaptive Remediation
-If the diagnostic engine detects a large deliberate gap or missing data (a failed **Input Coverage** test) or large uncertainty through k-folds CV, the UI exposes a remediation tool.
+**Purpose:** Determine the mathematical structure of your parameters rapidly without heavy computation.
 
-Instead of guessing where to add new points, you can simply input how many new points you'd like to generate. The engine will target the specific empty or uncertain regions and generate a new CSV containing targeted coordinates. Run these through your solver and merge the new data back into your main set!
+This tab represents **Layer 1 and Layer 2** of the DigiQual caching architecture.
 
+1. **Configure Parameters:** Select up to 2 Parameters of Interest (to plot) and up to 2 Nuisance parameters (to integrate out). Unassigned parameters will automatically be held as constant slices.
+2. **Select Model:** Choose "Auto (Best Fit)" to let Cross-Validation evaluate all Polynomials (Degrees 1-10) and Kriging, or force a specific model type.
+3. **Fit Model:** The engine calculates the fundamental physics regression, optimizes the heteroscedastic variance (noise) profile, and saves the mathematical equations into the high-speed cache.
 
-### Parameter Visualisation
+## 4. PoD Explorer (Reliability)
 
-Deep-dive visual inspection of your data distribution and model stability.
+**Purpose:** Real-time reliability evaluation using pre-calculated Threshold Spectrums.
 
-- **Summary Statistics:** A complete breakout of the Min, Median, Max, Mean, and Standard Deviation for every uploaded variable.
-- **Variable Inspector:**
-  - Trace any single variable's distribution (complete with Kernel Density Estimates and rug plots).
-  - Plot a variable against the outcome to visually inspect underlying trends (with linear projection).
-  - ::: {.callout-note}
-    If a variable failed the coverage check in Tab 2, its specific gap will be shaded in red and orange on these plots!
-    :::
-- **Input Space Coverage Overview:** A macro-panel that places histograms for *all* input parameters side-by-side, providing a fast visual confirmation of the entire experimental design's health.
-- **Outcome Diagnostic Overview:** Advanced evaluation of the underlying surrogate models:
-  - **Actual vs Predicted (Model Fit CV R²):** Visualises how well a degree-3 polynomial fits your raw data. Points hugging the diagonal indicate strong predictability.
-  - **Bootstrap Convergence Trace:** Traces the running average and maximum Relative Standard Deviation across 100 bootstrap iterations. A line flattening beneath the threshold indicates that your results are stable; a declining trace suggests you need more physical samples.
+This tab relies entirely on **Layer 3 and Layer 4** of the caching architecture. Because the heavy math was completed in Tab 3, exploring the reliability surface here is virtually instantaneous.
 
+1. **Detection Threshold:** Dragging this slider interpolates across a pre-calculated 100-threshold spectrum matrix, shifting the PoD S-Curve left and right instantly.
+2. **Dynamic Slice Sliders:** Any parameters you did not assign in Tab 3 will appear here as sliders. Moving a slider isolates a new 2D slice of your multidimensional space. The engine takes a vectorized "Fast Path" to evaluate the new physics and updates the PoD curve in milliseconds without needing to refit the core model.
+3. **Side-by-Side View:** Watch the Signal Response model (left) shift up and down alongside the PoD Curve (right) to intuitively understand the relationship between physics and reliability.
 
-## 4. Model Fit & Response
+## 5. UQ Analysis (Confidence)
 
-**Purpose:** Configure your $n$-dimensional evaluation space and explore the underlying physics model in real-time.
+**Purpose:** Construct rigorous Probability of Detection bounds via parallelised Bootstrapping.
 
-With a validated dataset, you define the rules for how the multi-dimensional surrogate model will be sliced and projected for visualisation.
+Once you have used the PoD Explorer to find the exact threshold and parameter slice you care about, you move to this final tab to wrap it in 95% Confidence Intervals.
 
-1. **Global Model Fit:** The underlying surrogate model is automatically trained on *all* initialized parameters.
-2. **Variable Designation:** - **Parameters to plot:** Select 1 or 2 variables to act as the axes of your plots.
-   - **Parameters to integrate over:** Select variables to act as "Nuisance Parameters". These are mathematically marginalised out via Monte Carlo Integration.
-3. **Set Threshold:** Define the critical threshold (e.g., a detection limit of `18.0`).
-4. **Fit Model (Fast):** The system automatically identifies the best predictive polynomial structure and extracts the LaTeX equation.
-5. **Real-Time Slice Explorer:** Any parameters not plotted or integrated automatically appear as sliders. You can drag these sliders to hold them at constant values, instantly updating the Signal Response plot in real-time without needing to re-fit the model!
-
-## 5. Uncertainty Quantification
-
-**Purpose:** Constructing the final Probability of Detection curves with robust confidence bounds.
-
-Once you are happy with the slice of the universe you configured in Tab 4, you move here to generate the heavy statistical bounds.
-
-1. **Bootstrap Configuration:** Define the number of resampling iterations (typically 1000). Ensure Parallel Compute is enabled for speed.
-2. **Run UQ:** The system locks the mathematical shape chosen in Tab 4, infers the best error distribution, and runs parallelized bootstrapping.
-3. **Interactive Mapping:** It renders two interactive plots side-by-side:
-   - The **Signal Response Model** (The underlying Physics with 95% Prediction Intervals).
-   - The **Probability of Detection Mapping** (The resulting Reliability curve with 95% Confidence Bounds).
-4. **Export Results:** Download a comprehensive Excel workbook containing your configuration metrics, mathematical equations, and the raw numerical curve data.
+1. **Bootstrap Configuration:** Define the number of resampling iterations (typically 1000). Ensure Parallel Compute is enabled to utilize all your CPU cores.
+2. **Run UQ:** The system safely bypasses the fast-caches. It locks the mathematical shape chosen in Tab 3 and runs thousands of Monte Carlo integrations to calculate the exact uncertainty bounds.
+3. **Export Results:** Download a comprehensive Excel workbook containing your configuration metrics, LaTeX equations, and the raw numerical curve data across separate spreadsheet tabs.

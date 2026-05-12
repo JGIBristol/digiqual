@@ -210,23 +210,20 @@ if not new_samples.empty:
     new_samples["Signal"] = apply_physics(new_samples)
     study.add_data(new_samples)
 
-# --- 5. Reliability Analysis & Caching ---
-print("\n>> RUN 1: Baseline Analysis")
-t0 = time.time()
-_ = study.pod(
-    poi_col="Length",
-    nuisance_col=["Roughness"],
-    slice_values={"Angle": 0.0},
-    threshold=34.0,
-    n_boot=0,
-)
-print(f"Run 1 completed in: {time.time() - t0:.4f} seconds")
+# --- 5. Fast-Path Reliability Exploration (Caching) ---
+# Calculate the base physics model (n_boot=0) to prime Layers 1 and 2
+study.pod(poi_col="Length", threshold=15.0, n_boot=0)
 
-print("\n>> RUN 2: Interactive Slicing")
-t1 = time.time()
-new_results = study.update_slice({"Angle": 5.0})
-print(f"Run 2 completed in: {time.time() - t1:.4f} seconds (Near Instant!)")
+# Generate a 100-threshold spectrum matrix (Layer 4 Cache) instantly
+spectrum = study.compute_pod_spectrum(poi_col="Length")
+print("Spectrum generated for thresholds:", spectrum["thresholds"][:3], "...")
 
-# --- 6. Visualise ---
+# --- 6. Uncertainty Quantification (Bootstrapping) ---
+# Run the heavy, parallelised bootstrap to get 95% Confidence Intervals
+results = study.pod(poi_col="Length", threshold=15.0, n_boot=1000, n_jobs=-1)
+
+print(f"Classical a90/95: {results['a90_95']:.2f}")
+
+# --- 7. Visualisation ---
 study.visualise()
 ```

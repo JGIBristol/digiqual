@@ -1,0 +1,112 @@
+---
+title: "DigiQual Caching Architecture"
+description: "A deep dive into the 4-layer caching system that powers real-time Reliability Analysis."
+---
+
+## Introduction
+
+In simulation-based NDT reliability assessment, generating a single Probability of Detection (PoD) curve requires computationally expensive operations: Cross-Validation (CV), Gaussian Kernel Smoothing (bandwidth optimization), and Monte Carlo Integration.
+
+To provide a modern, real-time user interface (UI) where users can instantly drag sliders to update threshold limits and slice multidimensional surfaces, `digiqual` implements a **4-Layer Caching Architecture** within the `SimulationStudy` core class.
+
+This architecture ensures that heavy math is only executed once. Subsequent UI interactions pull pre-calculated matrices directly from memory in microseconds.
+
+---
+
+## The 4 Caching Layers
+
+The state of the caches is managed inside `core.py`. Whenever the physical dataset changes (e.g., a user uploads a new CSV), all caches are instantly wiped to prevent state mismatch.
+
+### Layer 1: The Mean Model Cache (`models_cache`)
+**What it does:** Caches the fundamental physics regressions.
+**Trigger:** Hitting "Fit Physics Model" on Tab 4.
+
+Instead of only fitting the single "best" model, the engine evaluates *all* polynomial degrees (1-10) and the Kriging (Gaussian Process) model via Cross-Validation, and then fits every single one of them to the full dataset.
+
+* **Cache Key:** `('Polynomial', 3)` or `('Kriging', None)`
+* **Stored Data:** The fitted `scikit-learn` pipeline.
+* **Benefit:** If a user looks at the CV bar chart and decides to manually override the "Auto (Best Fit)" selection from Polynomial Degree 3 to Degree 4, the app retrieves the pre-trained Degree 4 model instantly without running regression again.
+
+### Layer 2: The Variance Model Cache (`variance_cache`)
+**What it does:** Caches the heteroscedastic noise profile.
+**Trigger:** Resolving a specific mean model.
+
+Once a mean model is selected, the engine must estimate how the noise (variance) changes across the surface. It uses Leave-One-Out Cross-Validation (LOO-CV) to find the optimal smoothing bandwidth for the residuals, and tests 6 different statistical distributions (Normal, Gumbel, Laplace, etc.) to find the best fit.
+
+* **Cache Key:** Inherits the Mean Model key (e.g., `('Polynomial', 3)`).
+* **Stored Data:** `residuals`, `bandwidth`, and `dist_info` (name and parameters).
+* **Benefit:** Bandwidth optimization is slow. By caching it, the system never has to recalculate the noise profile for a model it has already analyzed.
+
+### Layer 3: Individual PoD Curve Cache (`pod_curves_cache`)
+**What it does:** Caches a specific, integrated S-Curve.
+**Trigger:** Evaluating a specific slice of the parameter space.
+
+This layer stores the output of the `integration.py` engine. It locks in the specific grid coordinates (`X_eval`) and either performs heavy Monte Carlo integration (if there are active nuisance parameters) or fast vectorization (if all other variables are locked as constant slices).
+
+* **Cache Key:** `(selected_key, threshold, poi_cols, nuisance_cols, slice_values)`
+* **Stored Data:** The final `pod_curve` (1D array), `mean_curve`, and the mathematical grids used.
+* **Benefit:** If a user navigates away from a specific slice and then comes back to it, the fully integrated curve is loaded instantly.
+
+### Layer 4: Threshold Spectrum Cache (`threshold_spectrum_cache`)
+**What it does:** The "Crown Jewel" that enables real-time threshold scrubbing.
+**Trigger:** Runs silently in the background immediately after Layer 1 & 2 are complete.
+
+The `integration.py` engine is fully vectorized to handle multiple thresholds simultaneously. Instead of calculating one PoD curve, Layer 4 calculates **100 PoD curves** across the entire minimum-to-maximum range of the signal data in a single array operation.
+
+* **Cache Key:** strictly *excludes* the threshold: `(selected_key, poi_cols, nuisance_cols, slice_values)`
+* **Stored Data:** A massive 2D matrix (`pod_matrix`) where rows are X-axis grid points and columns are the 100 different thresholds.
+* **Benefit:** When the user drags the "Detection Threshold" slider on Tab 5, the app intercepts the slider value, performs a 1D linear interpolation across the pre-calculated `pod_matrix`, and returns the shifted S-Curve in less than a millisecond.
+
+---
+
+## Example: A User's Journey Through the Caches
+
+Let's trace exactly what happens in the engine when a user interacts with the application.
+
+#### Step 1: The Initial Fit
+The user uploads 500 simulations of an ultrasonic inspection with `Length`, `Angle`, and `Roughness`. They select `Length` as the Parameter of Interest, and click **"Fit Physics Model"**.
+
+1. **Layer 1 Miss:** The engine trains 10 polynomials and 1 Kriging model. It caches all 11 models. It selects "Polynomial (Degree 2)" as the winner.
+2. **Layer 2 Miss:** It optimizes the bandwidth and fits a Normal distribution for Poly 2. It caches the variance parameters.
+3. **Layer 3 Miss:** It evaluates the curve using the median threshold (e.g., 15.0 dB) and median slices for Angle and Roughness. It caches this base curve.
+4. **Layer 4 Miss (Background):** The UI says "Generating Instant Threshold Spectrum...". The engine pulls `X_train` and the `bandwidth` from Layer 2, generates a vector of 100 thresholds (from 0 dB to 50 dB), and runs the fast-path vectorized math. The 100-curve matrix is cached.
+
+*Total Compute Time: ~2.5 seconds.*
+
+#### Step 2: The Real-Time Slider
+The user navigates to Tab 5 (PoD Explorer) and rapidly drags the **Detection Threshold** slider from `15.0 dB` to `22.5 dB`.
+
+1. The `realtime_threshold_update` function fires in `app.py`.
+2. It calls `study.pod(threshold=22.5, n_boot=0)`.
+3. **Layer 1 Hit:** Poly 2 loaded instantly.
+4. **Layer 2 Hit:** Bandwidth loaded instantly.
+5. **Layer 4 Hit:** The engine sees that `Length` at the median slices already has a Threshold Spectrum matrix.
+6. It bypasses `integration.py` completely. It interpolates the matrix at exactly `22.5 dB` and returns the S-curve.
+
+*Total Compute Time: ~0.001 seconds.*
+
+#### Step 3: Changing a Slice
+The user moves the **Angle Slice Slider** from 0 degrees to 45 degrees.
+
+1. The `realtime_slice_update` function fires.
+2. **Layer 1 & 2 Hit:** Poly 2 physics loaded instantly.
+3. **Layer 4 Miss:** The cache key requires an exact match on `slice_values`. Because Angle changed, the old matrix doesn't apply.
+4. The engine falls back to `integration.py`. Because `Angle` is a constant slice (no Monte Carlo required), it takes the Fast Path.
+5. It computes the new 100-threshold spectrum for Angle=45 instantly, saves it to **Layer 4**, and returns the curve for the current threshold.
+
+*Total Compute Time: ~0.05 seconds.*
+
+#### Step 4: Uncertainty Quantification (Bypassing the Cache)
+The user is happy with a threshold of `22.5 dB` and clicks **"Run Uncertainty Quantification"** on Tab 6.
+
+1. The function calls `study.pod(threshold=22.5, n_boot=1000)`.
+2. The engine recognizes `n_boot > 0`.
+3. It completely bypasses the Layer 4 slider approximation.
+4. It calls `bootstrap_pod_ci()`, firing up 10 parallel CPU cores to resample the data 1,000 times, refitting the models and running strict Layer 3 math on every iteration to build rigorous 95% Confidence Bounds.
+
+*Total Compute Time: ~6.0 seconds.*
+
+---
+
+## Conclusion
+By cleanly separating the **Physics (Layer 1 & 2)**, the **Exploration (Layer 3 & 4)**, and the **Rigorous Confidence Bounds (Bootstrap Bypass)**, `digiqual` achieves the interactivity of a dashboard while preserving the mathematical integrity required for safety-critical statistical analysis.
