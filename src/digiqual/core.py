@@ -302,6 +302,7 @@ class SimulationStudy:
         self,
         executor: Union[Executor, str],
         ranges: Dict[str, Tuple[float, float]],
+        outcome_col: str = None,
         n_start: int = 20,
         n_step: int = 10,
         max_iter: int = 5,
@@ -347,7 +348,16 @@ class SimulationStudy:
             ```
         """
 
-        # --- NEW SAFEGUARD: Validate input ranges ---
+        # --- NEW: Cold Start Configuration ---
+        if not self.outcome:  # If the study hasn't been configured yet
+            if outcome_col is None:
+                raise ValueError("When running optimise() from a cold start, you must provide an 'outcome_col'.")
+            self.outcome = outcome_col
+            self.inputs = list(ranges.keys())
+        elif outcome_col is not None and outcome_col != self.outcome:
+            print(f"Note: Using established outcome '{self.outcome}' (ignoring '{outcome_col}').")
+
+        # --- SAFEGUARD: Validate input ranges ---
         expected_inputs = set(self.inputs)
         provided_ranges = set(ranges.keys())
 
@@ -359,7 +369,7 @@ class SimulationStudy:
 
         # 1. Delegate to the Agnostic Engine
         final_data = run_adaptive_search(
-            executor=executor,            # <-- Passes our new Executor object
+            executor=executor,
             input_cols=self.inputs,
             outcome_col=self.outcome,
             ranges=ranges,
@@ -368,7 +378,6 @@ class SimulationStudy:
             n_step=n_step,
             max_iter=max_iter,
             max_hours=max_hours,
-            # --- The 4 Custom Diagnostic Thresholds ---
             max_gap_ratio=self.max_gap_ratio,
             min_r2_score=self.min_r2_score,
             max_avg_cv=self.max_avg_cv,
