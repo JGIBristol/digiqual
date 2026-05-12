@@ -51,8 +51,8 @@ def plot_signal_model(
     # 2. Plot The Mean Model
     ax.plot(X_eval, mean_curve, color='blue', linewidth=2, label='Mean Response')
 
-    # 3. Plot The Threshold
-    ax.axhline(threshold, color='red', linestyle='--', linewidth=1.5, label=f'Threshold ({threshold} dB)')
+    # 3. Plot The Threshold (Updated to round to 2 decimal places)
+    ax.axhline(threshold, color='red', linestyle='--', linewidth=1.5, label=f'Threshold ({threshold:.2f} dB)')
 
     # 4. (Optional) Plot Prediction Intervals (+/- 2 Sigma)
     if local_std is not None:
