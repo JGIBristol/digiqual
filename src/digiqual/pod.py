@@ -765,3 +765,45 @@ def calculate_reliability_point(
     # We swap args because we are solving for X given Y=0.90
     monotonic_ci = np.maximum.accumulate(ci_lower)
     return float(np.interp(target_pod, monotonic_ci, X_eval))
+
+
+def calculate_sobol_indices(mean_model: Any, feature_names: list, data_df, n_samples: int = 1024) -> dict:
+    """
+    Calculates the Total-Order Sobol sensitivity index for the fitted mean model.
+    Optimized for speed by disabling second-order interaction matrices.
+    """
+    try:
+        from SALib.sample import saltelli
+        from SALib.analyze import sobol
+    except ImportError:
+        print("Warning: SALib not found. Skipping Sobol index calculation.")
+        return None
+
+    # 1. Define the bounds for each feature
+    bounds = []
+    for col in feature_names:
+        bounds.append([float(data_df[col].min()), float(data_df[col].max())])
+
+    problem = {
+        'num_vars': len(feature_names),
+        'names': feature_names,
+        'bounds': bounds
+    }
+
+    # 2. FAST SAMPLING: explicitly disable second-order calculations
+    X_sample = saltelli.sample(problem, n_samples, calc_second_order=False)
+
+    if X_sample.ndim == 1:
+        X_sample = X_sample.reshape(-1, 1)
+
+    y_sample = mean_model.predict(X_sample)
+
+    # 3. Analyze the results (also disabling second-order here)
+    Si = sobol.analyze(problem, y_sample.flatten(), print_to_console=False, calc_second_order=False)
+
+    # 4. Extract ONLY the Total-Order effect (ST)
+    results = {}
+    for i, name in enumerate(feature_names):
+        results[name] = float(Si['ST'][i])
+
+    return results

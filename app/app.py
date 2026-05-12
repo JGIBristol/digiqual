@@ -1883,6 +1883,34 @@ def server(input, output, session):
                        ui.p("The diagnostic tests found potential issues. Results may be unreliable.", class_="mb-0"), class_="alert alert-warning shadow-sm"), col_widths=[-1,10,-1])
         return ui.div()
 
+
+    @render.ui
+    def sobol_indices_ui():
+        data = fit_metrics()
+        if data and "Sobol Indices" in data and data["Sobol Indices"] is not None:
+            sobol_data = data["Sobol Indices"]
+
+            items = []
+            for var, st_val in sobol_data.items():
+                st_pct = st_val * 100
+
+                items.append(
+                    ui.div(
+                        ui.tags.strong(f"{var}: "),
+                        ui.span(f"{st_pct:.1f}%", class_="badge bg-primary rounded-pill fs-6"),
+                        class_="d-flex justify-content-between align-items-center border-bottom py-2 text-muted small"
+                    )
+                )
+
+            return ui.div(
+                ui.h6(icon_svg("chart-pie"), " Parameter Sensitivity (Total Effect)", class_="text-primary mb-1 fw-bold"),
+                ui.p("Percentage of output variance driven by each parameter.", class_="small text-muted mb-2 fst-italic"),
+                ui.div(*items),
+                class_="mb-3 p-3 bg-light rounded border shadow-sm"
+            )
+        return ui.div()
+
+
     @render.ui
     def fit_results_ui():
         if fit_metrics() is None:
@@ -1898,9 +1926,9 @@ def server(input, output, session):
                     ui.card(ui.card_header(f"{input.outcome_col()} Surface" if is_multi_dim else "Model Fit"), ui.output_plot("plot_signal"), full_screen=True),
                     col_widths=[6, 6]
                 ),
-                # --- CHANGED: Removed the Export card and let Fit Statistics take full width ---
                 ui.card(
                     ui.card_header("Fit Statistics"),
+                    ui.output_ui("sobol_indices_ui"),
                     ui.output_ui("mathjax_equation_ui"),
                     ui.output_data_frame("fit_stats_table")
                 )
@@ -2055,7 +2083,15 @@ def server(input, output, session):
                 "Model Fit (CV MSE)": best_mse_str,
                 "Smoothing Bandwidth": f"{results['bandwidth']:.4f}",
                 "Error Distribution": f"{dist_name} (Params: {tuple(dist_params)})",
+                "Sobol Indices": results.get("sobol_indices")
             }
+
+            # 2. Add the nicely formatted, rounded rows specifically for the table
+            sobol_raw = results.get("sobol_indices")
+            if sobol_raw:
+                for var, val in sobol_raw.items():
+                    metrics[f"Sensitivity ({var})"] = f"{val * 100:.2f}%"
+
             fit_metrics.set(metrics)
 
             # --- EXPORT PRELIMINARY DATA ---
@@ -2343,8 +2379,7 @@ def server(input, output, session):
         data = fit_metrics()
         if data is None:
             return None
-        # Hide the equations from the generic UI table
-        display_data = {k: v for k, v in data.items() if k not in ["LaTeX Equation", "Model Equation"]}
+        display_data = {k: v for k, v in data.items() if k not in ["LaTeX Equation", "Model Equation", "Sobol Indices"]}
         return render.DataGrid(pd.DataFrame(list(display_data.items()), columns=["Metric", "Value"]), width="100%", filters=False)
 
     @render.data_frame

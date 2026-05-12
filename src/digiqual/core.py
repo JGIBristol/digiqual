@@ -676,6 +676,17 @@ class SimulationStudy:
         print(f"   -> Selected Distribution: {dist_name}")
 
         # ---------------------------------------------------------
+        # Calculate Sobol Sensitivity Indices
+        # ---------------------------------------------------------
+        print("-> Calculating Total-Order Sobol Indices...")
+        from digiqual.pod import calculate_sobol_indices
+        sobol_indices = calculate_sobol_indices(
+            mean_model=mean_model,
+            feature_names=all_cols,
+            data_df=self.clean_data
+        )
+
+        # ---------------------------------------------------------
         # 6. LAYER 3 & 4 CACHE: Integration & Spectrum Interpolation
         # ---------------------------------------------------------
         # Define keys for the different caching layers
@@ -795,6 +806,7 @@ class SimulationStudy:
             "bandwidth": bandwidth,
             "residuals": residuals,
             "dist_info": (dist_name, dist_params),
+            "sobol_indices": sobol_indices,
             "curves": {
                 "mean_response": mean_curve,
                 "pod": pod_curve,
