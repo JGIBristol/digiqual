@@ -614,7 +614,8 @@ def compute_pod_curve(
 
 def _single_bootstrap_step(
     X_2d, y, X_eval, threshold, model_type, model_params,
-    bandwidth, dist_info, nuisance_ranges, n_samples
+    bandwidth, dist_info, nuisance_ranges, n_samples,
+    feature_names=None, poi_names=None
 ):
     """Internal helper to process a single bootstrap iteration."""
     # Resample indices
@@ -644,7 +645,8 @@ def _single_bootstrap_step(
     from digiqual.integration import compute_multi_dim_pod
     pod_curve, _ = compute_multi_dim_pod(
         X_eval, nuisance_ranges or {}, mean_model, X_res_2d, res_res,
-        bandwidth, dist_info, threshold, n_mc_samples=1000
+        bandwidth, dist_info, threshold, n_mc_samples=1000,
+        feature_names=feature_names, poi_names=poi_names
     )
     return pod_curve
 
@@ -662,7 +664,9 @@ def bootstrap_pod_ci(
     dist_info: Tuple[str, Tuple],
     n_boot: int = 1000,
     nuisance_ranges: dict = None,
-    n_jobs: int | None = None
+    n_jobs: int | None = None,
+    feature_names: list = None,
+    poi_names: list = None
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Estimates 95% Confidence Bounds for the PoD curve via Bootstrapping.
@@ -686,6 +690,8 @@ def bootstrap_pod_ci(
         n_jobs (int | None, optional): Number of CPU cores to use.
             ``None`` or ``1`` means single-core execution (no parallelisation).
             ``-1`` means use all available cores minus two. Defaults to ``None``.
+        feature_names (list): .
+        poi_names (list): .
 
     Returns:
         Tuple[np.ndarray, np.ndarray]:
@@ -719,7 +725,8 @@ def bootstrap_pod_ci(
     results = Parallel(n_jobs=n_jobs_actual,backend="multiprocessing", verbose=2)(
         delayed(_single_bootstrap_step)(
             X_2d, y, X_eval, threshold, model_type, model_params,
-            bandwidth, dist_info, nuisance_ranges, n_samples
+            bandwidth, dist_info, nuisance_ranges, n_samples,
+            feature_names, poi_names # <-- ADD THIS
         ) for _ in range(n_boot)
     )
 

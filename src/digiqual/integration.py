@@ -13,7 +13,9 @@ def compute_multi_dim_pod(
     bandwidth: float,
     dist_info: Tuple[str, Tuple],
     thresholds: Union[float, np.ndarray, list],
-    n_mc_samples: int = 3000
+    n_mc_samples: int = 3000,
+    feature_names: list = None,
+    poi_names: list = None
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Calculates the marginal Probability of Detection (PoD) across a grid of Parameters of Interest (PoI).
@@ -63,6 +65,7 @@ def compute_multi_dim_pod(
         )
         ```
     """
+
     n_pois = poi_grid.shape[1]
     n_nuisance = len(nuisance_ranges)
     total_vars = n_pois + n_nuisance
@@ -70,12 +73,22 @@ def compute_multi_dim_pod(
     dist_name, dist_params = dist_info
     dist_obj = getattr(stats, dist_name)
 
+    # --- THE FIX: Explicit Column Index Mapping ---
+    if feature_names and poi_names:
+        poi_indices = [feature_names.index(p) for p in poi_names]
+        nuisance_names = list(nuisance_ranges.keys())
+        nuisance_indices = [feature_names.index(n) for n in nuisance_names]
+    else:
+        # Fallback if names aren't provided
+        poi_indices = list(range(n_pois))
+        nuisance_indices = list(range(n_pois, total_vars))
+
     # 1. Handle Threshold Vectorization
     is_vector = isinstance(thresholds, (np.ndarray, list))
     thresh_array = np.atleast_1d(thresholds)
     n_thresholds = len(thresh_array)
 
-    # 2. Check for active integration requirements (min != max)
+    # 2. Check for active integration requirements
     active_nuisances = sum(1 for min_val, max_val in nuisance_ranges.values() if min_val != max_val)
 
     if active_nuisances > 0:
@@ -99,23 +112,23 @@ def compute_multi_dim_pod(
     # FAST PATH: Fully Vectorized (No active nuisances)
     # ---------------------------------------------------------
     if active_nuisances == 0:
-        # Build the entire evaluation grid at once
         X_eval_full = np.zeros((len(poi_grid), total_vars))
-        X_eval_full[:, :n_pois] = poi_grid
 
+        # Map PoIs to their correct physical columns
+        for i, idx in enumerate(poi_indices):
+            X_eval_full[:, idx] = poi_grid[:, i]
+
+        # Map Slices/Nuisances to their correct physical columns
         if n_nuisance > 0:
-            # Broadcast the constant slice values to all rows
-            X_eval_full[:, n_pois:] = nuisance_samples[0]
+            for i, idx in enumerate(nuisance_indices):
+                X_eval_full[:, idx] = nuisance_samples[0, i]
 
-        # ONE single prediction call for the entire grid
         mean_resp = model.predict(X_eval_full).flatten()
         sigma_resp = predict_local_std(X_train, residuals, X_eval_full, bandwidth).flatten()
 
-        # Suppress overflow warnings caused by extreme Z-scores during overfitting
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             if is_vector:
-                # Mathematical Broadcasting: (1, n_thresh) - (n_grid, 1) -> Matrix of (n_grid, n_thresh)
                 z_scores = (thresh_array[np.newaxis, :] - mean_resp[:, np.newaxis]) / sigma_resp[:, np.newaxis]
                 pod_integrated = 1 - dist_obj.cdf(z_scores, *dist_params)
             else:
@@ -124,9 +137,8 @@ def compute_multi_dim_pod(
 
         return pod_integrated, mean_resp
 
-
     # ---------------------------------------------------------
-    # SLOW PATH: Monte Carlo Integration (Active Nuisances Exist)
+    # SLOW PATH: Monte Carlo Integration
     # ---------------------------------------------------------
     if is_vector:
         pod_integrated = np.zeros((len(poi_grid), n_thresholds))
@@ -136,24 +148,25 @@ def compute_multi_dim_pod(
     mean_integrated = np.zeros(len(poi_grid))
 
     for i, poi_point in enumerate(poi_grid):
-
-        # Assemble the full input vectors for this specific grid point
         X_eval = np.zeros((n_mc_samples, total_vars))
-        X_eval[:, :n_pois] = poi_point
 
+        # Map PoIs
+        for j, idx in enumerate(poi_indices):
+            X_eval[:, idx] = poi_point[j]
+
+        # Map Nuisances
         if n_nuisance > 0:
-            X_eval[:, n_pois:] = nuisance_samples
+            for j, idx in enumerate(nuisance_indices):
+                X_eval[:, idx] = nuisance_samples[:, j]
 
         mean_resp = model.predict(X_eval)
         sigma_resp = predict_local_std(X_train, residuals, X_eval, bandwidth)
 
-        # Suppress overflow warnings caused by extreme Z-scores during overfitting
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             if is_vector:
                 z_scores = (thresh_array[:, np.newaxis] - mean_resp) / sigma_resp
                 probs = 1 - dist_obj.cdf(z_scores, *dist_params)
-                # Take the expected value (mean) across the Monte Carlo samples
                 pod_integrated[i, :] = np.mean(probs, axis=1)
             else:
                 z_scores = (thresholds - mean_resp) / sigma_resp

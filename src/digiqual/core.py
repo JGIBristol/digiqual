@@ -445,7 +445,9 @@ class SimulationStudy:
             residuals=temp_results['residuals'],
             bandwidth=temp_results['bandwidth'],
             dist_info=temp_results['dist_info'],
-            thresholds=thresh_vec
+            thresholds=thresh_vec,
+            feature_names=self.inputs, # <-- ADD THIS
+            poi_names=poi_cols         # <-- ADD THIS
         )
 
         # 6. Package and store in Layer 4
@@ -466,23 +468,32 @@ class SimulationStudy:
     def estimate_compute_time(self, model_type: str, n_boot: int, n_nuisances: int, n_jobs: int) -> float:
         """
         Physics-aware heuristic to estimate PoD computation time in seconds.
-        Accounts for algorithmic complexity (Kriging vs Poly),
-        integration paths (Monte Carlo vs Vectorized), and CPU cores.
+        Accounts for initial cache-building (CV), Kriging complexity, and MC Integration.
         """
         n_samples = len(self.clean_data) if not self.clean_data.empty else len(self.data)
         if n_samples == 0:
             return 0.0
 
-        # 1. Fit Time (Per Iteration)
-        # Kriging scales cubically with sample size (matrix inversion)
-        if model_type.lower() == "kriging":
-            t_fit = (n_samples / 500.0) ** 3 * 0.15
-        else: # Polynomials are lightning fast
-            t_fit = 0.0005 * (n_samples / 100.0)
+        # 1. Base Fit Time (Per Iteration)
+        t_poly = 0.001 * (n_samples / 100.0)
+        t_kriging = (n_samples / 500.0) ** 3 * 1.5  # Kriging matrix inversion is heavy!
 
-        # 2. Integration Time (Per Iteration)
+        # 2. Evaluate Caching State
+        if n_boot == 0 and not self.models_cache:
+            # INITIAL CACHE BUILD: 10 polys * 10 folds = 100 fits. Kriging = ~12 heavy fits.
+            # Plus Leave-One-Out CV for the variance smoothing bandwidth (~2 seconds)
+            if n_samples > 1000:
+                t_fit = (100 * t_poly) + 2.0 # Kriging is skipped automatically for N>1000
+            else:
+                t_fit = (100 * t_poly) + (12 * t_kriging) + 2.0
+        elif model_type.lower() == "kriging":
+            t_fit = t_kriging
+        else:
+            t_fit = t_poly
+
+        # 3. Integration Time (Per Iteration)
         if n_nuisances > 0:
-            # SLOW PATH: 100 grid points * 3000 Monte Carlo Samples
+            # SLOW PATH: 100 grid points * MC Samples
             t_int = 0.6 if model_type.lower() == "kriging" else 0.08
         else:
             # FAST PATH: Single Vectorized Matrix Operation
@@ -490,15 +501,18 @@ class SimulationStudy:
 
         t_single_iteration = t_fit + t_int
 
-        # 3. Core scaling
+        # 4. Core scaling for Bootstrap
         if n_jobs == -1:
             import os
             cores = max((os.cpu_count() or 1) - 1, 1)
         else:
             cores = max(n_jobs or 1, 1)
 
-        # 4. Total Time = Base Run + (Parallelized Bootstraps) + 0.5s Overhead
-        total_time = t_single_iteration + ((t_single_iteration * n_boot) / cores) + 0.5
+        # 5. Total Time
+        if n_boot == 0:
+            total_time = t_fit + t_int + 0.5  # Initial fit or slider slice update
+        else:
+            total_time = ((t_single_iteration * n_boot) / cores) + 0.5  # Heavy UQ bootstrap
 
         return total_time
 
@@ -714,7 +728,8 @@ class SimulationStudy:
             print("3. Integrating PoD Curve from Scratch (Cache Miss)...")
             from digiqual.integration import compute_multi_dim_pod
             pod_curve, mean_curve = compute_multi_dim_pod(
-                X_eval, nuisance_ranges, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold
+                X_eval, nuisance_ranges, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold,
+            feature_names=all_cols, poi_names=poi_cols
             )
 
             # Calculate Preliminary Reliability Point (1D only)
@@ -751,7 +766,7 @@ class SimulationStudy:
                 X, y, X_eval, threshold,
                 mean_model.model_type_, mean_model.model_params_, bandwidth, (dist_name, dist_params),
                 n_boot=n_boot, nuisance_ranges=nuisance_ranges,
-                n_jobs=n_jobs
+                n_jobs=n_jobs, feature_names=all_cols, poi_names=poi_cols
             )
 
             # Recalculate true a90/95 based on the LOWER confidence bound
