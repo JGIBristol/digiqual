@@ -1728,6 +1728,21 @@ def server(input, output, session):
             ui.update_selectize("pod_pois", choices=study.inputs)
             ui.update_selectize("pod_nuisance", choices=study.inputs)
 
+            # --- THE FIX: Restrict Kriging for large datasets ---
+            n_samples = len(study.data)
+            if n_samples > 1000:
+                ui.update_select(
+                    "pod_model_override",
+                    choices=["Auto (Best Fit)", "Polynomial"],
+                    selected="Auto (Best Fit)"
+                )
+            else:
+                ui.update_select(
+                    "pod_model_override",
+                    choices=["Auto (Best Fit)", "Polynomial", "Kriging"],
+                    selected="Auto (Best Fit)"
+                )
+
             if study.outcome:
                 # Ask the package for the min/max/median instantly
                 summary = study.get_data_summary(study.outcome)
@@ -1899,20 +1914,34 @@ def server(input, output, session):
         is_multi_dim = len(study.pod_results.get("poi_cols", [])) > 1
 
         return ui.layout_columns(
+            # --- NEW: Added the Signal Model Plot to the left ---
             ui.card(
-                ui.card_header("PoD Surface Heatmap" if is_multi_dim else "PoD Reliability Curve"),
-                ui.output_plot("plot_explorer", height="500px"),
+                ui.card_header(f"{input.outcome_col()} Surface" if is_multi_dim else "Model Fit"),
+                ui.output_plot("plot_signal_explorer", height="450px"),
                 full_screen=True, class_="mt-3"
             ),
-            col_widths=[-1,10,-1]
+            # --- The existing PoD Plot on the right ---
+            ui.card(
+                ui.card_header("PoD Surface Heatmap" if is_multi_dim else "PoD Reliability Curve"),
+                ui.output_plot("plot_explorer", height="450px"),
+                full_screen=True, class_="mt-3"
+            ),
+            col_widths=[6, 6]
         )
 
     @render.plot
     def plot_explorer():
-        """Dedicated plot renderer for Tab 5 that updates in real-time."""
+        """Dedicated PoD plot renderer for Tab 5."""
         _ = plot_trigger_fit() # Shares the same fast-trigger as Tab 4
         study = current_study()
         return study.plots["pod_curve"] if study and "pod_curve" in study.plots else None
+
+    @render.plot
+    def plot_signal_explorer():
+        """Dedicated Signal Model plot renderer for Tab 5."""
+        _ = plot_trigger_fit() # Triggers instantly when sliders move
+        study = current_study()
+        return study.plots["signal_model"] if study and "signal_model" in study.plots else None
 
     @reactive.effect
     @reactive.event(input.btn_run_fit)
@@ -2166,7 +2195,7 @@ def server(input, output, session):
                         ui.output_plot("plot_curve", height="400px"),
                         full_screen=True, class_="mt-3"
                     ),
-                    col_widths=[6, 6]
+                    col_widths=[-1, 5, 5, -1]
                 ),
                 # --- METRICS & EXPORT ---
                 ui.layout_columns(
