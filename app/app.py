@@ -1982,23 +1982,14 @@ def server(input, output, session):
                 pass # If it hasn't rendered yet, core.py will safely default to the median!
 
         # --- TAB 4 TIME ESTIMATION HEURISTIC ---
-        n_samples = len(study.clean_data)
-        est_sec = 0.5 # base UI overhead
-
-        # 1. Cross-Validation Time
-        if model_override == "auto":
-            est_sec += (n_samples / 1000.0) * 0.5
-            if n_samples <= 1000:
-                est_sec += (n_samples / 500.0)**3 * 0.8
-        elif model_override == "kriging":
-            est_sec += (n_samples / 500.0)**3 * 0.8
-        else:
-            est_sec += (n_samples / 1000.0) * 0.5
-
-        # 2. Single MC Integration Time (Runs once to generate the mean curve)
-        n_grid_points = 900 if len(poi_cols) > 1 else 100
-        n_mc_samples = 3000 if len(nuisance_cols) > 0 else 1 # Default is 3000 outside bootstrap
-        est_sec += (n_grid_points * n_mc_samples * n_samples) * 2e-9
+        # Call the package to get the exact estimate!
+        # n_boot=0 because we are just fitting, n_jobs=1 because fitting is sequential
+        est_sec = study.estimate_compute_time(
+            model_type=model_override,
+            n_boot=0,
+            n_nuisances=len(nuisance_cols),
+            n_jobs=1
+        )
 
         time_str = f"~{max(1, int(est_sec))} seconds" if est_sec < 90 else f"~{int(est_sec / 60)} minutes"
         ui.notification_show(f"Fitting Models (Cross-Validation)... Estimated time: {time_str}", id="fit_toast", duration=None, type="message")
@@ -2241,22 +2232,17 @@ def server(input, output, session):
                 pass
 
         # --- TAB 5 TIME ESTIMATION HEURISTIC ---
-        n_samples = len(study.clean_data)
+        # Get the currently locked model type
+        override = "polynomial" if locked_model_type() == "Polynomial" else "kriging"
 
-        # 1. Model Refitting Time (Per Iteration)
-        if locked_model_type() == 'Kriging':
-            base_fit_sec = 0.05 + (n_samples / 500.0)**3 * 0.1
-        else:
-            base_fit_sec = 0.005
+        # Call the package!
+        est_seconds = study.estimate_compute_time(
+            model_type=override,
+            n_boot=input.pod_n_boot(),
+            n_nuisances=len(nuisance_cols),
+            n_jobs=-1 if input.pod_parallel() else 1
+        )
 
-        # 2. Monte Carlo Integration & Variance Prediction Time (Per Iteration)
-        n_grid_points = 900 if len(poi_cols) > 1 else 100
-        n_mc_samples = 1000 if len(nuisance_cols) > 0 else 1 # Hardcoded to 1000 in bootstrap loop
-
-        # Complexity is driven by distance matrix: grid_points * mc_samples * training_samples
-        eval_sec = (n_grid_points * n_mc_samples * n_samples) * 2e-9
-
-        est_seconds = (input.pod_n_boot() / actual_cores) * (base_fit_sec + eval_sec) * 1.15
         time_str = f"~{max(1, int(est_seconds))} seconds" if est_seconds < 90 else f"~{int(est_seconds / 60)} minutes"
 
         ui.notification_show(f"Running Bootstrap on {actual_cores} core(s). Estimated time: {time_str}...", id="uq_toast", duration=None, type="message")

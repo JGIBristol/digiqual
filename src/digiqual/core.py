@@ -459,6 +459,50 @@ class SimulationStudy:
         print("--- Spectrum Generation Complete ---")
 
         return spectrum_data
+
+
+
+#### Time Heuristic ####
+    def estimate_compute_time(self, model_type: str, n_boot: int, n_nuisances: int, n_jobs: int) -> float:
+        """
+        Physics-aware heuristic to estimate PoD computation time in seconds.
+        Accounts for algorithmic complexity (Kriging vs Poly),
+        integration paths (Monte Carlo vs Vectorized), and CPU cores.
+        """
+        n_samples = len(self.clean_data) if not self.clean_data.empty else len(self.data)
+        if n_samples == 0:
+            return 0.0
+
+        # 1. Fit Time (Per Iteration)
+        # Kriging scales cubically with sample size (matrix inversion)
+        if model_type.lower() == "kriging":
+            t_fit = (n_samples / 500.0) ** 3 * 0.15
+        else: # Polynomials are lightning fast
+            t_fit = 0.0005 * (n_samples / 100.0)
+
+        # 2. Integration Time (Per Iteration)
+        if n_nuisances > 0:
+            # SLOW PATH: 100 grid points * 3000 Monte Carlo Samples
+            t_int = 0.6 if model_type.lower() == "kriging" else 0.08
+        else:
+            # FAST PATH: Single Vectorized Matrix Operation
+            t_int = 0.02 if model_type.lower() == "kriging" else 0.002
+
+        t_single_iteration = t_fit + t_int
+
+        # 3. Core scaling
+        if n_jobs == -1:
+            import os
+            cores = max((os.cpu_count() or 1) - 1, 1)
+        else:
+            cores = max(n_jobs or 1, 1)
+
+        # 4. Total Time = Base Run + (Parallelized Bootstraps) + 0.5s Overhead
+        total_time = t_single_iteration + ((t_single_iteration * n_boot) / cores) + 0.5
+
+        return total_time
+
+
 #### PoD Analysis ####
     def pod(
         self,
