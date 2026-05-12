@@ -377,7 +377,7 @@ class SimulationStudy:
 
         # 2. Update Class State with the result
         self.data = pd.DataFrame() # Clear old state to avoid duplication
-        self.add_data(final_data)
+        self.add_data(final_data, outcome_col=self.outcome, input_cols=self.inputs)
 
 
     def compute_pod_spectrum(

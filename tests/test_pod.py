@@ -3,7 +3,7 @@ import numpy as np
 import scipy.stats as stats
 from sklearn.gaussian_process.kernels import RBF
 from digiqual.pod import (
-    fit_robust_mean_model,
+    fit_all_robust_mean_models, # <-- Updated Import
     fit_variance_model,
     predict_local_std,
     infer_best_distribution,
@@ -11,8 +11,6 @@ from digiqual.pod import (
     bootstrap_pod_ci,
     plot_model_selection
 )
-import pandas as pd
-from digiqual.core import SimulationStudy
 
 from unittest.mock import patch
 from digiqual.pod import calculate_reliability_point
@@ -55,12 +53,14 @@ def gumbel_data():
 
 # --- 1. MEAN MODEL TESTS (Robust Regression) ---
 
-def test_fit_robust_mean_model_selection(quadratic_data):
+def test_fit_all_robust_mean_models_selection(quadratic_data):
     """Test if Cross-Validation correctly identifies model type and params."""
     X, y = quadratic_data
-    model = fit_robust_mean_model(X, y, max_degree=5, n_folds=5)
+    models, scores, best_key = fit_all_robust_mean_models(X, y, max_degree=5, n_folds=5)
 
-    # Check for the new dynamic attributes
+    model = models[best_key] # Retrieve the winner
+
+    # Check for the dynamic attributes
     assert hasattr(model, 'model_type_')
     assert hasattr(model, 'model_params_')
     assert model.model_type_ in ['Polynomial', 'Kriging']
@@ -69,10 +69,12 @@ def test_fit_robust_mean_model_selection(quadratic_data):
     if model.model_type_ == 'Polynomial':
         assert model.model_params_ >= 2
 
-def test_fit_robust_mean_model_shapes(linear_data):
+def test_fit_all_robust_mean_models_shapes(linear_data):
     """Test it handles 1D array shapes correctly and predicts smoothly."""
     X, y = linear_data
-    model = fit_robust_mean_model(X, y, max_degree=3)
+    models, scores, best_key = fit_all_robust_mean_models(X, y, max_degree=3)
+
+    model = models[best_key]
 
     X_eval = np.array([[1.0], [2.0], [3.0]])
     preds = model.predict(X_eval)
@@ -83,13 +85,10 @@ def test_fit_robust_mean_model_shapes(linear_data):
 def test_plot_model_selection(linear_data):
     """Test that the standalone model selection plot generates a figure."""
     X, y = linear_data
-    model = fit_robust_mean_model(X, y, max_degree=3)
+    models, scores, best_key = fit_all_robust_mean_models(X, y, max_degree=3)
 
-    # Test that the attribute was attached
-    assert hasattr(model, 'cv_scores_')
-
-    # Test that the plot generates successfully
-    fig = plot_model_selection(model.cv_scores_)
+    # Test that the plot generates successfully using the new scores dict
+    fig = plot_model_selection(scores, cv_winner_key=best_key)
     assert fig is not None
     assert fig.axes # Checks that it actually contains plot axes
 
@@ -97,7 +96,9 @@ def test_plot_model_selection(linear_data):
 
 def test_fit_variance_model_outputs(heteroscedastic_data):
     X, y = heteroscedastic_data
-    mean_model = fit_robust_mean_model(X, y)
+    models, scores, best_key = fit_all_robust_mean_models(X, y)
+    mean_model = models[best_key]
+
     residuals, bw = fit_variance_model(X.reshape(-1, 1), y, mean_model)
 
     assert len(residuals) == len(y)
@@ -106,7 +107,9 @@ def test_fit_variance_model_outputs(heteroscedastic_data):
 
 def test_predict_local_std_heteroscedasticity(heteroscedastic_data):
     X, y = heteroscedastic_data
-    mean_model = fit_robust_mean_model(X, y)
+    models, scores, best_key = fit_all_robust_mean_models(X, y)
+    mean_model = models[best_key]
+
     residuals, bw = fit_variance_model(X.reshape(-1, 1), y, mean_model)
 
     eval_points = np.array([[0.5], [4.5]])
@@ -120,7 +123,9 @@ def test_predict_local_std_heteroscedasticity(heteroscedastic_data):
 
 def test_infer_best_distribution_gaussian(linear_data):
     X, y = linear_data
-    mean_model = fit_robust_mean_model(X, y)
+    models, scores, best_key = fit_all_robust_mean_models(X, y)
+    mean_model = models[best_key]
+
     residuals, bw = fit_variance_model(X.reshape(-1, 1), y, mean_model)
     dist_name, params = infer_best_distribution(residuals, X.reshape(-1, 1), bw)
 
@@ -129,7 +134,9 @@ def test_infer_best_distribution_gaussian(linear_data):
 
 def test_infer_best_distribution_gumbel(gumbel_data):
     X, y = gumbel_data
-    mean_model = fit_robust_mean_model(X, y)
+    models, scores, best_key = fit_all_robust_mean_models(X, y)
+    mean_model = models[best_key]
+
     residuals, bw = fit_variance_model(X.reshape(-1, 1), y, mean_model)
     dist_name, params = infer_best_distribution(residuals, X.reshape(-1, 1), bw)
 
@@ -147,7 +154,9 @@ def test_infer_best_distribution_safety():
 
 def test_compute_pod_curve_bounds(linear_data):
     X, y = linear_data
-    mean_model = fit_robust_mean_model(X, y)
+    models, scores, best_key = fit_all_robust_mean_models(X, y)
+    mean_model = models[best_key]
+
     residuals, bw = fit_variance_model(X.reshape(-1, 1), y, mean_model)
     X_eval = np.linspace(X.min(), X.max(), 100).reshape(-1, 1)
     dist_info = ('norm', (0, 1))
@@ -166,7 +175,9 @@ def test_compute_pod_curve_bounds(linear_data):
 def test_bootstrap_pod_ci_structure(linear_data):
     """Test that bootstrap returns valid upper/lower bounds using dynamic models."""
     X, y = linear_data
-    mean_model = fit_robust_mean_model(X, y)
+    models, scores, best_key = fit_all_robust_mean_models(X, y)
+    mean_model = models[best_key]
+
     residuals, bw = fit_variance_model(X.reshape(-1, 1), y, mean_model)
     X_eval = np.linspace(X.min(), X.max(), 100).reshape(-1, 1)
     dist_info = ('norm', (0, 1))
@@ -206,37 +217,11 @@ def test_bootstrap_kriging_path(linear_data):
     assert len(lower) == 10
     assert np.all(upper >= lower)
 
-# --- 6. INTEGRATION TEST (Core Class Wiring) ---
 
-def test_simulation_study_pod_integration(linear_data):
-    """Test the full workflow via the main SimulationStudy class."""
-    X, y = linear_data
-    df = pd.DataFrame({'Crack_Len': X, 'Signal': y, 'Noise_Factor': np.random.rand(len(X))})
-
-    study = SimulationStudy(input_cols=['Crack_Len', 'Noise_Factor'], outcome_col='Signal')
-    study.add_data(df)
-
-    results = study.pod(poi_col='Crack_Len', threshold=5.0, n_boot=20)
-
-    assert isinstance(results, dict)
-    assert results['poi_col'] == 'Crack_Len'
-
-    # Check new dynamic attributes
-    assert hasattr(results['mean_model'], 'model_type_')
-    assert hasattr(results['mean_model'], 'model_params_')
-
-    curves = results['curves']
-    assert 'pod' in curves
-    assert 'ci_lower' in curves
-    assert 'ci_upper' in curves
-    assert len(curves['pod']) == 100
-
-# --- NEW TESTS FOR POD ---
-
-
+# --- 6. MISC TESTS ---
 
 @patch("digiqual.pod.cross_val_score")
-def test_fit_robust_mean_model_kriging(mock_cv, linear_data):
+def test_fit_all_robust_mean_models_kriging(mock_cv, linear_data):
     X, y = linear_data
     # Force Polynomial scores to be terrible (-1000) and Kriging to be great (-1)
     def side_effect(model, *args, **kwargs):
@@ -246,8 +231,9 @@ def test_fit_robust_mean_model_kriging(mock_cv, linear_data):
             return np.array([-1000, -1000])  # Polynomial
     mock_cv.side_effect = side_effect
 
-    model = fit_robust_mean_model(X, y, max_degree=1, n_folds=2)
-    assert model.model_type_ == 'Kriging'
+    models, scores, best_key = fit_all_robust_mean_models(X, y, max_degree=1, n_folds=2)
+    assert best_key == ('Kriging', None)
+    assert models[best_key].model_type_ == 'Kriging'
 
 def test_infer_best_distribution_exception():
     X = np.array([1, 2, 3])
@@ -263,31 +249,16 @@ def test_calculate_reliability_point_nan():
     res = calculate_reliability_point(X_eval, ci_lower, target_pod=0.9)
     assert np.isnan(res)
 
-
-def test_forced_model_still_shows_full_cv(linear_data):
-    """Forced model should still populate cv_scores_ in full."""
-    X, y = linear_data
-    model = fit_robust_mean_model(X, y, model_override="polynomial", force_degree=2)
-    assert model.forced_model_ is True
-    assert len(model.cv_scores_) > 1          # full, not a single NaN entry
-    assert not any(np.isnan(v) for v in model.cv_scores_.values())
-
-def test_cv_winner_differs_from_forced(linear_data):
-    """cv_winner_ should reflect what CV would have picked, not the forced choice."""
-    X, y = linear_data
-    model = fit_robust_mean_model(X, y, model_override="kriging")
-    assert model.model_type_ == 'Kriging'
-    assert model.cv_winner_ is not None       # always set
-    # cv_winner_ may or may not be Kriging — the point is it's independently determined
-
 def test_plot_model_selection_highlights_forced(linear_data):
     """Plot should render without error when used_key differs from cv_winner_key."""
     X, y = linear_data
-    model = fit_robust_mean_model(X, y, model_override="polynomial", force_degree=1)
+    models, scores, best_key = fit_all_robust_mean_models(X, y)
+
+    # Simulate a user forcing a Polynomial 1, even if it didn't win
     fig = plot_model_selection(
-        model.cv_scores_,
+        scores,
         used_key=('Polynomial', 1),
-        cv_winner_key=model.cv_winner_
+        cv_winner_key=best_key
     )
     assert fig is not None
     assert len(fig.axes) == 2

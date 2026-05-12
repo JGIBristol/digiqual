@@ -215,3 +215,25 @@ def test_targeted_samples_duplicate_coverage_failure(mock_diag, basic_df):
 def test_sample_uncertainty_zero_samples(basic_df):
     res = _sample_uncertainty(basic_df, ['Length'], 'Signal', n=0)
     assert res.empty
+
+@patch('digiqual.adaptive.sample_sufficiency')
+def test_targeted_samples_passes_custom_thresholds(mock_diag, basic_df, mock_pass_report):
+    """Verifies that custom thresholds are passed through to the diagnostics engine."""
+    mock_diag.return_value = mock_pass_report
+
+    _ = generate_targeted_samples(
+        basic_df, ['Length'], 'Signal',
+        max_gap_ratio=0.15,
+        min_r2_score=0.75,
+        max_avg_cv=0.10,
+        max_max_cv=0.25
+    )
+
+    mock_diag.assert_called_once()
+    kwargs = mock_diag.call_args.kwargs
+
+    # Assert custom values were passed down!
+    assert kwargs['max_gap_ratio'] == 0.15
+    assert kwargs['min_r2_score'] == 0.75
+    assert kwargs['max_avg_cv'] == 0.10
+    assert kwargs['max_max_cv'] == 0.25

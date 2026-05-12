@@ -117,3 +117,44 @@ def test_adaptive_refinement_loop(mock_validate, mock_sufficiency, mock_target, 
     mock_exec.assert_called()
     # Final data should be Initial (2) + Refined (1) = 3 rows
     assert len(final_df) == 3
+
+@patch("digiqual.adaptive.generate_targeted_samples")
+@patch("digiqual.adaptive.sample_sufficiency")
+@patch("digiqual.adaptive.validate_simulation")
+@patch("digiqual.executors.CLIExecutor.run")
+def test_adaptive_search_passes_custom_thresholds(mock_exec, mock_validate, mock_sufficiency, mock_target, sample_df, ranges):
+    """Verifies that run_adaptive_search cascades custom thresholds down the pipeline."""
+    mock_validate.return_value = (sample_df, pd.DataFrame())
+
+    # Fail diagnostics to trigger the refinement loop
+    mock_sufficiency.return_value = pd.DataFrame({'Test': ['Input Coverage'], 'Pass': [False]})
+
+    # Return empty to break the loop safely immediately after calling refinement
+    mock_target.return_value = pd.DataFrame()
+
+    run_adaptive_search(
+        executor="cmd",
+        input_cols=["Length", "Angle"],
+        outcome_col="Signal",
+        ranges=ranges,
+        existing_data=sample_df,
+        max_iter=1,
+        max_gap_ratio=0.15,
+        min_r2_score=0.75,
+        max_avg_cv=0.10,
+        max_max_cv=0.25
+    )
+
+    # 1. Check sufficiency received thresholds
+    suff_kwargs = mock_sufficiency.call_args.kwargs
+    assert suff_kwargs['max_gap_ratio'] == 0.15
+    assert suff_kwargs['min_r2_score'] == 0.75
+    assert suff_kwargs['max_avg_cv'] == 0.10
+    assert suff_kwargs['max_max_cv'] == 0.25
+
+    # 2. Check target samples received thresholds
+    target_kwargs = mock_target.call_args.kwargs
+    assert target_kwargs['max_gap_ratio'] == 0.15
+    assert target_kwargs['min_r2_score'] == 0.75
+    assert target_kwargs['max_avg_cv'] == 0.10
+    assert target_kwargs['max_max_cv'] == 0.25

@@ -773,8 +773,8 @@ def calculate_sobol_indices(mean_model: Any, feature_names: list, data_df, n_sam
     Optimized for speed by disabling second-order interaction matrices.
     """
     try:
-        from SALib.sample import saltelli
-        from SALib.analyze import sobol
+        from SALib.sample import sobol as salib_sample
+        from SALib.analyze import sobol as salib_analyze
     except ImportError:
         print("Warning: SALib not found. Skipping Sobol index calculation.")
         return None
@@ -791,7 +791,7 @@ def calculate_sobol_indices(mean_model: Any, feature_names: list, data_df, n_sam
     }
 
     # 2. FAST SAMPLING: explicitly disable second-order calculations
-    X_sample = saltelli.sample(problem, n_samples, calc_second_order=False)
+    X_sample = salib_sample.sample(problem, n_samples, calc_second_order=False)
 
     if X_sample.ndim == 1:
         X_sample = X_sample.reshape(-1, 1)
@@ -799,7 +799,11 @@ def calculate_sobol_indices(mean_model: Any, feature_names: list, data_df, n_sam
     y_sample = mean_model.predict(X_sample)
 
     # 3. Analyze the results (also disabling second-order here)
-    Si = sobol.analyze(problem, y_sample.flatten(), print_to_console=False, calc_second_order=False)
+    import warnings
+    with warnings.catch_warnings():
+        # Ignore divide-by-zero warnings if the predicted surface is perfectly flat
+        warnings.simplefilter("ignore", RuntimeWarning)
+        Si = salib_analyze.analyze(problem, y_sample.flatten(), print_to_console=False, calc_second_order=False)
 
     # 4. Extract ONLY the Total-Order effect (ST)
     results = {}
