@@ -1935,7 +1935,7 @@ def server(input, output, session):
                 ui.output_plot("plot_explorer", height="450px"),
                 full_screen=True, class_="mt-3"
             ),
-            col_widths=[6, 6]
+            col_widths=[-1, 5, 5, -1]
         )
 
     @render.plot
@@ -2195,7 +2195,7 @@ def server(input, output, session):
                         ui.output_plot("plot_curve", height="400px"),
                         full_screen=True, class_="mt-3"
                     ),
-                    col_widths=[-1, 5, 5, -1]
+                    col_widths=[6,6]
                 ),
                 # --- METRICS & EXPORT ---
                 ui.layout_columns(
