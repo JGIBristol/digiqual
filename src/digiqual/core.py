@@ -436,12 +436,12 @@ class SimulationStudy:
         # --- THE FIX: Pull matrices directly from Layer 2 and Layer 3 Caches ---
         l3_cache = self.pod_curves_cache[l3_key]
 
-        from digiqual.integration import compute_multi_dim_pod
+        from .integration import compute_multi_dim_pod
         pod_matrix, mean_curve = compute_multi_dim_pod(
             poi_grid=l3_cache['X_eval'],
-            nuisance_ranges=l3_cache['nuisance_ranges'], # This was the original missing key!
+            nuisance_ranges=l3_cache['nuisance_ranges'],
             model=mean_model,
-            X_train=temp_results['X'],                   # <--- CHANGED: Pull directly from temp_results
+            X_train=temp_results['X'],
             residuals=temp_results['residuals'],
             bandwidth=temp_results['bandwidth'],
             dist_info=temp_results['dist_info'],
@@ -679,7 +679,7 @@ class SimulationStudy:
         # Calculate Sobol Sensitivity Indices
         # ---------------------------------------------------------
         print("-> Calculating Total-Order Sobol Indices...")
-        from digiqual.pod import calculate_sobol_indices
+        from .pod import calculate_sobol_indices
         sobol_indices = calculate_sobol_indices(
             mean_model=mean_model,
             feature_names=all_cols,
@@ -737,7 +737,7 @@ class SimulationStudy:
 
         else:
             print("3. Integrating PoD Curve from Scratch (Cache Miss)...")
-            from digiqual.integration import compute_multi_dim_pod
+            from .integration import compute_multi_dim_pod
             pod_curve, mean_curve = compute_multi_dim_pod(
                 X_eval, nuisance_ranges, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold,
             feature_names=all_cols, poi_names=poi_cols
@@ -931,7 +931,7 @@ class SimulationStudy:
                 poi_name=poi_cols[0]
             )
         else:
-            from digiqual.plotting import plot_signal_surface
+            from .plotting import plot_signal_surface
             poi_idx_0 = self.inputs.index(poi_cols[0])
             poi_idx_1 = self.inputs.index(poi_cols[1])
 
@@ -956,7 +956,7 @@ class SimulationStudy:
                 poi_name=poi_cols[0]
             )
         else:
-            from digiqual.plotting import plot_pod_surface
+            from .plotting import plot_pod_surface
             self.plots["pod_curve"] = plot_pod_surface(
                 poi_grids=res["poi_grids"],
                 pod_curve=res["curves"]["pod"],

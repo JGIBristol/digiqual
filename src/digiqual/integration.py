@@ -73,7 +73,7 @@ def compute_multi_dim_pod(
     dist_name, dist_params = dist_info
     dist_obj = getattr(stats, dist_name)
 
-    # --- THE FIX: Explicit Column Index Mapping ---
+    # --- Explicit Column Index Mapping ---
     if feature_names and poi_names:
         poi_indices = [feature_names.index(p) for p in poi_names]
         nuisance_names = list(nuisance_ranges.keys())
@@ -106,7 +106,7 @@ def compute_multi_dim_pod(
     else:
         nuisance_samples = np.empty((n_mc_samples, 0))
 
-    from digiqual.pod import predict_local_std
+    from .pod import predict_local_std
 
     # ---------------------------------------------------------
     # FAST PATH: Fully Vectorized (No active nuisances)

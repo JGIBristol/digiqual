@@ -10,6 +10,8 @@ from . import adaptive             # noqa: E402
 from . import sampling             # noqa: E402
 from . import plotting             # noqa: E402
 from . import integration          # noqa: E402
+from . import executors            # noqa: E402
+from . import ahat                 # noqa: E402
 
 def dq_ui():
     """
@@ -55,5 +57,7 @@ __all__ = [
     "adaptive",
     "sampling",
     "plotting",
-    "integration"
+    "integration",
+    "executors",
+    "ahat"
 ]

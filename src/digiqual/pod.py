@@ -642,7 +642,7 @@ def _single_bootstrap_step(
     res_res = y_res - y_pred
 
     # Compute PoD for this iteration
-    from digiqual.integration import compute_multi_dim_pod
+    from .integration import compute_multi_dim_pod
     pod_curve, _ = compute_multi_dim_pod(
         X_eval, nuisance_ranges or {}, mean_model, X_res_2d, res_res,
         bandwidth, dist_info, threshold, n_mc_samples=1000,
