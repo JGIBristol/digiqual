@@ -689,9 +689,20 @@ def bootstrap_pod_ci(
         n_boot (int, optional): Number of bootstrap iterations. Defaults to 1000.
         n_jobs (int | None, optional): Number of CPU cores to use.
             ``None`` or ``1`` means single-core execution (no parallelisation).
-            ``-1`` means use all available cores minus two. Defaults to ``None``.
-        feature_names (list): .
-        poi_names (list): .
+            ``-1`` means use all available cores minus one. Defaults to ``None``.
+        feature_names (list, optional): Names of all feature columns in ``X``, in the exact
+            same order as the columns appear in ``X``. For one-dimensional inputs this
+            can be omitted or contain a single name, but for multi-dimensional
+            bootstrapping it is used to identify which variables are parameters of
+            interest versus nuisance variables.
+        poi_names (list, optional): Names of the parameters of interest (PoIs). Each entry must
+            correspond to a name in ``feature_names``. During multi-dimensional
+            bootstrapping, PoD curves are evaluated and resampled with respect to these
+            variables, while any remaining features in ``X`` are treated as nuisance
+            variables. This should therefore be provided whenever ``X`` has multiple
+            columns and PoIs need to be distinguished from nuisance inputs.
+
+    Returns:
 
     Returns:
         Tuple[np.ndarray, np.ndarray]:
@@ -767,7 +778,7 @@ def calculate_reliability_point(
     return float(np.interp(target_pod, monotonic_ci, X_eval))
 
 
-def calculate_sobol_indices(mean_model: Any, feature_names: list, data_df, n_samples: int = 1024) -> dict:
+def calculate_sobol_indices(mean_model: Any, feature_names: list, data_df, n_samples: int = 1024) -> dict | None:
     """
     Calculates the Total-Order Sobol sensitivity index for the fitted mean model.
     Optimized for speed by disabling second-order interaction matrices.

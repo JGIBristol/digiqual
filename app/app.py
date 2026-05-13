@@ -869,8 +869,24 @@ def server(input, output, session):
             df.columns = df.columns.str.strip()
             # 2. Replace any internal spaces with underscores
             df.columns = df.columns.str.replace(r'\s+', '_', regex=True)
-            # 3. Remove any remaining special characters (keep only letters, numbers, and underscores)
+            # 3. Remove any remaining special characters
             df.columns = df.columns.str.replace(r'[^a-zA-Z0-9_]', '', regex=True)
+
+            # 4. FIX: Detect and disambiguate duplicate column names
+            new_cols = []
+            seen = set()
+            for col in df.columns:
+                new_col = col
+                counter = 1
+                # If we've already seen this name, add a number until it's unique
+                while new_col in seen:
+                    new_col = f"{col}_{counter}"
+                    counter += 1
+
+                seen.add(new_col)
+                new_cols.append(new_col)
+
+            df.columns = new_cols
 
             uploaded_data.set(df)
         except Exception:

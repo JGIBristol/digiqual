@@ -633,12 +633,22 @@ class SimulationStudy:
         # Select the specific model requested by the user
         if model_override == "polynomial" and force_degree is not None:
             selected_key = ('Polynomial', force_degree)
-        elif model_override == "kriging" and ('Kriging', None) in self.models_cache:
-            selected_key = ('Kriging', None)
+            if selected_key not in self.models_cache:
+                raise ValueError(f"Polynomial degree {force_degree} was requested, but it is not available in the cache.")
+
         elif model_override == "polynomial":
             # User wants Poly but didn't force a degree -> Pick the best Poly
             poly_scores = {k: v for k, v in self.cv_scores_cache.items() if k[0] == 'Polynomial'}
             selected_key = min(poly_scores, key=poly_scores.get)
+
+        elif model_override == "kriging":
+            selected_key = ('Kriging', None)
+            if selected_key not in self.models_cache:
+                raise ValueError(
+                    "Kriging model was requested but is not available in the cache. "
+                    "This usually occurs if your dataset exceeds 1,000 samples, "
+                    "as Kriging evaluation is automatically skipped to prevent timeouts."
+                )
         else:
             selected_key = self.cv_winner_key
 
@@ -658,7 +668,7 @@ class SimulationStudy:
             print("-> Selected Model: Kriging (Gaussian Process)")
 
         # ---------------------------------------------------------
-        # 5. LAYER 2 CACHE: Variance Model & Distribution
+        # 5. LAYER 2 CACHE: Variance Model, Distribution & Sobol
         # ---------------------------------------------------------
         if selected_key not in self.variance_cache:
             print("2. Fitting Variance Model & Inferring Distribution (Cache Miss)...")
@@ -668,32 +678,32 @@ class SimulationStudy:
             )
             dist_name, dist_params = pod.infer_best_distribution(residuals, X, bandwidth)
 
+            # Calculate Sobol Sensitivity Indices (Cache Miss)
+            print("-> Calculating Total-Order Sobol Indices...")
+            from digiqual.pod import calculate_sobol_indices
+            sobol_indices = calculate_sobol_indices(
+                mean_model=mean_model,
+                feature_names=all_cols,
+                data_df=self.clean_data
+            )
+
             # Save the heavy lifting to the cache
             self.variance_cache[selected_key] = {
                 "residuals": residuals,
                 "bandwidth": bandwidth,
-                "dist_info": (dist_name, dist_params)
+                "dist_info": (dist_name, dist_params),
+                "sobol_indices": sobol_indices  # <--- Now safely cached!
             }
         else:
-            print("2. Loading Variance Model & Distribution from cache (Cache Hit)...")
+            print("2. Loading Variance Model, Distribution & Sobol from cache (Cache Hit)...")
             cached_var = self.variance_cache[selected_key]
             residuals = cached_var["residuals"]
             bandwidth = cached_var["bandwidth"]
             dist_name, dist_params = cached_var["dist_info"]
+            sobol_indices = cached_var.get("sobol_indices", None)  # <--- Instantly retrieved!
 
         print(f"   -> Smoothing Bandwidth: {bandwidth:.4f}")
         print(f"   -> Selected Distribution: {dist_name}")
-
-        # ---------------------------------------------------------
-        # Calculate Sobol Sensitivity Indices
-        # ---------------------------------------------------------
-        print("-> Calculating Total-Order Sobol Indices...")
-        from .pod import calculate_sobol_indices
-        sobol_indices = calculate_sobol_indices(
-            mean_model=mean_model,
-            feature_names=all_cols,
-            data_df=self.clean_data
-        )
 
         # ---------------------------------------------------------
         # 6. LAYER 3 & 4 CACHE: Integration & Spectrum Interpolation
@@ -875,7 +885,16 @@ class SimulationStudy:
             return
 
         import matplotlib.pyplot as plt
-        plt.close('all')
+
+        # --- THE FIX: Safely close ONLY DigiQual's previous figures to free memory ---
+        for plot_name, item in self.plots.items():
+            try:
+                # Check if the item is an Axes (needs .get_figure()) or a Figure itself
+                fig = item.get_figure() if hasattr(item, 'get_figure') else item
+                plt.close(fig)
+            except Exception:
+                pass
+        self.plots.clear()
 
         res = self.pod_results
         poi_cols = res.get("poi_cols", ["Parameter of Interest"])

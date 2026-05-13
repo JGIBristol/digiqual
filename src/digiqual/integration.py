@@ -44,6 +44,11 @@ def compute_multi_dim_pod(
             Providing an array triggers vectorized multi-threshold calculation.
         n_mc_samples (int, optional): Number of Monte Carlo draws per PoI grid point when
             evaluating active nuisances. Defaults to 3000.
+        feature_names (list, optional): Names of all feature columns in ``X_train``, in the exact
+            same order as the columns appear. Used to correctly map PoIs and nuisances to
+            their physical array indices.
+        poi_names (list, optional): Names of the parameters of interest (PoIs). Each entry must
+            correspond to a name in ``feature_names``.
 
     Returns:
         Tuple[np.ndarray, np.ndarray]:
