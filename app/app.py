@@ -377,7 +377,7 @@ ui.nav_panel(
                             ui.layout_columns(
                                 ui.div(
                                     ui.h5("About", class_="fw-bold mb-2"),
-                                    ui.tags.strong("Version: "), "0.20.0", ui.br(),
+                                    ui.tags.strong("Version: "), "0.20.1", ui.br(),
                                     ui.tags.strong("License: "), "MIT", ui.br(),
                                     ui.tags.strong("Author: "), "Dr. Josh Tyler", ui.br(),
                                     ui.tags.strong("Institution: "), "University of Bristol",
