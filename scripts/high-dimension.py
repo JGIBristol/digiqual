@@ -47,11 +47,8 @@ df_initial["Signal_Amplitude"] = apply_ndt_physics(df_initial)
 
 # --- 3. Initialize SimulationStudy ---
 input_cols = vars_df["Name"].tolist()
-study = SimulationStudy(
-    input_cols=input_cols,
-    outcome_col="Signal_Amplitude"
-)
-study.add_data(df_initial)
+study = SimulationStudy()
+study.add_data(df_initial,outcome_col="Signal_Amplitude")
 
 # --- 4. Diagnosis
 print("Running Diagnostics...")
