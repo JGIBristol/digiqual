@@ -313,7 +313,7 @@ Note
 <h3 class="anchored" data-anchor-id="setup-generation-smart-initialization">1. Setup, Generation &amp; Smart Initialization</h3>
 <p>We’ll define a simulated physics function with heteroscedastic noise and generate an initial design containing a deliberate gap between 3mm and 7mm.</p>
 <p>Notice that we no longer need to explicitly define our input columns when creating the <code>SimulationStudy</code>; the manager will automatically infer them from the data!</p>
-<div id="f0efb37f" class="cell" data-execution_count="1">
+<div id="6ebe8bfb" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
@@ -361,7 +361,7 @@ Note
 <div class="cell-output cell-output-stdout">
 <pre><code>Data initialized/overwritten. Total rows: 80
 Inferred Inputs: ['Length', 'Angle', 'Roughness']
-Auto-Threshold suggestion (Median Signal): 34.41</code></pre>
+Auto-Threshold suggestion (Median Signal): 34.58</code></pre>
 </div>
 </div>
 </section>
@@ -381,7 +381,7 @@ Warning
 <p>Because of our deliberate gap, we expect the diagnostic engine to flag the <strong>Input Coverage</strong> test as failed.</p>
 </div>
 </div>
-<div id="85d4b72d" class="cell" data-execution_count="2">
+<div id="ea89407e" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Running validation...
@@ -410,7 +410,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.4225</td>
+<td>0.4247</td>
 <td>&lt; 0.15</td>
 <td>False</td>
 </tr>
@@ -419,7 +419,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.0593</td>
+<td>0.0566</td>
 <td>&lt; 0.15</td>
 <td>True</td>
 </tr>
@@ -428,7 +428,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.0489</td>
+<td>0.0742</td>
 <td>&lt; 0.15</td>
 <td>True</td>
 </tr>
@@ -437,7 +437,7 @@ Checking sample sufficiency...</code></pre>
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9968</td>
+<td>0.9982</td>
 <td>&gt; 0.50</td>
 <td>True</td>
 </tr>
@@ -446,7 +446,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Avg CV (Rel Std Dev)</td>
-<td>0.0143</td>
+<td>0.0142</td>
 <td>&lt; 0.15</td>
 <td>True</td>
 </tr>
@@ -455,7 +455,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Max CV (Rel Std Dev)</td>
-<td>0.0289</td>
+<td>0.0267</td>
 <td>&lt; 0.30</td>
 <td>True</td>
 </tr>
@@ -474,7 +474,7 @@ Checking sample sufficiency...</code></pre>
 <li><strong>Generate:</strong> It outputs a dataframe of new input coordinates.</li>
 <li><strong>Execute &amp; Store:</strong> Appending the results back using <code>add_data()</code> automatically clears the mathematical caches to ensure your next analysis uses the updated physics!</li>
 </ol>
-<div id="9379033a" class="cell" data-execution_count="3">
+<div id="fa0a71ac" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate active learning samples (20 points to fill the gap)</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>new_samples <span class="op">=</span> study.refine(n_points<span class="op">=</span><span class="dv">20</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -517,7 +517,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.0635</td>
+<td>0.0783</td>
 <td>&lt; 0.15</td>
 <td>True</td>
 </tr>
@@ -526,7 +526,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.0429</td>
+<td>0.0566</td>
 <td>&lt; 0.15</td>
 <td>True</td>
 </tr>
@@ -535,7 +535,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.0489</td>
+<td>0.0742</td>
 <td>&lt; 0.15</td>
 <td>True</td>
 </tr>
@@ -544,7 +544,7 @@ Checking sample sufficiency...</code></pre>
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9970</td>
+<td>0.9968</td>
 <td>&gt; 0.50</td>
 <td>True</td>
 </tr>
@@ -553,7 +553,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Avg CV (Rel Std Dev)</td>
-<td>0.0133</td>
+<td>0.0134</td>
 <td>&lt; 0.15</td>
 <td>True</td>
 </tr>
@@ -562,7 +562,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Max CV (Rel Std Dev)</td>
-<td>0.0275</td>
+<td>0.0270</td>
 <td>&lt; 0.30</td>
 <td>True</td>
 </tr>
@@ -624,26 +624,25 @@ Tip
 -&gt; Selected Model: Polynomial (Degree 2)
 2. Fitting Variance Model &amp; Inferring Distribution (Cache Miss)...
    -&gt; Optimizing bandwidth via LOO-CV...
-   -&gt; Smoothing Bandwidth: 5.1588
-   -&gt; Selected Distribution: laplace
 -&gt; Calculating Total-Order Sobol Indices...
+   -&gt; Smoothing Bandwidth: 9.8592
+   -&gt; Selected Distribution: norm
 3. Integrating PoD Curve from Scratch (Cache Miss)...
 4. Skipping Bootstrap (n_boot=0)...
 --- Analysis Complete ---
-Run 1 completed in: 0.8146 seconds
+Run 1 completed in: 0.9317 seconds
 --- Starting Reliability Analysis (PoIs: ['Length'] - Nuisance: ['Roughness']) ---
 -&gt; Slicing surface at: {'Angle': 5.0}
 1. Loading surrogate models from cache (Cache Hit)...
 -&gt; Selected Model: Polynomial (Degree 2)
-2. Loading Variance Model &amp; Distribution from cache (Cache Hit)...
-   -&gt; Smoothing Bandwidth: 5.1588
-   -&gt; Selected Distribution: laplace
--&gt; Calculating Total-Order Sobol Indices...
+2. Loading Variance Model, Distribution &amp; Sobol from cache (Cache Hit)...
+   -&gt; Smoothing Bandwidth: 9.8592
+   -&gt; Selected Distribution: norm
 3. Integrating PoD Curve from Scratch (Cache Miss)...
 4. Skipping Bootstrap (n_boot=0)...
 --- Analysis Complete ---
-Run 2 completed in: 0.2346 seconds (Near Instant!)
-New a90/95 point at Angle 5.0: 5.464</code></pre>
+Run 2 completed in: 0.2323 seconds (Near Instant!)
+New a90/95 point at Angle 5.0: 5.397</code></pre>
 </div>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualise the results of the final active slice</span></span>

@@ -292,10 +292,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 6%">
-<col style="width: 9%">
-<col style="width: 77%">
-<col style="width: 5%">
+<col style="width: 3%">
+<col style="width: 4%">
+<col style="width: 89%">
+<col style="width: 2%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -363,23 +363,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="even">
 <td>n_jobs</td>
 <td>int | None</td>
-<td>Number of CPU cores to use. <code>None</code> or <code>1</code> means single-core execution (no parallelisation). <code>-1</code> means use all available cores minus two. Defaults to <code>None</code>.</td>
+<td>Number of CPU cores to use. <code>None</code> or <code>1</code> means single-core execution (no parallelisation). <code>-1</code> means use all available cores minus one. Defaults to <code>None</code>.</td>
 <td><code>None</code></td>
 </tr>
 <tr class="odd">
 <td>feature_names</td>
 <td>list</td>
-<td>.</td>
+<td>Names of all feature columns in <code>X</code>, in the exact same order as the columns appear in <code>X</code>. For one-dimensional inputs this can be omitted or contain a single name, but for multi-dimensional bootstrapping it is used to identify which variables are parameters of interest versus nuisance variables.</td>
 <td><code>None</code></td>
 </tr>
 <tr class="even">
 <td>poi_names</td>
 <td>list</td>
-<td>.</td>
+<td>Names of the parameters of interest (PoIs). Each entry must correspond to a name in <code>feature_names</code>. During multi-dimensional bootstrapping, PoD curves are evaluated and resampled with respect to these variables, while any remaining features in <code>X</code> are treated as nuisance variables. This should therefore be provided whenever <code>X</code> has multiple columns and PoIs need to be distinguished from nuisance inputs.</td>
 <td><code>None</code></td>
 </tr>
 </tbody>
 </table>
+<p>Returns:</p>
 </section>
 <section id="returns" class="level2 doc-section doc-section-returns">
 <h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>

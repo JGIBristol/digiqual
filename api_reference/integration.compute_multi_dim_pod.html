@@ -294,10 +294,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 9%">
-<col style="width: 20%">
-<col style="width: 63%">
-<col style="width: 6%">
+<col style="width: 7%">
+<col style="width: 15%">
+<col style="width: 71%">
+<col style="width: 5%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -361,6 +361,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>int</td>
 <td>Number of Monte Carlo draws per PoI grid point when evaluating active nuisances. Defaults to 3000.</td>
 <td><code>3000</code></td>
+</tr>
+<tr class="even">
+<td>feature_names</td>
+<td>list</td>
+<td>Names of all feature columns in <code>X_train</code>, in the exact same order as the columns appear. Used to correctly map PoIs and nuisances to their physical array indices.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="odd">
+<td>poi_names</td>
+<td>list</td>
+<td>Names of the parameters of interest (PoIs). Each entry must correspond to a name in <code>feature_names</code>.</td>
+<td><code>None</code></td>
 </tr>
 </tbody>
 </table>
