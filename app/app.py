@@ -1745,13 +1745,15 @@ def server(input, output, session):
 
 
     @reactive.effect
-    @reactive.event(uploaded_data, input.outcome_col)
+    @reactive.event(uploaded_data, input.input_cols, input.outcome_col)
     def update_pod_ui_choices():
         study = current_study()
         if study is not None:
-            # We don't need to check df columns anymore, the study knows!
-            ui.update_selectize("pod_pois", choices=study.inputs)
-            ui.update_selectize("pod_nuisance", choices=study.inputs)
+            # FIX: Pull choices directly from the UI to ensure instantaneous updates
+            valid_inputs = list(input.input_cols())
+
+            ui.update_selectize("pod_pois", choices=valid_inputs)
+            ui.update_selectize("pod_nuisance", choices=valid_inputs)
 
             # --- THE FIX: Restrict Kriging for large datasets ---
             n_samples = len(study.data)
