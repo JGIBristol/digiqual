@@ -226,6 +226,12 @@ window.Quarto = {
  <span class="menu-text">Classical vs Generalised PoD</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DigiQual Caching Architecture</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item">
@@ -256,13 +262,15 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#the-mathematics-2" id="toc-the-mathematics-2" class="nav-link" data-scroll-target="#the-mathematics-2">The Mathematics</a></li>
   </ul></li>
-  <li><a href="#multi-dimensional-integration-active-marginalisation" id="toc-multi-dimensional-integration-active-marginalisation" class="nav-link" data-scroll-target="#multi-dimensional-integration-active-marginalisation">4. Multi-Dimensional Integration (Active Marginalisation)</a>
+  <li><a href="#multi-dimensional-evaluation-marginalisation-slicing" id="toc-multi-dimensional-evaluation-marginalisation-slicing" class="nav-link" data-scroll-target="#multi-dimensional-evaluation-marginalisation-slicing">4. Multi-Dimensional Evaluation (Marginalisation &amp; Slicing)</a>
   <ul class="collapse">
-  <li><a href="#the-mathematics-3" id="toc-the-mathematics-3" class="nav-link" data-scroll-target="#the-mathematics-3">The Mathematics</a></li>
+  <li><a href="#active-marginalisation-nuisance-parameters" id="toc-active-marginalisation-nuisance-parameters" class="nav-link" data-scroll-target="#active-marginalisation-nuisance-parameters">Active Marginalisation (Nuisance Parameters)</a></li>
+  <li><a href="#parameter-slicing-constant-parameters" id="toc-parameter-slicing-constant-parameters" class="nav-link" data-scroll-target="#parameter-slicing-constant-parameters">Parameter Slicing (Constant Parameters)</a></li>
   </ul></li>
   <li><a href="#bootstrapping-for-confidence-bounds" id="toc-bootstrapping-for-confidence-bounds" class="nav-link" data-scroll-target="#bootstrapping-for-confidence-bounds">5. Bootstrapping for Confidence Bounds</a>
   <ul class="collapse">
   <li><a href="#the-process" id="toc-the-process" class="nav-link" data-scroll-target="#the-process">The Process</a></li>
+  <li><a href="#summary-the-3-tier-parameter-taxonomy" id="toc-summary-the-3-tier-parameter-taxonomy" class="nav-link" data-scroll-target="#summary-the-3-tier-parameter-taxonomy">Summary: The 3-Tier Parameter Taxonomy</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/generalised_pod.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -315,12 +323,17 @@ window.Quarto = {
 <p>Residuals are first standardized into <span class="math inline">\(Z\)</span>-scores using the local standard deviation: <span class="math display">\[ Z_i = \frac{y_i - \hat{f}(x_i)}{\hat{\sigma}(x_i)} \]</span> These <span class="math inline">\(Z\)</span>-scores are then fitted against a suite of distributions: Normal, Gumbel, Logistic, Laplace, and t-Student. The best-fitting distribution is selected using the <strong>Akaike Information Criterion (AIC)</strong>: <span class="math display">\[ AIC = 2k - 2\ln(\hat{L}) \]</span> Where <span class="math inline">\(k\)</span> is the number of parameters and <span class="math inline">\(\hat{L}\)</span> is the Maximum Likelihood.</p>
 </section>
 </section>
-<section id="multi-dimensional-integration-active-marginalisation" class="level2">
-<h2 class="anchored" data-anchor-id="multi-dimensional-integration-active-marginalisation">4. Multi-Dimensional Integration (Active Marginalisation)</h2>
-<p>If evaluating multidimensional datasets with nuisance variations (e.g., angle <span class="math inline">\(\theta\)</span>, roughness <span class="math inline">\(R\)</span>), <code>digiqual</code> utilizes Monte Carlo Integration to output a 1D or 2D marginal Probability of Detection.</p>
-<section id="the-mathematics-3" class="level3">
-<h3 class="anchored" data-anchor-id="the-mathematics-3">The Mathematics</h3>
-<p>The expected PoD for a Parameter of Interest (PoI) vector <span class="math inline">\(\mathbf{x}\)</span> is calculated by integrating the conditional PoD over the joint probability density function <span class="math inline">\(p(\mathbf{z})\)</span> of the nuisance variables <span class="math inline">\(\mathbf{z}\)</span>: <span class="math display">\[ PoD(\mathbf{x}) = \int_{\Omega_z} PoD(\mathbf{x}, \mathbf{z}) p(\mathbf{z}) d\mathbf{z} \]</span> <code>digiqual</code> approximates this integral computationally via Latin Hypercube Sampling (LHS) across the continuous physics space.</p>
+<section id="multi-dimensional-evaluation-marginalisation-slicing" class="level2">
+<h2 class="anchored" data-anchor-id="multi-dimensional-evaluation-marginalisation-slicing">4. Multi-Dimensional Evaluation (Marginalisation &amp; Slicing)</h2>
+<p>When evaluating multidimensional datasets with additional variables (e.g., angle <span class="math inline">\(\theta\)</span>, roughness <span class="math inline">\(R\)</span>), <code>digiqual</code> fits the surrogate model to the <em>entire</em> <span class="math inline">\(n\)</span>-dimensional parameter space. To project this down to a 1D or 2D Probability of Detection curve, it uses two distinct techniques:</p>
+<section id="active-marginalisation-nuisance-parameters" class="level3">
+<h3 class="anchored" data-anchor-id="active-marginalisation-nuisance-parameters">Active Marginalisation (Nuisance Parameters)</h3>
+<p>For parameters treated as random noise, the expected PoD for a Parameter of Interest (PoI) vector <span class="math inline">\(\mathbf{x}\)</span> is calculated by integrating the conditional PoD over the probability density function <span class="math inline">\(p(\mathbf{z})\)</span> of the nuisance variables <span class="math inline">\(\mathbf{z}\)</span>: <span class="math display">\[PoD(\mathbf{x}) = \int_{\Omega_z} PoD(\mathbf{x}, \mathbf{z}) p(\mathbf{z}) d\mathbf{z}\]</span></p>
+<p><code>digiqual</code> approximates this integral computationally via Monte Carlo integration (Latin Hypercube Sampling) to average the signal response across the noise spectrum.</p>
+</section>
+<section id="parameter-slicing-constant-parameters" class="level3">
+<h3 class="anchored" data-anchor-id="parameter-slicing-constant-parameters">Parameter Slicing (Constant Parameters)</h3>
+<p>For parameters that are neither plotted nor integrated out, <code>digiqual</code> treats them as strict mathematical constants. The evaluation grid takes a “slice” through the <span class="math inline">\(n\)</span>-dimensional response surface at these specific values (defaulting to the parameter’s median), allowing you to explore specific physical scenarios without retraining the underlying model.</p>
 </section>
 </section>
 <section id="bootstrapping-for-confidence-bounds" class="level2">
@@ -336,6 +349,46 @@ window.Quarto = {
 <li><p>Repeat this <span class="math inline">\(B\)</span> times (typically <span class="math inline">\(B=1000\)</span>).</p></li>
 <li><p>Extract the <span class="math inline">\(2.5^{th}\)</span> and <span class="math inline">\(97.5^{th}\)</span> percentiles at every point <span class="math inline">\(a\)</span> to form the robust 95% confidence interval <span class="math inline">\(PoD_{95}\)</span>.</p></li>
 </ol>
+</section>
+<section id="summary-the-3-tier-parameter-taxonomy" class="level3">
+<h3 class="anchored" data-anchor-id="summary-the-3-tier-parameter-taxonomy">Summary: The 3-Tier Parameter Taxonomy</h3>
+<p>To understand how <code>digiqual</code> handles high-dimensional data, it is helpful to see exactly how each parameter type is treated during the three phases of reliability assessment:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Parameter Type</th>
+<th style="text-align: left;">1. Model Fit (Training Phase)</th>
+<th style="text-align: left;">2. Evaluation Phase (Mean Curve)</th>
+<th style="text-align: left;">3. PoD Generation (Bootstrapping)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Parameter(s) of Interest (PoI)</strong></td>
+<td style="text-align: left;">Treated as a standard geometric dimension to train the n-dimensional surrogate model.</td>
+<td style="text-align: left;">Defines the evaluation grid. Steps evenly from its minimum to maximum value to form the plot axes.</td>
+<td style="text-align: left;">Forms the primary axes for the final Probability of Detection confidence bounds.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Sliced Parameter (Constant)</strong></td>
+<td style="text-align: left;">Treated as a standard geometric dimension. The model learns its physical impact globally.</td>
+<td style="text-align: left;">Held <strong>strictly constant</strong> at a user-defined value. Acts as a targeted, multi-dimensional “laser beam” slice.</td>
+<td style="text-align: left;">Remains rigidly locked at the exact same constant value across all bootstrap resamples.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Nuisance Parameter (Marginalised)</strong></td>
+<td style="text-align: left;">Treated as a standard geometric dimension. The model learns its physical impact globally.</td>
+<td style="text-align: left;"><strong>Randomly sampled</strong> via Monte Carlo integration across its physical bounds. Results are averaged out.</td>
+<td style="text-align: left;">Re-sampled and averaged inside <em>every single</em> bootstrap iteration to capture real-world uncertainty.</td>
+</tr>
+</tbody>
+</table>
 
 
 </section>

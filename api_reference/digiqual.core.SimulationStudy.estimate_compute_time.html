@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>pod.fit_robust_mean_model – digiqual</title>
+<title>digiqual.core.simulationstudy.estimate_compute_time – digiqual</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -230,6 +230,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Classical vs Generalised PoD</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DigiQual Caching Architecture</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item">
@@ -248,14 +254,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.pod.fit_robust_mean_model" id="toc-digiqual.pod.fit_robust_mean_model" class="nav-link active" data-scroll-target="#digiqual.pod.fit_robust_mean_model">pod.fit_robust_mean_model</a>
-  <ul class="collapse">
-  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
-  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
-  <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
-  </ul></li>
+  <li><a href="#digiqual.core.SimulationStudy.estimate_compute_time" id="toc-digiqual.core.SimulationStudy.estimate_compute_time" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.estimate_compute_time">estimate_compute_time</a></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/pod.fit_robust_mean_model.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.estimate_compute_time.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
@@ -263,128 +264,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<section id="digiqual.pod.fit_robust_mean_model" class="level1">
-<h1>pod.fit_robust_mean_model</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>fit_robust_mean_model(</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    X,</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    y,</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    max_degree<span class="op">=</span><span class="dv">10</span>,</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    n_folds<span class="op">=</span><span class="dv">10</span>,</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    model_override<span class="op">=</span><span class="st">'auto'</span>,</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    force_degree<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Fits regression models (Polynomials and Kriging) and selects the optimal one.</p>
-<p>This function performs k-fold Cross Validation (CV) to find the model type (Polynomial or Kriging) and parameters (e.g., degree) that minimize the Mean Squared Error (MSE), balancing bias and variance.</p>
-<p>When <code>model_override</code> is set to <code>"polynomial"</code> or <code>"kriging"</code>, CV selection is skipped and the requested model type is fitted directly.</p>
-<section id="parameters" class="level2 doc-section doc-section-parameters">
-<h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 10%">
-<col style="width: 8%">
-<col style="width: 73%">
-<col style="width: 7%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>X</td>
-<td>np.ndarray</td>
-<td>1D array of input variable values (e.g., flaw size).</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>y</td>
-<td>np.ndarray</td>
-<td>1D array of outcome values (e.g., signal response).</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>max_degree</td>
-<td>int</td>
-<td>The maximum polynomial degree to test. Defaults to 10.</td>
-<td><code>10</code></td>
-</tr>
-<tr class="even">
-<td>n_folds</td>
-<td>int</td>
-<td>Number of folds for Cross Validation. Defaults to 10.</td>
-<td><code>10</code></td>
-</tr>
-<tr class="odd">
-<td>model_override</td>
-<td>str</td>
-<td>Force a model type. One of <code>"auto"</code>, <code>"polynomial"</code>, or <code>"kriging"</code>. Defaults to <code>"auto"</code>.</td>
-<td><code>'auto'</code></td>
-</tr>
-<tr class="even">
-<td>force_degree</td>
-<td>int | None</td>
-<td>When <code>model_override="polynomial"</code>, use this degree instead of CV selection. Defaults to None (CV selects).</td>
-<td><code>None</code></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="returns" class="level2 doc-section doc-section-returns">
-<h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 83%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Any</td>
-<td>Any</td>
-<td>A fitted scikit-learn model with the following added attributes:</td>
-</tr>
-<tr class="even">
-<td></td>
-<td>Any</td>
-<td>- <code>model_type_</code> (str): Either ‘Polynomial’ or ‘Kriging’.</td>
-</tr>
-<tr class="odd">
-<td></td>
-<td>Any</td>
-<td>- <code>model_params_</code> (Any): The selected integer degree or the fitted kernel.</td>
-</tr>
-<tr class="even">
-<td></td>
-<td>Any</td>
-<td>- <code>cv_scores_</code> (dict): The cross-validation MSE scores for all tested models.</td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="examples" class="level2 doc-section doc-section-examples">
-<h2 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="dv">10</span>, <span class="dv">50</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> <span class="dv">3</span> <span class="op">*</span> X <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">50</span>)</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> fit_robust_mean_model(X, y)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(model.model_type_)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Force a cubic polynomial</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> fit_robust_mean_model(X, y, model_override<span class="op">=</span><span class="st">"polynomial"</span>, force_degree<span class="op">=</span><span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="digiqual.core.SimulationStudy.estimate_compute_time" class="level1">
+<h1>estimate_compute_time</h1>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>estimate_compute_time(model_type, n_boot, n_nuisances, n_jobs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Physics-aware heuristic to estimate PoD computation time in seconds. Accounts for initial cache-building (CV), Kriging complexity, and MC Integration.</p>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->
@@ -793,4 +678,4 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/pod.fit_robust_mean_model.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.estimate_compute_time.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

@@ -230,6 +230,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Classical vs Generalised PoD</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DigiQual Caching Architecture</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item">
@@ -267,22 +273,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="digiqual.core.SimulationStudy" class="level1">
 <h1>core.SimulationStudy</h1>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>SimulationStudy(</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    input_cols,</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    outcome_col,</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    max_gap_ratio<span class="op">=</span><span class="fl">0.2</span>,</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    min_r2_score<span class="op">=</span><span class="fl">0.5</span>,</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    max_avg_cv<span class="op">=</span><span class="fl">0.15</span>,</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    max_max_cv<span class="op">=</span><span class="fl">0.3</span>,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    max_gap_ratio<span class="op">=</span><span class="fl">0.2</span>,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    min_r2_score<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    max_avg_cv<span class="op">=</span><span class="fl">0.15</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    max_max_cv<span class="op">=</span><span class="fl">0.3</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>A workflow manager for simulation reliability assessment.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 11%">
-<col style="width: 9%">
-<col style="width: 69%">
-<col style="width: 9%">
+<col style="width: 12%">
+<col style="width: 6%">
+<col style="width: 72%">
+<col style="width: 8%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -293,18 +297,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
-<td>input_cols</td>
-<td>List[str]</td>
-<td>List of input variable names.</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>outcome_col</td>
-<td>str</td>
-<td>Name of the outcome variable.</td>
-<td><em>required</em></td>
-</tr>
 <tr class="odd">
 <td>max_gap_ratio</td>
 <td>float</td>
@@ -393,6 +385,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>Dict</td>
 <td>Stores figures from the classical linear analysis.</td>
 </tr>
+<tr class="even">
+<td>models_cache</td>
+<td>Dict</td>
+<td>Cached mean models to prevent redundant fitting.</td>
+</tr>
+<tr class="odd">
+<td>variance_cache</td>
+<td>Dict</td>
+<td>Cached variance models (residuals/bandwidth).</td>
+</tr>
+<tr class="even">
+<td>pod_curves_cache</td>
+<td>Dict</td>
+<td>Cached integrated PoD curves.</td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -402,11 +409,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize with stricter diagnostic thresholds</span></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>study <span class="op">=</span> SimulationStudy(</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    input_cols<span class="op">=</span>[<span class="st">'Length'</span>, <span class="st">'Angle'</span>],</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    outcome_col<span class="op">=</span><span class="st">'Signal'</span>,</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    max_gap_ratio<span class="op">=</span><span class="fl">0.10</span>,</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    min_r2_score<span class="op">=</span><span class="fl">0.75</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    max_gap_ratio<span class="op">=</span><span class="fl">0.10</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    min_r2_score<span class="op">=</span><span class="fl">0.75</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Add data (automatically infers input columns)</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>study.add_data(df, outcome_col<span class="op">=</span><span class="st">'Signal'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="methods" class="level2">
 <h2 class="anchored" data-anchor-id="methods">Methods</h2>
@@ -420,11 +428,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.add_data.html#digiqual.core.SimulationStudy.add_data">add_data</a></td>
-<td>Ingests raw simulation data, filtering for relevant columns only.</td>
+<td>Ingests raw simulation data, configures columns, and manages the cache.</td>
 </tr>
 <tr class="even">
+<td><a href="../api_reference/digiqual.core.SimulationStudy.compute_pod_spectrum.html#digiqual.core.SimulationStudy.compute_pod_spectrum">compute_pod_spectrum</a></td>
+<td>Pre-calculates a spectrum of PoD curves across a range of signal thresholds.</td>
+</tr>
+<tr class="odd">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.diagnose.html#digiqual.core.SimulationStudy.diagnose">diagnose</a></td>
 <td>Runs statistical diagnostics to evaluate if the current sample size is sufficient.</td>
+</tr>
+<tr class="even">
+<td><a href="../api_reference/digiqual.core.SimulationStudy.estimate_compute_time.html#digiqual.core.SimulationStudy.estimate_compute_time">estimate_compute_time</a></td>
+<td>Physics-aware heuristic to estimate PoD computation time in seconds.</td>
+</tr>
+<tr class="odd">
+<td><a href="../api_reference/digiqual.core.SimulationStudy.get_data_summary.html#digiqual.core.SimulationStudy.get_data_summary">get_data_summary</a></td>
+<td>Calculates the minimum, maximum, and median values for a given column.</td>
+</tr>
+<tr class="even">
+<td><a href="../api_reference/digiqual.core.SimulationStudy.get_unassigned_parameters.html#digiqual.core.SimulationStudy.get_unassigned_parameters">get_unassigned_parameters</a></td>
+<td>Calculates which input variables are not currently assigned as a Parameter</td>
 </tr>
 <tr class="odd">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.linear_pod.html#digiqual.core.SimulationStudy.linear_pod">linear_pod</a></td>
@@ -443,6 +467,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>Identifies gaps or high-variance regions and suggests new simulation points.</td>
 </tr>
 <tr class="odd">
+<td><a href="../api_reference/digiqual.core.SimulationStudy.update_slice.html#digiqual.core.SimulationStudy.update_slice">update_slice</a></td>
+<td>Updates the evaluated slice for the PoD surface using Layer 3 Caching.</td>
+</tr>
+<tr class="even">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.visualise.html#digiqual.core.SimulationStudy.visualise">visualise</a></td>
 <td>Generates and displays diagnostic plots (Signal Model and PoD Curve).</td>
 </tr>

@@ -226,6 +226,12 @@ window.Quarto = {
  <span class="menu-text">Classical vs Generalised PoD</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DigiQual Caching Architecture</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item">
@@ -245,12 +251,10 @@ window.Quarto = {
    
   <ul>
   <li><a href="#experimental-design" id="toc-experimental-design" class="nav-link active" data-scroll-target="#experimental-design">1. Experimental Design</a></li>
-  <li><a href="#simulation-diagnostics" id="toc-simulation-diagnostics" class="nav-link" data-scroll-target="#simulation-diagnostics">2. Simulation Diagnostics</a>
-  <ul class="collapse">
-  <li><a href="#adaptive-remediation" id="toc-adaptive-remediation" class="nav-link" data-scroll-target="#adaptive-remediation">Adaptive Remediation</a></li>
-  </ul></li>
-  <li><a href="#data-visualisation" id="toc-data-visualisation" class="nav-link" data-scroll-target="#data-visualisation">3. Data Visualisation</a></li>
-  <li><a href="#pod-analysis" id="toc-pod-analysis" class="nav-link" data-scroll-target="#pod-analysis">4. PoD Analysis</a></li>
+  <li><a href="#simulation-diagnostics" id="toc-simulation-diagnostics" class="nav-link" data-scroll-target="#simulation-diagnostics">2. Simulation Diagnostics</a></li>
+  <li><a href="#model-fit-physics" id="toc-model-fit-physics" class="nav-link" data-scroll-target="#model-fit-physics">3. Model Fit (Physics)</a></li>
+  <li><a href="#pod-explorer-reliability" id="toc-pod-explorer-reliability" class="nav-link" data-scroll-target="#pod-explorer-reliability">4. PoD Explorer (Reliability)</a></li>
+  <li><a href="#uq-analysis-confidence" id="toc-uq-analysis-confidence" class="nav-link" data-scroll-target="#uq-analysis-confidence">5. UQ Analysis (Confidence)</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/gui_manual.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -277,7 +281,7 @@ window.Quarto = {
 
 
 <p>This manual provides a detailed breakdown of the functionality found inside the DigiQual Shiny application. For instructions on how to install or launch the app, see the <a href="../docs/gui.html">Launch the App</a> guide.</p>
-<p>The DigiQual GUI is built with a modern “Fluent” design system and provides a visual alternative to the Python API. It is split into four primary tabs that map directly to the programmatic workflow.</p>
+<p>The DigiQual GUI is built with a modern “Fluent” design system and provides a visual alternative to the Python API. It is split into five functional tabs (alongside a Home dashboard) that map directly to the programmatic workflow.</p>
 <section id="experimental-design" class="level2">
 <h2 class="anchored" data-anchor-id="experimental-design">1. Experimental Design</h2>
 <p><strong>Purpose:</strong> Generate a statistically sound framework of sampling points for your physics solvers to evaluate.</p>
@@ -292,64 +296,42 @@ window.Quarto = {
 </section>
 <section id="simulation-diagnostics" class="level2">
 <h2 class="anchored" data-anchor-id="simulation-diagnostics">2. Simulation Diagnostics</h2>
-<p><strong>Purpose:</strong> Validate your simulation inputs and catch problematic gaps <em>before</em> performing an expensive reliability analysis.</p>
-<p>Once your external physics solver has calculated the outcomes for your generated framework, you will upload the results back into this tab for validation.</p>
+<p><strong>Purpose:</strong> Validate your dataset and identify regions where the physics solver failed to provide sufficient coverage or converged poorly.</p>
 <ol type="1">
-<li><strong>Upload Data:</strong> Upload the merged CSV containing your input conditions and their resulting output signals.</li>
-<li><strong>Assign Columns:</strong> Identify which columns represent your inputs and which single column represents your outcome.</li>
-<li><strong>Diagnostic Report:</strong> The engine runs sanity checks across your data, testing for sufficient sample sizes and input coverage. A tabular report provides a clear Pass/Fail for every parameter.</li>
+<li><strong>Upload Data:</strong> Upload the CSV containing your completed simulation results.</li>
+<li><strong>Configure Columns:</strong> Select which variables are the inputs (e.g., Flaw Size, Angle) and which is the output (the Signal Response).</li>
+<li><strong>Run Diagnostics:</strong> The engine will evaluate the data against four rigorous statistical tests (Gap Ratio, R² Fit, Average CV, Peak CV).</li>
+<li><strong>Remediation:</strong> If the data fails the coverage checks, the app will offer an Active Learning “Remediation” tool. Enter the number of new samples you want, and it will generate a targeted CSV of new coordinates specifically designed to fill the detected gaps and stabilize the model.</li>
 </ol>
-<section id="adaptive-remediation" class="level3">
-<h3 class="anchored" data-anchor-id="adaptive-remediation">Adaptive Remediation</h3>
-<p>If the diagnostic engine detects a large deliberate gap or missing data (a failed <strong>Input Coverage</strong> test) or large uncertainty through k-folds CV, the UI exposes a remediation tool.</p>
-<p>Instead of guessing where to add new points, you can simply input how many new points you’d like to generate. The engine will target the specific empty or uncertain regions and generate a new CSV containing targeted coordinates. Run these through your solver and merge the new data back into your main set!</p>
 </section>
-</section>
-<section id="data-visualisation" class="level2">
-<h2 class="anchored" data-anchor-id="data-visualisation">3. Data Visualisation</h2>
-<p><strong>Purpose:</strong> Deep-dive visual inspection of your data distribution and model stability.</p>
-<p>This brand-new tab utilizes the data uploaded in the Simulation Diagnostics pane to generate interactive, exploratory plots.</p>
-<ul>
-<li><strong>Summary Statistics:</strong> A complete breakout of the Min, Median, Max, Mean, and Standard Deviation for every uploaded variable.</li>
-<li><strong>Variable Inspector:</strong>
-<ul>
-<li>Trace any single variable’s distribution (complete with Kernel Density Estimates and rug plots).</li>
-<li>Plot a variable against the outcome to visually inspect underlying trends (with linear projection).</li>
-<li><div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Note
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>If a variable failed the coverage check in Tab 2, its specific gap will be shaded in red and orange on these plots!</p>
-</div>
-</div></li>
-</ul></li>
-<li><strong>Input Space Coverage Overview:</strong> A macro-panel that places histograms for <em>all</em> input parameters side-by-side, providing a fast visual confirmation of the entire experimental design’s health.</li>
-<li><strong>Outcome Diagnostic Overview:</strong> Advanced evaluation of the underlying surrogate models:
-<ul>
-<li><strong>Actual vs Predicted (Model Fit CV R²):</strong> Visualises how well a degree-3 polynomial fits your raw data. Points hugging the diagonal indicate strong predictability.</li>
-<li><strong>Bootstrap Convergence Trace:</strong> Traces the running average and maximum Relative Standard Deviation across 100 bootstrap iterations. A line flattening beneath the threshold indicates that your results are stable; a declining trace suggests you need more physical samples.</li>
-</ul></li>
-</ul>
-</section>
-<section id="pod-analysis" class="level2">
-<h2 class="anchored" data-anchor-id="pod-analysis">4. PoD Analysis</h2>
-<p><strong>Purpose:</strong> Constructing the final Probability of Detection curves and surfaces.</p>
-<p>With a validated and well-understood dataset, you define the parameters for the Generalized <span class="math inline">\(a\)</span>-versus-<span class="math inline">\(\hat{a}\)</span> Method.</p>
+<section id="model-fit-physics" class="level2">
+<h2 class="anchored" data-anchor-id="model-fit-physics">3. Model Fit (Physics)</h2>
+<p><strong>Purpose:</strong> Determine the mathematical structure of your parameters rapidly without heavy computation.</p>
+<p>This tab represents <strong>Layer 1 and Layer 2</strong> of the DigiQual caching architecture.</p>
 <ol type="1">
-<li><strong>Variable Designation:</strong> Select your Parameters of Interest (PoI) &amp; Nuisance Parameters (Optional). Nuisance Parameters are mathematically marginalised out via Monte Carlo Integration.</li>
-<li><strong>Set Threshold:</strong> Define the critical threshold (e.g., a detection limit of <code>18.0</code>).</li>
-<li><strong>Generate Outcomes:</strong> The system automatically identifies the best predictive polynomial structure, infers error distribution, and generates bootstrap confidence intervals.</li>
-<li><strong>Interactive Mapping:</strong> It renders two interactive plots side-by-side:
-<ul>
-<li>The <strong>Signal Response Model</strong> (The underlying Physics).</li>
-<li>The <strong>Probability of Detection Mapping</strong> (The resulting Reliability).</li>
-</ul></li>
+<li><strong>Configure Parameters:</strong> Select up to 2 Parameters of Interest (to plot) and up to 2 Nuisance parameters (to integrate out). Unassigned parameters will automatically be held as constant slices.</li>
+<li><strong>Select Model:</strong> Choose “Auto (Best Fit)” to let Cross-Validation evaluate all Polynomials (Degrees 1-10) and Kriging, or force a specific model type.</li>
+<li><strong>Fit Model:</strong> The engine calculates the fundamental physics regression, optimizes the heteroscedastic variance (noise) profile, and saves the mathematical equations into the high-speed cache.</li>
+</ol>
+</section>
+<section id="pod-explorer-reliability" class="level2">
+<h2 class="anchored" data-anchor-id="pod-explorer-reliability">4. PoD Explorer (Reliability)</h2>
+<p><strong>Purpose:</strong> Real-time reliability evaluation using pre-calculated Threshold Spectrums.</p>
+<p>This tab relies entirely on <strong>Layer 3 and Layer 4</strong> of the caching architecture. Because the heavy math was completed in Tab 3, exploring the reliability surface here is virtually instantaneous.</p>
+<ol type="1">
+<li><strong>Detection Threshold:</strong> Dragging this slider interpolates across a pre-calculated 100-threshold spectrum matrix, shifting the PoD S-Curve left and right instantly.</li>
+<li><strong>Dynamic Slice Sliders:</strong> Any parameters you did not assign in Tab 3 will appear here as sliders. Moving a slider isolates a new 2D slice of your multidimensional space. The engine takes a vectorized “Fast Path” to evaluate the new physics and updates the PoD curve in milliseconds without needing to refit the core model.</li>
+<li><strong>Side-by-Side View:</strong> Watch the Signal Response model (left) shift up and down alongside the PoD Curve (right) to intuitively understand the relationship between physics and reliability.</li>
+</ol>
+</section>
+<section id="uq-analysis-confidence" class="level2">
+<h2 class="anchored" data-anchor-id="uq-analysis-confidence">5. UQ Analysis (Confidence)</h2>
+<p><strong>Purpose:</strong> Construct rigorous Probability of Detection bounds via parallelised Bootstrapping.</p>
+<p>Once you have used the PoD Explorer to find the exact threshold and parameter slice you care about, you move to this final tab to wrap it in 95% Confidence Intervals.</p>
+<ol type="1">
+<li><strong>Bootstrap Configuration:</strong> Define the number of resampling iterations (typically 1000). Ensure Parallel Compute is enabled to utilize all your CPU cores.</li>
+<li><strong>Run UQ:</strong> The system safely bypasses the fast-caches. It locks the mathematical shape chosen in Tab 3 and runs thousands of Monte Carlo integrations to calculate the exact uncertainty bounds.</li>
+<li><strong>Export Results:</strong> Download a comprehensive Excel workbook containing your configuration metrics, LaTeX equations, and the raw numerical curve data across separate spreadsheet tabs.</li>
 </ol>
 
 

@@ -230,6 +230,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Classical vs Generalised PoD</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DigiQual Caching Architecture</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item">
@@ -277,7 +283,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    n_boot<span class="op">=</span><span class="dv">1000</span>,</span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    nuisance_ranges<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    n_jobs<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    feature_names<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    poi_names<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Estimates 95% Confidence Bounds for the PoD curve via Bootstrapping.</p>
 <p>This function resamples the original data with replacement <code>n_boot</code> times. For each resample, it refits the Mean Model (dynamically rebuilding either a Polynomial or Kriging model), recalculates residuals, and generates a new PoD curve. If Kriging is selected, the optimizer is disabled during bootstrapping to remain computationally tractable.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
@@ -286,7 +294,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <colgroup>
 <col style="width: 6%">
 <col style="width: 9%">
-<col style="width: 78%">
+<col style="width: 77%">
 <col style="width: 5%">
 </colgroup>
 <thead>
@@ -356,6 +364,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>n_jobs</td>
 <td>int | None</td>
 <td>Number of CPU cores to use. <code>None</code> or <code>1</code> means single-core execution (no parallelisation). <code>-1</code> means use all available cores minus two. Defaults to <code>None</code>.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="odd">
+<td>feature_names</td>
+<td>list</td>
+<td>.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="even">
+<td>poi_names</td>
+<td>list</td>
+<td>.</td>
 <td><code>None</code></td>
 </tr>
 </tbody>

@@ -33,7 +33,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../docs/comparison.html" rel="prev">
+<link href="../docs/caching.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
@@ -196,6 +196,12 @@ ul.task-list li input[type="checkbox"] {
  <span class="menu-text">Classical vs Generalised PoD</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DigiQual Caching Architecture</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item">
@@ -285,90 +291,94 @@ ul.task-list li input[type="checkbox"] {
 <td>Active Learning Engine: Generates new samples based on diagnostic failures.</td>
 </tr>
 <tr class="odd">
-<td><a href="../api_reference/pod.fit_robust_mean_model.html#digiqual.pod.fit_robust_mean_model">pod.fit_robust_mean_model</a></td>
-<td>Fits regression models (Polynomials and Kriging) and selects the optimal one.</td>
+<td><a href="../api_reference/pod.fit_all_robust_mean_models.html#digiqual.pod.fit_all_robust_mean_models">pod.fit_all_robust_mean_models</a></td>
+<td>Fits all polynomial models (and optionally Kriging) and returns them for caching.</td>
 </tr>
 <tr class="even">
+<td><a href="../api_reference/pod.generate_latex_equation.html#digiqual.pod.generate_latex_equation">pod.generate_latex_equation</a></td>
+<td>Extracts a LaTeX formatted equation from a fitted Polynomial Pipeline.</td>
+</tr>
+<tr class="odd">
 <td><a href="../api_reference/pod.optimise_bandwidth.html#digiqual.pod.optimise_bandwidth">pod.optimise_bandwidth</a></td>
 <td>Finds the optimal kernel smoothing bandwidth using Leave-One-Out Cross-Validation (LOO-CV).</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/pod.fit_variance_model.html#digiqual.pod.fit_variance_model">pod.fit_variance_model</a></td>
 <td>Calculates residuals and defines the smoothing bandwidth for variance estimation.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/pod.infer_best_distribution.html#digiqual.pod.infer_best_distribution">pod.infer_best_distribution</a></td>
 <td>Selects the best statistical distribution for the standardized residuals using AIC.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/pod.plot_model_selection.html#digiqual.pod.plot_model_selection">pod.plot_model_selection</a></td>
 <td>Generates a normalized bar chart of the Bias-Variance Tradeoff from CV scores,</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/pod.predict_local_std.html#digiqual.pod.predict_local_std">pod.predict_local_std</a></td>
 <td>Estimates the local standard deviation using Gaussian Kernel Smoothing.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/pod.compute_pod_curve.html#digiqual.pod.compute_pod_curve">pod.compute_pod_curve</a></td>
 <td>Calculates the Probability of Detection (PoD) curve.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/pod.bootstrap_pod_ci.html#digiqual.pod.bootstrap_pod_ci">pod.bootstrap_pod_ci</a></td>
 <td>Estimates 95% Confidence Bounds for the PoD curve via Bootstrapping.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/pod.calculate_reliability_point.html#digiqual.pod.calculate_reliability_point">pod.calculate_reliability_point</a></td>
 <td>Calculates the defect size (a90/95) where the Lower Confidence Bound</td>
 </tr>
-<tr class="even">
-<td><a href="../api_reference/integration.compute_multi_dim_pod.html#digiqual.integration.compute_multi_dim_pod">integration.compute_multi_dim_pod</a></td>
-<td>Performs Monte Carlo integration over continuous nuisance parameters to calculate</td>
-</tr>
 <tr class="odd">
+<td><a href="../api_reference/integration.compute_multi_dim_pod.html#digiqual.integration.compute_multi_dim_pod">integration.compute_multi_dim_pod</a></td>
+<td>Calculates the marginal Probability of Detection (PoD) across a grid of Parameters of Interest (PoI).</td>
+</tr>
+<tr class="even">
 <td><a href="../api_reference/ahat.fit_linear_a_hat_model.html#digiqual.ahat.fit_linear_a_hat_model">ahat.fit_linear_a_hat_model</a></td>
 <td>Fits a simple linear regression model according to the standard a-hat vs a method.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/ahat.compute_linear_pod_curve.html#digiqual.ahat.compute_linear_pod_curve">ahat.compute_linear_pod_curve</a></td>
 <td>Calculates the PoD curve using the standard a-hat vs a analytical assumptions.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/ahat.bootstrap_linear_pod_ci.html#digiqual.ahat.bootstrap_linear_pod_ci">ahat.bootstrap_linear_pod_ci</a></td>
 <td>Estimates 95% Confidence Bounds for the classical linear PoD curve via Bootstrapping.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/ahat.plot_linear_signal_model.html#digiqual.ahat.plot_linear_signal_model">ahat.plot_linear_signal_model</a></td>
 <td>Diagnostic Plot: Visualizes the standard linear a-hat vs a model.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/plotting.plot_signal_model.html#digiqual.plotting.plot_signal_model">plotting.plot_signal_model</a></td>
 <td>Diagnostic Plot 1: Signal vs Parameter of Interest (The Physics).</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/plotting.plot_pod_curve.html#digiqual.plotting.plot_pod_curve">plotting.plot_pod_curve</a></td>
 <td>Result Plot 2: Probability of Detection (The Reliability).</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/plotting.plot_pod_surface.html#digiqual.plotting.plot_pod_surface">plotting.plot_pod_surface</a></td>
 <td>Plots a 2D heatmap / contour for multi-dimensional PoD (2 Parameters of Interest).</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/plotting.plot_signal_surface.html#digiqual.plotting.plot_signal_surface">plotting.plot_signal_surface</a></td>
 <td>Result Plot 1 (Multi-Dimensional): Signal vs Parameters of Interest.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/executors.Executor.html#digiqual.executors.Executor">executors.Executor</a></td>
 <td>THE BLUEPRINT:</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/executors.PythonExecutor.html#digiqual.executors.PythonExecutor">executors.PythonExecutor</a></td>
 <td>THE IN-MEMORY TRANSLATOR:</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/executors.CLIExecutor.html#digiqual.executors.CLIExecutor">executors.CLIExecutor</a></td>
 <td>THE HEAVY-DUTY TRANSLATOR (Process Isolation):</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/executors.MatlabExecutor.html#digiqual.executors.MatlabExecutor">executors.MatlabExecutor</a></td>
 <td>THE MATLAB TRANSLATOR:</td>
 </tr>
@@ -782,8 +792,8 @@ ul.task-list li input[type="checkbox"] {
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../docs/comparison.html" class="pagination-link" aria-label="Classical vs Generalised PoD">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Classical vs Generalised PoD</span>
+      <a href="../docs/caching.html" class="pagination-link" aria-label="DigiQual Caching Architecture">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">DigiQual Caching Architecture</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">

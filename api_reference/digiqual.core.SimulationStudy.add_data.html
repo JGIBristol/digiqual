@@ -230,6 +230,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Classical vs Generalised PoD</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DigiQual Caching Architecture</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item">
@@ -251,8 +257,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#digiqual.core.SimulationStudy.add_data" id="toc-digiqual.core.SimulationStudy.add_data" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.add_data">add_data</a>
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
-  <li><a href="#raises" id="toc-raises" class="nav-link" data-scroll-target="#raises">Raises</a></li>
-  <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.add_data.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -265,12 +269,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="digiqual.core.SimulationStudy.add_data" class="level1">
 <h1>add_data</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>add_data(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Ingests raw simulation data, filtering for relevant columns only.</p>
-<p>This method automatically strips away any columns in <code>df</code> that were not defined in <code>self.inputs</code> or <code>self.outcome</code> during initialization.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>add_data(df, outcome_col<span class="op">=</span><span class="va">None</span>, input_cols<span class="op">=</span><span class="va">None</span>, overwrite<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Ingests raw simulation data, configures columns, and manages the cache.</p>
+<p>This method sets the outcome and input variables, subsets the data accordingly, and automatically clears the mathematical caches whenever new data is ingested to prevent state mismatches. If <code>input_cols</code> is not provided, it smartly infers that all columns other than the outcome are inputs.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 10%">
+<col style="width: 71%">
+<col style="width: 8%">
+</colgroup>
 <thead>
 <tr class="header">
 <th>Name</th>
@@ -286,42 +296,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>The DataFrame to ingest.</td>
 <td><em>required</em></td>
 </tr>
-</tbody>
-</table>
-</section>
-<section id="raises" class="level2 doc-section doc-section-raises">
-<h2 class="doc-section doc-section-raises anchored" data-anchor-id="raises">Raises</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 9%">
-<col style="width: 13%">
-<col style="width: 77%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
+<tr class="even">
+<td>outcome_col</td>
+<td>str</td>
+<td>The name of the target/outcome variable. Required on first ingestion, optional when appending.</td>
+<td><code>None</code></td>
 </tr>
-</thead>
-<tbody>
 <tr class="odd">
-<td></td>
-<td>ValueError</td>
-<td>If the new data is missing any required input or outcome columns.</td>
+<td>input_cols</td>
+<td>List[str]</td>
+<td>Explicit list of input variables. Defaults to None (infers all non-outcome columns).</td>
+<td><code>None</code></td>
+</tr>
+<tr class="even">
+<td>overwrite</td>
+<td>bool</td>
+<td>If True, replaces existing data. If False, appends to existing data. Defaults to False.</td>
+<td><code>False</code></td>
 </tr>
 </tbody>
 </table>
-</section>
-<section id="examples" class="level2 doc-section doc-section-examples">
-<h2 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame({</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Length'</span>: [<span class="fl">1.0</span>, <span class="fl">2.5</span>, <span class="fl">5.0</span>],</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Angle'</span>: [<span class="dv">0</span>, <span class="dv">15</span>, <span class="op">-</span><span class="dv">10</span>],</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Signal'</span>: [<span class="fl">0.5</span>, <span class="fl">0.8</span>, <span class="fl">1.2</span>]</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>study.add_data(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 </section>

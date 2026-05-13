@@ -230,6 +230,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Classical vs Generalised PoD</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DigiQual Caching Architecture</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item">
@@ -252,6 +258,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
   <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
+  <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/integration.compute_multi_dim_pod.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -272,19 +279,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    residuals,</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    bandwidth,</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    dist_info,</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    threshold,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    thresholds,</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    n_mc_samples<span class="op">=</span><span class="dv">3000</span>,</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Performs Monte Carlo integration over continuous nuisance parameters to calculate the marginal Probability of Detection (PoD) for a grid of Parameters of Interest (PoI).</p>
-<p>Based on the methodology from Malkiel et al.&nbsp;(2026), this function evaluates the flexible multi-dimensional surrogate model across randomly sampled nuisance parameter realizations, calculates the probability of detection at each realization using local variance standardisation, and aggregates them.</p>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    feature_names<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    poi_names<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Calculates the marginal Probability of Detection (PoD) across a grid of Parameters of Interest (PoI).</p>
+<p>This function determines the probability that a signal will exceed a given threshold. It features a dual-path architecture for maximum efficiency:</p>
+<ol type="1">
+<li><strong>Fast Path (Vectorized)</strong>: If there are no active nuisance parameters (i.e., all extra variables are held constant as ‘slices’), it calculates the probabilities for the entire grid and all threshold vectors simultaneously in a single array operation.</li>
+<li><strong>Slow Path (Monte Carlo)</strong>: If there are active nuisance parameters (ranges where min != max), it performs Monte Carlo integration to marginalize out the nuisance variance, running thousands of samples per grid point.</li>
+</ol>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 12%">
-<col style="width: 26%">
-<col style="width: 51%">
-<col style="width: 8%">
+<col style="width: 9%">
+<col style="width: 20%">
+<col style="width: 63%">
+<col style="width: 6%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -298,55 +311,55 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td>poi_grid</td>
 <td>np.ndarray</td>
-<td>The evaluation grid of the Parameters of Interest shape (N, n_pois).</td>
+<td>A 2D array of shape (N_grid_points, n_pois) containing the evaluation coordinates.</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>nuisance_ranges</td>
 <td>Dict[str, Tuple[float, float]]</td>
-<td>The min/max bounds for each nuisance.</td>
+<td>The min and max bounds for each nuisance parameter. If min == max, the parameter is treated as a constant slice.</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
 <td>model</td>
 <td>Any</td>
-<td>Fitted multi-dimensional surrogate model (predicts mean response).</td>
+<td>A fitted scikit-learn surrogate model (predicts the mean response).</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>X_train</td>
 <td>np.ndarray</td>
-<td>Original training data (N_train, n_total_vars).</td>
+<td>Original training data matrix (N_train, n_total_vars).</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
 <td>residuals</td>
 <td>np.ndarray</td>
-<td>Residuals from the model fit.</td>
+<td>Residuals from the model fit, used for local noise estimation.</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>bandwidth</td>
 <td>float</td>
-<td>Local kernel smoothing bandwidth.</td>
+<td>The local kernel smoothing bandwidth for the variance model.</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
 <td>dist_info</td>
 <td>Tuple[str, Tuple]</td>
-<td>Residual error distribution (name, params).</td>
+<td>The (name, parameters) of the residual error distribution.</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
-<td>threshold</td>
-<td>float</td>
-<td>Signal detection threshold.</td>
+<td>thresholds</td>
+<td>Union[float, np.ndarray, list]</td>
+<td>One or more signal detection thresholds. Providing an array triggers vectorized multi-threshold calculation.</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
 <td>n_mc_samples</td>
 <td>int</td>
-<td>Number of Monte Carlo draws per PoI grid point.</td>
+<td>Number of Monte Carlo draws per PoI grid point when evaluating active nuisances. Defaults to 3000.</td>
 <td><code>3000</code></td>
 </tr>
 </tbody>
@@ -356,9 +369,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 4%">
-<col style="width: 16%">
-<col style="width: 79%">
+<col style="width: 2%">
+<col style="width: 9%">
+<col style="width: 88%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -371,10 +384,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td></td>
 <td>Tuple[np.ndarray, np.ndarray]</td>
-<td>Tuple[np.ndarray, np.ndarray]: - pod_integrated: Integrated PoD values across the poi_grid. - mean_integrated: Expected mean response across the poi_grid.</td>
+<td>Tuple[np.ndarray, np.ndarray]: - pod_integrated (np.ndarray): The PoD values. Shape is <code>(N_grid_points,)</code> if a single threshold is provided, or <code>(N_grid_points, N_thresholds)</code> if an array of thresholds is provided. - mean_integrated (np.ndarray): The expected mean signal response across the PoI grid.</td>
 </tr>
 </tbody>
 </table>
+</section>
+<section id="examples" class="level2 doc-section doc-section-examples">
+<h2 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate a PoD spectrum for 100 thresholds instantly (Fast Path)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>pod_matrix, mean_curve <span class="op">=</span> compute_multi_dim_pod(</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    poi_grid<span class="op">=</span>X_eval,</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    nuisance_ranges<span class="op">=</span>{<span class="st">'Angle'</span>: (<span class="fl">45.0</span>, <span class="fl">45.0</span>)}, <span class="co"># Constant slice</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    model<span class="op">=</span>kriging_model,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    X_train<span class="op">=</span>X, residuals<span class="op">=</span>resids, bandwidth<span class="op">=</span><span class="fl">1.5</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    dist_info<span class="op">=</span>(<span class="st">'norm'</span>, (<span class="dv">0</span>, <span class="dv">1</span>)),</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    thresholds<span class="op">=</span>np.linspace(<span class="dv">10</span>, <span class="dv">50</span>, <span class="dv">100</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 </section>
