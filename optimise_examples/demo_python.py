@@ -42,7 +42,6 @@ def run_demo():
     print("Starting DigiQual Live Demo...\n")
 
     # 2. Configure the Study with the new Roughness parameter
-    inputs = ['Length', 'Angle', 'Roughness']
     outcome = 'Signal'
     ranges = {
         'Length': (0.0, 10.0),
@@ -50,7 +49,7 @@ def run_demo():
         'Roughness': (0.0, 1.0)
     }
 
-    study = SimulationStudy(input_cols=inputs, outcome_col=outcome)
+    study = SimulationStudy()
 
     print("Setting up the Python Executor...")
     executor = PythonExecutor(solver_func=mock_sensor_model, outcome_col=outcome)
@@ -61,6 +60,7 @@ def run_demo():
     study.optimise(
         executor=executor,
         ranges=ranges,
+        outcome_col=outcome,
         n_start=40,
         n_step=10,
         max_iter=10

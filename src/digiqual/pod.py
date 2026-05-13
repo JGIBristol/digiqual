@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.stats as stats
-from typing import Tuple, Any
+from typing import Tuple, Any, Dict
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
@@ -17,72 +17,70 @@ from sklearn.exceptions import ConvergenceWarning
 
 #### Mean Model - Robust Regression (Polynomial + Kriging) ####
 
-def fit_robust_mean_model(
+def fit_all_robust_mean_models(
     X: np.ndarray,
     y: np.ndarray,
     max_degree: int = 10,
-    n_folds: int = 10,
-    model_override: str = "auto",
-    force_degree: int | None = None
-) -> Any:
+    n_folds: int = 10
+) -> Tuple[Dict[Tuple[str, Any], Any], Dict[Tuple[str, Any], float], Tuple[str, Any]]:
     """
-    Fits regression models (Polynomials and Kriging) and selects the optimal one.
+    Fits all polynomial models (and optionally Kriging) and returns them for caching.
 
-    This function performs k-fold Cross Validation (CV) to find the model type
-    (Polynomial or Kriging) and parameters (e.g., degree) that minimize the
-    Mean Squared Error (MSE), balancing bias and variance.
-
-    When ``model_override`` is set to ``"polynomial"`` or ``"kriging"``, CV
-    selection is skipped and the requested model type is fitted directly.
+    Instead of fitting models, selecting the best, and throwing the rest away,
+    this function evaluates all candidates via k-fold Cross Validation (CV) and
+    then fits *every* model to the full dataset. This allows the application to
+    instantly swap between different model structures without recalculating.
 
     Args:
-        X (np.ndarray): 1D array of input variable values (e.g., flaw size).
+        X (np.ndarray): 1D array or 2D matrix of input variable values.
         y (np.ndarray): 1D array of outcome values (e.g., signal response).
         max_degree (int, optional): The maximum polynomial degree to test. Defaults to 10.
         n_folds (int, optional): Number of folds for Cross Validation. Defaults to 10.
-        model_override (str, optional): Force a model type. One of ``"auto"``,
-            ``"polynomial"``, or ``"kriging"``. Defaults to ``"auto"``.
-        force_degree (int | None, optional): When ``model_override="polynomial"``,
-            use this degree instead of CV selection. Defaults to None (CV selects).
 
     Returns:
-        Any: A fitted scikit-learn model with the following added attributes:
-        - `model_type_` (str): Either 'Polynomial' or 'Kriging'.
-        - `model_params_` (Any): The selected integer degree or the fitted kernel.
-        - `cv_scores_` (dict): The cross-validation MSE scores for all tested models.
+        Tuple[Dict, Dict, Tuple]:
+            - `fitted_models`: A dictionary mapping a key like `('Polynomial', 3)` to the fully trained scikit-learn model.
+            - `cv_scores`: A dictionary mapping the same keys to their Cross-Validation MSE scores.
+            - `cv_winner_key`: The key of the model that achieved the lowest MSE.
 
     Examples:
         ```python
         import numpy as np
         X = np.linspace(0, 10, 50)
         y = 3 * X + np.random.normal(0, 1, 50)
-        model = fit_robust_mean_model(X, y)
-        print(model.model_type_)
 
-        # Force a cubic polynomial
-        model = fit_robust_mean_model(X, y, model_override="polynomial", force_degree=3)
+        models, scores, best_key = fit_all_robust_mean_models(X, y)
+
+        print(f"The best model was: {best_key}")
+
+        # Instantly retrieve the degree-4 polynomial without refitting
+        poly_4 = models[('Polynomial', 4)]
         ```
     """
     X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
-    cv_scores = {}
-    override = model_override.lower()
 
-    # -----------------------------------------------------------------------
-    # Step 1: Always run full CV across all polynomials AND Kriging.
-    # This ensures cv_scores_ is always fully populated for the plot,
-    # regardless of whether the user has forced a model override.
-    # -----------------------------------------------------------------------
+    fitted_models = {}
+    cv_scores = {}
+
     cv = KFold(n_splits=n_folds, shuffle=True, random_state=42)
 
-    # 1A. Evaluate Polynomials
+    # 1. Evaluate & Fit ALL Polynomials
     for d in range(1, max_degree + 1):
         model = make_pipeline(PolynomialFeatures(degree=d), LinearRegression())
+
+        # A) Run CV for the bias-variance tradeoff evaluation
         scores = cross_val_score(model, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
         cv_scores[('Polynomial', d)] = -np.mean(scores)
 
-    # 1B. Evaluate Kriging (WITH SAFEGUARD)
+        # B) Fit to the FULL dataset and store it
+        model.fit(X_2d, y)
+        model.model_type_ = 'Polynomial'
+        model.model_params_ = d
+        fitted_models[('Polynomial', d)] = model
+
+    # 2. Evaluate & Fit Kriging (With safeguard for large datasets)
     n_samples = len(y)
-    if n_samples <= 1000 or override == "kriging":
+    if n_samples <= 1000:
         kernel = C(1.0, (1e-5, 1e6)) * RBF(1.0, (1e-3, 1e5))
         gpr = GaussianProcessRegressor(
             kernel=kernel,
@@ -93,65 +91,61 @@ def fit_robust_mean_model(
 
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=ConvergenceWarning)
+            # A) Run CV
             gpr_scores = cross_val_score(gpr, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
+            cv_scores[('Kriging', None)] = -np.mean(gpr_scores)
 
-        cv_scores[('Kriging', None)] = -np.mean(gpr_scores)
+            # B) Fit to FULL dataset using more restarts for the final fit
+            gpr.n_restarts_optimizer = 15
+            gpr.fit(X_2d, y)
+
+            gpr.model_type_ = 'Kriging'
+            gpr.model_params_ = gpr.kernel_
+            fitted_models[('Kriging', None)] = gpr
     else:
-        print(f"Skipping Kriging CV evaluation to prevent timeout (Dataset N={n_samples} > 1000).")
+        print(f"Skipping Kriging evaluation to prevent timeout (Dataset N={n_samples} > 1000).")
 
-    # Record the CV winner before applying any override
-    cv_winner = min(cv_scores, key=cv_scores.get)
+    # 3. Determine the overall CV winner
+    cv_winner_key = min(cv_scores, key=cv_scores.get)
 
-    # -----------------------------------------------------------------------
-    # Step 2: Determine which model to actually use.
-    # -----------------------------------------------------------------------
-    forced = False
-
-    if override == "polynomial" and force_degree is not None:
-        # User forced a specific degree
-        best_type, best_params = 'Polynomial', force_degree
-        forced = True
-    elif override == "kriging":
-        # User forced Kriging
-        best_type, best_params = 'Kriging', None
-        forced = True
-    elif override == "polynomial":
-        # User wants polynomial but left degree to CV — pick best poly
-        poly_scores = {k: v for k, v in cv_scores.items() if k[0] == 'Polynomial'}
-        best_type, best_params = min(poly_scores, key=poly_scores.get)
-    else:
-        # Auto: use overall CV winner
-        best_type, best_params = cv_winner
-
-    # -----------------------------------------------------------------------
-    # Step 3: Fit the final model using the selected type and parameters.
-    # -----------------------------------------------------------------------
-    if best_type == 'Polynomial':
-        final_model = make_pipeline(PolynomialFeatures(degree=best_params), LinearRegression())
-        final_model.fit(X_2d, y)
-        final_model.model_params_ = best_params
-    else:
-        # Use more restarts for the final fit than during CV
-        final_model = GaussianProcessRegressor(
-            kernel=kernel,
-            n_restarts_optimizer=15,
-            alpha=np.var(y) * 0.01,
-            random_state=42
-        )
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=ConvergenceWarning)
-            final_model.fit(X_2d, y)
+    return fitted_models, cv_scores, cv_winner_key
 
 
-        final_model.model_params_ = final_model.kernel_
+def generate_latex_equation(model: Any, feature_names: list, outcome_name: str = "y") -> str:
+    """
+    Extracts a LaTeX formatted equation from a fitted Polynomial Pipeline.
+    """
+    if getattr(model, 'model_type_', None) != 'Polynomial':
+        return "Equation not available for Kriging models (Gaussian Process)."
 
-    final_model.model_type_ = best_type
-    final_model.cv_scores_ = cv_scores
-    final_model.cv_winner_ = cv_winner
-    final_model.forced_model_ = forced
+    poly = model.named_steps['polynomialfeatures']
+    lr = model.named_steps['linearregression']
 
-    return final_model
+    terms = poly.get_feature_names_out(feature_names)
+    # Ensure coefs and intercept are flattened correctly
+    import numpy as np
+    coefs = lr.coef_[0] if lr.coef_.ndim > 1 else lr.coef_
+    intercept = lr.intercept_[0] if np.ndim(lr.intercept_) > 0 else lr.intercept_
+
+    # Format outcome name for LaTeX (escape underscores)
+    latex_outcome = outcome_name.replace("_", "\\_")
+    equation = f"{latex_outcome} = {intercept:.4g}"
+
+    import re
+    for coef, term in zip(coefs, terms):
+        # Skip the constant term (intercept is already added) or zero coefficients
+        if term == "1" or coef == 0:
+            continue
+
+        # Format the feature names for LaTeX
+        formatted_term = term.replace(" ", " \\cdot ")
+        formatted_term = re.sub(r'\^(\d+)', r'^{\1}', formatted_term)
+        formatted_term = formatted_term.replace("_", "\\_")
+
+        sign = "+" if coef > 0 else "-"
+        equation += f" {sign} {abs(coef):.4g} \\cdot {formatted_term}"
+
+    return equation
 
 def plot_model_selection(
     cv_scores: dict,
@@ -620,7 +614,8 @@ def compute_pod_curve(
 
 def _single_bootstrap_step(
     X_2d, y, X_eval, threshold, model_type, model_params,
-    bandwidth, dist_info, nuisance_ranges, n_samples
+    bandwidth, dist_info, nuisance_ranges, n_samples,
+    feature_names=None, poi_names=None
 ):
     """Internal helper to process a single bootstrap iteration."""
     # Resample indices
@@ -647,10 +642,11 @@ def _single_bootstrap_step(
     res_res = y_res - y_pred
 
     # Compute PoD for this iteration
-    from digiqual.integration import compute_multi_dim_pod
+    from .integration import compute_multi_dim_pod
     pod_curve, _ = compute_multi_dim_pod(
         X_eval, nuisance_ranges or {}, mean_model, X_res_2d, res_res,
-        bandwidth, dist_info, threshold, n_mc_samples=1000
+        bandwidth, dist_info, threshold, n_mc_samples=1000,
+        feature_names=feature_names, poi_names=poi_names
     )
     return pod_curve
 
@@ -668,7 +664,9 @@ def bootstrap_pod_ci(
     dist_info: Tuple[str, Tuple],
     n_boot: int = 1000,
     nuisance_ranges: dict = None,
-    n_jobs: int | None = None
+    n_jobs: int | None = None,
+    feature_names: list = None,
+    poi_names: list = None
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Estimates 95% Confidence Bounds for the PoD curve via Bootstrapping.
@@ -692,6 +690,8 @@ def bootstrap_pod_ci(
         n_jobs (int | None, optional): Number of CPU cores to use.
             ``None`` or ``1`` means single-core execution (no parallelisation).
             ``-1`` means use all available cores minus two. Defaults to ``None``.
+        feature_names (list): .
+        poi_names (list): .
 
     Returns:
         Tuple[np.ndarray, np.ndarray]:
@@ -725,7 +725,8 @@ def bootstrap_pod_ci(
     results = Parallel(n_jobs=n_jobs_actual,backend="multiprocessing", verbose=2)(
         delayed(_single_bootstrap_step)(
             X_2d, y, X_eval, threshold, model_type, model_params,
-            bandwidth, dist_info, nuisance_ranges, n_samples
+            bandwidth, dist_info, nuisance_ranges, n_samples,
+            feature_names, poi_names # <-- ADD THIS
         ) for _ in range(n_boot)
     )
 
@@ -764,3 +765,49 @@ def calculate_reliability_point(
     # We swap args because we are solving for X given Y=0.90
     monotonic_ci = np.maximum.accumulate(ci_lower)
     return float(np.interp(target_pod, monotonic_ci, X_eval))
+
+
+def calculate_sobol_indices(mean_model: Any, feature_names: list, data_df, n_samples: int = 1024) -> dict:
+    """
+    Calculates the Total-Order Sobol sensitivity index for the fitted mean model.
+    Optimized for speed by disabling second-order interaction matrices.
+    """
+    try:
+        from SALib.sample import sobol as salib_sample
+        from SALib.analyze import sobol as salib_analyze
+    except ImportError:
+        print("Warning: SALib not found. Skipping Sobol index calculation.")
+        return None
+
+    # 1. Define the bounds for each feature
+    bounds = []
+    for col in feature_names:
+        bounds.append([float(data_df[col].min()), float(data_df[col].max())])
+
+    problem = {
+        'num_vars': len(feature_names),
+        'names': feature_names,
+        'bounds': bounds
+    }
+
+    # 2. FAST SAMPLING: explicitly disable second-order calculations
+    X_sample = salib_sample.sample(problem, n_samples, calc_second_order=False)
+
+    if X_sample.ndim == 1:
+        X_sample = X_sample.reshape(-1, 1)
+
+    y_sample = mean_model.predict(X_sample)
+
+    # 3. Analyze the results (also disabling second-order here)
+    import warnings
+    with warnings.catch_warnings():
+        # Ignore divide-by-zero warnings if the predicted surface is perfectly flat
+        warnings.simplefilter("ignore", RuntimeWarning)
+        Si = salib_analyze.analyze(problem, y_sample.flatten(), print_to_console=False, calc_second_order=False)
+
+    # 4. Extract ONLY the Total-Order effect (ST)
+    results = {}
+    for i, name in enumerate(feature_names):
+        results[name] = float(Si['ST'][i])
+
+    return results

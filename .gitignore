@@ -30,6 +30,8 @@ package
 !app/sufficient_data.csv
 !app/initial_data.csv
 
+app/app_fail.py
+
 # --- Testing & Code Quality ---
 .pytest_cache/
 .coverage

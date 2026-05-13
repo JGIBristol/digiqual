@@ -241,8 +241,8 @@ def plot_linear_signal_model(
     # Regression line
     ax.plot(X_eval, mean_curve, color='blue', linewidth=2, label='Mean Response')
 
-    # Threshold Plane
-    ax.axhline(threshold, color='red', linestyle='--', linewidth=1.5, label=f'Threshold ({threshold})')
+    # Threshold Plane (Updated to round to 2 decimal places)
+    ax.axhline(threshold, color='red', linestyle='--', linewidth=1.5, label=f'Threshold ({threshold:.2f})')
 
     # Prediction Intervals
     ax.plot(X_eval, upper_bound, color='blue', linestyle=':', alpha=0.6)

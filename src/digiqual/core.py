@@ -11,14 +11,11 @@ from .executors import Executor
 from .ahat import fit_linear_a_hat_model, compute_linear_pod_curve, plot_linear_signal_model, bootstrap_linear_pod_ci
 
 
-
 class SimulationStudy:
     """
     A workflow manager for simulation reliability assessment.
 
     Args:
-        input_cols (List[str]): List of input variable names.
-        outcome_col (str): Name of the outcome variable.
         max_gap_ratio (float, optional): Max allowable gap between data points as a fraction of the total range. Defaults to 0.20.
         min_r2_score (float, optional): Minimum cross-validated R-squared score required for the signal fit. Defaults to 0.50.
         max_avg_cv (float, optional): Max allowable average relative width of the bootstrap predictions. Defaults to 0.15.
@@ -34,6 +31,9 @@ class SimulationStudy:
         plots (Dict): Stores the latest generated figures.
         linear_pod_results (Dict): Results from the classical linear analysis.
         linear_plots (Dict): Stores figures from the classical linear analysis.
+        models_cache (Dict): Cached mean models to prevent redundant fitting.
+        variance_cache (Dict): Cached variance models (residuals/bandwidth).
+        pod_curves_cache (Dict): Cached integrated PoD curves.
 
     Examples:
         ```python
@@ -41,38 +41,41 @@ class SimulationStudy:
 
         # Initialize with stricter diagnostic thresholds
         study = SimulationStudy(
-            input_cols=['Length', 'Angle'],
-            outcome_col='Signal',
             max_gap_ratio=0.10,
             min_r2_score=0.75
         )
+
+        # Add data (automatically infers input columns)
+        study.add_data(df, outcome_col='Signal')
         ```
     """
 
 #### Initialisation ####
     def __init__(
         self,
-        input_cols: List[str],
-        outcome_col: str,
         max_gap_ratio: float = 0.20,
         min_r2_score: float = 0.50,
         max_avg_cv: float = 0.15,
         max_max_cv: float = 0.30
     ):
-        self.inputs = input_cols
-        self.outcome = outcome_col
-
         # Save custom diagnostic thresholds
         self.max_gap_ratio = max_gap_ratio
         self.min_r2_score = min_r2_score
         self.max_avg_cv = max_avg_cv
         self.max_max_cv = max_max_cv
 
-        # Internal state
+        # Internal Data State
+        self.inputs: List[str] = []
+        self.outcome: str = ""
         self.data: pd.DataFrame = pd.DataFrame()
         self.clean_data: pd.DataFrame = pd.DataFrame()
         self.removed_data: pd.DataFrame = pd.DataFrame()
 
+        # Initialize and clear all caches
+        self._clear_caches()
+
+    def _clear_caches(self) -> None:
+        """Internal method to wipe all cached mathematical results and state."""
         # Generalized method storage
         self.sufficiency_results: pd.DataFrame = pd.DataFrame()
         self.pod_results: Dict[str, Any] = {}
@@ -82,53 +85,121 @@ class SimulationStudy:
         self.linear_pod_results: Dict[str, Any] = {}
         self.linear_plots: Dict[str, Any] = {}
 
-#### Adding Data ####
-    def add_data(self, df: pd.DataFrame) -> None:
-        """
-        Ingests raw simulation data, filtering for relevant columns only.
+        # Layered Caches for performance optimization
+        self.models_cache: Dict[str, Any] = {}       # Stores fitted mean models
+        self.variance_cache: Dict[str, Any] = {}     # Stores residuals and bandwidths
+        self.pod_curves_cache: Dict[str, Any] = {}   # Stores integrated PoD curves
+        self.threshold_spectrum_cache: Dict[Tuple, Dict] = {} # Stores threshold spectrum
 
-        This method automatically strips away any columns in `df` that were not
-        defined in `self.inputs` or `self.outcome` during initialization.
+#### Adding Data & Cache Management ####
+    def add_data(
+        self,
+        df: pd.DataFrame,
+        outcome_col: str = None,
+        input_cols: List[str] = None,
+        overwrite: bool = False
+    ) -> None:
+        """
+        Ingests raw simulation data, configures columns, and manages the cache.
+
+        This method sets the outcome and input variables, subsets the data
+        accordingly, and automatically clears the mathematical caches whenever
+        new data is ingested to prevent state mismatches. If `input_cols` is not
+        provided, it smartly infers that all columns other than the outcome are inputs.
 
         Args:
             df (pd.DataFrame): The DataFrame to ingest.
-
-        Raises:
-            ValueError: If the new data is missing any required input or outcome columns.
-
-        Examples:
-            ```python
-            import pandas as pd
-            df = pd.DataFrame({
-                'Length': [1.0, 2.5, 5.0],
-                'Angle': [0, 15, -10],
-                'Signal': [0.5, 0.8, 1.2]
-            })
-            study.add_data(df)
-            ```
+            outcome_col (str, optional): The name of the target/outcome variable.
+                Required on first ingestion, optional when appending.
+            input_cols (List[str], optional): Explicit list of input variables.
+                Defaults to None (infers all non-outcome columns).
+            overwrite (bool, optional): If True, replaces existing data.
+                If False, appends to existing data. Defaults to False.
         """
+        # 1. Configure Columns (Only if initializing or overwriting)
+        if self.data.empty or overwrite:
+            if outcome_col is None:
+                raise ValueError("You must provide 'outcome_col' when initializing or overwriting data.")
+            self.outcome = outcome_col
+
+            if input_cols is None:
+                # Smart Inference: Assume all other columns in the DataFrame are inputs
+                self.inputs = [col for col in df.columns if col != outcome_col]
+            else:
+                self.inputs = input_cols
+        else:
+            # If appending, ignore new column definitions and strictly use the established ones
+            if outcome_col is not None and outcome_col != self.outcome:
+                print(f"Note: Using established outcome '{self.outcome}' (ignoring '{outcome_col}').")
+
         required_cols = self.inputs + [self.outcome]
 
         missing = [c for c in required_cols if c not in df.columns]
         if missing:
             raise ValueError(f"New data is missing required columns: {missing}")
 
+        # This cleanly strips away any extra helper metadata (like 'Refinement_Reason')
         df_subset = df[required_cols].copy()
 
-        if self.data.empty:
+        # 2. Append or Overwrite Data
+        if self.data.empty or overwrite:
             self.data = df_subset
+            print(f"Data initialized/overwritten. Total rows: {len(self.data)}")
         else:
             self.data = pd.concat([self.data, df_subset], ignore_index=True)
+            print(f"Data appended. Total rows: {len(self.data)}")
 
-        print(f"Data updated. Total rows: {len(self.data)}")
-
-        # RESET State
+        # 3. Reset validation state
         self.clean_data = pd.DataFrame()
-        self.sufficiency_results = pd.DataFrame()
-        self.pod_results = {}
-        self.plots = {}
-        self.linear_pod_results = {}
-        self.linear_plots = {}
+        self.removed_data = pd.DataFrame()
+
+        # 4. CRITICAL: Data changed, math is invalid. Wipe the caches.
+        self._clear_caches()
+
+
+#### UI Helper Methods ####
+    def get_unassigned_parameters(self, poi_cols: List[str], nuisance_cols: List[str] = None) -> List[str]:
+        """
+        Calculates which input variables are not currently assigned as a Parameter
+        of Interest or a Nuisance parameter.
+
+        Args:
+            poi_cols (List[str]): Currently selected Parameters of Interest.
+            nuisance_cols (List[str], optional): Currently selected Nuisance parameters. Defaults to None.
+
+        Returns:
+            List[str]: A list of unassigned column names.
+        """
+        nuisance_cols = nuisance_cols or []
+        return [c for c in self.inputs if c not in poi_cols and c not in nuisance_cols]
+
+    def get_data_summary(self, col_name: str) -> Dict[str, float]:
+        """
+        Calculates the minimum, maximum, and median values for a given column.
+        Useful for instantly populating UI slider bounds or default thresholds.
+
+        Args:
+            col_name (str): The name of the column to summarize.
+
+        Returns:
+            Dict[str, float]: A dictionary containing 'min', 'median', and 'max'.
+            Returns None values if the data is empty or the column does not exist.
+        """
+        if self.data.empty or col_name not in self.data.columns:
+            return {"min": None, "median": None, "max": None}
+
+        # Prefer cleaned data if validation has run
+        df_target = self.clean_data if not self.clean_data.empty else self.data
+        vals = pd.to_numeric(df_target[col_name], errors="coerce").dropna()
+
+        if vals.empty:
+            return {"min": None, "median": None, "max": None}
+
+        return {
+            "min": float(vals.min()),
+            "median": float(vals.median()),
+            "max": float(vals.max())
+        }
 
 #### Validating self.data ####
     def _validate(self) -> None:
@@ -231,6 +302,7 @@ class SimulationStudy:
         self,
         executor: Union[Executor, str],
         ranges: Dict[str, Tuple[float, float]],
+        outcome_col: str = None,
         n_start: int = 20,
         n_step: int = 10,
         max_iter: int = 5,
@@ -276,7 +348,16 @@ class SimulationStudy:
             ```
         """
 
-        # --- NEW SAFEGUARD: Validate input ranges ---
+        # --- NEW: Cold Start Configuration ---
+        if not self.outcome:  # If the study hasn't been configured yet
+            if outcome_col is None:
+                raise ValueError("When running optimise() from a cold start, you must provide an 'outcome_col'.")
+            self.outcome = outcome_col
+            self.inputs = list(ranges.keys())
+        elif outcome_col is not None and outcome_col != self.outcome:
+            print(f"Note: Using established outcome '{self.outcome}' (ignoring '{outcome_col}').")
+
+        # --- SAFEGUARD: Validate input ranges ---
         expected_inputs = set(self.inputs)
         provided_ranges = set(ranges.keys())
 
@@ -288,7 +369,7 @@ class SimulationStudy:
 
         # 1. Delegate to the Agnostic Engine
         final_data = run_adaptive_search(
-            executor=executor,            # <-- Passes our new Executor object
+            executor=executor,
             input_cols=self.inputs,
             outcome_col=self.outcome,
             ranges=ranges,
@@ -297,7 +378,6 @@ class SimulationStudy:
             n_step=n_step,
             max_iter=max_iter,
             max_hours=max_hours,
-            # --- The 4 Custom Diagnostic Thresholds ---
             max_gap_ratio=self.max_gap_ratio,
             min_r2_score=self.min_r2_score,
             max_avg_cv=self.max_avg_cv,
@@ -306,7 +386,145 @@ class SimulationStudy:
 
         # 2. Update Class State with the result
         self.data = pd.DataFrame() # Clear old state to avoid duplication
-        self.add_data(final_data)
+        self.add_data(final_data, outcome_col=self.outcome, input_cols=self.inputs)
+
+
+    def compute_pod_spectrum(
+        self,
+        poi_col: list | str,
+        nuisance_col: list | str | None = None,
+        slice_values: dict | None = None,
+        n_threshold_points: int = 100,
+        bandwidth_ratio: float = 0.1,
+        model_override: str = "auto",
+        force_degree: int | None = None
+    ) -> Dict[str, Any]:
+        """Pre-calculates a spectrum of PoD curves across a range of signal thresholds."""
+        # 1. Standardize column configurations
+        if isinstance(poi_col, str):
+            poi_cols = [poi_col]
+        else:
+            poi_cols = poi_col
+
+        nuisance_cols = [nuisance_col] if isinstance(nuisance_col, str) else (nuisance_col or [])
+        slice_values = slice_values or {}
+
+        # 2. Establish baseline model and variance
+        print("--- Initiating Threshold Spectrum Generation ---")
+        median_thresh = float(self.clean_data[self.outcome].median())
+        temp_results = self.pod(
+            poi_col=poi_cols,
+            threshold=median_thresh,
+            nuisance_col=nuisance_cols,
+            slice_values=slice_values,
+            bandwidth_ratio=bandwidth_ratio,
+            n_boot=0,
+            model_override=model_override,
+            force_degree=force_degree
+        )
+
+        # Extract the key for cache indexing
+        mean_model = temp_results['mean_model']
+        selected_key = ('Polynomial', mean_model.model_params_) if mean_model.model_type_ == 'Polynomial' else ('Kriging', None)
+
+        # Create the Spectrum Key and Layer 3 Key to access our matrices
+        spectrum_key = (selected_key, tuple(poi_cols), tuple(nuisance_cols), frozenset(temp_results['slice_values'].items()))
+        l3_key = (selected_key, median_thresh, tuple(poi_cols), tuple(nuisance_cols), frozenset(temp_results['slice_values'].items()))
+
+        # 3. Check if this exact spectrum configuration is already cached
+        if spectrum_key in self.threshold_spectrum_cache:
+            print("4. Threshold Spectrum already cached (Layer 4 Hit).")
+            return self.threshold_spectrum_cache[spectrum_key]
+
+        print(f"4. Computing PoD Spectrum for {n_threshold_points} thresholds (Layer 4 Cache Miss)...")
+
+        # 4. Generate Threshold Vector across the observed signal range
+        y_min, y_max = float(self.clean_data[self.outcome].min()), float(self.clean_data[self.outcome].max())
+        thresh_vec = np.linspace(y_min, y_max, n_threshold_points)
+
+        # --- THE FIX: Pull matrices directly from Layer 2 and Layer 3 Caches ---
+        l3_cache = self.pod_curves_cache[l3_key]
+
+        from .integration import compute_multi_dim_pod
+        pod_matrix, mean_curve = compute_multi_dim_pod(
+            poi_grid=l3_cache['X_eval'],
+            nuisance_ranges=l3_cache['nuisance_ranges'],
+            model=mean_model,
+            X_train=temp_results['X'],
+            residuals=temp_results['residuals'],
+            bandwidth=temp_results['bandwidth'],
+            dist_info=temp_results['dist_info'],
+            thresholds=thresh_vec,
+            feature_names=self.inputs, # <-- ADD THIS
+            poi_names=poi_cols         # <-- ADD THIS
+        )
+
+        # 6. Package and store in Layer 4
+        spectrum_data = {
+            "thresholds": thresh_vec,
+            "pod_matrix": pod_matrix,
+            "mean_curve": mean_curve
+        }
+
+        self.threshold_spectrum_cache[spectrum_key] = spectrum_data
+        print("--- Spectrum Generation Complete ---")
+
+        return spectrum_data
+
+
+
+#### Time Heuristic ####
+    def estimate_compute_time(self, model_type: str, n_boot: int, n_nuisances: int, n_jobs: int) -> float:
+        """
+        Physics-aware heuristic to estimate PoD computation time in seconds.
+        Accounts for initial cache-building (CV), Kriging complexity, and MC Integration.
+        """
+        n_samples = len(self.clean_data) if not self.clean_data.empty else len(self.data)
+        if n_samples == 0:
+            return 0.0
+
+        # 1. Base Fit Time (Per Iteration)
+        t_poly = 0.001 * (n_samples / 100.0)
+        t_kriging = (n_samples / 500.0) ** 3 * 1.5  # Kriging matrix inversion is heavy!
+
+        # 2. Evaluate Caching State
+        if n_boot == 0 and not self.models_cache:
+            # INITIAL CACHE BUILD: 10 polys * 10 folds = 100 fits. Kriging = ~12 heavy fits.
+            # Plus Leave-One-Out CV for the variance smoothing bandwidth (~2 seconds)
+            if n_samples > 1000:
+                t_fit = (100 * t_poly) + 2.0 # Kriging is skipped automatically for N>1000
+            else:
+                t_fit = (100 * t_poly) + (12 * t_kriging) + 2.0
+        elif model_type.lower() == "kriging":
+            t_fit = t_kriging
+        else:
+            t_fit = t_poly
+
+        # 3. Integration Time (Per Iteration)
+        if n_nuisances > 0:
+            # SLOW PATH: 100 grid points * MC Samples
+            t_int = 0.6 if model_type.lower() == "kriging" else 0.08
+        else:
+            # FAST PATH: Single Vectorized Matrix Operation
+            t_int = 0.02 if model_type.lower() == "kriging" else 0.002
+
+        t_single_iteration = t_fit + t_int
+
+        # 4. Core scaling for Bootstrap
+        if n_jobs == -1:
+            import os
+            cores = max((os.cpu_count() or 1) - 1, 1)
+        else:
+            cores = max(n_jobs or 1, 1)
+
+        # 5. Total Time
+        if n_boot == 0:
+            total_time = t_fit + t_int + 0.5  # Initial fit or slider slice update
+        else:
+            total_time = ((t_single_iteration * n_boot) / cores) + 0.5  # Heavy UQ bootstrap
+
+        return total_time
+
 
 #### PoD Analysis ####
     def pod(
@@ -314,6 +532,7 @@ class SimulationStudy:
         poi_col: list | str,
         threshold: float,
         nuisance_col: list | str | None = None,
+        slice_values: dict | None = None,
         bandwidth_ratio: float = 0.1,
         n_boot: int = 1000,
         model_override: str = "auto",
@@ -327,6 +546,7 @@ class SimulationStudy:
             poi_col (list | str): The parameter(s) of interest (e.g., 'Crack Length', ['Angle', 'Depth']).
             threshold (float): The failure threshold (e.g., 4.0 dB).
             nuisance_col (list | str | None): The nuisance parameters to marginalize over via MC integration.
+            slice_values (dict | None): The sliced parameters and their values.
             bandwidth_ratio (float): Smoothing bandwidth fraction (default 0.1).
             n_boot (int): Bootstrap iterations for confidence bounds.
             model_override (str): Force a model type. One of "auto",
@@ -356,6 +576,11 @@ class SimulationStudy:
         else:
             poi_cols = poi_col
 
+        # --- ADD THIS SAFETY CHECK ---
+        if len(poi_cols) > 2:
+            raise ValueError("digiqual currently only supports plotting 1 or 2 Parameters of Interest. "
+                                "Please move additional variables to 'nuisance_col' or 'slice_values'.")
+
         if nuisance_col is None:
             nuisance_cols = []
         elif isinstance(nuisance_col, str):
@@ -363,39 +588,121 @@ class SimulationStudy:
         else:
             nuisance_cols = nuisance_col
 
-        all_cols = poi_cols + nuisance_cols
-        for c in all_cols:
-            if c not in self.clean_data.columns:
-                raise ValueError(f"Variable '{c}' not found in data columns.")
+        slice_values = slice_values or {}
 
-        # 1. Prepare Data Vectors
-        print(f"--- Starting Reliability Analysis (PoIs: {poi_cols}) ---")
+        # 1. The model is ALWAYS trained on all initialized inputs
+        all_cols = self.inputs
+
+        # Validate that requested PoIs and Nuisances are actually in the dataset
+        for c in poi_cols + nuisance_cols:
+            if c not in all_cols:
+                raise ValueError(f"Variable '{c}' is not in the initialized input_cols.")
+
+        # 2. Automatically handle sliced parameters (Leftovers)
+        final_slice_values = {}
+        for c in all_cols:
+            if c not in poi_cols and c not in nuisance_cols:
+                if c in slice_values:
+                    # Use the specific value the user provided
+                    final_slice_values[c] = float(slice_values[c])
+                else:
+                    # Default to the median of the dataset
+                    final_slice_values[c] = float(self.clean_data[c].median())
+
+        # 3. Prepare Data Vectors
+        print(f"--- Starting Reliability Analysis (PoIs: {poi_cols} - Nuisance: {nuisance_cols}) ---")
+        if final_slice_values:
+            print(f"-> Slicing surface at: {final_slice_values}")
+
         X = self.clean_data[all_cols].values
         y = self.clean_data[self.outcome].values
 
-        # 2. Fit Mean Model (Robust Regression)
-        print("1. Selecting Mean Model (Cross-Validation)...")
-        mean_model = pod.fit_robust_mean_model(
-            X, y, model_override=model_override, force_degree=force_degree
-        )
+        # ---------------------------------------------------------
+        # 4. LAYER 1 CACHE: Mean Models
+        # ---------------------------------------------------------
+        if not self.models_cache:
+            print("1. Training all surrogate models (Cache Miss)...")
+            # Fit everything and save to caches
+            models, scores, winner = pod.fit_all_robust_mean_models(X, y)
+            self.models_cache = models
+            self.cv_scores_cache = scores
+            self.cv_winner_key = winner
+        else:
+            print("1. Loading surrogate models from cache (Cache Hit)...")
+
+        # Select the specific model requested by the user
+        if model_override == "polynomial" and force_degree is not None:
+            selected_key = ('Polynomial', force_degree)
+        elif model_override == "kriging" and ('Kriging', None) in self.models_cache:
+            selected_key = ('Kriging', None)
+        elif model_override == "polynomial":
+            # User wants Poly but didn't force a degree -> Pick the best Poly
+            poly_scores = {k: v for k, v in self.cv_scores_cache.items() if k[0] == 'Polynomial'}
+            selected_key = min(poly_scores, key=poly_scores.get)
+        else:
+            selected_key = self.cv_winner_key
+
+        # Retrieve the selected model!
+        mean_model = self.models_cache[selected_key]
+
+        # Attach the CV data to the model so plotting functions can still read it
+        mean_model.cv_scores_ = self.cv_scores_cache
+        mean_model.cv_winner_ = self.cv_winner_key
+        mean_model.forced_model_ = (selected_key != self.cv_winner_key)
+
+        equation = pod.generate_latex_equation(mean_model, all_cols, self.outcome)
+
         if mean_model.model_type_ == 'Polynomial':
             print(f"-> Selected Model: Polynomial (Degree {mean_model.model_params_})")
         else:
             print("-> Selected Model: Kriging (Gaussian Process)")
 
-        # 3. Fit Variance Model & Generate Grid
-        print("2. Fitting Variance Model (Kernel Smoothing)...")
-        residuals, bandwidth = pod.fit_variance_model(
-            X, y, mean_model, bandwidth_ratio=bandwidth_ratio
-        )
-        print(f"   -> Smoothing Bandwidth: {bandwidth:.4f}")
+        # ---------------------------------------------------------
+        # 5. LAYER 2 CACHE: Variance Model & Distribution
+        # ---------------------------------------------------------
+        if selected_key not in self.variance_cache:
+            print("2. Fitting Variance Model & Inferring Distribution (Cache Miss)...")
 
-        # 4. Infer Distribution
-        print("3. Inferring Error Distribution (AIC)...")
-        dist_name, dist_params = pod.infer_best_distribution(residuals, X, bandwidth)
+            residuals, bandwidth = pod.fit_variance_model(
+                X, y, mean_model, bandwidth_ratio=bandwidth_ratio
+            )
+            dist_name, dist_params = pod.infer_best_distribution(residuals, X, bandwidth)
+
+            # Save the heavy lifting to the cache
+            self.variance_cache[selected_key] = {
+                "residuals": residuals,
+                "bandwidth": bandwidth,
+                "dist_info": (dist_name, dist_params)
+            }
+        else:
+            print("2. Loading Variance Model & Distribution from cache (Cache Hit)...")
+            cached_var = self.variance_cache[selected_key]
+            residuals = cached_var["residuals"]
+            bandwidth = cached_var["bandwidth"]
+            dist_name, dist_params = cached_var["dist_info"]
+
+        print(f"   -> Smoothing Bandwidth: {bandwidth:.4f}")
         print(f"   -> Selected Distribution: {dist_name}")
 
-        # Build PoI grid and nuisance ranges
+        # ---------------------------------------------------------
+        # Calculate Sobol Sensitivity Indices
+        # ---------------------------------------------------------
+        print("-> Calculating Total-Order Sobol Indices...")
+        from .pod import calculate_sobol_indices
+        sobol_indices = calculate_sobol_indices(
+            mean_model=mean_model,
+            feature_names=all_cols,
+            data_df=self.clean_data
+        )
+
+        # ---------------------------------------------------------
+        # 6. LAYER 3 & 4 CACHE: Integration & Spectrum Interpolation
+        # ---------------------------------------------------------
+        # Define keys for the different caching layers
+        spectrum_key = (selected_key, tuple(poi_cols), tuple(nuisance_cols), frozenset(final_slice_values.items()))
+        l3_key = (selected_key, threshold, tuple(poi_cols), tuple(nuisance_cols), frozenset(final_slice_values.items()))
+
+        # A) Setup Evaluation Grid & Nuisance Parameters (Lightweight Setup)
         poi_grids = []
         for col in poi_cols:
             num_points = 100 if len(poi_cols) == 1 else 30
@@ -407,16 +714,64 @@ class SimulationStudy:
             mesh = np.meshgrid(*poi_grids, indexing='ij')
             X_eval = np.vstack([m.flatten() for m in mesh]).T
 
+        # Build nuisance ranges (including sliced parameters locked as single-value ranges)
         nuisance_ranges = {c: (float(self.clean_data[c].min()), float(self.clean_data[c].max())) for c in nuisance_cols}
+        for c, val in final_slice_values.items():
+            nuisance_ranges[c] = (val, val)
 
-        # 5. Compute PoD Curve
-        print("4. Computing PoD Curve...")
-        from digiqual.integration import compute_multi_dim_pod
-        pod_curve, mean_curve = compute_multi_dim_pod(
-            X_eval, nuisance_ranges, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold
-        )
+        # B) Resolve Analysis (Layer 4 -> Layer 3 -> Miss)
+        if spectrum_key in self.threshold_spectrum_cache and n_boot == 0:
+            print("3. Interpolating PoD Curve from Threshold Spectrum (Layer 4 Hit)...")
+            spec = self.threshold_spectrum_cache[spectrum_key]
 
-        # 6. Bootstrap Confidence Intervals (Parallelized)
+            # Linear Interpolation across the pre-calculated threshold spectrum
+            # pod_matrix shape: (n_grid_points, n_thresholds)
+            pod_curve = np.array([
+                np.interp(threshold, spec["thresholds"], spec["pod_matrix"][i, :])
+                for i in range(len(X_eval))
+            ])
+            mean_curve = spec["mean_curve"]
+
+            # Calculate Preliminary Reliability Point (1D only)
+            a90_95 = np.nan
+            if len(poi_cols) == 1:
+                a90_95 = pod.calculate_reliability_point(X_eval.flatten(), pod_curve, target_pod=0.90)
+
+        elif l3_key in self.pod_curves_cache:
+            print("3. Loading PoD Curve from Individual Cache (Layer 3 Hit)...")
+            cached_l3 = self.pod_curves_cache[l3_key]
+            pod_curve = cached_l3["pod_curve"]
+            mean_curve = cached_l3["mean_curve"]
+            a90_95 = cached_l3["a90_95"]
+
+        else:
+            print("3. Integrating PoD Curve from Scratch (Cache Miss)...")
+            from .integration import compute_multi_dim_pod
+            pod_curve, mean_curve = compute_multi_dim_pod(
+                X_eval, nuisance_ranges, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold,
+            feature_names=all_cols, poi_names=poi_cols
+            )
+
+            # Calculate Preliminary Reliability Point (1D only)
+            a90_95 = np.nan
+            if len(poi_cols) == 1:
+                a90_95 = pod.calculate_reliability_point(X_eval.flatten(), pod_curve, target_pod=0.90)
+
+            # Store in Layer 3 Cache for fast slicing/parameter swapping
+            self.pod_curves_cache[l3_key] = {
+                "X_eval": X_eval,
+                "poi_grids": poi_grids,
+                "nuisance_ranges": nuisance_ranges,
+                "pod_curve": pod_curve,
+                "mean_curve": mean_curve,
+                "a90_95": a90_95
+            }
+
+
+        # ---------------------------------------------------------
+        # 7. Bootstrap Confidence Intervals (Parallelized)
+        # ---------------------------------------------------------
+        # We don't cache the bootstrap because n_boot can change, and it's heavily intentional when run.
         if n_boot > 0:
             if n_jobs is None or n_jobs == 1:
                 actual_cores = 1
@@ -425,29 +780,29 @@ class SimulationStudy:
             else:
                 actual_cores = n_jobs
 
-            print(f"5. Running Bootstrap ({n_boot} iterations on {actual_cores} cores)...", flush=True)
+            print(f"4. Running Bootstrap ({n_boot} iterations on {actual_cores} cores)...", flush=True)
 
             lower_ci, upper_ci = pod.bootstrap_pod_ci(
                 X, y, X_eval, threshold,
                 mean_model.model_type_, mean_model.model_params_, bandwidth, (dist_name, dist_params),
                 n_boot=n_boot, nuisance_ranges=nuisance_ranges,
-                n_jobs=n_jobs
+                n_jobs=n_jobs, feature_names=all_cols, poi_names=poi_cols
             )
-        else:
-            print("5. Skipping Bootstrap (n_boot=0)...", flush=True)
-            lower_ci, upper_ci = None, None
 
-        # 7. Calculate Reliability Point
-        a90_95 = np.nan
-        if len(poi_cols) == 1 and lower_ci is not None:
-            a90_95 = pod.calculate_reliability_point(X_eval.flatten(), lower_ci, target_pod=0.90)
-            print(f"   -> a90/95 Reliability Index: {a90_95:.3f}")
+            # Recalculate true a90/95 based on the LOWER confidence bound
+            if len(poi_cols) == 1 and lower_ci is not None:
+                a90_95 = pod.calculate_reliability_point(X_eval.flatten(), lower_ci, target_pod=0.90)
+                print(f"   -> a90/95 Reliability Index: {a90_95:.3f}")
+
+        else:
+            print("4. Skipping Bootstrap (n_boot=0)...", flush=True)
+            lower_ci, upper_ci = None, None
 
         # 8. Package Results
         self.pod_results = {
-            "poi_col": poi_cols[0] if len(poi_cols) == 1 else poi_cols,
             "poi_cols": poi_cols,
             "nuisance_cols": nuisance_cols,
+            "slice_values": final_slice_values,
             "threshold": threshold,
             "n_boot" : n_boot,
             "a90_95": a90_95,
@@ -456,9 +811,11 @@ class SimulationStudy:
             "X_eval": X_eval,
             "poi_grids": poi_grids,
             "mean_model": mean_model,
+            "equation": equation,
             "bandwidth": bandwidth,
             "residuals": residuals,
             "dist_info": (dist_name, dist_params),
+            "sobol_indices": sobol_indices,
             "curves": {
                 "mean_response": mean_curve,
                 "pod": pod_curve,
@@ -469,6 +826,31 @@ class SimulationStudy:
 
         print("--- Analysis Complete ---")
         return self.pod_results
+
+#### Real-Time Slice Evaluation ####
+    def update_slice(self, slice_values: dict) -> Dict[str, Any]:
+        """
+        Updates the evaluated slice for the PoD surface using Layer 3 Caching.
+        This allows for real-time plot updates when changing constant parameters in the UI.
+        """
+        if not self.pod_results:
+            return {}
+
+        # Just re-call .pod() with n_boot=0!
+        # Because we built the Layer 1, 2, and 3 caches, this call will resolve in
+        # microseconds if it's cached, or only run the lightweight Layer 3 if it's a new slice.
+
+        return self.pod(
+            poi_col=self.pod_results["poi_cols"],
+            threshold=self.pod_results["threshold"],
+            nuisance_col=self.pod_results["nuisance_cols"],
+            slice_values=slice_values,
+            n_boot=0, # Never run bootstrap during a slider drag!
+
+            # Force it to use the exact same model we are currently looking at
+            model_override="polynomial" if self.pod_results["mean_model"].model_type_ == "Polynomial" else "kriging",
+            force_degree=self.pod_results["mean_model"].model_params_ if self.pod_results["mean_model"].model_type_ == "Polynomial" else None
+        )
 
 #### Visualise Results ####
     def visualise(self, show: bool = True, save_path: str = None) -> None:
@@ -492,17 +874,40 @@ class SimulationStudy:
             print("No PoD results found. Please run .pod() first.")
             return
 
+        import matplotlib.pyplot as plt
+        plt.close('all')
+
         res = self.pod_results
-        poi_label = res.get("poi_col", "Parameter of Interest")
+        poi_cols = res.get("poi_cols", ["Parameter of Interest"])
 
-        poi_cols = res.get("poi_cols", [poi_label])
-        nuisance_cols = res.get("nuisance_cols", [])
-
+        # --- FIXED BLOCK: Multidimensional Local SD Calculation ---
         local_std = None
-        if len(poi_cols) == 1 and len(nuisance_cols) == 0:
+        if len(poi_cols) == 1:
+            # 1. Create a full-dimension evaluation grid that matches the training data (e.g., 7 columns)
+            n_samples_eval = len(res["X_eval"])
+            n_total_vars = len(self.inputs)
+            X_eval_full = np.zeros((n_samples_eval, n_total_vars))
+
+            # 2. Gather the fixed values for this specific plot slice
+            # We use the current slice values, and fallback to medians for nuisances
+            current_view_values = res["slice_values"].copy()
+            for c in res["nuisance_cols"]:
+                current_view_values[c] = float(self.clean_data[c].median())
+
+            # 3. Populate the high-dimensional grid for the noise estimator
+            for i, col_name in enumerate(self.inputs):
+                if col_name == poi_cols[0]:
+                    # This column gets the sliding PoI values (x-axis)
+                    X_eval_full[:, i] = res["X_eval"].flatten()
+                else:
+                    # These columns get the constant slice/nuisance values
+                    X_eval_full[:, i] = current_view_values[col_name]
+
+            # 4. Now the dimensions match (7 columns vs 7 columns)!
             local_std = pod.predict_local_std(
-                res["X"], res["residuals"], res["X_eval"], res["bandwidth"]
+                res["X"], res["residuals"], X_eval_full, res["bandwidth"]
             )
+
         if hasattr(res["mean_model"], "cv_scores_"):
             mean_model = res["mean_model"]
             model_type = getattr(mean_model, 'model_type_', None)
@@ -524,8 +929,9 @@ class SimulationStudy:
 
         # 1. Signal Model Plot
         if len(poi_cols) == 1:
+            poi_idx = self.inputs.index(poi_cols[0])
             self.plots["signal_model"] = plot_signal_model(
-                X=res["X"][:, 0],
+                X=res["X"][:, poi_idx],  # Safely grabbed the correct column!
                 y=res["y"],
                 X_eval=res["X_eval"].flatten(),
                 mean_curve=res["curves"]["mean_response"],
@@ -534,11 +940,14 @@ class SimulationStudy:
                 poi_name=poi_cols[0]
             )
         else:
-            from digiqual.plotting import plot_signal_surface
+            from .plotting import plot_signal_surface
+            poi_idx_0 = self.inputs.index(poi_cols[0])
+            poi_idx_1 = self.inputs.index(poi_cols[1])
+
             self.plots["signal_model"] = plot_signal_surface(
                 poi_grids=res["poi_grids"],
                 mean_curve=res["curves"]["mean_response"],
-                X_raw=res["X"],
+                X_raw=res["X"][:, [poi_idx_0, poi_idx_1]], # Safely grabbed the 2 columns!
                 y_raw=res["y"],
                 threshold=res["threshold"],
                 poi_names=poi_cols,
@@ -546,23 +955,22 @@ class SimulationStudy:
             )
 
         # 2. PoD Curve/Surface Plot
-        if res["curves"]["ci_lower"] is not None:
-            if len(poi_cols) == 1:
-                self.plots["pod_curve"] = plot_pod_curve(
-                    X_eval=res["X_eval"].flatten(),
-                    pod_curve=res["curves"]["pod"],
-                    ci_lower=res["curves"]["ci_lower"],
-                    ci_upper=res["curves"]["ci_upper"],
-                    target_pod=0.90,
-                    poi_name=poi_cols[0]
-                )
-            else:
-                from digiqual.plotting import plot_pod_surface
-                self.plots["pod_curve"] = plot_pod_surface(
-                    poi_grids=res["poi_grids"],
-                    pod_curve=res["curves"]["pod"],
-                    poi_names=poi_cols
-                )
+        if len(poi_cols) == 1:
+            self.plots["pod_curve"] = plot_pod_curve(
+                X_eval=res["X_eval"].flatten(),
+                pod_curve=res["curves"]["pod"],
+                ci_lower=res["curves"]["ci_lower"], # plotting.py handles None gracefully!
+                ci_upper=res["curves"]["ci_upper"],
+                target_pod=0.90,
+                poi_name=poi_cols[0]
+            )
+        else:
+            from .plotting import plot_pod_surface
+            self.plots["pod_curve"] = plot_pod_surface(
+                poi_grids=res["poi_grids"],
+                pod_curve=res["curves"]["pod"],
+                poi_names=poi_cols
+            )
 
         # Handle Saving
         if save_path:

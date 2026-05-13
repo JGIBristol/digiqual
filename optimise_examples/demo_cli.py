@@ -8,7 +8,7 @@ def run_cli_demo():
 
     # 1. Configure the Study
     ranges = {'Length': (0.0, 10.0), 'Angle': (-45.0, 45.0),'Roughness': (0, 1)}
-    study = SimulationStudy(input_cols=['Length', 'Angle','Roughness'], outcome_col='Signal')
+    study = SimulationStudy()
 
     # 2. Setup the CLI Executor
     # Figure out exactly where THIS script (demo_cli.py) lives on the computer
@@ -28,6 +28,7 @@ def run_cli_demo():
     study.optimise(
         executor=executor,
         ranges=ranges,
+        outcome_col='Signal',
         n_start=20,
         n_step=10,
         max_iter=10

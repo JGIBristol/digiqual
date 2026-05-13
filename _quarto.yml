@@ -53,6 +53,7 @@ website:
             href: docs/generalised_pod.qmd
           - text: "Classical vs Generalised PoD"
             href: docs/comparison.qmd
+          - docs/caching.qmd
 
       - text: "API Reference"
         href: api_reference/index.qmd
@@ -113,7 +114,8 @@ quartodoc:
         - adaptive.generate_targeted_samples
 
         # -- PoD Analysis --
-        - pod.fit_robust_mean_model
+        - pod.fit_all_robust_mean_models
+        - pod.generate_latex_equation
         - pod.optimise_bandwidth
         - pod.fit_variance_model
         - pod.infer_best_distribution

@@ -37,13 +37,17 @@ These $Z$-scores are then fitted against a suite of distributions: Normal, Gumbe
 $$ AIC = 2k - 2\ln(\hat{L}) $$
 Where $k$ is the number of parameters and $\hat{L}$ is the Maximum Likelihood.
 
-## 4. Multi-Dimensional Integration (Active Marginalisation)
-If evaluating multidimensional datasets with nuisance variations (e.g., angle $\theta$, roughness $R$), `digiqual` utilizes Monte Carlo Integration to output a 1D or 2D marginal Probability of Detection.
+## 4. Multi-Dimensional Evaluation (Marginalisation & Slicing)
+When evaluating multidimensional datasets with additional variables (e.g., angle $\theta$, roughness $R$), `digiqual` fits the surrogate model to the *entire* $n$-dimensional parameter space. To project this down to a 1D or 2D Probability of Detection curve, it uses two distinct techniques:
 
-### The Mathematics
-The expected PoD for a Parameter of Interest (PoI) vector $\mathbf{x}$ is calculated by integrating the conditional PoD over the joint probability density function $p(\mathbf{z})$ of the nuisance variables $\mathbf{z}$:
-$$ PoD(\mathbf{x}) = \int_{\Omega_z} PoD(\mathbf{x}, \mathbf{z}) p(\mathbf{z}) d\mathbf{z} $$
-`digiqual` approximates this integral computationally via Latin Hypercube Sampling (LHS) across the continuous physics space.
+### Active Marginalisation (Nuisance Parameters)
+For parameters treated as random noise, the expected PoD for a Parameter of Interest (PoI) vector $\mathbf{x}$ is calculated by integrating the conditional PoD over the probability density function $p(\mathbf{z})$ of the nuisance variables $\mathbf{z}$:
+$$PoD(\mathbf{x}) = \int_{\Omega_z} PoD(\mathbf{x}, \mathbf{z}) p(\mathbf{z}) d\mathbf{z}$$
+
+`digiqual` approximates this integral computationally via Monte Carlo integration (Latin Hypercube Sampling) to average the signal response across the noise spectrum.
+
+### Parameter Slicing (Constant Parameters)
+For parameters that are neither plotted nor integrated out, `digiqual` treats them as strict mathematical constants. The evaluation grid takes a "slice" through the $n$-dimensional response surface at these specific values (defaulting to the parameter's median), allowing you to explore specific physical scenarios without retraining the underlying model.
 
 ## 5. Bootstrapping for Confidence Bounds
 Because the model is non-linear and non-normal, traditional analytical confidence bounds are invalid.
@@ -60,3 +64,13 @@ Because the model is non-linear and non-normal, traditional analytical confidenc
 4. Repeat this $B$ times (typically $B=1000$).
 
 5. Extract the $2.5^{th}$ and $97.5^{th}$ percentiles at every point $a$ to form the robust 95% confidence interval $PoD_{95}$.
+
+### Summary: The 3-Tier Parameter Taxonomy
+
+To understand how `digiqual` handles high-dimensional data, it is helpful to see exactly how each parameter type is treated during the three phases of reliability assessment:
+
+| Parameter Type | 1. Model Fit (Training Phase) | 2. Evaluation Phase (Mean Curve) | 3. PoD Generation (Bootstrapping) |
+| :--- | :--- | :--- | :--- |
+| **Parameter(s) of Interest (PoI)** | Treated as a standard geometric dimension to train the n-dimensional surrogate model. | Defines the evaluation grid. Steps evenly from its minimum to maximum value to form the plot axes. | Forms the primary axes for the final Probability of Detection confidence bounds. |
+| **Sliced Parameter (Constant)** | Treated as a standard geometric dimension. The model learns its physical impact globally. | Held **strictly constant** at a user-defined value. Acts as a targeted, multi-dimensional "laser beam" slice. | Remains rigidly locked at the exact same constant value across all bootstrap resamples. |
+| **Nuisance Parameter (Marginalised)** | Treated as a standard geometric dimension. The model learns its physical impact globally. | **Randomly sampled** via Monte Carlo integration across its physical bounds. Results are averaged out. | Re-sampled and averaged inside *every single* bootstrap iteration to capture real-world uncertainty. |

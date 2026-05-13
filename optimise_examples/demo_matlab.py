@@ -13,7 +13,7 @@ def run_matlab_demo():
 
     # 1. Configure the Study
     ranges = {'Length': (0.0, 10.0), 'Angle': (-45.0, 45.0), 'Roughness': (0.0, 1.0)}
-    study = SimulationStudy(input_cols=['Length', 'Angle', 'Roughness'], outcome_col='Signal')
+    study = SimulationStudy()
 
     # 2. Setup the MATLAB Executor
     # We just provide the name of the MATLAB function (without the .m extension)
@@ -26,6 +26,7 @@ def run_matlab_demo():
     study.optimise(
         executor=executor,
         ranges=ranges,
+        outcome_col='Signal',
         n_start=40,
         n_step=10,
         max_iter=3

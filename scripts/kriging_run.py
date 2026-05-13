@@ -21,8 +21,8 @@ df = pd.DataFrame({
 
 # 3. Initialize the Study
 print("Initializing SimulationStudy...")
-study = SimulationStudy(input_cols=['Flaw_Size'], outcome_col='Response')
-study.add_data(df)
+study = SimulationStudy()
+study.add_data(df,outcome_col='Response')
 study.diagnose()
 
 # 4. Run the PoD Analysis

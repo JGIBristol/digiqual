@@ -317,15 +317,15 @@ ui.nav_panel(
                             ),
                             ui.hr(class_="my-4"),
 
-                            # Module 3: Analysis (Step 1)
+                            # Module 3: Analysis (Physics)
                             ui.div(
                                 ui.h5(
                                     ui.span(icon_svg("chart-area"), class_="text-success me-2"),
-                                    "3. Model Fit (PoD Step 1)", class_="fw-bold mb-2"
+                                    "3. Model Fit & Response", class_="fw-bold mb-2"
                                 ),
-                                ui.p("Determine the statistical structure of your parameters rapidly without heavy computation.", class_="fw-semibold mb-2"),
+                                ui.p("Determine the statistical structure and physics of your parameters rapidly.", class_="fw-semibold mb-2"),
                                 ui.tags.ul(
-                                    ui.tags.li("Automated model selection (Cross-Validation)."),
+                                    ui.tags.li("Automated model selection via Cross-Validation."),
                                     ui.tags.li("Extract mathematical equations and visualize the mean response surface."),
                                     class_="mb-0 ps-3 text-muted"
                                 ),
@@ -333,13 +333,29 @@ ui.nav_panel(
                             ),
                             ui.hr(class_="my-4"),
 
-                            # Module 4: Uncertainty Quantification (Step 2)
+                            # Module 4: Exploration (Reliability) - NEW
+                            ui.div(
+                                ui.h5(
+                                    ui.span(icon_svg("magnifying-glass-chart"), class_="text-info me-2"),
+                                    "4. PoD Explorer", class_="fw-bold mb-2"
+                                ),
+                                ui.p("Real-time reliability evaluation using pre-calculated Threshold Spectrums.", class_="fw-semibold mb-2"),
+                                ui.tags.ul(
+                                    ui.tags.li("Instantly observe PoD changes across different detection thresholds."),
+                                    ui.tags.li("Interactively slice constant parameters without model refitting."),
+                                    class_="mb-0 ps-3 text-muted"
+                                ),
+                                class_="border-start border-3 border-info ps-3 mb-3"
+                            ),
+                            ui.hr(class_="my-4"),
+
+                            # Module 5: Uncertainty Quantification (Confidence)
                             ui.div(
                                 ui.h5(
                                     ui.span(icon_svg("chart-line"), class_="text-danger me-2"),
-                                    "4. Uncertainty Quantification (PoD Step 2)", class_="fw-bold mb-2"
+                                    "5. Uncertainty Quantification", class_="fw-bold mb-2"
                                 ),
-                                ui.p("Lock the mathematical model and construct Generalised Probability of Detection (PoD) bounds.", class_="fw-semibold mb-2"),
+                                ui.p("Lock the structural shape and construct rigorous Probability of Detection bounds.", class_="fw-semibold mb-2"),
                                 ui.tags.ul(
                                     ui.tags.li("Parallelized bootstrap resampling for robust 95% Confidence Intervals."),
                                     ui.tags.li("Monte Carlo integration to marginalize over nuisance parameters."),
@@ -363,8 +379,8 @@ ui.nav_panel(
                                     ui.h5("About", class_="fw-bold mb-2"),
                                     ui.tags.strong("Version: "), "0.19.1", ui.br(),
                                     ui.tags.strong("License: "), "MIT", ui.br(),
-                                    ui.tags.strong("Author: "), "Josh Tyler", ui.br(),
-                                    ui.tags.strong("Institution: "), "Univ. of Bristol",
+                                    ui.tags.strong("Author: "), "Dr. Josh Tyler", ui.br(),
+                                    ui.tags.strong("Institution: "), "University of Bristol",
                                 ),
                                 ui.div(
                                     ui.h5("Resources", class_="fw-bold mb-2"),
@@ -619,23 +635,21 @@ ui.nav_panel(
             ui.layout_columns(
                 ui.card(
                     ui.card_header("Model Configuration"),
+                    ui.output_ui("model_context_note"),
                     ui.layout_columns(
                         ui.div(
-                            ui.input_selectize("pod_pois", "Parameters of Interest (Select 1 or 2)", choices=[], multiple=True),
-                            ui.input_selectize("pod_nuisance", "Nuisance Parameters (Max 2)", choices=[], multiple=True),
+                            ui.input_selectize("pod_pois", "Parameters to plot (Select 1 or 2)", choices=[], multiple=True),
+                            ui.input_selectize("pod_nuisance", "Parameters to integrate over (Max 2)", choices=[], multiple=True),
                         ),
                         ui.div(
                             ui.input_select("pod_model_override", "Model Override", choices=["Auto (Best Fit)", "Polynomial", "Kriging"], selected="Auto (Best Fit)"),
                             ui.panel_conditional("input.pod_model_override === 'Polynomial'",
                                 ui.input_slider("pod_poly_degree", "Polynomial Degree", min=1, max=10, value=3, step=1),
                             ),
-                            ui.input_numeric("pod_threshold", "Detection Threshold", value=0, step=0.1),
                         ),
-                        col_widths=[6, 6],
-                        style="overflow: visible;" # Lets dropdowns escape the columns
+                        col_widths=[6, 6]
                     ),
-                    ui.input_task_button("btn_run_fit", "Fit Model (Fast)", class_="btn-primary w-100", icon=icon_svg("bolt")),
-                    style="min-height: 280px; overflow: visible;" # Lets dropdowns escape the card and guarantees minimum space
+                    ui.input_task_button("btn_run_fit", "Step 1: Fit Physics Model", class_="btn-primary w-100", icon=icon_svg("bolt")),
                 ),
                 col_widths=[-1,10,-1]
             ),
@@ -645,9 +659,32 @@ ui.nav_panel(
         icon=icon_svg("chart-area")
     ),
 
-#### UI - Uncertainty Quantification (Tab 5) ####
+#### UI - PoD Explorer (Tab 5 - NEW) ####
     ui.nav_panel(
-        "Uncertainty Quantification",
+        "PoD Explorer",
+        ui.div(
+            ui.h3("Reliability Explorer", class_="mb-4 text-center"),
+            ui.output_ui("explorer_warnings_ui"), # Shared warning logic
+            ui.layout_columns(
+                ui.div(
+                    ui.card(
+                        ui.card_header("Real-Time Reliability Configuration"),
+                        ui.p("Adjust the detection threshold to see the impact on reliability across the parameter space.", class_="small text-muted mb-3"),
+                        ui.input_slider("pod_threshold_slider", "Detection Threshold", min=0, max=100, value=50, step=0.1),
+                    ),
+                    ui.output_ui("dynamic_slice_sliders"), # The slice sliders move here
+                ),
+                col_widths=[-1,10,-1]
+            ),
+            ui.output_ui("explorer_results_ui"),
+            class_="container-fluid py-3"
+        ),
+        icon=icon_svg("magnifying-glass-chart")
+    ),
+
+#### UI - Uncertainty Quantification (Tab 6 - Renumbered) ####
+    ui.nav_panel(
+        "UQ Analysis",
         ui.div(
             ui.h3("Uncertainty Quantification (PoD)", class_="mb-4 text-center"),
             ui.output_ui("uq_warnings_ui"),
@@ -826,6 +863,15 @@ def server(input, output, session):
             return
         try:
             df = pd.read_csv(file_info[0]["datapath"])
+
+            # --- NEW: Header String Check & Cleaning ---
+            # 1. Strip leading/trailing spaces
+            df.columns = df.columns.str.strip()
+            # 2. Replace any internal spaces with underscores
+            df.columns = df.columns.str.replace(r'\s+', '_', regex=True)
+            # 3. Remove any remaining special characters (keep only letters, numbers, and underscores)
+            df.columns = df.columns.str.replace(r'[^a-zA-Z0-9_]', '', regex=True)
+
             uploaded_data.set(df)
         except Exception:
             uploaded_data.set(None)
@@ -908,21 +954,6 @@ def server(input, output, session):
             )
 
     @reactive.effect
-    @reactive.event(
-        uploaded_data,
-        input.input_cols,
-        input.outcome_col,
-        input.ui_max_gap,
-        input.ui_min_r2,
-        input.ui_avg_cv,
-        input.ui_max_cv
-    )
-    def reset_diagnostics_on_change():
-        """Clears the diagnostic results if the user changes any settings before clicking Run."""
-        diagnostic_table.set(None)
-        validation_passed.set(False)
-
-    @reactive.effect
     @reactive.event(input.btn_run_diagnostics)
     def run_validation_diagnostics():
         df = uploaded_data()
@@ -938,15 +969,13 @@ def server(input, output, session):
             return
 
         try:
+            # NEW: Initialize empty, then add_data with overwrite=True
             study = SimulationStudy(
-                input_cols=selected_inputs,
-                outcome_col=selected_outcome,
-                max_gap_ratio=input.ui_max_gap(),
-                min_r2_score=input.ui_min_r2(),
-                max_avg_cv=input.ui_avg_cv(),
-                max_max_cv=input.ui_max_cv()
+            max_gap_ratio=input.ui_max_gap(), min_r2_score=input.ui_min_r2(),
+            max_avg_cv=input.ui_avg_cv(), max_max_cv=input.ui_max_cv()
             )
-            study.add_data(df)
+            study.add_data(uploaded_data(), outcome_col=selected_outcome, input_cols=selected_inputs, overwrite=True)
+            study_instance.set(study)
             diag_df = study.diagnose()
 
             if diag_df is None:
@@ -1332,6 +1361,11 @@ def server(input, output, session):
         outcome = input.outcome_col()
         if not input_cols_list:
             input_cols_list = [c for c in df.columns if c != outcome]
+
+        # --- ADD THIS NEW SAFETY GUARD ---
+        # Ensure the UI hasn't fallen behind the dataset
+        input_cols_list = [c for c in input_cols_list if c in df.columns]
+
         if not input_cols_list:
             return None
 
@@ -1604,21 +1638,58 @@ def server(input, output, session):
     @reactive.effect
     @reactive.event(uploaded_data, input.input_cols, input.outcome_col)
     def update_study():
+        df = uploaded_data()
         selected_inputs = list(input.input_cols())
         selected_outcome = input.outcome_col()
 
-        if uploaded_data() is None or not selected_inputs or not selected_outcome or (selected_outcome in selected_inputs):
+        # Guard 1: Missing basic selections
+        if df is None or not selected_inputs or not selected_outcome or (selected_outcome in selected_inputs):
             study_instance.set(None)
             return
 
+        # Guard 2: Reactive Race Condition Guard
+        # Ensure the UI selections actually exist in the CURRENT dataset before processing.
+        required_cols = selected_inputs + [selected_outcome]
+        if not all(col in df.columns for col in required_cols):
+            # The UI hasn't caught up to the newly uploaded data yet. Safely abort.
+            study_instance.set(None)
+            return
+
+        # Initialize empty, then add_data with overwrite=True
         study = SimulationStudy(
-            input_cols=selected_inputs, outcome_col=selected_outcome,
             max_gap_ratio=input.ui_max_gap(), min_r2_score=input.ui_min_r2(),
             max_avg_cv=input.ui_avg_cv(), max_max_cv=input.ui_max_cv()
         )
-        study.add_data(uploaded_data())
+        study.add_data(df, outcome_col=selected_outcome, input_cols=selected_inputs, overwrite=True)
         study_instance.set(study)
 
+    # -----------------------------------------------------------------
+    # TWO-TIER RESET LOGIC
+    # -----------------------------------------------------------------
+    @reactive.effect
+    @reactive.event(
+        uploaded_data, input.input_cols, input.outcome_col,
+        input.ui_max_gap, input.ui_min_r2, input.ui_avg_cv, input.ui_max_cv
+    )
+    def reset_core_data_state():
+        """TIER 1: Wipes EVERYTHING when the physical data or core definitions change."""
+        diagnostic_table.set(None)
+        validation_passed.set(False)
+        new_samples.set(None)
+
+        fit_metrics.set(None)
+        uq_metrics.set(None)
+        locked_model_type.set(None)
+        pod_export_data.set(None)
+
+    @reactive.effect
+    @reactive.event(input.pod_pois, input.pod_nuisance)
+    def reset_analysis_results():
+        """TIER 2: Clears just the downstream math when plot targets change, keeping the core study intact."""
+        fit_metrics.set(None)
+        uq_metrics.set(None)
+        locked_model_type.set(None)
+        pod_export_data.set(None)
     @reactive.calc
     def current_study(): return study_instance()
 
@@ -1632,36 +1703,172 @@ def server(input, output, session):
             return None
         return {"min": float(vals.min()), "median": float(vals.median()), "max": float(vals.max())}
 
-    @reactive.effect
-    @reactive.event(input.pod_pois, input.pod_nuisance)
-    def _clear_results_on_variable_change():
-        fit_metrics.set(None)
-        uq_metrics.set(None)
-        locked_model_type.set(None)
-
     # ─────────────────────────────────────────────────────────────────
     # DYNAMIC UI UPDATERS (Prevents resetting)
     # ─────────────────────────────────────────────────────────────────
     @reactive.effect
+    @reactive.event(input.pod_pois, input.pod_nuisance)
+    def handle_mutual_exclusivity():
+        """Prevents the same column from being selected as both PoI and Nuisance."""
+        study = current_study()
+        if study is None:
+            return
+
+        all_inputs = study.inputs
+        selected_pois = list(input.pod_pois())
+        selected_nuis = list(input.pod_nuisance())
+
+        # Update Nuisance choices: All inputs MINUS current POIs
+        nuisance_choices = [c for c in all_inputs if c not in selected_pois]
+        ui.update_selectize("pod_nuisance", choices=nuisance_choices, selected=selected_nuis)
+
+        # Update POI choices: All inputs MINUS current Nuisances
+        poi_choices = [c for c in all_inputs if c not in selected_nuis]
+        ui.update_selectize("pod_pois", choices=poi_choices, selected=selected_pois)
+
+
+
+    @reactive.effect
     @reactive.event(uploaded_data, input.outcome_col)
     def update_pod_ui_choices():
-        df = uploaded_data()
-        if df is not None:
-            cols = list(df.columns)
-            outcome = input.outcome_col()
-            inputs = [c for c in cols if c != outcome] if outcome else cols
+        study = current_study()
+        if study is not None:
+            # We don't need to check df columns anymore, the study knows!
+            ui.update_selectize("pod_pois", choices=study.inputs)
+            ui.update_selectize("pod_nuisance", choices=study.inputs)
 
-            ui.update_selectize("pod_pois", choices=inputs)
-            ui.update_selectize("pod_nuisance", choices=inputs)
+            # --- THE FIX: Restrict Kriging for large datasets ---
+            n_samples = len(study.data)
+            if n_samples > 1000:
+                ui.update_select(
+                    "pod_model_override",
+                    choices=["Auto (Best Fit)", "Polynomial"],
+                    selected="Auto (Best Fit)"
+                )
+            else:
+                ui.update_select(
+                    "pod_model_override",
+                    choices=["Auto (Best Fit)", "Polynomial", "Kriging"],
+                    selected="Auto (Best Fit)"
+                )
 
-            if outcome and outcome in df.columns:
-                vals = pd.to_numeric(df[outcome], errors="coerce").dropna()
-                if not vals.empty:
-                    ui.update_numeric("pod_threshold",
-                                      label=f"Detection Threshold ({outcome})",
-                                      value=round(float(vals.median()), 1),
-                                      min=round(float(vals.min()), 3),
-                                      max=round(float(vals.max()), 3))
+            if study.outcome:
+                # Ask the package for the min/max/median instantly
+                summary = study.get_data_summary(study.outcome)
+                if summary["median"] is not None:
+                    ui.update_slider(
+                        "pod_threshold_slider",
+                        label=f"Detection Threshold ({study.outcome})",
+                        value=round(summary["median"], 2),
+                        min=round(summary["min"], 2),
+                        max=round(summary["max"], 2)
+                    )
+
+    @render.ui
+    def leftover_params_note():
+        study = current_study()
+        if study is None or not study.inputs:
+            return ui.div() # Hide if nothing is configured yet
+
+        selected_pois = list(input.pod_pois()) if input.pod_pois() else []
+        selected_nuis = list(input.pod_nuisance()) if input.pod_nuisance() else []
+
+        # Instantly get unassigned parameters from the package
+        leftovers = study.get_unassigned_parameters(selected_pois, selected_nuis)
+
+        if leftovers:
+            leftovers_str = ", ".join([f"'{c}'" for c in leftovers])
+            return ui.div(
+                ui.span(icon_svg("sliders"), class_="text-primary me-2", style="font-size: 1.1em;"),
+                ui.div(
+                    ui.tags.strong("Interactive Sliders: ", class_="d-block"),
+                    ui.span(f"Unassigned parameters ({leftovers_str}) will appear as interactive sliders after fitting to let you slice the surface.", class_="small text-muted")
+                ),
+                class_="mt-3 p-2 bg-light border rounded d-flex align-items-start shadow-sm"
+            )
+        else:
+            return ui.div(
+                ui.span(icon_svg("check"), class_="text-success me-2", style="font-size: 1.1em;"),
+                ui.div(
+                    ui.tags.strong("All Parameters Assigned", class_="d-block text-success"),
+                    ui.span("No slice sliders will be generated.", class_="small text-muted")
+                ),
+                class_="mt-3 p-2 bg-light border rounded d-flex align-items-start shadow-sm"
+            )
+
+
+    @render.ui
+    def dynamic_slice_sliders():
+        study = current_study()
+
+        # LAZY RENDER: Only show if a model has been successfully fitted!
+        if study is None or fit_metrics() is None:
+            return ui.div()
+
+        selected_pois = list(input.pod_pois()) if input.pod_pois() else []
+        selected_nuis = list(input.pod_nuisance()) if input.pod_nuisance() else []
+
+        leftovers = study.get_unassigned_parameters(selected_pois, selected_nuis)
+
+        if not leftovers:
+            return ui.div()
+
+        sliders = []
+        for col in leftovers:
+            # Get clean bounds from the package
+            summary = study.get_data_summary(col)
+            if summary["min"] is None:
+                continue
+
+            col_min = round(summary["min"], 3)
+            col_max = round(summary["max"], 3)
+            col_med = round(summary["median"], 3)
+
+            step_size = round((col_max - col_min) / 100, 3)
+            if step_size == 0:
+                step_size = 0.001
+
+            sliders.append(
+                ui.input_slider(f"slice_{col}", col, min=col_min, max=col_max, value=col_med, step=step_size)
+            )
+
+        return ui.card(
+            ui.card_header(
+                ui.span(icon_svg("sliders"), class_="text-primary me-2"),
+                "Real-Time Slice Explorer"
+            ),
+            ui.p(
+                "Adjust these constant parameters to instantly update the surface plot below. "
+                "There is no need to re-fit the model.",
+                class_="small text-muted mb-3"
+            ),
+            ui.layout_columns(*sliders, col_widths=6),
+            class_="mt-3 shadow-sm"
+        )
+
+    @render.ui
+    def model_context_note():
+        study = current_study()
+        if study is None:
+            return ui.div()
+
+        # Get all variables the model will be trained on
+        all_vars = study.inputs
+        var_list_str = ", ".join(all_vars)
+        n_vars = len(all_vars)
+
+        # Build a clean, styled banner
+        return ui.div(
+            ui.p(
+                ui.span(icon_svg("circle-info"), class_="text-primary me-2"),
+                ui.tags.strong("Global Model Fit: "),
+                f"The underlying surrogate model is always trained on all {n_vars} initialized parameters ({var_list_str}). "
+                "Use the controls below to dictate how this multi-dimensional surface is sliced and projected for visualisation.",
+                class_="small text-muted mb-0"
+            ),
+            class_="bg-light border rounded p-2 mb-4"
+        )
+
 
     # ─────────────────────────────────────────────────────────────────
     # TAB 4: MODEL FIT LOGIC
@@ -1675,6 +1882,34 @@ def server(input, output, session):
             return ui.layout_columns(ui.div(ui.h5(icon_svg("triangle-exclamation"), " Caution: Validation Issues"),
                        ui.p("The diagnostic tests found potential issues. Results may be unreliable.", class_="mb-0"), class_="alert alert-warning shadow-sm"), col_widths=[-1,10,-1])
         return ui.div()
+
+
+    @render.ui
+    def sobol_indices_ui():
+        data = fit_metrics()
+        if data and "Sobol Indices" in data and data["Sobol Indices"] is not None:
+            sobol_data = data["Sobol Indices"]
+
+            items = []
+            for var, st_val in sobol_data.items():
+                st_pct = st_val * 100
+
+                items.append(
+                    ui.div(
+                        ui.tags.strong(f"{var}: "),
+                        ui.span(f"{st_pct:.1f}%", class_="badge bg-primary rounded-pill fs-6"),
+                        class_="d-flex justify-content-between align-items-center border-bottom py-2 text-muted small"
+                    )
+                )
+
+            return ui.div(
+                ui.h6(icon_svg("chart-pie"), " Parameter Sensitivity (Total Effect)", class_="text-primary mb-1 fw-bold"),
+                ui.p("Percentage of output variance driven by each parameter.", class_="small text-muted mb-2 fst-italic"),
+                ui.div(*items),
+                class_="mb-3 p-3 bg-light rounded border shadow-sm"
+            )
+        return ui.div()
+
 
     @render.ui
     def fit_results_ui():
@@ -1691,24 +1926,59 @@ def server(input, output, session):
                     ui.card(ui.card_header(f"{input.outcome_col()} Surface" if is_multi_dim else "Model Fit"), ui.output_plot("plot_signal"), full_screen=True),
                     col_widths=[6, 6]
                 ),
-                ui.layout_columns(
-                        ui.card(
-                            ui.card_header("Fit Statistics"),
-
-                            ui.output_ui("mathjax_equation_ui"),
-                            ui.output_data_frame("fit_stats_table")
-                        ),
-                    ui.card(
-                        ui.card_header("Export Preliminary Results"),
-                        ui.p("Download the configuration metrics and the mean response curve. Run UQ in Tab 5 to include confidence bounds.", class_="small text-muted mb-3"),
-                        ui.download_button("download_excel_fit", "Download Excel Report", class_="btn-success w-100", icon=icon_svg("file-excel")),
-                        class_="text-center"
-                    ),
-                    col_widths=[8, 4]
+                ui.card(
+                    ui.card_header("Fit Statistics"),
+                    ui.output_ui("sobol_indices_ui"),
+                    ui.output_ui("mathjax_equation_ui"),
+                    ui.output_data_frame("fit_stats_table")
                 )
             ),
             col_widths=[-1,10,-1]
         )
+
+    @render.ui
+    def explorer_warnings_ui():
+        if fit_metrics() is None:
+            return ui.layout_columns(ui.div(ui.p("Please fit a model in the 'Model Fit' tab first.", class_="text-center p-4 text-muted bg-light rounded border")), col_widths=[-1,10,-1])
+        return ui.div()
+
+    @render.ui
+    def explorer_results_ui():
+        if fit_metrics() is None:
+            return ui.div()
+
+        study = current_study()
+        is_multi_dim = len(study.pod_results.get("poi_cols", [])) > 1
+
+        return ui.layout_columns(
+            # --- NEW: Added the Signal Model Plot to the left ---
+            ui.card(
+                ui.card_header(f"{input.outcome_col()} Surface" if is_multi_dim else "Model Fit"),
+                ui.output_plot("plot_signal_explorer", height="450px"),
+                full_screen=True, class_="mt-3"
+            ),
+            # --- The existing PoD Plot on the right ---
+            ui.card(
+                ui.card_header("PoD Surface Heatmap" if is_multi_dim else "PoD Reliability Curve"),
+                ui.output_plot("plot_explorer", height="450px"),
+                full_screen=True, class_="mt-3"
+            ),
+            col_widths=[-1, 5, 5, -1]
+        )
+
+    @render.plot
+    def plot_explorer():
+        """Dedicated PoD plot renderer for Tab 5."""
+        _ = plot_trigger_fit() # Shares the same fast-trigger as Tab 4
+        study = current_study()
+        return study.plots["pod_curve"] if study and "pod_curve" in study.plots else None
+
+    @render.plot
+    def plot_signal_explorer():
+        """Dedicated Signal Model plot renderer for Tab 5."""
+        _ = plot_trigger_fit() # Triggers instantly when sliders move
+        study = current_study()
+        return study.plots["signal_model"] if study and "signal_model" in study.plots else None
 
     @reactive.effect
     @reactive.event(input.btn_run_fit)
@@ -1723,41 +1993,59 @@ def server(input, output, session):
 
         poi_cols, nuisance_cols = list(input.pod_pois()), list(input.pod_nuisance())
         if not poi_cols or len(poi_cols) > 2:
-            ui.notification_show("Select 1 or 2 Parameters of Interest.", type="error")
+            ui.notification_show("Select 1 or 2 Parameters to visualise.", type="error")
             return
 
         override_map = {"Auto (Best Fit)": "auto", "Polynomial": "polynomial", "Kriging": "kriging"}
         model_override = override_map.get(input.pod_model_override(), "auto")
         force_degree = int(input.pod_poly_degree()) if model_override == "polynomial" else None
 
+        slice_values = {}
+        leftovers = [c for c in study.inputs if c not in poi_cols and c not in nuisance_cols]
+        for col in leftovers:
+            try:
+                # Attempt to get the dynamic slider value
+                slice_values[col] = input[f"slice_{col}"]()
+            except Exception:
+                pass # If it hasn't rendered yet, core.py will safely default to the median!
+
         # --- TAB 4 TIME ESTIMATION HEURISTIC ---
-        n_samples = len(study.clean_data)
-        est_sec = 0.5 # base UI overhead
-
-        # 1. Cross-Validation Time
-        if model_override == "auto":
-            est_sec += (n_samples / 1000.0) * 0.5
-            if n_samples <= 1000:
-                est_sec += (n_samples / 500.0)**3 * 0.8
-        elif model_override == "kriging":
-            est_sec += (n_samples / 500.0)**3 * 0.8
-        else:
-            est_sec += (n_samples / 1000.0) * 0.5
-
-        # 2. Single MC Integration Time (Runs once to generate the mean curve)
-        n_grid_points = 900 if len(poi_cols) > 1 else 100
-        n_mc_samples = 3000 if len(nuisance_cols) > 0 else 1 # Default is 3000 outside bootstrap
-        est_sec += (n_grid_points * n_mc_samples * n_samples) * 2e-9
+        # Call the package to get the exact estimate!
+        # n_boot=0 because we are just fitting, n_jobs=1 because fitting is sequential
+        est_sec = study.estimate_compute_time(
+            model_type=model_override,
+            n_boot=0,
+            n_nuisances=len(nuisance_cols),
+            n_jobs=1
+        )
 
         time_str = f"~{max(1, int(est_sec))} seconds" if est_sec < 90 else f"~{int(est_sec / 60)} minutes"
         ui.notification_show(f"Fitting Models (Cross-Validation)... Estimated time: {time_str}", id="fit_toast", duration=None, type="message")
         await asyncio.sleep(0.1)
 
         try:
+            # 1. Run the standard fit (n_boot=0) to establish Layer 1, 2, 3
             results = study.pod(
-                poi_col=poi_cols, threshold=input.pod_threshold(), nuisance_col=nuisance_cols,
+                poi_col=poi_cols, threshold=float(study.get_data_summary(study.outcome)["median"]),
+                nuisance_col=nuisance_cols, slice_values=slice_values,
                 model_override=model_override, force_degree=force_degree, n_boot=0
             )
+
+            # 2. NEW: Trigger the Threshold Spectrum calculation (Layer 4)
+            ui.notification_show("Generating Instant Threshold Spectrum...", id="spec_toast", duration=None)
+            study.compute_pod_spectrum(
+                poi_col=poi_cols, nuisance_col=nuisance_cols,
+                slice_values=slice_values, n_threshold_points=100,
+                model_override=model_override, force_degree=force_degree
+            )
+            ui.notification_remove("spec_toast")
+
+            # 3. Update the Tab 5 slider range based on actual data
+            summary = study.get_data_summary(study.outcome)
+            ui.update_slider("pod_threshold_slider",
+                             min=round(summary["min"], 2),
+                             max=round(summary["max"], 2),
+                             value=round(summary["median"], 2))
 
             mean_model = results["mean_model"]
             locked_model_type.set(mean_model.model_type_)
@@ -1766,41 +2054,9 @@ def server(input, output, session):
             if mean_model.model_type_ == 'Polynomial':
                 locked_model_degree.set(mean_model.model_params_)
                 model_str = f"Polynomial (Degree {mean_model.model_params_})"
-                try:
-                    poly = mean_model.named_steps['polynomialfeatures']
-                    lr = mean_model.named_steps['linearregression']
-
-                    # 1. Format names for beautiful LaTeX (\mathrm prevents italics)
-                    latex_features = [f"\\mathrm{{{col}}}" for col in poi_cols + nuisance_cols]
-                    latex_terms = poly.get_feature_names_out(latex_features)
-
-                    # 2. Extract coefficients
-                    coefs = np.atleast_1d(lr.coef_).flatten()
-                    intercept = float(lr.intercept_[0] if isinstance(lr.intercept_, np.ndarray) else lr.intercept_)
-
-                    # 3. Build LaTeX Equation
-                    eq_parts = [f"{intercept:.4g}"]
-                    for c, t in zip(coefs, latex_terms):
-                        if c == 0 or t == "1":
-                            continue
-                        sign = "+" if c > 0 else "-"
-                        clean_term = t.replace(" ", " \\cdot ")
-                        eq_parts.append(f"{sign} {abs(c):.4g} {clean_term}")
-                    equation_latex = f"$$ \\mathrm{{{input.outcome_col()}}} = {' '.join(eq_parts)} $$"
-
-                    # 4. Build Plain Text Equation for Excel
-                    plain_terms = poly.get_feature_names_out(poi_cols + nuisance_cols)
-                    plain_parts = [f"{intercept:.4g}"]
-                    for c, t in zip(coefs, plain_terms):
-                        if c == 0 or t == "1":
-                            continue
-                        sign = "+" if c > 0 else "-"
-                        plain_parts.append(f"{sign} {abs(c):.4g} * {t.replace(' ', ' * ')}")
-                    equation_plain = " ".join(plain_parts)
-
-                except Exception:
-                    equation_latex = "$$ \\text{Equation Extraction Failed} $$"
-                    equation_plain = "Extraction Failed"
+                # Core package now provides the formatted string directly!
+                equation_latex = f"$$ {results.get('equation', 'Equation Not Available')} $$"
+                equation_plain = results.get('equation', 'Equation Not Available')
             else:
                 locked_model_degree.set(None)
                 model_str = "Kriging (Gaussian Process)"
@@ -1812,19 +2068,30 @@ def server(input, output, session):
             best_mse_str = f"{cv_scores.get(used_key, np.nan):.2e}"
 
             dist_name = results['dist_info'][0].capitalize()
-            dist_params = [round(p, 4) for p in results['dist_info'][1]]
+            dist_params = [round(float(p), 4) for p in results['dist_info'][1]]
+
+            slice_display = ", ".join(leftovers) if leftovers else "None"
 
             metrics = {
                 "Parameter(s) of Interest": ", ".join(poi_cols),
                 "Nuisance Parameter(s)": ", ".join(nuisance_cols) if nuisance_cols else "None",
+                "Sliced Parameter(s)": slice_display,
                 "Total Samples (N)": len(study.clean_data),
                 "Selected Model": model_str,
-                "Model Equation": equation_plain, # Stays here for Excel
-                "LaTeX Equation": equation_latex, # Used for UI
+                "Model Equation": equation_plain,
+                "LaTeX Equation": equation_latex,
                 "Model Fit (CV MSE)": best_mse_str,
                 "Smoothing Bandwidth": f"{results['bandwidth']:.4f}",
                 "Error Distribution": f"{dist_name} (Params: {tuple(dist_params)})",
+                "Sobol Indices": results.get("sobol_indices")
             }
+
+            # 2. Add the nicely formatted, rounded rows specifically for the table
+            sobol_raw = results.get("sobol_indices")
+            if sobol_raw:
+                for var, val in sobol_raw.items():
+                    metrics[f"Sensitivity ({var})"] = f"{val * 100:.2f}%"
+
             fit_metrics.set(metrics)
 
             # --- EXPORT PRELIMINARY DATA ---
@@ -1847,6 +2114,82 @@ def server(input, output, session):
             ui.notification_show(f"Fit Failed: {str(e)}", type="error")
         finally:
             ui.notification_remove("fit_toast")
+
+
+    @reactive.effect
+    def realtime_slice_update():
+        """Listens to the dynamic sliders and instantly updates the plots without refitting."""
+        study = current_study()
+        if study is None or fit_metrics() is None:
+            return
+
+        poi_cols = study.pod_results.get("poi_cols", [])
+        nuis_cols = study.pod_results.get("nuisance_cols", [])
+
+        leftovers = study.get_unassigned_parameters(poi_cols, nuis_cols)
+        if not leftovers:
+            return
+
+        slice_values = {}
+        for col in leftovers:
+            try:
+                val = input[f"slice_{col}"]()
+                slice_values[col] = val if val is not None else study.get_data_summary(col)["median"]
+            except Exception:
+                slice_values[col] = study.get_data_summary(col)["median"]
+
+        if not slice_values:
+            return
+
+        # 1. Update the math instantly using the Layer 3 Cache
+        study.update_slice(slice_values)
+
+        # 2. Re-generate the visualisations in memory
+        study.visualise(show=False)
+
+        # 3. Trigger the UI to redraw (Isolated to prevent infinite loops!)
+        with reactive.isolate():
+            current_trigger = plot_trigger_fit()
+        plot_trigger_fit.set(current_trigger + 1)
+
+        # 4. Clear UQ bounds
+        uq_metrics.set(None)
+
+
+    @reactive.effect
+    @reactive.event(input.pod_threshold_slider)
+    def realtime_threshold_update():
+        """Instantly updates plots using Layer 4 Spectrum Interpolation."""
+        study = current_study()
+        if study is None or fit_metrics() is None or not study.pod_results:
+            return
+
+        # 1. Grab the currently active slice values so they don't reset!
+        current_slices = study.pod_results.get("slice_values", {})
+
+        # 2. Lock the model so it doesn't attempt to run auto-CV again
+        current_model = study.pod_results["mean_model"]
+        override = "polynomial" if current_model.model_type_ == "Polynomial" else "kriging"
+        degree = current_model.model_params_ if current_model.model_type_ == "Polynomial" else None
+
+        # 3. Re-run .pod() with the new threshold
+        # Since Layer 4 is primed, this takes microseconds.
+        study.pod(
+            poi_col=list(input.pod_pois()),
+            threshold=input.pod_threshold_slider(),
+            nuisance_col=list(input.pod_nuisance()),
+            slice_values=current_slices,
+            model_override=override,
+            force_degree=degree,
+            n_boot=0
+        )
+
+        study.visualise(show=False)
+
+        with reactive.isolate():
+            current_trigger = plot_trigger_fit()
+        plot_trigger_fit.set(current_trigger + 1)
+
 
     # ─────────────────────────────────────────────────────────────────
     # TAB 5: UQ LOGIC
@@ -1888,7 +2231,7 @@ def server(input, output, session):
                         ui.output_plot("plot_curve", height="400px"),
                         full_screen=True, class_="mt-3"
                     ),
-                    col_widths=[6, 6]
+                    col_widths=[6,6]
                 ),
                 # --- METRICS & EXPORT ---
                 ui.layout_columns(
@@ -1916,23 +2259,26 @@ def server(input, output, session):
         poi_cols, nuisance_cols = list(input.pod_pois()), list(input.pod_nuisance())
         actual_cores = max((os.cpu_count() or 1) - 1, 1) if input.pod_parallel() else 1
 
+        slice_values = {}
+        leftovers = [c for c in study.inputs if c not in poi_cols and c not in nuisance_cols]
+        for col in leftovers:
+            try:
+                slice_values[col] = input[f"slice_{col}"]()
+            except Exception:
+                pass
+
         # --- TAB 5 TIME ESTIMATION HEURISTIC ---
-        n_samples = len(study.clean_data)
+        # Get the currently locked model type
+        override = "polynomial" if locked_model_type() == "Polynomial" else "kriging"
 
-        # 1. Model Refitting Time (Per Iteration)
-        if locked_model_type() == 'Kriging':
-            base_fit_sec = 0.05 + (n_samples / 500.0)**3 * 0.1
-        else:
-            base_fit_sec = 0.005
+        # Call the package!
+        est_seconds = study.estimate_compute_time(
+            model_type=override,
+            n_boot=input.pod_n_boot(),
+            n_nuisances=len(nuisance_cols),
+            n_jobs=-1 if input.pod_parallel() else 1
+        )
 
-        # 2. Monte Carlo Integration & Variance Prediction Time (Per Iteration)
-        n_grid_points = 900 if len(poi_cols) > 1 else 100
-        n_mc_samples = 1000 if len(nuisance_cols) > 0 else 1 # Hardcoded to 1000 in bootstrap loop
-
-        # Complexity is driven by distance matrix: grid_points * mc_samples * training_samples
-        eval_sec = (n_grid_points * n_mc_samples * n_samples) * 2e-9
-
-        est_seconds = (input.pod_n_boot() / actual_cores) * (base_fit_sec + eval_sec) * 1.15
         time_str = f"~{max(1, int(est_seconds))} seconds" if est_seconds < 90 else f"~{int(est_seconds / 60)} minutes"
 
         ui.notification_show(f"Running Bootstrap on {actual_cores} core(s). Estimated time: {time_str}...", id="uq_toast", duration=None, type="message")
@@ -1941,7 +2287,10 @@ def server(input, output, session):
         try:
             override = "polynomial" if locked_model_type() == "Polynomial" else "kriging"
             results = study.pod(
-                poi_col=poi_cols, threshold=input.pod_threshold(), nuisance_col=nuisance_cols,
+                poi_col=poi_cols,
+                threshold=input.pod_threshold_slider(),
+                nuisance_col=nuisance_cols,
+                slice_values=slice_values,
                 model_override=override, force_degree=locked_model_degree(),
                 n_boot=input.pod_n_boot(), n_jobs=-1 if input.pod_parallel() else 1
             )
@@ -2030,8 +2379,7 @@ def server(input, output, session):
         data = fit_metrics()
         if data is None:
             return None
-        # Hide the equations from the generic UI table
-        display_data = {k: v for k, v in data.items() if k not in ["LaTeX Equation", "Model Equation"]}
+        display_data = {k: v for k, v in data.items() if k not in ["LaTeX Equation", "Model Equation", "Sobol Indices"]}
         return render.DataGrid(pd.DataFrame(list(display_data.items()), columns=["Metric", "Value"]), width="100%", filters=False)
 
     @render.data_frame
@@ -2073,32 +2421,6 @@ def server(input, output, session):
                 df_curve.to_excel(writer, sheet_name="PoD Curve Data", index=False)
 
         # Return the bytes to trigger the download
-        yield output.getvalue()
-
-    @render.download(filename="digiqual_preliminary_report.xlsx")
-    def download_excel_fit():
-        """
-        Generates the Excel workbook for Tab 4 (without UQ metrics).
-        """
-        import io
-        output = io.BytesIO()
-
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            # --- TAB 1: Summary Metrics ---
-            fit_data = fit_metrics()
-            if fit_data:
-                # Strip out the LaTeX, but keep "Model Equation" (the plain text)
-                excel_data = {k: v for k, v in fit_data.items() if k != "LaTeX Equation"}
-
-                # Use the filtered excel_data to build the DataFrame
-                df_metrics = pd.DataFrame(list(excel_data.items()), columns=["Metric", "Value"])
-                df_metrics.to_excel(writer, sheet_name="Summary Metrics", index=False)
-
-            # --- TAB 2: Full Curve Data ---
-            df_curve = pod_export_data()
-            if df_curve is not None:
-                df_curve.to_excel(writer, sheet_name="PoD Curve Data", index=False)
-
         yield output.getvalue()
 
 #### App ####
