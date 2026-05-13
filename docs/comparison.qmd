@@ -53,10 +53,8 @@ np.random.seed(42)
 df = generate_lhs(ranges=vars_df, n=150)  # 150 points for 3D space
 df["Signal"] = apply_physics(df)
 
-study = SimulationStudy(
-    input_cols=["Length", "Angle", "Roughness"], outcome_col="Signal"
-)
-study.add_data(df)
+study = SimulationStudy()
+study.add_data(df, outcome_col="Signal")
 ```
 
 ### 2. The Classical Approach (Linear)

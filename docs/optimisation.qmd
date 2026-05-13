@@ -98,9 +98,7 @@ from digiqual.core import SimulationStudy
 ranges = {"Length": (0.0, 10.0), "Angle": (-45.0, 45.0), "Roughness": (0, 1)}
 
 # Initialise
-study = SimulationStudy(
-    input_cols=["Length", "Angle", "Roughness"], outcome_col="Signal"
-)
+study = SimulationStudy()
 ```
 
 ### 3. Run Optimisation
@@ -115,6 +113,7 @@ study.optimise(
     n_step=10,  # Refinement batch size
     max_iter=5,  # Safety limit for the loops
     max_hours=1.5,  # Time limit to safely stop after 1.5 hours
+    outcome_col="Signal"
 )
 ```
 
@@ -181,7 +180,7 @@ You just provide the name of the MATLAB file. The Executor builds the headless t
 from digiqual.executors import MatlabExecutor
 
 executor = MatlabExecutor(wrapper_name="matlab_wrapper")
-study.optimise(executor=executor, ranges=ranges)
+study.optimise(executor=executor, ranges=ranges, outcome_col="Signal")
 ```
 
 ---
@@ -237,5 +236,5 @@ from digiqual.executors import CLIExecutor
 cmd_template = "python run_ansys_simulation.py {input} {output}"
 
 executor = CLIExecutor(command_template=cmd_template)
-study.optimise(executor=executor, ranges=ranges)
+study.optimise(executor=executor, ranges=ranges, outcome_col="Signal")
 ```
