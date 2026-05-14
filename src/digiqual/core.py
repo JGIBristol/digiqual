@@ -988,7 +988,8 @@ class SimulationStudy:
             self.plots["pod_curve"] = plot_pod_surface(
                 poi_grids=res["poi_grids"],
                 pod_curve=res["curves"]["pod"],
-                poi_names=poi_cols
+                poi_names=poi_cols,
+                ci_lower=res["curves"]["ci_lower"] # <-- ADD THIS
             )
 
         # Handle Saving

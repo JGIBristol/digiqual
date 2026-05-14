@@ -155,10 +155,12 @@ def plot_pod_surface(
     poi_grids: list,
     pod_curve: np.ndarray,
     poi_names: list,
+    ci_lower: Optional[np.ndarray] = None, # <-- NEW ARGUMENT
     ax: Optional[plt.Axes] = None
 ) -> plt.Axes:
     """
     Plots a 2D heatmap / contour for multi-dimensional PoD (2 Parameters of Interest).
+    Draws the mean a90 contour by default, or the true a90/95 contour if ci_lower is provided.
     """
     if ax is None:
         fig, ax = plt.subplots(figsize=(8,6))
@@ -168,13 +170,20 @@ def plot_pod_surface(
     grid_x, grid_y = np.meshgrid(poi_grids[0], poi_grids[1], indexing='ij')
     Z = pod_curve.reshape(len(poi_grids[0]), len(poi_grids[1]))
 
+    # Always shade the background using the Mean PoD surface
     c = ax.contourf(grid_x, grid_y, Z, levels=np.linspace(0, 1.0, 11), cmap='viridis', alpha=0.9)
     fig.colorbar(c, ax=ax, label="Probability of Detection")
 
     try:
-        # Avoid error if no contours generated
-        ax.contour(grid_x, grid_y, Z, levels=[0.90], colors='white', linewidths=2, linestyles='--')
-        ax.plot([], [], color='white', linestyle='--', linewidth=2, label='a90/95 Contour')
+        if ci_lower is not None:
+            # UQ TAB: Draw the a90/95 contour based on the LOWER BOUND surface
+            Z_lower = ci_lower.reshape(len(poi_grids[0]), len(poi_grids[1]))
+            ax.contour(grid_x, grid_y, Z_lower, levels=[0.90], colors='#d13438', linewidths=2, linestyles='--')
+            ax.plot([], [], color='#d13438', linestyle='--', linewidth=2, label='a90/95 Contour')
+        else:
+            # EXPLORER TAB: Draw the simple a90 contour based on the MEAN surface
+            ax.contour(grid_x, grid_y, Z, levels=[0.90], colors='white', linewidths=2, linestyles='--')
+            ax.plot([], [], color='white', linestyle='--', linewidth=2, label='a90 Contour (Mean)')
     except Exception:
         pass
 
@@ -214,9 +223,6 @@ def plot_signal_surface(
 
     # 2. Plot the fitted mean surface
     ax.plot_surface(grid_x, grid_y, Z, cmap='viridis', alpha=0.7, edgecolor='none')
-
-    # 3. Plot the raw simulation data (REMOVED to clean up the plot)
-    # ax.scatter(X_raw[:, 0], X_raw[:, 1], y_raw, color='grey', s=20, label='Simulation Data')
 
     # 4. Plot the threshold plane (Lowered alpha to 0.15 for more transparency)
     Z_thresh = np.full_like(Z, threshold)
