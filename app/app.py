@@ -1787,52 +1787,6 @@ def server(input, output, session):
         ui.update_selectize("pod_pois", choices=poi_choices, selected=selected_pois)
 
 
-
-    @reactive.effect
-    @reactive.event(uploaded_data, input.input_cols, input.outcome_col)
-    def update_pod_ui_choices():
-        study = current_study()
-        if study is not None:
-            # FIX: Pull choices directly from the UI to ensure instantaneous updates
-            valid_inputs = list(input.input_cols())
-
-            ui.update_selectize("pod_pois", choices=valid_inputs)
-            ui.update_selectize("pod_nuisance", choices=valid_inputs)
-
-            # --- THE FIX: Restrict Kriging for large datasets ---
-            n_samples = len(study.data)
-            if n_samples > 1000:
-                ui.update_select(
-                    "pod_model_override",
-                    choices=["Auto (Best Fit)", "Polynomial"],
-                    selected="Auto (Best Fit)"
-                )
-            else:
-                ui.update_select(
-                    "pod_model_override",
-                    choices=["Auto (Best Fit)", "Polynomial", "Kriging"],
-                    selected="Auto (Best Fit)"
-                )
-
-            if study.outcome:
-                # Ask the package for the min/max/median instantly
-                summary = study.get_data_summary(study.outcome)
-                if summary["median"] is not None:
-                    # Calculate exactly 100 steps across the data range
-                    s_min, s_max = summary["min"], summary["max"]
-                    step_size = (s_max - s_min) / 100.0
-                    if step_size == 0:
-                        step_size = 0.001
-
-                    ui.update_slider(
-                        "pod_threshold_slider",
-                        label=f"Detection Threshold ({study.outcome})",
-                        value=round(summary["median"], 4), # Increased precision for tiny ranges
-                        min=round(s_min, 4),
-                        max=round(s_max, 4),
-                        step=round(step_size, 4) # Inject the dynamic step size!
-                    )
-
     @render.ui
     def leftover_params_note():
         study = current_study()
@@ -2112,19 +2066,6 @@ def server(input, output, session):
                 model_override=model_override, force_degree=force_degree
             )
             ui.notification_remove("spec_toast")
-
-            # 3. Update the Tab 5 slider range based on actual data
-            summary = study.get_data_summary(study.outcome)
-            s_min, s_max = summary["min"], summary["max"]
-            step_size = (s_max - s_min) / 100.0
-            if step_size == 0:
-                step_size = 0.001
-
-            ui.update_slider("pod_threshold_slider",
-                             min=round(s_min, 4),
-                             max=round(s_max, 4),
-                             value=round(summary["median"], 4),
-                             step=round(step_size, 4)) # Inject the dynamic step size!
 
             mean_model = results["mean_model"]
             locked_model_type.set(mean_model.model_type_)
