@@ -325,7 +325,7 @@ window.Quarto = {
 <section id="setup-data-generation" class="level3">
 <h3 class="anchored" data-anchor-id="setup-data-generation">1. Setup &amp; Data Generation</h3>
 <p>First, we will simulate a physics scenario where the signal response grows quadratically and the noise increases with the flaw size.</p>
-<div id="df2aea8c" class="cell" data-execution_count="1">
+<div id="b6cde87f" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -398,7 +398,7 @@ window.Quarto = {
 Validation passed. 150 valid rows ready.
 --- Starting Linear a-hat vs a Analysis (PoI: Length) ---
 Running Bootstrap (1000 iterations) to establish classical confidence bounds...
-   -&gt; Classical a90/95 Reliability Index: 7.901 mm
+   -&gt; Classical a90/95 Reliability Index: 7.906 mm
 --- Linear Analysis Complete ---</code></pre>
 </div>
 </div>
@@ -464,12 +464,12 @@ Tip
 <div class="cell-output cell-output-stderr">
 <pre><code>[Parallel(n_jobs=11)]: Using backend MultiprocessingBackend with 11 concurrent workers.
 [Parallel(n_jobs=11)]: Done  19 tasks      | elapsed:   11.5s
-[Parallel(n_jobs=11)]: Done 140 tasks      | elapsed:   13.3s
-[Parallel(n_jobs=11)]: Done 343 tasks      | elapsed:   16.7s
-[Parallel(n_jobs=11)]: Done 626 tasks      | elapsed:   21.4s</code></pre>
+[Parallel(n_jobs=11)]: Done 140 tasks      | elapsed:   13.9s
+[Parallel(n_jobs=11)]: Done 343 tasks      | elapsed:   18.0s
+[Parallel(n_jobs=11)]: Done 626 tasks      | elapsed:   23.7s</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>[Parallel(n_jobs=11)]: Done 1000 out of 1000 | elapsed:   27.6s finished</code></pre>
+<pre><code>[Parallel(n_jobs=11)]: Done 1000 out of 1000 | elapsed:   31.4s finished</code></pre>
 </div>
 <div id="fig-generalised" class="quarto-layout-panel">
 <figure class="quarto-float quarto-float-fig figure">
@@ -478,19 +478,19 @@ Tip
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
 <pre><code>--- Starting Reliability Analysis (PoIs: ['Length'] - Nuisance: ['Angle', 'Roughness']) ---
 1. Training all surrogate models (Cache Miss)...
--&gt; Selected Model: Polynomial (Degree 2)
+-&gt; Selected Model: Kriging (Gaussian Process)
 2. Fitting Variance Model &amp; Inferring Distribution (Cache Miss)...
    -&gt; Optimizing bandwidth via LOO-CV...
 -&gt; Calculating Total-Order Sobol Indices...
-   -&gt; Smoothing Bandwidth: 44.4692
-   -&gt; Selected Distribution: norm
+   -&gt; Smoothing Bandwidth: 19.1575
+   -&gt; Selected Distribution: logistic
 3. Integrating PoD Curve from Scratch (Cache Miss)...
 4. Running Bootstrap (1000 iterations on 11 cores)...</code></pre>
 </div>
 </div>
 <div class="quarto-layout-row">
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<pre><code>   -&gt; a90/95 Reliability Index: 5.411
+<pre><code>   -&gt; a90/95 Reliability Index: 5.329
 --- Analysis Complete ---</code></pre>
 </div>
 </div>
@@ -622,7 +622,7 @@ Figure&nbsp;2: Generalised Relaxed Analysis Results
 <span id="cb10-74"><a href="#cb10-74" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Difference in critical sizing: </span><span class="sc">{</span>diff<span class="sc">:.2f}</span><span class="ss"> mm"</span>)</span>
 <span id="cb10-75"><a href="#cb10-75" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">IndexError</span>:</span>
 <span id="cb10-76"><a href="#cb10-76" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"Curves did not reach 90</span><span class="sc">% r</span><span class="st">eliability."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div id="cell-fig-comparison" class="cell quarto-layout-panel" data-execution_count="4" data-layout-ncol="1">
+<div id="cell-fig-comparison" class="cell quarto-layout-panel" data-layout-ncol="1" data-execution_count="4">
 <div class="quarto-layout-row">
 <div class="cell-output cell-output-display quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
 <div id="fig-comparison" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -641,10 +641,10 @@ Figure&nbsp;3: Head-to-Head Reliability Comparison
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
 <pre><code>--- Reliability Summary ---
 Target Threshold: 15
-Classical a90/95 (Estimated):  7.96 mm
-Generalised a90/95 (Estimated): 5.48 mm
+Classical a90/95 (Estimated):  7.99 mm
+Generalised a90/95 (Estimated): 5.40 mm
 
-Difference in critical sizing: 2.48 mm</code></pre>
+Difference in critical sizing: 2.59 mm</code></pre>
 </div>
 </div>
 </div>
