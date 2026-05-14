@@ -677,6 +677,14 @@ ui.nav_panel(
 #### Server Definition ####
 def server(input, output, session):
 
+    def create_warning_card(message: str):
+        return ui.layout_columns(
+            ui.div(
+                ui.p(message, class_="text-center p-4 text-muted bg-light rounded border")
+            ),
+            col_widths=[-1,10,-1]
+        )
+
 #### Server - LHS generation (Tab 2) ####
 
     active_row_ids = reactive.Value([0])
@@ -1613,8 +1621,6 @@ def server(input, output, session):
     fit_metrics = reactive.value(None)
     uq_metrics = reactive.value(None)
     pod_export_data = reactive.value(None)
-    plot_trigger_fit = reactive.value(0)
-    plot_trigger_uq = reactive.value(0)
 
     @reactive.effect
     @reactive.event(uploaded_data, input.input_cols, input.outcome_col)
@@ -1899,7 +1905,7 @@ def server(input, output, session):
     @render.ui
     def fit_warnings_ui():
         if uploaded_data() is None:
-            return ui.layout_columns(ui.div(ui.p("Please upload data in the 'Simulation Diagnostics' tab.", class_="text-center p-4 text-muted bg-light rounded border")), col_widths=[-1,10,-1])
+            return create_warning_card("Please upload data in the 'Simulation Diagnostics' tab.")
 
         # --- NEW: Check if diagnostics have actually been run! ---
         if diagnostic_table() is None:
@@ -1966,7 +1972,7 @@ def server(input, output, session):
     @render.ui
     def explorer_warnings_ui():
         if fit_metrics() is None:
-            return ui.layout_columns(ui.div(ui.p("Please fit a model in the 'Model Fit' tab first.", class_="text-center p-4 text-muted bg-light rounded border")), col_widths=[-1,10,-1])
+            return create_warning_card("Please fit a model in the 'Model Fit' tab first.")
         return ui.div()
 
     @render.ui
@@ -1995,17 +2001,8 @@ def server(input, output, session):
 
     @render.plot
     def plot_explorer():
-        """Dedicated PoD plot renderer for Tab 5."""
-        _ = plot_trigger_fit() # Shares the same fast-trigger as Tab 4
-        study = current_study()
-        return study.plots["pod_curve"] if study and "pod_curve" in study.plots else None
-
-    @render.plot
-    def plot_signal_explorer():
-        """Dedicated Signal Model plot renderer for Tab 5."""
-        _ = plot_trigger_fit() # Triggers instantly when sliders move
-        study = current_study()
-        return study.plots["signal_model"] if study and "signal_model" in study.plots else None
+        # Tab 5's PoD curve is just the "pod_curve" dictionary entry
+        return _render_study_plot("pod_curve")
 
     @reactive.effect
     @reactive.event(input.btn_run_fit)
@@ -2127,7 +2124,7 @@ def server(input, output, session):
             pod_export_data.set(pd.DataFrame(export_data))
 
             study.visualise(show=False)
-            plot_trigger_fit.set(plot_trigger_fit() + 1)
+            global_plot_trigger.set(global_plot_trigger() + 1)
             ui.notification_show("Model Fit Complete. Proceed to Uncertainty Quantification.", type="success")
 
         except Exception as e:
@@ -2169,8 +2166,7 @@ def server(input, output, session):
 
         # 3. Trigger the UI to redraw (Isolated to prevent infinite loops!)
         with reactive.isolate():
-            current_trigger = plot_trigger_fit()
-        plot_trigger_fit.set(current_trigger + 1)
+            global_plot_trigger.set(global_plot_trigger() + 1)
 
         # 4. Clear UQ bounds
         uq_metrics.set(None)
@@ -2207,8 +2203,7 @@ def server(input, output, session):
         study.visualise(show=False)
 
         with reactive.isolate():
-            current_trigger = plot_trigger_fit()
-        plot_trigger_fit.set(current_trigger + 1)
+            global_plot_trigger.set(global_plot_trigger() + 1)
 
 
     # ─────────────────────────────────────────────────────────────────
@@ -2217,7 +2212,7 @@ def server(input, output, session):
     @render.ui
     def uq_warnings_ui():
         if locked_model_type() is None:
-            return ui.layout_columns(ui.div(ui.p("Please fit a model in the 'Model Fit' tab first.", class_="text-center p-4 text-muted bg-light rounded border")), col_widths=[-1,10,-1])
+            return create_warning_card("Please fit a model in the 'Model Fit' tab first.")
 
         model_str = f"Polynomial (Degree {locked_model_degree()})" if locked_model_type() == 'Polynomial' else "Kriging"
         return ui.layout_columns(
@@ -2338,7 +2333,7 @@ def server(input, output, session):
             pod_export_data.set(pd.DataFrame(export_data))
 
             study.visualise(show=False)
-            plot_trigger_uq.set(plot_trigger_uq() + 1)
+            global_plot_trigger.set(global_plot_trigger() + 1)
             ui.notification_show("Uncertainty Quantification Complete!", type="success")
 
         except Exception as e:
@@ -2369,30 +2364,33 @@ def server(input, output, session):
             )
         return ui.div()
 
+    global_plot_trigger = reactive.value(0)
+    # 2. Consolidate the renderers into reusable functions
+    def _render_study_plot(plot_key: str):
+        _ = global_plot_trigger()  # Listen to the single global trigger
+        study = current_study()
+        return study.plots[plot_key] if study and plot_key in study.plots else None
 
     @render.plot
     def plot_model_selection():
-        _ = plot_trigger_fit()
-        study = current_study()
-        return study.plots["model_selection"] if study and "model_selection" in study.plots else None
+        return _render_study_plot("model_selection")
 
     @render.plot
     def plot_signal():
-        _ = plot_trigger_fit()
-        study = current_study()
-        return study.plots["signal_model"] if study and "signal_model" in study.plots else None
+        return _render_study_plot("signal_model")
 
     @render.plot
     def plot_signal_uq():
-        _ = plot_trigger_uq()
-        study = current_study()
-        return study.plots["signal_model"] if study and "signal_model" in study.plots else None
+        return _render_study_plot("signal_model")
+
+    @render.plot
+    def plot_signal_explorer():
+        return _render_study_plot("signal_model")
 
     @render.plot
     def plot_curve():
-        _ = plot_trigger_uq()
-        study = current_study()
-        return study.plots["pod_curve"] if study and "pod_curve" in study.plots else None
+        # Tab 6's PoD curve is also just the "pod_curve" dictionary entry
+        return _render_study_plot("pod_curve")
 
     @render.data_frame
     def fit_stats_table():
