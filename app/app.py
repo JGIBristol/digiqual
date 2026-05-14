@@ -1377,7 +1377,8 @@ def server(input, output, session):
         fig, axes = plt.subplots(
             nrows, ncols,
             figsize=(5 * ncols, 3 * nrows),
-            squeeze=False
+            squeeze=False,
+            constrained_layout=True
         )
 
         for idx, col in enumerate(input_cols_list):
@@ -1417,7 +1418,6 @@ def server(input, output, session):
             row, c = divmod(idx, ncols)
             axes[row][c].set_visible(False)
 
-        fig.tight_layout(pad=2.0, h_pad=3.0)
         return fig
 
     @render.ui
