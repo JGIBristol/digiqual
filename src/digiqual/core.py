@@ -15,12 +15,6 @@ class SimulationStudy:
     """
     A workflow manager for simulation reliability assessment.
 
-    Args:
-        max_gap_ratio (float, optional): Max allowable gap between data points as a fraction of the total range. Defaults to 0.20.
-        min_r2_score (float, optional): Minimum cross-validated R-squared score required for the signal fit. Defaults to 0.50.
-        max_avg_cv (float, optional): Max allowable average relative width of the bootstrap predictions. Defaults to 0.15.
-        max_max_cv (float, optional): Max allowable relative width at the tail ends (10th/90th percentiles). Defaults to 0.30.
-
     Attributes:
         inputs (List[str]): List of input variable names.
         outcome (str): Name of the outcome variable.
@@ -34,36 +28,24 @@ class SimulationStudy:
         models_cache (Dict): Cached mean models to prevent redundant fitting.
         variance_cache (Dict): Cached variance models (residuals/bandwidth).
         pod_curves_cache (Dict): Cached integrated PoD curves.
+        threshold_spectrum_cache (Dict): Cached threshold spectrum.
 
     Examples:
         ```python
         from digiqual.core import SimulationStudy
 
-        # Initialize with stricter diagnostic thresholds
-        study = SimulationStudy(
-            max_gap_ratio=0.10,
-            min_r2_score=0.75
-        )
+        # 1. Clean Initialization
+        study = SimulationStudy()
 
-        # Add data (automatically infers input columns)
+        # 2. Add data (automatically infers input columns)
         study.add_data(df, outcome_col='Signal')
+
+        # 3. Run diagnostics with custom strict thresholds
+        results = study.diagnose(max_gap_ratio=0.10, min_r2_score=0.75)
         ```
     """
-
 #### Initialisation ####
-    def __init__(
-        self,
-        max_gap_ratio: float = 0.20,
-        min_r2_score: float = 0.50,
-        max_avg_cv: float = 0.15,
-        max_max_cv: float = 0.30
-    ):
-        # Save custom diagnostic thresholds
-        self.max_gap_ratio = max_gap_ratio
-        self.min_r2_score = min_r2_score
-        self.max_avg_cv = max_avg_cv
-        self.max_max_cv = max_max_cv
-
+    def __init__(self):
         # Internal Data State
         self.inputs: List[str] = []
         self.outcome: str = ""
@@ -229,7 +211,13 @@ class SimulationStudy:
             self.clean_data = pd.DataFrame()
 
 #### Checking Sample Sufficiency ####
-    def diagnose(self) -> pd.DataFrame:
+    def diagnose(
+        self,
+        max_gap_ratio: float = 0.20,
+        min_r2_score: float = 0.50,
+        max_avg_cv: float = 0.15,
+        max_max_cv: float = 0.30
+    ) -> pd.DataFrame:
         """
         Runs statistical diagnostics to evaluate if the current sample size is sufficient.
         """
@@ -246,19 +234,22 @@ class SimulationStudy:
 
         print("Checking sample sufficiency...")
 
-        # Pass the class-level thresholds into the diagnostic function
         self.sufficiency_results = sample_sufficiency(
             self.clean_data, self.inputs, self.outcome,
             skip_validation=True,
-            max_gap_ratio=self.max_gap_ratio,
-            min_r2_score=self.min_r2_score,
-            max_avg_cv=self.max_avg_cv,
-            max_max_cv=self.max_max_cv
+            max_gap_ratio=max_gap_ratio,
+            min_r2_score=min_r2_score,
+            max_avg_cv=max_avg_cv,
+            max_max_cv=max_max_cv
         )
         return self.sufficiency_results
 
 #### Adaptive Refinement ####
-    def refine(self, n_points: int = 10) -> pd.DataFrame:
+    def refine(self, n_points: int = 10,
+        max_gap_ratio: float = 0.20,
+        min_r2_score: float = 0.50,
+        max_avg_cv: float = 0.15,
+        max_max_cv: float = 0.30) -> pd.DataFrame:
         """
         Identifies gaps or high-variance regions and suggests new simulation points.
 
@@ -289,10 +280,10 @@ class SimulationStudy:
             outcome_col=self.outcome,
             n_new_per_fix=n_points,
             failed_data=self.removed_data,
-            max_gap_ratio=self.max_gap_ratio,
-            min_r2_score=self.min_r2_score,
-            max_avg_cv=self.max_avg_cv,
-            max_max_cv=self.max_max_cv
+            max_gap_ratio=max_gap_ratio,
+            min_r2_score=min_r2_score,
+            max_avg_cv=max_avg_cv,
+            max_max_cv=max_max_cv
         )
 
         return new_samples
@@ -306,7 +297,11 @@ class SimulationStudy:
         n_start: int = 20,
         n_step: int = 10,
         max_iter: int = 5,
-        max_hours: float = None
+        max_hours: float = None,
+        max_gap_ratio: float = 0.20,
+        min_r2_score: float = 0.50,
+        max_avg_cv: float = 0.15,
+        max_max_cv: float = 0.30
     ) -> None:
         """
         Runs the automated Active Learning loop (Initialize -> Execute -> Diagnose -> Refine).
@@ -378,10 +373,10 @@ class SimulationStudy:
             n_step=n_step,
             max_iter=max_iter,
             max_hours=max_hours,
-            max_gap_ratio=self.max_gap_ratio,
-            min_r2_score=self.min_r2_score,
-            max_avg_cv=self.max_avg_cv,
-            max_max_cv=self.max_max_cv
+            max_gap_ratio=max_gap_ratio,
+            min_r2_score=min_r2_score,
+            max_avg_cv=max_avg_cv,
+            max_max_cv=max_max_cv
         )
 
         # 2. Update Class State with the result

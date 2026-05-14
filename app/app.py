@@ -921,7 +921,13 @@ def server(input, output, session):
             # We assume your SimulationStudy has a refine method
             # that targets the 'Length' gaps we discussed earlier
             n_to_gen = input.n_new_samples()
-            refined_df = study.refine(n_points=n_to_gen) # Or your specific generation logic
+            refined_df = study.refine(
+                n_points=n_to_gen,
+                max_gap_ratio=input.ui_max_gap(),
+                min_r2_score=input.ui_min_r2(),
+                max_avg_cv=input.ui_avg_cv(),
+                max_max_cv=input.ui_max_cv()
+            )
 
             new_samples.set(refined_df)
             ui.notification_show(f"Generated {n_to_gen} targeted samples.", type="message")
@@ -985,14 +991,17 @@ def server(input, output, session):
             return
 
         try:
-            # NEW: Initialize empty, then add_data with overwrite=True
-            study = SimulationStudy(
-            max_gap_ratio=input.ui_max_gap(), min_r2_score=input.ui_min_r2(),
-            max_avg_cv=input.ui_avg_cv(), max_max_cv=input.ui_max_cv()
-            )
+            study = SimulationStudy() # <-- Perfectly clean initialization
             study.add_data(uploaded_data(), outcome_col=selected_outcome, input_cols=selected_inputs, overwrite=True)
             study_instance.set(study)
-            diag_df = study.diagnose()
+
+            # Pass the UI threshold values dynamically at runtime!
+            diag_df = study.diagnose(
+                max_gap_ratio=input.ui_max_gap(),
+                min_r2_score=input.ui_min_r2(),
+                max_avg_cv=input.ui_avg_cv(),
+                max_max_cv=input.ui_max_cv()
+            )
 
             if diag_df is None:
                 diagnostic_table.set(None)
@@ -1672,10 +1681,7 @@ def server(input, output, session):
             return
 
         # Initialize empty, then add_data with overwrite=True
-        study = SimulationStudy(
-            max_gap_ratio=input.ui_max_gap(), min_r2_score=input.ui_min_r2(),
-            max_avg_cv=input.ui_avg_cv(), max_max_cv=input.ui_max_cv()
-        )
+        study = SimulationStudy()
         study.add_data(df, outcome_col=selected_outcome, input_cols=selected_inputs, overwrite=True)
         study_instance.set(study)
 
