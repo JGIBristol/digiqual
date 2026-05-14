@@ -356,7 +356,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="define-a-solver-and-executor" class="level3">
 <h3 class="anchored" data-anchor-id="define-a-solver-and-executor">1. Define a Solver and Executor</h3>
 <p>For this tutorial, we will write a standard Python function to simulate our physics. We will then wrap it in the <code>PythonExecutor</code>.</p>
-<div id="26706dc6" class="cell" data-execution_count="1">
+<div id="ce901c68" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> PythonExecutor</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -402,7 +402,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="configure-the-study" class="level3">
 <h3 class="anchored" data-anchor-id="configure-the-study">2. Configure the Study</h3>
 <p>We define our input variables and the ranges we want to explore.</p>
-<div id="ecaee070" class="cell" data-execution_count="2">
+<div id="2949108f" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.core <span class="im">import</span> SimulationStudy</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define inputs ranges</span></span>
@@ -415,7 +415,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="run-optimisation" class="level3">
 <h3 class="anchored" data-anchor-id="run-optimisation">3. Run Optimisation</h3>
 <p>This single command handles the entire Active Learning loop:</p>
-<div id="ba15c9cc" class="cell" data-execution_count="3">
+<div id="2db6d255" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.optimise(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    executor<span class="op">=</span>executor,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    ranges<span class="op">=</span>ranges,</span>
@@ -443,6 +443,7 @@ Diagnostics flagged issues. Initiating Active Learning...
 --- Iteration 2: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
+ -&gt; Active Graveyard Tracker: Protecting against 2 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 2 (10 points) ---
    -&gt; Executing Python model for 10 points...
@@ -450,6 +451,7 @@ Diagnostics flagged issues. Initiating Active Learning...
 --- Iteration 3: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
+ -&gt; Active Graveyard Tracker: Protecting against 2 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 3 (10 points) ---
    -&gt; Executing Python model for 10 points...
@@ -457,6 +459,7 @@ Diagnostics flagged issues. Initiating Active Learning...
 --- Iteration 4: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
+ -&gt; Active Graveyard Tracker: Protecting against 2 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 4 (10 points) ---
    -&gt; Executing Python model for 10 points...
@@ -464,6 +467,7 @@ Diagnostics flagged issues. Initiating Active Learning...
 --- Iteration 5: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
+ -&gt; Active Graveyard Tracker: Protecting against 2 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 5 (10 points) ---
    -&gt; Executing Python model for 10 points...
@@ -471,12 +475,12 @@ Diagnostics flagged issues. Initiating Active Learning...
 ----------------------------------------
 &gt;&gt;&gt; SEARCH COMPLETE &lt;&lt;&lt;
 Total Time:      0.01 minutes
-Successful Runs: 70
-Failed Runs:     0 (in graveyard)
+Successful Runs: 68
+Failed Runs:     2 (in graveyard)
 Total Attempted: 70
 ----------------------------------------
 
-Data initialized/overwritten. Total rows: 70</code></pre>
+Data initialized/overwritten. Total rows: 68</code></pre>
 </div>
 </div>
 </section>
@@ -492,30 +496,28 @@ Data initialized/overwritten. Total rows: 70</code></pre>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>study.visualise()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>[Parallel(n_jobs=11)]: Using backend MultiprocessingBackend with 11 concurrent workers.
-[Parallel(n_jobs=11)]: Done  19 tasks      | elapsed:   13.1s
-[Parallel(n_jobs=11)]: Done 140 tasks      | elapsed:   22.4s
-[Parallel(n_jobs=11)]: Done 343 tasks      | elapsed:   38.6s
-[Parallel(n_jobs=11)]: Done 626 tasks      | elapsed:  1.0min</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>[Parallel(n_jobs=11)]: Done 1000 out of 1000 | elapsed:  1.5min finished</code></pre>
+[Parallel(n_jobs=11)]: Done  19 tasks      | elapsed:   24.2s
+[Parallel(n_jobs=11)]: Done 140 tasks      | elapsed:   33.4s
+[Parallel(n_jobs=11)]: Done 343 tasks      | elapsed:   49.6s
+[Parallel(n_jobs=11)]: Done 626 tasks      | elapsed:  1.2min
+[Parallel(n_jobs=11)]: Done 1000 out of 1000 | elapsed:  1.7min finished</code></pre>
 </div>
 <div id="fig-results-optim" class="quarto-layout-panel">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-results-optim-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="quarto-layout-row">
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<pre><code>Total Simulations Run: 70
+<pre><code>Total Simulations Run: 68
 Running validation...
-Validation passed. 70 valid rows ready.
+Validation passed. 68 valid rows ready.
 --- Starting Reliability Analysis (PoIs: ['Length', 'Angle'] - Nuisance: ['Roughness']) ---
 1. Training all surrogate models (Cache Miss)...
 -&gt; Selected Model: Polynomial (Degree 3)
 2. Fitting Variance Model &amp; Inferring Distribution (Cache Miss)...
    -&gt; Optimizing bandwidth via LOO-CV...
 -&gt; Calculating Total-Order Sobol Indices...
-   -&gt; Smoothing Bandwidth: 3.0037
-   -&gt; Selected Distribution: norm
+   -&gt; Smoothing Bandwidth: 32.4801
+   -&gt; Selected Distribution: gumbel_r
 3. Integrating PoD Curve from Scratch (Cache Miss)...
 4. Running Bootstrap (1000 iterations on 11 cores)...</code></pre>
 </div>
@@ -530,7 +532,7 @@ Validation passed. 70 valid rows ready.
 <div id="fig-results-optim-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-results-optim-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="optimisation_files/figure-html/fig-results-optim-output-5.png" data-ref-parent="fig-results-optim" width="950" height="465" class="figure-img">
+<img src="optimisation_files/figure-html/fig-results-optim-output-4.png" data-ref-parent="fig-results-optim" width="950" height="465" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-results-optim-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (a) Best Fitting Model (Statistics)
@@ -544,7 +546,7 @@ Validation passed. 70 valid rows ready.
 <div id="fig-results-optim-2" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-results-optim-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="optimisation_files/figure-html/fig-results-optim-output-6.png" data-ref-parent="fig-results-optim" width="476" height="488" class="figure-img">
+<img src="optimisation_files/figure-html/fig-results-optim-output-5.png" data-ref-parent="fig-results-optim" width="475" height="486" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-results-optim-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (b) Signal Response Model (Physics)
@@ -558,7 +560,7 @@ Validation passed. 70 valid rows ready.
 <div id="fig-results-optim-3" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-results-optim-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="optimisation_files/figure-html/fig-results-optim-output-7.png" data-ref-parent="fig-results-optim" width="652" height="523" class="figure-img">
+<img src="optimisation_files/figure-html/fig-results-optim-output-6.png" data-ref-parent="fig-results-optim" width="652" height="523" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-results-optim-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (c) Probability of Detection Curve (Reliability)
@@ -604,11 +606,11 @@ end</code></pre>
 <section id="a2.-the-digiqual-execution" class="level4">
 <h4 class="anchored" data-anchor-id="a2.-the-digiqual-execution">A2. The Digiqual Execution</h4>
 <p>You just provide the name of the MATLAB file. The Executor builds the headless terminal command automatically.</p>
-<div id="5c690582" class="cell" data-execution_count="5">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> MatlabExecutor</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>executor <span class="op">=</span> MatlabExecutor(wrapper_name<span class="op">=</span><span class="st">"matlab_wrapper"</span>)</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>study.optimise(executor<span class="op">=</span>executor, ranges<span class="op">=</span>ranges, outcome_col<span class="op">=</span><span class="st">"Signal"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="90bd2824" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> MatlabExecutor</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>executor <span class="op">=</span> MatlabExecutor(wrapper_name<span class="op">=</span><span class="st">"matlab_wrapper"</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>study.optimise(executor<span class="op">=</span>executor, ranges<span class="op">=</span>ranges, outcome_col<span class="op">=</span><span class="st">"Signal"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <hr>
 </section>
@@ -620,46 +622,46 @@ end</code></pre>
 <section id="b1.-the-external-solver-script-run_ansys_simulation.py" class="level4">
 <h4 class="anchored" data-anchor-id="b1.-the-external-solver-script-run_ansys_simulation.py">B1. The External Solver Script (<code>run_ansys_simulation.py</code>)</h4>
 <p>This script represents your standalone software. It must accept the input and output file paths as command-line arguments, read the input CSV, perform its calculations, and save the output CSV.</p>
-<div id="e92e316f" class="cell" data-execution_count="6">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_simulation(input_csv, output_csv):</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. Read the input coordinates generated by DigiQual</span></span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> pd.read_csv(input_csv)</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    signals <span class="op">=</span> []</span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. Run the solver for each row</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _, row <span class="kw">in</span> df.iterrows():</span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>        length <span class="op">=</span> row[<span class="st">"Length"</span>]</span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>        angle <span class="op">=</span> row[<span class="st">"Angle"</span>]</span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Insert your complex FEA/external physics here</span></span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>        signal <span class="op">=</span> (length<span class="op">**</span><span class="dv">3</span>) <span class="op">*</span> <span class="fl">0.5</span> <span class="op">+</span> angle</span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>        signals.append(signal)</span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. Append the results and save</span></span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">"Signal"</span>] <span class="op">=</span> signals</span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>    df.to_csv(output_csv, index<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">"__main__"</span>:</span>
-<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># sys.argv[1] is the {input} path, sys.argv[2] is the {output} path</span></span>
-<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>    run_simulation(sys.argv[<span class="dv">1</span>], sys.argv[<span class="dv">2</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="02d74d16" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_simulation(input_csv, output_csv):</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. Read the input coordinates generated by DigiQual</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> pd.read_csv(input_csv)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    signals <span class="op">=</span> []</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. Run the solver for each row</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _, row <span class="kw">in</span> df.iterrows():</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        length <span class="op">=</span> row[<span class="st">"Length"</span>]</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>        angle <span class="op">=</span> row[<span class="st">"Angle"</span>]</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Insert your complex FEA/external physics here</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>        signal <span class="op">=</span> (length<span class="op">**</span><span class="dv">3</span>) <span class="op">*</span> <span class="fl">0.5</span> <span class="op">+</span> angle</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>        signals.append(signal)</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. Append the results and save</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">"Signal"</span>] <span class="op">=</span> signals</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    df.to_csv(output_csv, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">"__main__"</span>:</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># sys.argv[1] is the {input} path, sys.argv[2] is the {output} path</span></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>    run_simulation(sys.argv[<span class="dv">1</span>], sys.argv[<span class="dv">2</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="b2.-the-digiqual-execution" class="level4">
 <h4 class="anchored" data-anchor-id="b2.-the-digiqual-execution">B2. The DigiQual Execution</h4>
 <p>You define the exact terminal command needed to run the script above, and pass it to the <code>CLIExecutor</code>.</p>
-<div id="3160da2a" class="cell" data-execution_count="7">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> CLIExecutor</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co"># The exact command you would type into your terminal</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>cmd_template <span class="op">=</span> <span class="st">"python run_ansys_simulation.py </span><span class="sc">{input}</span><span class="st"> </span><span class="sc">{output}</span><span class="st">"</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>executor <span class="op">=</span> CLIExecutor(command_template<span class="op">=</span>cmd_template)</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>study.optimise(executor<span class="op">=</span>executor, ranges<span class="op">=</span>ranges, outcome_col<span class="op">=</span><span class="st">"Signal"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="134a3ba5" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> CLIExecutor</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co"># The exact command you would type into your terminal</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>cmd_template <span class="op">=</span> <span class="st">"python run_ansys_simulation.py </span><span class="sc">{input}</span><span class="st"> </span><span class="sc">{output}</span><span class="st">"</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>executor <span class="op">=</span> CLIExecutor(command_template<span class="op">=</span>cmd_template)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>study.optimise(executor<span class="op">=</span>executor, ranges<span class="op">=</span>ranges, outcome_col<span class="op">=</span><span class="st">"Signal"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 
 
