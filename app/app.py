@@ -632,77 +632,33 @@ ui.nav_panel(
         ui.div(
             ui.h3("Model Fit & Response", class_="mb-4 text-center"),
             ui.output_ui("fit_warnings_ui"),
-            ui.layout_columns(
-                ui.card(
-                    ui.card_header("Model Configuration"),
-                    ui.output_ui("model_context_note"),
-                    ui.layout_columns(
-                        ui.div(
-                            ui.input_selectize("pod_pois", "Parameters to plot (Select 1 or 2)", choices=[], multiple=True),
-                            ui.input_selectize("pod_nuisance", "Parameters to integrate over (Max 2)", choices=[], multiple=True),
-                        ),
-                        ui.div(
-                            ui.input_select("pod_model_override", "Model Override", choices=["Auto (Best Fit)", "Polynomial", "Kriging"], selected="Auto (Best Fit)"),
-                            ui.panel_conditional("input.pod_model_override === 'Polynomial'",
-                                ui.input_slider("pod_poly_degree", "Polynomial Degree", min=1, max=10, value=3, step=1),
-                            ),
-                        ),
-                        col_widths=[6, 6]
-                    ),
-                    ui.input_task_button("btn_run_fit", "Step 1: Fit Physics Model", class_="btn-primary w-100", icon=icon_svg("bolt")),
-                ),
-                col_widths=[-1,10,-1]
-            ),
+            ui.output_ui("fit_main_ui"), # <-- New dynamic container
             ui.output_ui("fit_results_ui"),
             class_="container-fluid py-3"
         ),
         icon=icon_svg("chart-area")
     ),
 
-#### UI - PoD Explorer (Tab 5 - NEW) ####
+#### UI - PoD Explorer (Tab 5) ####
     ui.nav_panel(
         "PoD Explorer",
         ui.div(
             ui.h3("Reliability Explorer", class_="mb-4 text-center"),
-            ui.output_ui("explorer_warnings_ui"), # Shared warning logic
-            ui.layout_columns(
-                ui.div(
-                    ui.card(
-                        ui.card_header("Real-Time Reliability Configuration"),
-                        ui.p("Adjust the detection threshold to see the impact on reliability across the parameter space.", class_="small text-muted mb-3"),
-                        ui.input_slider("pod_threshold_slider", "Detection Threshold", min=0, max=100, value=50, step=0.1),
-                    ),
-                    ui.output_ui("dynamic_slice_sliders"), # The slice sliders move here
-                ),
-                col_widths=[-1,10,-1]
-            ),
+            ui.output_ui("explorer_warnings_ui"),
+            ui.output_ui("explorer_main_ui"), # <-- New dynamic container
             ui.output_ui("explorer_results_ui"),
             class_="container-fluid py-3"
         ),
         icon=icon_svg("magnifying-glass-chart")
     ),
 
-#### UI - Uncertainty Quantification (Tab 6 - Renumbered) ####
+#### UI - Uncertainty Quantification (Tab 6) ####
     ui.nav_panel(
         "UQ Analysis",
         ui.div(
             ui.h3("Uncertainty Quantification (PoD)", class_="mb-4 text-center"),
             ui.output_ui("uq_warnings_ui"),
-            ui.layout_columns(
-                ui.card(
-                    ui.card_header("Bootstrap Configuration"),
-                    ui.layout_columns(
-                        ui.input_numeric("pod_n_boot", "Bootstrap Iterations", value=1000, min=10, step=100),
-                        ui.div(
-                            ui.input_checkbox("pod_parallel", "Enable Parallel Compute (Faster)", value=True),
-                            class_="pt-4"
-                        ),
-                        col_widths=[6, 6]
-                    ),
-                    ui.input_task_button("btn_run_uq", "Run Uncertainty Quantification", class_="btn-danger w-100", icon=icon_svg("layer-group")),
-                ),
-                col_widths=[-1,10,-1]
-            ),
+            ui.output_ui("uq_main_ui"), # <-- New dynamic container
             ui.output_ui("uq_results_ui"),
             class_="container-fluid py-3"
         ),
@@ -1685,6 +1641,88 @@ def server(input, output, session):
         study.add_data(df, outcome_col=selected_outcome, input_cols=selected_inputs, overwrite=True)
         study_instance.set(study)
 
+
+    @render.ui
+    def fit_main_ui():
+        # Hide entirely if diagnostics haven't run
+        if diagnostic_table() is None:
+            return ui.div()
+
+        study = current_study()
+        valid_inputs = list(input.input_cols()) if study else []
+        n_samples = len(study.data) if study else 0
+        model_choices = ["Auto (Best Fit)", "Polynomial"] if n_samples > 1000 else ["Auto (Best Fit)", "Polynomial", "Kriging"]
+
+        return ui.layout_columns(
+            ui.card(
+                ui.card_header("Model Configuration"),
+                ui.output_ui("model_context_note"),
+                ui.layout_columns(
+                    ui.div(
+                        ui.input_selectize("pod_pois", "Parameters to plot (Select 1 or 2)", choices=valid_inputs, multiple=True),
+                        ui.input_selectize("pod_nuisance", "Parameters to integrate over (Max 2)", choices=valid_inputs, multiple=True),
+                    ),
+                    ui.div(
+                        ui.input_select("pod_model_override", "Model Override", choices=model_choices, selected="Auto (Best Fit)"),
+                        ui.panel_conditional("input.pod_model_override === 'Polynomial'",
+                            ui.input_slider("pod_poly_degree", "Polynomial Degree", min=1, max=10, value=3, step=1),
+                        ),
+                    ),
+                    col_widths=[6, 6]
+                ),
+                ui.input_task_button("btn_run_fit", "Step 1: Fit Physics Model", class_="btn-primary w-100", icon=icon_svg("bolt")),
+            ),
+            col_widths=[-1,10,-1]
+        )
+
+    @render.ui
+    def explorer_main_ui():
+        # Hide entirely if model hasn't been fit
+        if fit_metrics() is None:
+            return ui.div()
+
+        study = current_study()
+        if study and study.outcome:
+            summary = study.get_data_summary(study.outcome)
+            s_min, s_max, s_med = summary["min"], summary["max"], summary["median"]
+            step_size = (s_max - s_min) / 100.0 if s_max != s_min else 0.001
+        else:
+            s_min, s_max, s_med, step_size = 0, 100, 50, 0.1
+
+        return ui.layout_columns(
+            ui.div(
+                ui.card(
+                    ui.card_header("Real-Time Reliability Configuration"),
+                    ui.p("Adjust the detection threshold to see the impact on reliability across the parameter space.", class_="small text-muted mb-3"),
+                    ui.input_slider("pod_threshold_slider", f"Detection Threshold ({study.outcome if study else ''})", min=round(s_min, 4), max=round(s_max, 4), value=round(s_med, 4), step=round(step_size, 4)),
+                ),
+                ui.output_ui("dynamic_slice_sliders"),
+            ),
+            col_widths=[-1,10,-1]
+        )
+
+    @render.ui
+    def uq_main_ui():
+        # Hide entirely if model hasn't been fit
+        if locked_model_type() is None:
+            return ui.div()
+
+        return ui.layout_columns(
+            ui.card(
+                ui.card_header("Bootstrap Configuration"),
+                ui.layout_columns(
+                    ui.input_numeric("pod_n_boot", "Bootstrap Iterations", value=1000, min=10, step=100),
+                    ui.div(
+                        ui.input_checkbox("pod_parallel", "Enable Parallel Compute (Faster)", value=True),
+                        class_="pt-4"
+                    ),
+                    col_widths=[6, 6]
+                ),
+                ui.input_task_button("btn_run_uq", "Run Uncertainty Quantification", class_="btn-danger w-100", icon=icon_svg("layer-group")),
+            ),
+            col_widths=[-1,10,-1]
+        )
+
     # -----------------------------------------------------------------
     # TWO-TIER RESET LOGIC
     # -----------------------------------------------------------------
@@ -1908,6 +1946,10 @@ def server(input, output, session):
     def fit_warnings_ui():
         if uploaded_data() is None:
             return ui.layout_columns(ui.div(ui.p("Please upload data in the 'Simulation Diagnostics' tab.", class_="text-center p-4 text-muted bg-light rounded border")), col_widths=[-1,10,-1])
+
+        # --- NEW: Check if diagnostics have actually been run! ---
+        if diagnostic_table() is None:
+            return ui.layout_columns(ui.div(ui.p("Please run diagnostics in the 'Simulation Diagnostics' tab before configuring your model.", class_="text-center p-4 text-muted bg-light rounded border")), col_widths=[-1,10,-1])
 
         if not validation_passed():
             return ui.layout_columns(ui.div(ui.h5(icon_svg("triangle-exclamation"), " Caution: Validation Issues"),
