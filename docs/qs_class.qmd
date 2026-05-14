@@ -21,6 +21,7 @@ import pandas as pd
 import time
 from digiqual import SimulationStudy
 
+
 # --- Define the Physics ---
 def apply_physics(df):
     """Simulates a signal with quadratic trends and heteroscedastic noise."""
@@ -34,24 +35,29 @@ def apply_physics(df):
     noise = np.random.normal(loc=0, scale=noise_scale, size=len(df))
     return signal + noise
 
+
 # --- Create Flawed Data (Gap between 3mm and 7mm) ---
-df1 = pd.DataFrame({
-    "Length": np.random.uniform(0.1, 3.0, 40),
-    "Angle": np.random.uniform(-10, 10, 40),
-    "Roughness": np.random.uniform(0, 0.5, 40),
-})
-df2 = pd.DataFrame({
-    "Length": np.random.uniform(7.0, 10.0, 40),
-    "Angle": np.random.uniform(-10, 10, 40),
-    "Roughness": np.random.uniform(0, 0.5, 40),
-})
+df1 = pd.DataFrame(
+    {
+        "Length": np.random.uniform(0.1, 3.0, 40),
+        "Angle": np.random.uniform(-10, 10, 40),
+        "Roughness": np.random.uniform(0, 0.5, 40),
+    }
+)
+df2 = pd.DataFrame(
+    {
+        "Length": np.random.uniform(7.0, 10.0, 40),
+        "Angle": np.random.uniform(-10, 10, 40),
+        "Roughness": np.random.uniform(0, 0.5, 40),
+    }
+)
 
 df_initial = pd.concat([df1, df2], ignore_index=True)
 df_initial["Signal"] = apply_physics(df_initial)
 
 # --- The NEW Smarter Initialization ---
 # 1. Initialize with a clean slate
-study = SimulationStudy(max_gap_ratio=0.15)
+study = SimulationStudy()
 
 # 2. Add data: It automatically infers 'Length', 'Angle', 'Roughness' as inputs!
 study.add_data(df_initial, outcome_col="Signal", overwrite=True)
@@ -199,7 +205,7 @@ df_initial = pd.concat([df1, df2], ignore_index=True)
 df_initial["Signal"] = apply_physics(df_initial)
 
 # --- 3. Initialize & Ingest ---
-study = SimulationStudy(max_gap_ratio=0.15)
+study = SimulationStudy()
 study.add_data(df_initial, outcome_col="Signal", overwrite=True)
 
 # --- 4. Diagnose & Refine ---
