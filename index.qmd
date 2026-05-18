@@ -1,7 +1,7 @@
 ---
 title: "digiqual"
 subtitle: "High-Fidelity Reliability Assessment for Non-Destructive Evaluation"
-description: "A Python-based implementation of the Generalized a-vs-â framework for Model-Assisted Probability of Detection (MAPOD) studies."
+description: "A Python-based implementation of the Generalised a-vs-â framework for Model-Assisted Probability of Detection (MAPOD) studies."
 page-layout: full
 ---
 
@@ -10,7 +10,7 @@ page-layout: full
 ::: {.g-col-12 .g-col-md-7}
 ## Advanced NDE Reliability Engineering
 
-`digiqual` is a specialized statistical library developed for Non-Destructive Evaluation (NDE) professionals. It provides a rigorous framework for conducting Model-Assisted Probability of Detection (MAPOD) studies, utilizing the **Generalized $\hat{a}$-versus-$a$ Method**.
+`digiqual` is a specialised statistical library developed for Non-Destructive Evaluation (NDE) professionals. It provides a rigorous framework for conducting Model-Assisted Probability of Detection (MAPOD) studies, utilising the **Generalised $\hat{a}$-versus-$a$ Method**.
 
 The package is designed to provide robust, conservative reliability assessments in complex scenarios where traditional linear regression, homoscedasticity, and normality assumptions are statistically invalid.
 :::
@@ -37,8 +37,13 @@ Utilises an Active Learning lifecycle to orchestrate automated loops of initiali
 :::
 
 ::: {.g-col-12 .g-col-md-4}
-### 💻 Multimodal Execution
+### 🔧 Multimodal Execution
 Integrates with external physics solvers via specialised Executors for Python, MATLAB, and Command Line Interfaces (CLI), facilitating process isolation.
+:::
+
+::: {.g-col-12 .g-col-md-4}
+### 🖥️ Full GUI Tool
+Specialised Graphical User Interface that contains the full suite of digiqual tools and downloadable reports.
 :::
 
 :::
