@@ -5,7 +5,6 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.model_selection import cross_val_score, KFold
 from sklearn.pipeline import make_pipeline
-from sklearn.utils import resample
 
 #### Error Function ####
 class ValidationError(Exception):
@@ -143,8 +142,14 @@ def _check_bootstrap_convergence(
     probe_points = np.percentile(X, [10, 50, 90], axis=0)
     all_predictions = []
 
+    # --- FIX: Initialize a seeded random number generator to sync with app.py ---
+    rng = np.random.default_rng(42)
+
     for _ in range(n_bootstraps):
-        X_res, y_res = resample(X, y, n_samples=n_samples)
+        # --- FIX: Use rng to sample instead of sklearn.resample ---
+        idx = rng.choice(n_samples, n_samples, replace=True)
+        X_res, y_res = X[idx], y[idx]
+
         model = make_pipeline(PolynomialFeatures(degree=2), LinearRegression())
         model.fit(X_res, y_res)
         preds = model.predict(probe_points)

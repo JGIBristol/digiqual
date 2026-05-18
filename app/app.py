@@ -591,6 +591,14 @@ ui.nav_panel(
                             class_="btn-primary w-100", icon=icon_svg("stethoscope")
                         ),
                         ui.output_ui("validation_status"),
+
+                        # --- Restart Button ---
+                        ui.hr(class_="w-100 mt-2 mb-2"),
+                        ui.input_action_button(
+                            "btn_restart", "Clear All & Restart",
+                            class_="btn-outline-danger w-100", icon=icon_svg("trash")
+                        ),
+
                         class_="config-container"
                     ),
                     class_="h-100 mb-0"
@@ -980,6 +988,36 @@ def server(input, output, session):
             diagnostic_table.set(None)
             print(f"Diagnostic Error: {e}")
 
+
+    @reactive.effect
+    @reactive.event(input.btn_restart)
+    def handle_restart():
+        """
+        Nuclear option: Completely resets the app state, clearing all physical data,
+        downstream mathematical caches, and UI selections so the user can start over cleanly.
+        """
+        # 1. Reset Core Data state (Tab 3)
+        uploaded_data.set(None)
+        validation_passed.set(False)
+        new_samples.set(None)
+        diagnostic_table.set(None)
+
+        # 2. Reset Downstream Math & Models (Tabs 4, 5, & 6)
+        study_instance.set(None)
+        locked_model_type.set(None)
+        locked_model_degree.set(None)
+        fit_metrics.set(None)
+        uq_metrics.set(None)
+        pod_export_data.set(None)
+
+        # 3. Clear UI Selections visually
+        ui.update_selectize("input_cols", choices=[], selected=[])
+        ui.update_selectize("outcome_col", choices=[], selected=[])
+        ui.update_selectize("pod_pois", choices=[], selected=[])
+        ui.update_selectize("pod_nuisance", choices=[], selected=[])
+
+        # 4. Notify the user
+        ui.notification_show("App state completely cleared. Ready for a new dataset.", type="message")
     # --- OUTPUTS ---
 
     @render.ui
@@ -1029,7 +1067,7 @@ def server(input, output, session):
         # 4. Show the Remediation card
         return ui.card(
             ui.card_header("Remediation: Generate New Samples"),
-            ui.p("Your data has coverage issues. Use the Refine tool to generate new samples specifically in the empty spaces."),
+            ui.p("Your data has coverage issues. Use the Refine tool to generate new samples."),
 
             ui.layout_columns(
                 ui.input_numeric("n_new_samples", "Count", value=10, min=1),
@@ -1078,7 +1116,17 @@ def server(input, output, session):
             return ui.div()
 
         df = uploaded_data()
-        all_cols = list(df.columns)
+
+        # Gather only the selected input and outcome columns
+        input_cols = list(input.input_cols())
+        outcome = input.outcome_col()
+
+        selected_cols = input_cols.copy()
+        if outcome and outcome not in selected_cols:
+            selected_cols.append(outcome)
+
+        if not selected_cols:
+             selected_cols = list(df.columns)
 
         return ui.div(
             # ── Row 1: Summary Statistics ──────────────────────────────────────
@@ -1097,8 +1145,8 @@ def server(input, output, session):
                     ui.div(
                         ui.input_select(
                             "viz_variable", "Select Variable",
-                            choices=all_cols,
-                            selected=all_cols[0] if all_cols else None,
+                            choices=selected_cols, # Use the filtered list here!
+                            selected=selected_cols[0] if selected_cols else None,
                         ),
                         ui.input_select(
                             "viz_plot_type", "Plot Type",
@@ -1155,8 +1203,24 @@ def server(input, output, session):
         if df is None:
             return None
 
+        # Gather only the selected input and outcome columns
+        input_cols = list(input.input_cols())
+        outcome = input.outcome_col()
+
+        selected_cols = input_cols.copy()
+        if outcome and outcome not in selected_cols:
+            selected_cols.append(outcome)
+
+        # Fallback just in case
+        if not selected_cols:
+            selected_cols = list(df.columns)
+
         rows = []
-        for col in df.columns:
+        # Iterate over selected_cols instead of df.columns
+        for col in selected_cols:
+            if col not in df.columns:
+                continue
+
             numeric = pd.to_numeric(df[col], errors="coerce").dropna()
             n_valid = len(numeric)
             rows.append({
