@@ -156,17 +156,31 @@ The `MatlabExecutor` makes connecting to MATLAB effortless. You simply write a t
 function matlab_wrapper(input_csv, output_csv)
     df = readtable(input_csv);
     num_rows = height(df);
-    signal_results = zeros(num_rows, 1);
+
+    % Pre-allocating with NaN is a safer default than zeros
+    signal_results = NaN(num_rows, 1);
 
     for i = 1:num_rows
-        L = df.Length(i);
-        theta = df.Angle(i);
-        % Insert your complex MATLAB physics here
-        signal_results(i) = (L^3) * 0.5 + theta;
+        % --- NEW: Wrap the physics calculation in a try...catch block ---
+        try
+            L = df.Length(i);
+            theta = df.Angle(i);
+
+            % Insert your complex MATLAB physics here
+            signal_results(i) = (L^3) * 0.5 + theta;
+
+        catch ME
+            % If the simulation fails, catch the error and log it safely
+            fprintf('Error on row %d: %s\n', i, ME.message);
+
+            % Assign NaN so DigiQual knows this point failed and sends it to the graveyard
+            signal_results(i) = NaN;
+        end
     end
 
     df.Signal = signal_results;
     writetable(df, output_csv);
+
     exit; % CRITICAL: Exit MATLAB to hand control back to DigiQual
 end
 ```
