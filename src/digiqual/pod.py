@@ -816,9 +816,15 @@ def calculate_sobol_indices(mean_model: Any, feature_names: list, data_df, n_sam
         warnings.simplefilter("ignore", RuntimeWarning)
         Si = salib_analyze.analyze(problem, y_sample.flatten(), print_to_console=False, calc_second_order=False)
 
-    # 4. Extract ONLY the Total-Order effect (ST)
+    # 4. Extract ONLY the Total-Order effect (ST) and clamp numerical noise
     results = {}
     for i, name in enumerate(feature_names):
-        results[name] = float(Si['ST'][i])
+        raw_val = float(Si['ST'][i])
+
+        # --- Clamp the value strictly between 0.0 and 1.0 ---
+        # This prevents Monte Carlo approximation noise from showing > 100% or < 0%
+        clamped_val = max(0.0, min(1.0, raw_val))
+
+        results[name] = clamped_val
 
     return results

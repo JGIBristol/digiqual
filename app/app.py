@@ -1913,16 +1913,35 @@ def server(input, output, session):
             if summary["min"] is None:
                 continue
 
-            col_min = round(summary["min"], 3)
-            col_max = round(summary["max"], 3)
-            col_med = round(summary["median"], 3)
+            col_min = float(summary["min"])
+            col_max = float(summary["max"])
+            col_med = float(summary["median"])
 
-            step_size = round((col_max - col_min) / 100, 3)
-            if step_size == 0:
-                step_size = 0.001
+            step_size = (col_max - col_min) / 100.0
+            if step_size <= 0:
+                step_size = abs(col_min) / 100.0 if col_min != 0 else 0.001
+
+            # --- NEW: Dynamic precision formatting ---
+            # Calculate how many decimal places we actually need based on the step size
+            try:
+                # Use np.log10 to find the magnitude.
+                # e.g., if step is 0.0005 -> -log10 is ~3.3 -> ceil is 4 -> +1 means 5 decimals
+                required_decimals = max(3, int(np.ceil(-np.log10(step_size))) + 1)
+            except Exception:
+                required_decimals = 3 # Safe fallback
+
+            # Round specifically to the required precision for this specific variable
+            clean_min = round(col_min, required_decimals)
+            clean_max = round(col_max, required_decimals)
+            clean_med = round(col_med, required_decimals)
+            clean_step = round(step_size, required_decimals)
 
             sliders.append(
-                ui.input_slider(f"slice_{col}", col, min=col_min, max=col_max, value=col_med, step=step_size)
+                ui.input_slider(
+                    f"slice_{col}", col,
+                    min=clean_min, max=clean_max,
+                    value=clean_med, step=clean_step
+                )
             )
 
         return ui.card(
@@ -2001,7 +2020,7 @@ def server(input, output, session):
 
             return ui.div(
                 ui.h6(icon_svg("chart-pie"), " Parameter Sensitivity (Total Effect)", class_="text-primary mb-1 fw-bold"),
-                ui.p("Percentage of output variance driven by each parameter.", class_="small text-muted mb-2 fst-italic"),
+                ui.p("Impact of each parameter (including interactions). Sum may exceed 100%.", class_="small text-muted mb-2 fst-italic"),
                 ui.div(*items),
                 class_="mb-3 p-3 bg-light rounded border shadow-sm"
             )
