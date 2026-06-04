@@ -2197,7 +2197,7 @@ def server(input, output, session):
             # --- EXPORT PRELIMINARY DATA ---
             export_data = {}
             if len(poi_cols) == 1:
-                export_data["x_defect_size"] = results["X_eval"].flatten()
+                export_data[poi_cols[0]] = results["X_eval"].flatten()
             else:
                 for i, col in enumerate(poi_cols):
                     export_data[col] = results["X_eval"][:, i]
@@ -2406,7 +2406,7 @@ def server(input, output, session):
 
             export_data = {}
             if len(poi_cols) == 1:
-                export_data["x_defect_size"] = results["X_eval"].flatten()
+                export_data[poi_cols[0]] = results["X_eval"].flatten()
             else:
                 for i, col in enumerate(poi_cols):
                     export_data[col] = results["X_eval"][:, i]
