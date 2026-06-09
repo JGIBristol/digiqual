@@ -365,7 +365,8 @@ def run_adaptive_search(
     max_gap_ratio: float = 0.20,
     min_r2_score: float = 0.50,
     max_avg_cv: float = 0.15,
-    max_max_cv: float = 0.30
+    max_max_cv: float = 0.30,
+    output_csv: Optional[str] = None
 ) -> pd.DataFrame:
     """
     Orchestrates the Active Learning loop on raw DataFrames using the Executor architecture.
@@ -385,6 +386,7 @@ def run_adaptive_search(
         min_r2_score (float): Decimal Percentage threshold for minimum r2 diagnostics,
         max_avg_cv (float): Decimal Percentage threshold for average CI diagnostics,
         max_max_cv (float): Decimal Percentage threshold for maximum CI diagnostics
+        output_csv (str, optional): Path to write the output CSV results incrementally.
 
     Returns:
         pd.DataFrame: Final dataset containing all successful runs.
@@ -423,6 +425,10 @@ def run_adaptive_search(
             failed_data = pd.concat([failed_data, results[~successful_mask][input_cols]], ignore_index=True)
     else:
         print(f"--- Iteration 0: Resuming with {len(current_data)} existing points ---")
+
+    if output_csv and not current_data.empty:
+        current_data.to_csv(output_csv, index=False)
+        print(f"   -> Progress saved to: {output_csv}")
 
     # --- STEP 2: REFINEMENT LOOP ---
     for i in range(max_iter):
@@ -484,6 +490,10 @@ def run_adaptive_search(
             current_data = pd.concat([current_data, new_successful], ignore_index=True)
             new_failed = new_results[~successful_mask][input_cols]
             failed_data = pd.concat([failed_data, new_failed], ignore_index=True)
+
+        if output_csv and not current_data.empty:
+            current_data.to_csv(output_csv, index=False)
+            print(f"   -> Progress saved to: {output_csv}")
 
     # --- STEP 3: FINAL REPORTING ---
     end_time = time.time()
