@@ -23,34 +23,44 @@ function dummy_matlab_solver(input_csv, output_csv)
 
     % 2. Do the "Physics"
     for i = 1:num_rows
-        L = df.Length(i);
-        angle = df.Angle(i);
+        % --- NEW: Wrap the row calculation in a try...catch block ---
+        try
+            L = df.Length(i);
+            angle = df.Angle(i);
 
-        if has_roughness
-            roughness = df.Roughness(i);
-        else
-            roughness = 0.0;
-        end
+            if has_roughness
+                roughness = df.Roughness(i);
+            else
+                roughness = 0.0;
+            end
 
-        % A) THE DEAD ZONE (Trigger Graveyard Tracking)
-        if (L > 4.0 && L < 6.0) && (abs(angle) > 30)
+            % A) THE DEAD ZONE (Trigger Graveyard Tracking)
+            if (L > 4.0 && L < 6.0) && (abs(angle) > 30)
+                signals(i) = NaN;
+                continue; % Skip to the next row
+            end
+
+            % B) BASE SIGNAL (Cubic Trend + Interaction + Attenuation)
+            base_signal = 5.0 + (3.0 * L) - (0.8 * (L^2)) + (0.1 * (L^3)) ...
+                          + (angle * 0.1) - (0.05 * L * abs(angle)) - (roughness * 5.0);
+
+            % C) HETEROSCEDASTIC, NON-NORMAL NOISE
+            noise_scale = 0.5 + (L * 0.4) + (roughness * 1.0);
+
+            % Generate Gumbel noise using Inverse Transform Sampling
+            U = rand();
+            noise = -noise_scale * log(-log(U));
+            noise = noise - (noise_scale * 0.57721);
+
+            signals(i) = base_signal + noise;
+
+        catch ME
+            % --- NEW: If ANYTHING goes wrong, catch it and log it safely ---
+            fprintf('   [MATLAB FEA] Error on row %d: %s\n', i, ME.message);
+
+            % Assign NaN so DigiQual knows this simulation failed and sends it to the graveyard
             signals(i) = NaN;
-            continue; % Skip to the next row
         end
-
-        % B) BASE SIGNAL (Cubic Trend + Interaction + Attenuation)
-        base_signal = 5.0 + (3.0 * L) - (0.8 * (L^2)) + (0.1 * (L^3)) ...
-                      + (angle * 0.1) - (0.05 * L * abs(angle)) - (roughness * 5.0);
-
-        % C) HETEROSCEDASTIC, NON-NORMAL NOISE
-        noise_scale = 0.5 + (L * 0.4) + (roughness * 1.0);
-
-        % Generate Gumbel noise using Inverse Transform Sampling (no toolboxes needed!)
-        U = rand();
-        noise = -noise_scale * log(-log(U));
-        noise = noise - (noise_scale * 0.57721);
-
-        signals(i) = base_signal + noise;
     end
 
     % 3. Save the results back to the hard drive
