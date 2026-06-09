@@ -158,3 +158,43 @@ def test_adaptive_search_passes_custom_thresholds(mock_exec, mock_validate, mock
     assert target_kwargs['min_r2_score'] == 0.75
     assert target_kwargs['max_avg_cv'] == 0.10
     assert target_kwargs['max_max_cv'] == 0.25
+
+
+@patch("digiqual.executors.CLIExecutor.run")
+@patch("digiqual.adaptive.generate_targeted_samples")
+@patch("digiqual.adaptive.sample_sufficiency")
+@patch("digiqual.adaptive.validate_simulation")
+def test_run_adaptive_search_output_csv(mock_validate, mock_sufficiency, mock_target, mock_exec, ranges, sample_df, tmp_path):
+    """Verifies that run_adaptive_search saves results to output_csv incrementally."""
+    import os
+    csv_file = tmp_path / "progress.csv"
+
+    # Setup Mocks: diagnostics pass in second iteration
+    mock_validate.side_effect = lambda df, *args: (df, pd.DataFrame())
+    
+    fail_report = pd.DataFrame({'Test': ['Coverage'], 'Pass': [False]})
+    pass_report = pd.DataFrame({'Test': ['Coverage'], 'Pass': [True]})
+    mock_sufficiency.side_effect = [fail_report, pass_report]
+
+    new_points = pd.DataFrame({'Length': [5], 'Angle': [5]})
+    mock_target.return_value = new_points
+
+    new_result = new_points.copy()
+    new_result['Signal'] = 0.99
+    mock_exec.return_value = new_result
+
+    # Run
+    run_adaptive_search(
+        executor="cmd",
+        input_cols=["Length", "Angle"],
+        outcome_col="Signal",
+        ranges=ranges,
+        existing_data=sample_df,
+        max_iter=5,
+        output_csv=str(csv_file)
+    )
+
+    # Check that the file was written
+    assert os.path.exists(csv_file)
+    saved_df = pd.read_csv(csv_file)
+    assert len(saved_df) == 3

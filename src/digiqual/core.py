@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from typing import List, Dict, Any, Tuple, Union
+from typing import List, Dict, Any, Tuple, Union, Optional
 import os
 
 from .diagnostics import validate_simulation, sample_sufficiency, ValidationError
@@ -301,7 +301,8 @@ class SimulationStudy:
         max_gap_ratio: float = 0.20,
         min_r2_score: float = 0.50,
         max_avg_cv: float = 0.15,
-        max_max_cv: float = 0.30
+        max_max_cv: float = 0.30,
+        output_csv: Optional[str] = None
     ) -> None:
         """
         Runs the automated Active Learning loop (Initialize -> Execute -> Diagnose -> Refine).
@@ -314,6 +315,7 @@ class SimulationStudy:
             n_step (int): Batch size for refinement.
             max_iter (int): Max refinement loops.
             max_hours (float, optional): Physical time limit in hours to safely stop the loop.
+            output_csv (str, optional): Path to write the output CSV results incrementally.
 
         Examples:
             ```python
@@ -376,7 +378,8 @@ class SimulationStudy:
             max_gap_ratio=max_gap_ratio,
             min_r2_score=min_r2_score,
             max_avg_cv=max_avg_cv,
-            max_max_cv=max_max_cv
+            max_max_cv=max_max_cv,
+            output_csv=output_csv
         )
 
         # 2. Update Class State with the result
