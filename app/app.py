@@ -592,12 +592,7 @@ ui.nav_panel(
                         ),
                         ui.output_ui("validation_status"),
 
-                        # --- Restart Button ---
-                        ui.hr(class_="w-100 mt-2 mb-2"),
-                        ui.input_action_button(
-                            "btn_restart", "Clear All & Restart",
-                            class_="btn-outline-danger w-100", icon=icon_svg("trash")
-                        ),
+
 
                         class_="config-container"
                     ),
@@ -672,13 +667,27 @@ ui.nav_panel(
         ),
         icon=icon_svg("chart-line")
     ),
+    ui.nav_spacer(),
+    ui.nav_control(
+        ui.input_action_button(
+            "btn_restart", "Reset App",
+            class_="btn-danger btn-sm",
+            style="color: white !important;",
+            icon=icon_svg("trash")
+        )
+    ),
     title="DigiQual",
     id="navbar",
     fillable=True,
     # --- ADDED MATHJAX SCRIPT TO HEADER ---
     header=ui.tags.head(
         ui.tags.style(app_css),
-        ui.tags.script(src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js")
+        ui.tags.script(src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"),
+        ui.tags.script("""
+            Shiny.addCustomMessageHandler('refresh_page', function(message) {
+                window.location.reload();
+            });
+        """)
     )
 )
 
@@ -992,32 +1001,30 @@ def server(input, output, session):
     @reactive.effect
     @reactive.event(input.btn_restart)
     def handle_restart():
-        """
-        Nuclear option: Completely resets the app state, clearing all physical data,
-        downstream mathematical caches, and UI selections so the user can start over cleanly.
-        """
-        # 1. Reset Core Data state (Tab 3)
-        uploaded_data.set(None)
-        validation_passed.set(False)
-        new_samples.set(None)
-        diagnostic_table.set(None)
+        """Shows a confirmation modal when the user clicks the Reset button."""
+        ui.modal_show(
+            ui.modal(
+                "Are you sure you want to completely reset the application? This will clear all uploaded data, models, and current progress.",
+                title="Confirm Application Reset",
+                footer=ui.div(
+                    ui.input_action_button("btn_cancel_restart", "Cancel", class_="btn-secondary me-2"),
+                    ui.input_action_button("btn_confirm_restart", "Reset", class_="btn-danger"),
+                    class_="d-flex justify-content-end"
+                ),
+                easy_close=True
+            )
+        )
 
-        # 2. Reset Downstream Math & Models (Tabs 4, 5, & 6)
-        study_instance.set(None)
-        locked_model_type.set(None)
-        locked_model_degree.set(None)
-        fit_metrics.set(None)
-        uq_metrics.set(None)
-        pod_export_data.set(None)
+    @reactive.effect
+    @reactive.event(input.btn_cancel_restart)
+    def handle_cancel_restart():
+        ui.modal_remove()
 
-        # 3. Clear UI Selections visually
-        ui.update_selectize("input_cols", choices=[], selected=[])
-        ui.update_selectize("outcome_col", choices=[], selected=[])
-        ui.update_selectize("pod_pois", choices=[], selected=[])
-        ui.update_selectize("pod_nuisance", choices=[], selected=[])
-
-        # 4. Notify the user
-        ui.notification_show("App state completely cleared. Ready for a new dataset.", type="message")
+    @reactive.effect
+    @reactive.event(input.btn_confirm_restart)
+    async def handle_confirm_restart():
+        ui.modal_remove()
+        await session.send_custom_message("refresh_page", {})
     # --- OUTPUTS ---
 
     @render.ui
@@ -1178,20 +1185,6 @@ def server(input, output, session):
                     class_="small text-muted px-3 pt-2 mb-0"
                 ),
                 ui.output_plot("viz_coverage_overview", height="300px"),
-                full_screen=True,
-            ),
-            # ── Row 4: Full Outcome Diagnostic Overview ────────────────────────
-            ui.card(
-                ui.card_header("Outcome Diagnostic Overview"),
-                ui.output_ui("viz_diagnostics_state"),
-                ui.p(
-                    "Left: Actual vs Predicted scatter for the degree-3 polynomial model. "
-                    "Points hugging the diagonal indicate a good fit. "
-                    "Right: Bootstrap convergence trace — running relative std dev across "
-                    "iterations. Lines flattening below the thresholds indicate convergence.",
-                    class_="small text-muted px-3 pt-2 mb-0"
-                ),
-
                 full_screen=True,
             ),
         )
@@ -1484,196 +1477,7 @@ def server(input, output, session):
 
         return fig
 
-    @render.ui
-    def viz_diagnostics_state():
-        """
-        Guards the diagnostic overview plot. Shows a prompt if diagnostics
-        haven't been run yet (diagnostic_table is None or empty).
-        """
-        diag = diagnostic_table()
-        if diag is None or diag.empty:
-            return ui.div(
-                ui.p(
-                    ui.span(icon_svg("circle-info"), class_="me-2 text-primary"),
-                    "Diagnostics have not been run yet. "
-                    "Configure your columns in the 'Simulation Diagnostics' tab — "
-                    "results will appear here automatically.",
-                    class_="text-muted fst-italic p-4 text-center"
-                )
-            )
-        return ui.output_plot("viz_diagnostics_overview", height="500px")
 
-    @render.plot
-    def viz_diagnostics_overview():
-        """
-        Two diagnostic visualisations side by side:
-
-        Left — Actual vs Predicted (Model Fit):
-            Fits a degree-3 polynomial on the full dataset and plots observed y
-            against predicted y. Points on the diagonal = perfect fit. Spread
-            away from it explains why the CV R² may be low.
-
-        Right — Bootstrap Convergence Trace:
-            Runs 100 bootstrap iterations and plots the *running* average and
-            maximum relative std dev as each iteration accumulates. A line that
-            flattens below its threshold dashed line has converged; one that is
-            still declining suggests more samples would improve stability.
-        """
-        import matplotlib.pyplot as plt
-        from sklearn.linear_model import LinearRegression
-        from sklearn.preprocessing import PolynomialFeatures
-        from sklearn.pipeline import make_pipeline
-
-        df = uploaded_data()
-        if df is None:
-            return None
-
-        diag = diagnostic_table()
-        if diag is None or diag.empty:
-            return None
-
-        input_cols_list = list(input.input_cols())
-        outcome = input.outcome_col()
-
-        if not input_cols_list or outcome not in df.columns:
-            return None
-
-        # Clean numeric data (same subset diagnostics used)
-        required = input_cols_list + [outcome]
-        df_num = df[required].apply(pd.to_numeric, errors="coerce").dropna()
-        if len(df_num) < 10:
-            return None
-
-        X = df_num[input_cols_list].values
-        y = df_num[outcome].values
-
-        # --- NEW: Fetch dynamic thresholds from the UI ---
-        thresh_r2 = input.ui_min_r2()
-        thresh_avg = input.ui_avg_cv()
-        thresh_max = input.ui_max_cv()
-
-        # Pull pass/fail status from existing diagnostic_table
-        fit_row  = diag[diag["Test"] == "Model Fit (CV)"]
-        boot_row = diag[diag["Test"] == "Bootstrap Convergence"]
-
-        r2_val      = float(fit_row["Value"].values[0])      if not fit_row.empty  else None
-        fit_passed  = bool(fit_row["Pass"].values[0])         if not fit_row.empty  else True
-        boot_passed = bool(boot_row["Pass"].all())            if not boot_row.empty else True
-
-        avg_cv_val = None
-        max_cv_val = None
-        if not boot_row.empty:
-            avg_rows = boot_row[boot_row["Metric"] == "Avg CV (Rel Std Dev)"]
-            max_rows = boot_row[boot_row["Metric"] == "Max CV (Rel Std Dev)"]
-            if not avg_rows.empty:
-                avg_cv_val = float(avg_rows["Value"].values[0])
-            if not max_rows.empty:
-                max_cv_val = float(max_rows["Value"].values[0])
-
-        fig, (ax_fit, ax_boot) = plt.subplots(1, 2, figsize=(12, 5))
-
-        # ── LEFT: Actual vs Predicted ─────────────────────────────────────────
-        poly_model = make_pipeline(PolynomialFeatures(degree=3), LinearRegression())
-        poly_model.fit(X, y)
-        y_pred = poly_model.predict(X)
-
-        ax_fit.scatter(y, y_pred, alpha=0.55, s=25, color="#1f77b4",
-                        label="Simulations", zorder=3)
-
-        # Perfect-fit diagonal
-        y_lo = min(y.min(), y_pred.min())
-        y_hi = max(y.max(), y_pred.max())
-        pad  = (y_hi - y_lo) * 0.05
-        diag_range = [y_lo - pad, y_hi + pad]
-        ax_fit.plot(diag_range, diag_range, color="#d13438", linewidth=1.5,
-                    linestyle="--", label="Perfect Fit", zorder=2)
-
-        fit_colour = "#107c10" if fit_passed else "#d13438"
-        fit_status = "✓ Pass" if fit_passed else "✗ Fail"
-        ax_fit.set_title(f"Model Fit (CV R²)  —  {fit_status}",
-                            color=fit_colour, fontweight="bold")
-        ax_fit.set_xlabel(f"Actual  '{outcome}'", fontsize=9)
-        ax_fit.set_ylabel(f"Predicted  '{outcome}'", fontsize=9)
-
-        if r2_val is not None:
-            ax_fit.annotate(
-                # --- CHANGED: Dynamic annotation ---
-                f"CV R² = {r2_val:.3f}\nThreshold > {thresh_r2:.2f}",
-                xy=(0.05, 0.95), xycoords="axes fraction",
-                va="top", ha="left", fontsize=9,
-                bbox=dict(boxstyle="round,pad=0.4", facecolor="white",
-                            edgecolor=fit_colour, alpha=0.9)
-            )
-
-        ax_fit.legend(fontsize=8)
-        ax_fit.grid(True, alpha=0.3)
-
-        # ── RIGHT: Bootstrap Convergence Trace ────────────────────────────────
-        n_boot = 100
-        probe_points = np.percentile(X, [10, 50, 90], axis=0)
-
-        running_avg = []
-        running_max = []
-        accumulated_preds = []
-
-        rng = np.random.default_rng(42)
-        for _ in range(n_boot):
-            idx = rng.choice(len(y), len(y), replace=True)
-            X_b, y_b = X[idx], y[idx]
-            m = make_pipeline(PolynomialFeatures(degree=2), LinearRegression())
-            m.fit(X_b, y_b)
-            accumulated_preds.append(m.predict(probe_points))
-
-            preds_arr  = np.array(accumulated_preds)
-            stds       = np.std(preds_arr, axis=0)
-            means      = np.abs(np.mean(preds_arr, axis=0))
-            rel_widths = stds / (means + 1e-6)
-
-            running_avg.append(float(np.mean(rel_widths)))
-            running_max.append(float(np.max(rel_widths)))
-
-        iters = np.arange(1, n_boot + 1)
-
-        ax_boot.plot(iters, running_avg, color="#006abc", linewidth=2,
-                        label="Running Avg CV")
-        ax_boot.plot(iters, running_max, color="#1f77b4", linewidth=1.5,
-                        linestyle=":", alpha=0.75, label="Running Max CV")
-
-        # --- CHANGED: Dynamic Threshold lines ---
-        ax_boot.axhline(thresh_avg, color="#107c10", linewidth=1.2, linestyle="--",
-                        alpha=0.85, label=f"Avg Threshold ({thresh_avg:.2f})")
-        ax_boot.axhline(thresh_max, color="#ffb900", linewidth=1.2, linestyle="--",
-                        alpha=0.85, label=f"Max Threshold ({thresh_max:.2f})")
-
-        # --- CHANGED: Dynamic Shading ---
-        ax_boot.fill_between(iters, 0, thresh_avg, color="#107c10", alpha=0.04)
-
-        boot_colour = "#107c10" if boot_passed else "#d13438"
-        boot_status = "✓ Pass" if boot_passed else "✗ Fail"
-        ax_boot.set_title(f"Bootstrap Convergence  —  {boot_status}",
-                            color=boot_colour, fontweight="bold")
-        ax_boot.set_xlabel("Bootstrap Iteration", fontsize=9)
-        ax_boot.set_ylabel("Relative Std Dev (CV)", fontsize=9)
-        ax_boot.set_xlim(1, n_boot)
-        ax_boot.set_ylim(bottom=0)
-
-        if avg_cv_val is not None and max_cv_val is not None:
-            ax_boot.annotate(
-                # --- CHANGED: Dynamic Annotations ---
-                f"Final Avg CV = {avg_cv_val:.3f}  (< {thresh_avg:.2f})\n"
-                f"Final Max CV = {max_cv_val:.3f}  (< {thresh_max:.2f})",
-                xy=(0.97, 0.97), xycoords="axes fraction",
-                va="top", ha="right", fontsize=9,
-                bbox=dict(boxstyle="round,pad=0.4", facecolor="white",
-                            edgecolor=boot_colour, alpha=0.9)
-            )
-
-        ax_boot.legend(fontsize=8, loc="upper right",
-                        bbox_to_anchor=(0.97, 0.70))
-        ax_boot.grid(True, alpha=0.3)
-
-        fig.tight_layout()
-        return fig
 
 #### Server - Model Fit & UQ Logic (Tabs 4 & 5) ####
 
@@ -2041,6 +1845,19 @@ def server(input, output, session):
                     ui.card(ui.card_header("Model Selection"), ui.output_plot("plot_model_selection"), full_screen=True),
                     ui.card(ui.card_header(f"{input.outcome_col()} Surface" if is_multi_dim else "Model Fit"), ui.output_plot("plot_signal"), full_screen=True),
                     col_widths=[6, 6]
+                ),
+                ui.card(
+                    ui.card_header("Model Fit Diagnostics"),
+                    ui.output_plot("plot_fit_diagnostics", height="500px"),
+                    ui.p(
+                        "Left: Actual vs Predicted scatter for the selected model. "
+                        "Points hugging the diagonal indicate a good fit. "
+                        "Right: Bootstrap convergence trace — running relative std dev across "
+                        "iterations. Lines flattening below the thresholds indicate convergence.",
+                        class_="small text-muted px-3 pt-2 mb-0"
+                    ),
+                    full_screen=True,
+                    class_="mb-3"
                 ),
                 ui.card(
                     ui.card_header("Fit Statistics"),
@@ -2474,6 +2291,165 @@ def server(input, output, session):
     def plot_curve():
         # Tab 6's PoD curve is also just the "pod_curve" dictionary entry
         return _render_study_plot("pod_curve")
+
+    @render.plot
+    def plot_fit_diagnostics():
+        study = current_study()
+        if study is None or fit_metrics() is None:
+            return None
+
+        # Extract variables from study.pod_results
+        res = study.pod_results
+        X = res["X"]
+        y = res["y"]
+        model_type = locked_model_type()
+        model_degree = locked_model_degree()
+
+        # Build and fit the specific model
+        from sklearn.preprocessing import PolynomialFeatures
+        from sklearn.linear_model import LinearRegression
+        from sklearn.pipeline import make_pipeline
+        import matplotlib.pyplot as plt
+        from sklearn.metrics import r2_score
+
+        if model_type == 'Polynomial':
+            model = make_pipeline(PolynomialFeatures(degree=model_degree), LinearRegression())
+            model.fit(X, y)
+        elif model_type == 'Kriging':
+            from sklearn.gaussian_process import GaussianProcessRegressor
+            from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
+            kernel = C(1.0, (1e-5, 1e6)) * RBF(1.0, (1e-3, 1e5))
+            model = GaussianProcessRegressor(
+                kernel=kernel,
+                n_restarts_optimizer=10,
+                alpha=np.var(y) * 0.01,
+                random_state=42
+            )
+            model.fit(X, y)
+        else:
+            return None
+
+        y_pred = model.predict(X)
+
+        # Get thresholds from UI (Simulation Diagnostics Tab)
+        thresh_r2 = input.ui_min_r2()
+        thresh_avg = input.ui_avg_cv()
+        thresh_max = input.ui_max_cv()
+
+        # Calculate data R2
+        r2_val = r2_score(y, y_pred)
+
+        fig, (ax_fit, ax_boot) = plt.subplots(1, 2, figsize=(12, 5))
+
+        # ── LEFT: Actual vs Predicted ─────────────────────────────────────────
+        ax_fit.scatter(y, y_pred, alpha=0.55, s=25, color="#1f77b4",
+                        label="Simulations", zorder=3)
+
+        # Perfect-fit diagonal
+        y_lo = min(y.min(), y_pred.min())
+        y_hi = max(y.max(), y_pred.max())
+        pad  = (y_hi - y_lo) * 0.05
+        diag_range = [y_lo - pad, y_hi + pad]
+        ax_fit.plot(diag_range, diag_range, color="#d13438", linewidth=1.5,
+                    linestyle="--", label="Perfect Fit", zorder=2)
+
+        fit_passed = r2_val >= thresh_r2
+        fit_colour = "#107c10" if fit_passed else "#d13438"
+        fit_status = "✓ Pass" if fit_passed else "✗ Fail"
+        
+        model_name_str = f"Poly Degree {model_degree}" if model_type == 'Polynomial' else "Kriging"
+        ax_fit.set_title(f"Model Fit ({model_name_str})  —  {fit_status}",
+                            color=fit_colour, fontweight="bold")
+        ax_fit.set_xlabel(f"Actual  '{study.outcome}'", fontsize=9)
+        ax_fit.set_ylabel(f"Predicted  '{study.outcome}'", fontsize=9)
+
+        ax_fit.annotate(
+            f"Data R² = {r2_val:.3f}\nThreshold > {thresh_r2:.2f}",
+            xy=(0.05, 0.95), xycoords="axes fraction",
+            va="top", ha="left", fontsize=9,
+            bbox=dict(boxstyle="round,pad=0.4", facecolor="white",
+                        edgecolor=fit_colour, alpha=0.9)
+        )
+
+        ax_fit.legend(fontsize=8)
+        ax_fit.grid(True, alpha=0.3)
+
+        # ── RIGHT: Bootstrap Convergence Trace ────────────────────────────────
+        n_boot = 100
+        probe_points = np.percentile(X, [10, 50, 90], axis=0)
+
+        running_avg = []
+        running_max = []
+        accumulated_preds = []
+
+        rng = np.random.default_rng(42)
+        for _ in range(n_boot):
+            idx = rng.choice(len(y), len(y), replace=True)
+            X_b, y_b = X[idx], y[idx]
+            
+            if model_type == 'Polynomial':
+                m = make_pipeline(PolynomialFeatures(degree=model_degree), LinearRegression())
+            elif model_type == 'Kriging':
+                from sklearn.gaussian_process import GaussianProcessRegressor
+                m = GaussianProcessRegressor(
+                    kernel=model.kernel_, alpha=np.var(y_b)*0.01, optimizer=None
+                )
+            
+            m.fit(X_b, y_b)
+            accumulated_preds.append(m.predict(probe_points))
+
+            preds_arr  = np.array(accumulated_preds)
+            stds       = np.std(preds_arr, axis=0)
+            means      = np.abs(np.mean(preds_arr, axis=0))
+            rel_widths = stds / (means + 1e-6)
+
+            running_avg.append(float(np.mean(rel_widths)))
+            running_max.append(float(np.max(rel_widths)))
+
+        iters = np.arange(1, n_boot + 1)
+
+        ax_boot.plot(iters, running_avg, color="#006abc", linewidth=2,
+                        label="Running Avg CV")
+        ax_boot.plot(iters, running_max, color="#1f77b4", linewidth=1.5,
+                        linestyle=":", alpha=0.75, label="Running Max CV")
+
+        # Dynamic Threshold lines
+        ax_boot.axhline(thresh_avg, color="#107c10", linewidth=1.2, linestyle="--",
+                        alpha=0.85, label=f"Avg Threshold ({thresh_avg:.2f})")
+        ax_boot.axhline(thresh_max, color="#ffb900", linewidth=1.2, linestyle="--",
+                        alpha=0.85, label=f"Max Threshold ({thresh_max:.2f})")
+
+        # Dynamic Shading
+        ax_boot.fill_between(iters, 0, thresh_avg, color="#107c10", alpha=0.04)
+
+        final_avg_cv = running_avg[-1]
+        final_max_cv = running_max[-1]
+        boot_passed = (final_avg_cv < thresh_avg) and (final_max_cv < thresh_max)
+        boot_colour = "#107c10" if boot_passed else "#d13438"
+        boot_status = "✓ Pass" if boot_passed else "✗ Fail"
+        
+        ax_boot.set_title(f"Bootstrap Convergence  —  {boot_status}",
+                            color=boot_colour, fontweight="bold")
+        ax_boot.set_xlabel("Bootstrap Iteration", fontsize=9)
+        ax_boot.set_ylabel("Relative Std Dev (CV)", fontsize=9)
+        ax_boot.set_xlim(1, n_boot)
+        ax_boot.set_ylim(bottom=0)
+
+        ax_boot.annotate(
+            f"Final Avg CV = {final_avg_cv:.3f}  (< {thresh_avg:.2f})\n"
+            f"Final Max CV = {final_max_cv:.3f}  (< {thresh_max:.2f})",
+            xy=(0.97, 0.97), xycoords="axes fraction",
+            va="top", ha="right", fontsize=9,
+            bbox=dict(boxstyle="round,pad=0.4", facecolor="white",
+                        edgecolor=boot_colour, alpha=0.9)
+        )
+
+        ax_boot.legend(fontsize=8, loc="upper right",
+                        bbox_to_anchor=(0.97, 0.70))
+        ax_boot.grid(True, alpha=0.3)
+
+        fig.tight_layout()
+        return fig
 
     @render.data_frame
     def fit_stats_table():
