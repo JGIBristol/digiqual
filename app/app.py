@@ -1583,13 +1583,18 @@ def server(input, output, session):
 
         return ui.layout_columns(
             ui.card(
-                ui.card_header("Bootstrap Configuration"),
+                ui.card_header("Bootstrap & Target Configuration"),
                 ui.layout_columns(
                     ui.input_numeric("pod_n_boot", "Bootstrap Iterations", value=1000, min=10, step=100),
                     ui.div(
                         ui.input_checkbox("pod_parallel", "Enable Parallel Compute (Faster)", value=True),
                         class_="pt-4"
                     ),
+                    col_widths=[6, 6]
+                ),
+                ui.layout_columns(
+                    ui.input_select("pod_target_val", "Target PoD (%)", choices=["50", "90", "95", "99"], selected="90"),
+                    ui.input_select("pod_conf_val", "Confidence Level (%)", choices=["50", "90", "95", "99"], selected="95"),
                     col_widths=[6, 6]
                 ),
                 ui.input_task_button("btn_run_uq", "Run Uncertainty Quantification", class_="btn-danger w-100", icon=icon_svg("layer-group")),
@@ -2132,9 +2137,37 @@ def server(input, output, session):
         study = current_study()
         is_multi_dim = len(study.pod_results.get("poi_cols", [])) > 1
 
+        # We conditionally layout the Sensitivity plot and the Matrix table
+        if not is_multi_dim:
+            row2 = ui.layout_columns(
+                ui.card(
+                    ui.card_header("Probability of Detection vs. Threshold"),
+                    ui.output_plot("plot_uq_sensitivity", height="400px"),
+                    ui.p("Probability of detection as a function of the detection threshold for representative defect sizes.", class_="small text-muted px-3 pt-2 mb-0"),
+                    full_screen=True, class_="mt-3"
+                ),
+                ui.card(
+                    ui.card_header("Reliability Index Matrix (aX/Y)"),
+                    ui.output_data_frame("uq_reliability_matrix_table"),
+                    ui.p("Flaw sizes for combinations of Target Probability of Detection (rows) and Confidence Levels (columns).", class_="small text-muted mt-2 mb-0"),
+                    class_="mt-3"
+                ),
+                col_widths=[7, 5]
+            )
+        else:
+            row2 = ui.layout_columns(
+                ui.card(
+                    ui.card_header("Reliability Index Matrix (aX/Y)"),
+                    ui.output_data_frame("uq_reliability_matrix_table"),
+                    ui.p("Note: Reliability matrices and threshold sensitivity plots are only supported for a single Parameter of Interest.", class_="small text-muted mt-2 mb-0"),
+                    class_="mt-3"
+                ),
+                col_widths=[12]
+            )
+
         return ui.layout_columns(
             ui.div(
-                # --- NEW SIDE-BY-SIDE PLOT LAYOUT ---
+                # --- PLOTS ---
                 ui.layout_columns(
                     ui.card(
                         ui.card_header(f"{input.outcome_col()} Surface" if is_multi_dim else "Model Fit"),
@@ -2148,14 +2181,16 @@ def server(input, output, session):
                     ),
                     col_widths=[6,6]
                 ),
+                # --- SENSITIVITY AND MATRIX ---
+                row2,
                 # --- METRICS & EXPORT ---
                 ui.layout_columns(
-                    ui.card(ui.card_header("Reliability Metrics"), ui.output_data_frame("uq_stats_table")),
+                    ui.card(ui.card_header("Selected Reliability Metric"), ui.output_data_frame("uq_stats_table"), class_="mt-3"),
                     ui.card(
                         ui.card_header("Export Results"),
                         ui.p("Download a comprehensive Excel workbook containing all configuration metrics and full curve data across separate tabs.", class_="small text-muted mb-3"),
                         ui.download_button("download_excel_report", "Download Excel Report", class_="btn-success w-100", icon=icon_svg("file-excel")),
-                        class_="text-center"
+                        class_="text-center mt-3"
                     ),
                     col_widths=[8, 4]
                 )
@@ -2210,14 +2245,20 @@ def server(input, output, session):
                 n_boot=input.pod_n_boot(), n_jobs=-1 if input.pod_parallel() else 1
             )
 
-            val = results["a90_95"]
-            a9095_str = "N/A (Surface)" if len(poi_cols) > 1 else (f"{val:.3f}" if not np.isnan(val) else "Not Reached")
+            target_pod = float(input.pod_target_val()) / 100.0
+            conf_level = int(input.pod_conf_val())
+
+            val = results["reliability_table"].get((int(target_pod * 100), conf_level), np.nan)
+            aX_Y_str = "N/A (Surface)" if len(poi_cols) > 1 else (f"{val:.3f}" if not np.isnan(val) else "Not Reached")
+            selected_label = f"a{int(target_pod*100)}/{conf_level} Reliability Index"
 
             # --- EXPANDED UQ METRICS ---
             metrics = {
                 "Detection Threshold": results["threshold"],
                 "Bootstrap Iterations": results["n_boot"],
-                "a90/95 Reliability Index": a9095_str
+                "Target PoD (%)": f"{target_pod*100:.0f}%",
+                "Confidence Level (%)": f"{conf_level}%",
+                selected_label: aX_Y_str
             }
             uq_metrics.set(metrics)
 
@@ -2232,7 +2273,7 @@ def server(input, output, session):
             export_data["ci_upper"] = results["curves"]["ci_upper"]
             pod_export_data.set(pd.DataFrame(export_data))
 
-            study.visualise(show=False)
+            study.visualise(show=False, target_pod=target_pod, confidence_level=conf_level)
             global_plot_trigger.set(global_plot_trigger() + 1)
             ui.notification_show("Uncertainty Quantification Complete!", type="success")
 
@@ -2451,6 +2492,121 @@ def server(input, output, session):
         fig.tight_layout()
         return fig
 
+    @reactive.calc
+    def uq_selected_metrics():
+        data = uq_metrics()
+        if data is None:
+            return None
+
+        study = current_study()
+        if study is None or not study.pod_results:
+            return data
+
+        try:
+            target_pod = float(input.pod_target_val()) / 100.0
+            conf_level = int(input.pod_conf_val())
+            
+            poi_cols = study.pod_results.get("poi_cols", [])
+            
+            table = study.pod_results.get("reliability_table", {})
+            val = table.get((int(target_pod * 100), conf_level), np.nan)
+            aX_Y_str = "N/A (Surface)" if len(poi_cols) > 1 else (f"{val:.3f}" if not np.isnan(val) else "Not Reached")
+            
+            selected_label = f"a{int(target_pod*100)}/{conf_level} Reliability Index"
+            
+            return {
+                "Detection Threshold": study.pod_results["threshold"],
+                "Bootstrap Iterations": study.pod_results["n_boot"],
+                "Target PoD (%)": f"{target_pod*100:.0f}%",
+                "Confidence Level (%)": f"{conf_level}%",
+                selected_label: aX_Y_str
+            }
+        except Exception:
+            return data
+
+    @reactive.effect
+    @reactive.event(input.pod_target_val, input.pod_conf_val)
+    def update_uq_plots_target_conf():
+        study = current_study()
+        if study is None or not study.pod_results:
+            return
+            
+        try:
+            target_pod = float(input.pod_target_val()) / 100.0
+            conf_level = int(input.pod_conf_val())
+            
+            study.visualise(
+                show=False,
+                target_pod=target_pod,
+                confidence_level=conf_level
+            )
+            
+            with reactive.isolate():
+                global_plot_trigger.set(global_plot_trigger() + 1)
+        except Exception:
+            pass
+
+    @render.data_frame
+    def uq_reliability_matrix_table():
+        study = current_study()
+        if study is None or not study.pod_results:
+            return None
+
+        table = study.pod_results.get("reliability_table", {})
+        if not table:
+            return None
+
+        std_conf_levels = [50, 90, 95, 99]
+        std_target_pods = [50, 90, 95, 99]
+
+        rows = []
+        for tp in std_target_pods:
+            row_data = {"Target PoD": f"a{tp}"}
+            for cl in std_conf_levels:
+                val = table.get((tp, cl), np.nan)
+                row_data[f"Conf {cl}%"] = f"{val:.3f}" if not np.isnan(val) else "Not Reached"
+            rows.append(row_data)
+
+        df = pd.DataFrame(rows)
+        return render.DataGrid(df, width="100%", filters=False)
+
+    @render.plot
+    def plot_uq_sensitivity():
+        _ = global_plot_trigger()
+        study = current_study()
+        if study is None or not study.threshold_spectrum_cache:
+            return None
+            
+        poi_cols = study.pod_results.get("poi_cols", [])
+        if len(poi_cols) > 1:
+            return None
+
+        # Get the first spectrum from the cache
+        spectrum_key = list(study.threshold_spectrum_cache.keys())[0]
+        spec = study.threshold_spectrum_cache[spectrum_key]
+        poi_name = poi_cols[0] if poi_cols else "Parameter of Interest"
+
+        # Get X_eval
+        X_eval = None
+        for l3_key, l3_cache in study.pod_curves_cache.items():
+            if l3_key[0] == spectrum_key[0] and l3_key[2] == spectrum_key[1]:
+                X_eval = l3_cache["X_eval"].flatten()
+                break
+        if X_eval is None:
+            X_eval = np.linspace(
+                study.clean_data[poi_name].min(),
+                study.clean_data[poi_name].max(),
+                len(spec["mean_curve"])
+            )
+
+        from digiqual.plotting import plot_pod_vs_threshold
+        return plot_pod_vs_threshold(
+            X_eval=X_eval,
+            thresholds=spec["thresholds"],
+            pod_matrix=spec["pod_matrix"],
+            poi_name=poi_name
+        )
+
     @render.data_frame
     def fit_stats_table():
         data = fit_metrics()
@@ -2461,7 +2617,7 @@ def server(input, output, session):
 
     @render.data_frame
     def uq_stats_table():
-        data = uq_metrics()
+        data = uq_selected_metrics()
         return render.DataGrid(pd.DataFrame(list(data.items()), columns=["Metric", "Value"]), width="100%", filters=False) if data else None
 
     @render.download(filename="digiqual_pod_report.xlsx")
@@ -2483,8 +2639,8 @@ def server(input, output, session):
             if fit_data is not None:
                 # Strip out the LaTeX, but keep "Model Equation" (the plain text)
                 excel_data = {k: v for k, v in fit_data.items() if k != "LaTeX Equation"}
-                combined_metrics.update(excel_data) # Note: For download_excel_fit, this line is df_metrics = pd.DataFrame(list(excel_data.items())...)
-            uq_data = uq_metrics()
+                combined_metrics.update(excel_data)
+            uq_data = uq_selected_metrics()
             if uq_data is not None:
                 combined_metrics.update(uq_data)
 
@@ -2496,6 +2652,23 @@ def server(input, output, session):
             df_curve = pod_export_data()
             if df_curve is not None:
                 df_curve.to_excel(writer, sheet_name="PoD Curve Data", index=False)
+
+            # --- TAB 3: Reliability Matrix ---
+            study = current_study()
+            if study is not None and study.pod_results:
+                table = study.pod_results.get("reliability_table", {})
+                if table:
+                    std_conf_levels = [50, 90, 95, 99]
+                    std_target_pods = [50, 90, 95, 99]
+                    rows = []
+                    for tp in std_target_pods:
+                        row_data = {"Target PoD": f"a{tp}"}
+                        for cl in std_conf_levels:
+                            val = table.get((tp, cl), np.nan)
+                            row_data[f"Conf {cl}%"] = val if not np.isnan(val) else "Not Reached"
+                        rows.append(row_data)
+                    df_matrix = pd.DataFrame(rows)
+                    df_matrix.to_excel(writer, sheet_name="Reliability Matrix", index=False)
 
         # Return the bytes to trigger the download
         yield output.getvalue()

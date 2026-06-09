@@ -82,6 +82,7 @@ def plot_pod_curve(
     ci_lower: Optional[np.ndarray] = None,
     ci_upper: Optional[np.ndarray] = None,
     target_pod: float = 0.90,
+    confidence_level: float = 95,
     poi_name: str = "Parameter of Interest",
     ax: Optional[plt.Axes] = None
 ) -> plt.Axes:
@@ -90,28 +91,6 @@ def plot_pod_curve(
 
     Visualizes the PoD curve with Bootstrap Confidence Intervals.
     Equivalent to Figure 11 in the Generalized Method paper.
-
-    Args:
-        X_eval: The grid of points used for the curves.
-        pod_curve: The main PoD estimate (0.0 to 1.0).
-        ci_lower: (Optional) The lower 95% confidence bound.
-        ci_upper: (Optional) The upper 95% confidence bound.
-        target_pod: The target reliability level (usually 0.90) to mark on the plot.
-        poi_name: The label to use for the Parameter of Interest on the x-axis.
-        ax: (Optional) Matplotlib axes to plot on.
-
-    Examples:
-        ```python
-        # Plot the reliability curve with confidence bounds
-        ax = plot_pod_curve(
-            X_eval, pod_curve,
-            ci_lower=lower_bound,
-            ci_upper=upper_bound,
-            target_pod=0.90,
-            poi_name="Crack Length (mm)"
-        )
-        plt.show()
-        ```
     """
     if ax is None:
         fig, ax = plt.subplots()
@@ -124,22 +103,22 @@ def plot_pod_curve(
         ax.fill_between(
             X_eval, ci_lower, ci_upper,
             color='orange', alpha=0.3,
-            label='95% Confidence Bounds'
+            label=f"{int(confidence_level)}% Confidence Bounds"
         )
         ax.plot(X_eval, ci_lower, color='orange', linestyle='--', linewidth=1)
 
-    # 3. Mark the a90/95 point (UPDATED FOR PRECISION)
+    # 3. Mark the reliability point
     if ci_lower is not None:
         # Check if we actually reach the target reliability
         if np.max(ci_lower) >= target_pod:
             from digiqual.pod import calculate_reliability_point
-            a90_95 = calculate_reliability_point(X_eval, ci_lower, target_pod)
+            rel_pt = calculate_reliability_point(X_eval, ci_lower, target_pod)
 
             # Draw the marker lines
-            label_text = f"a90/95 = {a90_95:.3f}"
-            ax.axvline(a90_95, color='green', linestyle='-.', label=label_text)
+            label_text = f"a{int(target_pod*100)}/{int(confidence_level)} = {rel_pt:.3f}"
+            ax.axvline(rel_pt, color='green', linestyle='-.', label=label_text)
             ax.axhline(target_pod, color='green', linestyle=':', alpha=0.5)
-            ax.scatter([a90_95], [target_pod], color='green', zorder=5)
+            ax.scatter([rel_pt], [target_pod], color='green', zorder=5)
 
     # Formatting
     ax.set_ylim(0, 1.05)
@@ -150,6 +129,43 @@ def plot_pod_curve(
     ax.grid(True, alpha=0.3)
 
     return ax
+
+
+def plot_pod_vs_threshold(
+    X_eval: np.ndarray,
+    thresholds: np.ndarray,
+    pod_matrix: np.ndarray,
+    poi_name: str = "Parameter of Interest",
+    ax: Optional[plt.Axes] = None
+) -> plt.Axes:
+    """
+    Plots Probability of Detection (y-axis) vs. Detection Threshold (x-axis)
+    for a selection of representative defect sizes (flaw sizes).
+    """
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 6))
+
+    # Select 5 representative defect sizes from the X_eval grid
+    # E.g. at percentiles 10%, 30%, 50%, 70%, 90% of the evaluated range
+    n_points = len(X_eval)
+    indices = [int(n_points * p) for p in [0.1, 0.3, 0.5, 0.7, 0.9]]
+    indices = [min(max(0, idx), n_points - 1) for idx in indices]
+    indices = sorted(list(set(indices)))
+
+    for idx in indices:
+        size_val = X_eval[idx]
+        pod_vs_t = pod_matrix[idx, :]
+        ax.plot(thresholds, pod_vs_t, label=f"{poi_name} = {size_val:.2f}", linewidth=2)
+
+    ax.set_ylim(-0.05, 1.05)
+    ax.set_xlabel("Detection Threshold")
+    ax.set_ylabel("Probability of Detection (Mean)")
+    ax.set_title("Probability of Detection vs. Detection Threshold")
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc="lower left", title="Defect Size")
+
+    return ax
+
 
 def plot_pod_surface(
     poi_grids: list,

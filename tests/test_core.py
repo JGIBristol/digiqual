@@ -272,3 +272,54 @@ def test_visualise_no_matplotlib(study):
         # <-- FIXED: We now explicitly expect the ImportError to be thrown
         with pytest.raises(ImportError):
             study.visualise(show=True)
+
+
+def test_pod_reliability_table(study, clean_df):
+    """Verify that reliability_table and ci_bounds are correctly populated in core study pod()."""
+    study.add_data(clean_df, outcome_col="Signal")
+    study._validate()
+    
+    # Run pod with bootstrap iterations = 10 for speed
+    res = study.pod(poi_col="Length", threshold=10.5, n_boot=10, n_jobs=1)
+    
+    assert "reliability_table" in res
+    assert "ci_bounds" in res
+    assert (90, 95) in res["reliability_table"]
+    assert 95 in res["ci_bounds"]
+    
+    # Check that reliability values are computed
+    assert isinstance(res["reliability_table"][(90, 95)], float)
+    
+    # Check that n_boot=0 defaults to mean curves
+    res_no_boot = study.pod(poi_col="Length", threshold=10.5, n_boot=0)
+    assert 95 in res_no_boot["ci_bounds"]
+    assert (90, 95) in res_no_boot["reliability_table"]
+
+
+@patch("matplotlib.pyplot.subplots")
+def test_plot_pod_vs_threshold_wrapper(mock_subplots, study):
+    """Test that study.plot_pod_vs_threshold correctly retrieves data and generates figure."""
+    mock_fig = MagicMock()
+    mock_ax = MagicMock()
+    mock_subplots.return_value = (mock_fig, mock_ax)
+    
+    study.threshold_spectrum_cache = {
+        ("dummy_key", ("Length",), (), frozenset()): {
+            "thresholds": np.array([2.0, 3.0, 4.0]),
+            "pod_matrix": np.ones((10, 3)),
+            "mean_curve": np.ones(10)
+        }
+    }
+    
+    # Set up matching pod curves cache for evaluation grid
+    study.pod_curves_cache = {
+        ("dummy_key", 10.5, ("Length",), (), frozenset()): {
+            "X_eval": np.linspace(1, 10, 10)
+        }
+    }
+    
+    with patch("digiqual.plotting.plot_pod_vs_threshold") as mock_plot:
+        fig = study.plot_pod_vs_threshold(show=False)
+        assert fig == mock_fig
+        mock_plot.assert_called_once()
+

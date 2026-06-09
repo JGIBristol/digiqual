@@ -780,6 +780,11 @@ class SimulationStudy:
         # 7. Bootstrap Confidence Intervals (Parallelized)
         # ---------------------------------------------------------
         # We don't cache the bootstrap because n_boot can change, and it's heavily intentional when run.
+        std_conf_levels = [50, 90, 95, 99]
+        std_target_pods = [0.50, 0.90, 0.95, 0.99]
+        ci_bounds = {}
+        reliability_table = {}
+
         if n_boot > 0:
             if n_jobs is None or n_jobs == 1:
                 actual_cores = 1
@@ -790,21 +795,41 @@ class SimulationStudy:
 
             print(f"4. Running Bootstrap ({n_boot} iterations on {actual_cores} cores)...", flush=True)
 
-            lower_ci, upper_ci = pod.bootstrap_pod_ci(
+            ci_bounds = pod.bootstrap_pod_ci(
                 X, y, X_eval, threshold,
                 mean_model.model_type_, mean_model.model_params_, bandwidth, (dist_name, dist_params),
                 n_boot=n_boot, nuisance_ranges=nuisance_ranges,
-                n_jobs=n_jobs, feature_names=all_cols, poi_names=poi_cols
+                n_jobs=n_jobs, feature_names=all_cols, poi_names=poi_cols,
+                confidence_levels=std_conf_levels
             )
+            if isinstance(ci_bounds, dict):
+                # Default lower_ci and upper_ci for backward compatibility
+                lower_ci, upper_ci = ci_bounds[95]
+            else:
+                # Handle mocked or legacy tuple return
+                lower_ci, upper_ci = ci_bounds
+                ci_bounds = {cl: (lower_ci, upper_ci) for cl in std_conf_levels}
 
             # Recalculate true a90/95 based on the LOWER confidence bound
             if len(poi_cols) == 1 and lower_ci is not None:
                 a90_95 = pod.calculate_reliability_point(X_eval.flatten(), lower_ci, target_pod=0.90)
                 print(f"   -> a90/95 Reliability Index: {a90_95:.3f}")
+            else:
+                a90_95 = np.nan
 
         else:
             print("4. Skipping Bootstrap (n_boot=0)...", flush=True)
             lower_ci, upper_ci = None, None
+            a90_95 = np.nan
+            ci_bounds = {cl: (pod_curve, pod_curve) for cl in std_conf_levels}
+
+        # Calculate reliability matrix for all combinations
+        if len(poi_cols) == 1:
+            for cl in std_conf_levels:
+                cl_lower, _ = ci_bounds[cl]
+                for tp in std_target_pods:
+                    val = pod.calculate_reliability_point(X_eval.flatten(), cl_lower, target_pod=tp)
+                    reliability_table[(int(tp*100), cl)] = val
 
         # 8. Package Results
         self.pod_results = {
@@ -814,6 +839,8 @@ class SimulationStudy:
             "threshold": threshold,
             "n_boot" : n_boot,
             "a90_95": a90_95,
+            "reliability_table": reliability_table,
+            "ci_bounds": ci_bounds,
             "X": X,
             "y": y,
             "X_eval": X_eval,
@@ -861,22 +888,21 @@ class SimulationStudy:
         )
 
 #### Visualise Results ####
-    def visualise(self, show: bool = True, save_path: str = None) -> None:
+    def visualise(
+        self,
+        show: bool = True,
+        save_path: str = None,
+        target_pod: float = 0.90,
+        confidence_level: float = 95
+    ) -> None:
         """
         Generates and displays diagnostic plots (Signal Model and PoD Curve).
 
         Args:
             show (bool): If True, calls plt.show().
             save_path (str, optional): If provided, saves figures to disk (e.g., 'results/run1'). Appends '_signal.png' and '_pod.png'.
-
-        Examples:
-            ```python
-            # Display only
-            study.visualise()
-
-            # Save to disk
-            study.visualise(show=False, save_path='my_plots')
-            ```
+            target_pod (float): The target PoD value to plot.
+            confidence_level (float): The confidence level (50, 90, 95, 99) for confidence bounds.
         """
         if not self.pod_results:
             print("No PoD results found. Please run .pod() first.")
@@ -973,12 +999,21 @@ class SimulationStudy:
 
         # 2. PoD Curve/Surface Plot
         if len(poi_cols) == 1:
+            # Extract the correct confidence bounds
+            cl_lower, cl_upper = None, None
+            if "ci_bounds" in res and confidence_level in res["ci_bounds"] and res.get("n_boot", 0) > 0:
+                cl_lower, cl_upper = res["ci_bounds"][confidence_level]
+            else:
+                cl_lower = res["curves"]["ci_lower"]
+                cl_upper = res["curves"]["ci_upper"]
+
             self.plots["pod_curve"] = plot_pod_curve(
                 X_eval=res["X_eval"].flatten(),
                 pod_curve=res["curves"]["pod"],
-                ci_lower=res["curves"]["ci_lower"], # plotting.py handles None gracefully!
-                ci_upper=res["curves"]["ci_upper"],
-                target_pod=0.90,
+                ci_lower=cl_lower,
+                ci_upper=cl_upper,
+                target_pod=target_pod,
+                confidence_level=confidence_level,
                 poi_name=poi_cols[0]
             )
         else:
@@ -1041,14 +1076,38 @@ class SimulationStudy:
 
         # 2. Bootstrap Confidence Intervals
         print(f"Running Bootstrap ({n_boot} iterations) to establish classical confidence bounds...")
-        lower_ci, upper_ci = bootstrap_linear_pod_ci(
-            X, y, X_eval, threshold, xlog, ylog, n_boot, n_jobs
-        )
+        std_conf_levels = [50, 90, 95, 99]
+        std_target_pods = [0.50, 0.90, 0.95, 0.99]
+        ci_bounds = {}
+        reliability_table = {}
 
-        # 3. Calculate classical a90/95 point
-        a90_95 = pod.calculate_reliability_point(X_eval, lower_ci, target_pod=0.90)
-        if not np.isnan(a90_95):
-            print(f"   -> Classical a90/95 Reliability Index: {a90_95:.3f} mm")
+        if n_boot > 0:
+            ci_bounds = bootstrap_linear_pod_ci(
+                X, y, X_eval, threshold, xlog, ylog, n_boot, n_jobs, confidence_levels=std_conf_levels
+            )
+            if isinstance(ci_bounds, dict):
+                lower_ci, upper_ci = ci_bounds[95]
+            else:
+                lower_ci, upper_ci = ci_bounds
+                ci_bounds = {cl: (lower_ci, upper_ci) for cl in std_conf_levels}
+
+            # 3. Calculate classical a90/95 point
+            a90_95 = pod.calculate_reliability_point(X_eval, lower_ci, target_pod=0.90)
+            if not np.isnan(a90_95):
+                print(f"   -> Classical a90/95 Reliability Index: {a90_95:.3f} mm")
+            else:
+                a90_95 = np.nan
+        else:
+            lower_ci, upper_ci = None, None
+            a90_95 = np.nan
+            ci_bounds = {cl: (pod_curve, pod_curve) for cl in std_conf_levels}
+
+        # Calculate reliability matrix for all combinations
+        for cl in std_conf_levels:
+            cl_lower, _ = ci_bounds[cl]
+            for tp in std_target_pods:
+                val = pod.calculate_reliability_point(X_eval, cl_lower, target_pod=tp)
+                reliability_table[(int(tp*100), cl)] = val
 
         # 4. Store Results
         self.linear_pod_results = {
@@ -1061,6 +1120,9 @@ class SimulationStudy:
             "X_eval": X_eval,
             "model": model,
             "tau": tau,
+            "a90_95": a90_95,
+            "reliability_table": reliability_table,
+            "ci_bounds": ci_bounds,
             "curves": {
                 "mean_response": mean_curve,
                 "pod": pod_curve,
@@ -1073,7 +1135,13 @@ class SimulationStudy:
         return self.linear_pod_results
 
 #### Visualise Linear Results ####
-    def visualise_linear(self, show: bool = True, save_path: str = None) -> None:
+    def visualise_linear(
+        self,
+        show: bool = True,
+        save_path: str = None,
+        target_pod: float = 0.90,
+        confidence_level: float = 95
+    ) -> None:
         if not self.linear_pod_results:
             print("No linear PoD results found. Please run .linear_pod() first.")
             return
@@ -1086,13 +1154,22 @@ class SimulationStudy:
             ylog=res["ylog"], poi_name=res["poi_col"]
         )
 
+        # Extract the correct confidence bounds
+        cl_lower, cl_upper = None, None
+        if "ci_bounds" in res and confidence_level in res["ci_bounds"] and res.get("n_boot", 0) > 0:
+            cl_lower, cl_upper = res["ci_bounds"][confidence_level]
+        else:
+            cl_lower = res["curves"]["ci_lower"]
+            cl_upper = res["curves"]["ci_upper"]
+
         # Now pass the calculated bounds into the plot!
         self.linear_plots["pod_curve"] = plot_pod_curve(
             X_eval=res["X_eval"].flatten(),
             pod_curve=res["curves"]["pod"],
-            ci_lower=res["curves"]["ci_lower"],
-            ci_upper=res["curves"]["ci_upper"],
-            target_pod=0.90,
+            ci_lower=cl_lower,
+            ci_upper=cl_upper,
+            target_pod=target_pod,
+            confidence_level=confidence_level,
             poi_name=res["poi_col"]
         )
 
@@ -1107,3 +1184,63 @@ class SimulationStudy:
                 plt.show()
             except ImportError:
                 pass
+
+    def plot_pod_vs_threshold(
+        self,
+        show: bool = True,
+        save_path: str = None
+    ) -> Any:
+        """
+        Generates a plot of Probability of Detection (y-axis) vs. Detection Threshold (x-axis)
+        for representative defect sizes.
+        """
+        if not self.threshold_spectrum_cache:
+            print("No threshold spectrum found. Please run compute_pod_spectrum() first.")
+            return None
+
+        # Get the first spectrum from the cache
+        spectrum_key = list(self.threshold_spectrum_cache.keys())[0]
+        spec = self.threshold_spectrum_cache[spectrum_key]
+
+        poi_cols = spectrum_key[1]
+        poi_name = poi_cols[0] if poi_cols else "Parameter of Interest"
+
+        if len(poi_cols) > 1:
+            print("Threshold sensitivity plotting is currently only supported for 1 Parameter of Interest.")
+            return None
+
+        # Get X_eval
+        X_eval = None
+        for l3_key, l3_cache in self.pod_curves_cache.items():
+            if l3_key[0] == spectrum_key[0] and l3_key[2] == spectrum_key[1]:
+                X_eval = l3_cache["X_eval"].flatten()
+                break
+        if X_eval is None:
+            X_eval = np.linspace(
+                self.clean_data[poi_name].min(),
+                self.clean_data[poi_name].max(),
+                len(spec["mean_curve"])
+            )
+
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots(figsize=(8, 6))
+
+        from .plotting import plot_pod_vs_threshold as plot_func
+        plot_func(
+            X_eval=X_eval,
+            thresholds=spec["thresholds"],
+            pod_matrix=spec["pod_matrix"],
+            poi_name=poi_name,
+            ax=ax
+        )
+
+        fig.tight_layout()
+
+        if save_path:
+            fig.savefig(save_path)
+            print(f"Threshold sensitivity plot saved to {save_path}")
+
+        if show:
+            plt.show()
+
+        return fig

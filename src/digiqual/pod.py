@@ -666,10 +666,11 @@ def bootstrap_pod_ci(
     nuisance_ranges: dict = None,
     n_jobs: int | None = None,
     feature_names: list = None,
-    poi_names: list = None
-) -> Tuple[np.ndarray, np.ndarray]:
+    poi_names: list = None,
+    confidence_levels: list | None = None
+) -> Tuple[np.ndarray, np.ndarray] | dict:
     """
-    Estimates 95% Confidence Bounds for the PoD curve via Bootstrapping.
+    Estimates Confidence Bounds for the PoD curve via Bootstrapping.
 
     This function resamples the original data with replacement `n_boot` times.
     For each resample, it refits the Mean Model (dynamically rebuilding either
@@ -687,37 +688,21 @@ def bootstrap_pod_ci(
         bandwidth (float): Smoothing bandwidth (fixed from original fit).
         dist_info (Tuple[str, Tuple]): Error distribution (fixed from original fit).
         n_boot (int, optional): Number of bootstrap iterations. Defaults to 1000.
+        nuisance_ranges (dict, optional): Nuisance ranges.
         n_jobs (int | None, optional): Number of CPU cores to use.
-            ``None`` or ``1`` means single-core execution (no parallelisation).
-            ``-1`` means use all available cores minus one. Defaults to ``None``.
-        feature_names (list, optional): Names of all feature columns in ``X``, in the exact
-            same order as the columns appear in ``X``. For one-dimensional inputs this
-            can be omitted or contain a single name, but for multi-dimensional
-            bootstrapping it is used to identify which variables are parameters of
-            interest versus nuisance variables.
-        poi_names (list, optional): Names of the parameters of interest (PoIs). Each entry must
-            correspond to a name in ``feature_names``. During multi-dimensional
-            bootstrapping, PoD curves are evaluated and resampled with respect to these
-            variables, while any remaining features in ``X`` are treated as nuisance
-            variables. This should therefore be provided whenever ``X`` has multiple
-            columns and PoIs need to be distinguished from nuisance inputs.
+        feature_names (list, optional): Names of all feature columns in ``X``.
+        poi_names (list, optional): Names of the parameters of interest (PoIs).
+        confidence_levels (list | None, optional): Specific confidence levels (e.g. [50, 90, 95, 99])
+            to return curves for. If provided, returns a dict of {level: (lower, upper)}.
+            Otherwise, returns the standard Tuple (lower_95, upper_95).
 
     Returns:
-
-    Returns:
-        Tuple[np.ndarray, np.ndarray]:
-            - lower_ci: The 2.5th percentile PoD curve (Lower 95% Bound).
-            - upper_ci: The 97.5th percentile PoD curve (Upper 95% Bound).
-
-    Examples:
-        ```python
-        # Generate 95% confidence bounds
-        lower, upper = bootstrap_pod_ci(
-            X, y, X_eval, threshold=0.5,
-            model_type='Polynomial', model_params=3,
-            bandwidth=1.5, dist_info=('norm', (0, 1)), n_boot=100
-        )
-        ```
+        Tuple[np.ndarray, np.ndarray] | dict:
+            If confidence_levels is None:
+                - lower_ci: The 2.5th percentile PoD curve (Lower 95% Bound).
+                - upper_ci: The 97.5th percentile PoD curve (Upper 95% Bound).
+            If confidence_levels is a list:
+                - dict: Mapping each confidence level to its (lower_ci, upper_ci) curves.
     """
 
     n_samples = len(y)
@@ -737,12 +722,21 @@ def bootstrap_pod_ci(
         delayed(_single_bootstrap_step)(
             X_2d, y, X_eval, threshold, model_type, model_params,
             bandwidth, dist_info, nuisance_ranges, n_samples,
-            feature_names, poi_names # <-- ADD THIS
+            feature_names, poi_names
         ) for _ in range(n_boot)
     )
 
     pod_matrix = np.array(results)
-    return np.percentile(pod_matrix, 2.5, axis=0), np.percentile(pod_matrix, 97.5, axis=0)
+    
+    if confidence_levels is None:
+        return np.percentile(pod_matrix, 2.5, axis=0), np.percentile(pod_matrix, 97.5, axis=0)
+    
+    bounds = {}
+    for cl in confidence_levels:
+        low_p = (100.0 - cl) / 2.0
+        high_p = 100.0 - low_p
+        bounds[cl] = (np.percentile(pod_matrix, low_p, axis=0), np.percentile(pod_matrix, high_p, axis=0))
+    return bounds
 
 
 def calculate_reliability_point(

@@ -145,10 +145,11 @@ def bootstrap_linear_pod_ci(
     xlog: bool = False,
     ylog: bool = False,
     n_boot: int = 1000,
-    n_jobs: int | None = None
-) -> Tuple[np.ndarray, np.ndarray]:
+    n_jobs: int | None = None,
+    confidence_levels: list | None = None
+) -> Tuple[np.ndarray, np.ndarray] | dict:
     """
-    Estimates 95% Confidence Bounds for the classical linear PoD curve via Bootstrapping.
+    Estimates Confidence Bounds for the classical linear PoD curve via Bootstrapping.
     Maintains the strict assumptions of constant variance and normally distributed errors.
     """
     if n_jobs is None or n_jobs == 1:
@@ -167,8 +168,15 @@ def bootstrap_linear_pod_ci(
 
     pod_matrix = np.array(results)
 
-    # Return the 2.5% (Lower Bound) and 97.5% (Upper Bound) curves
-    return np.percentile(pod_matrix, 2.5, axis=0), np.percentile(pod_matrix, 97.5, axis=0)
+    if confidence_levels is None:
+        return np.percentile(pod_matrix, 2.5, axis=0), np.percentile(pod_matrix, 97.5, axis=0)
+
+    bounds = {}
+    for cl in confidence_levels:
+        low_p = (100.0 - cl) / 2.0
+        high_p = 100.0 - low_p
+        bounds[cl] = (np.percentile(pod_matrix, low_p, axis=0), np.percentile(pod_matrix, high_p, axis=0))
+    return bounds
 
 
 

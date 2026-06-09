@@ -262,3 +262,46 @@ def test_plot_model_selection_highlights_forced(linear_data):
     )
     assert fig is not None
     assert len(fig.axes) == 2
+
+
+def test_bootstrap_pod_ci_confidence_levels(linear_data):
+    """Test that bootstrap_pod_ci returns a dict of bounds when confidence_levels is provided."""
+    X, y = linear_data
+    models, scores, best_key = fit_all_robust_mean_models(X, y)
+    mean_model = models[best_key]
+    residuals, bw = fit_variance_model(X.reshape(-1, 1), y, mean_model)
+    X_eval = np.linspace(X.min(), X.max(), 10).reshape(-1, 1)
+    dist_info = ('norm', (0, 1))
+
+    levels = [50, 95, 99]
+    bounds = bootstrap_pod_ci(
+        X.reshape(-1, 1), y, X_eval,
+        threshold=5.0,
+        model_type=mean_model.model_type_,
+        model_params=mean_model.model_params_,
+        bandwidth=bw,
+        dist_info=dist_info,
+        n_boot=10,
+        confidence_levels=levels
+    )
+
+    assert isinstance(bounds, dict)
+    for lvl in levels:
+        assert lvl in bounds
+        lower, upper = bounds[lvl]
+        assert len(lower) == len(X_eval)
+        assert len(upper) == len(X_eval)
+        assert np.all(upper >= lower)
+
+
+def test_plot_pod_vs_threshold():
+    """Test that plot_pod_vs_threshold runs successfully and returns an axis."""
+    from digiqual.plotting import plot_pod_vs_threshold
+    X_eval = np.linspace(1, 10, 50)
+    thresholds = np.linspace(2, 8, 20)
+    pod_matrix = np.random.uniform(0, 1, size=(50, 20))
+
+    ax = plot_pod_vs_threshold(X_eval, thresholds, pod_matrix, poi_name="Flaw Size")
+    assert ax is not None
+    assert len(ax.get_lines()) > 0
+
