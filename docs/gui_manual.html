@@ -296,12 +296,20 @@ window.Quarto = {
 </section>
 <section id="simulation-diagnostics" class="level2">
 <h2 class="anchored" data-anchor-id="simulation-diagnostics">2. Simulation Diagnostics</h2>
-<p><strong>Purpose:</strong> Validate your dataset and identify regions where the physics solver failed to provide sufficient coverage or converged poorly.</p>
+<p><strong>Purpose:</strong> Validate your dataset, detect input correlations, and identify regions where the physics solver failed to provide sufficient coverage or converged poorly.</p>
 <ol type="1">
 <li><strong>Upload Data:</strong> Upload the CSV containing your completed simulation results.</li>
 <li><strong>Configure Columns:</strong> Select which variables are the inputs (e.g., Flaw Size, Angle) and which is the output (the Signal Response).</li>
-<li><strong>Run Diagnostics:</strong> The engine will evaluate the data against four rigorous statistical tests (Gap Ratio, R² Fit, Average CV, Peak CV).</li>
-<li><strong>Remediation:</strong> If the data fails the coverage checks, the app will offer an Active Learning “Remediation” tool. Enter the number of new samples you want, and it will generate a targeted CSV of new coordinates specifically designed to fill the detected gaps and stabilize the model.</li>
+<li><strong>Run Diagnostics:</strong> The engine evaluates the data against <strong>five</strong> rigorous statistical tests:
+<ul>
+<li><strong>Gap Ratio</strong>: Checks for gaps in input space coverage.</li>
+<li><strong>R² Fit</strong>: Measures whether a basic surrogate model can capture a meaningful signal-to-noise relationship.</li>
+<li><strong>Average CV &amp; Peak CV</strong>: Evaluates bootstrap prediction stability.</li>
+<li><strong>Collinearity Check</strong>: Calculates the Variance Inflation Factor (VIF) for each input variable to detect multicollinearity.</li>
+</ul></li>
+<li><strong>Configure Thresholds:</strong> Adjust diagnostic tolerances (including a <strong>Max Allowed VIF</strong> setting, defaulting to <code>5.0</code>) to define custom limits for passing.</li>
+<li><strong>Collinearity Analysis:</strong> A dedicated card displays a correlation heatmap of your input variables, complete with VIF values and correlation coefficients, highlighting any strongly correlated variables that could destabilize model fitting.</li>
+<li><strong>Remediation:</strong> If the data fails the coverage or collinearity checks, the app will offer an Active Learning “Remediation” tool or highlight issues. Enter the number of new samples you want, and it will generate a targeted CSV of new coordinates specifically designed to fill the detected gaps and stabilize the model.</li>
 </ol>
 </section>
 <section id="model-fit-physics" class="level2">
@@ -326,12 +334,15 @@ window.Quarto = {
 </section>
 <section id="uq-analysis-confidence" class="level2">
 <h2 class="anchored" data-anchor-id="uq-analysis-confidence">5. UQ Analysis (Confidence)</h2>
-<p><strong>Purpose:</strong> Construct rigorous Probability of Detection bounds via parallelised Bootstrapping.</p>
-<p>Once you have used the PoD Explorer to find the exact threshold and parameter slice you care about, you move to this final tab to wrap it in 95% Confidence Intervals.</p>
+<p><strong>Purpose:</strong> Construct rigorous Probability of Detection bounds via parallelised Bootstrapping, and inspect threshold sensitivity and multi-confidence level reliability matrices.</p>
+<p>Once you have used the PoD Explorer to find the exact threshold and parameter slice you care about, you move to this final tab to perform Uncertainty Quantification (UQ).</p>
 <ol type="1">
 <li><strong>Bootstrap Configuration:</strong> Define the number of resampling iterations (typically 1000). Ensure Parallel Compute is enabled to utilize all your CPU cores.</li>
-<li><strong>Run UQ:</strong> The system safely bypasses the fast-caches. It locks the mathematical shape chosen in Tab 3 and runs thousands of Monte Carlo integrations to calculate the exact uncertainty bounds.</li>
-<li><strong>Export Results:</strong> Download a comprehensive Excel workbook containing your configuration metrics, LaTeX equations, and the raw numerical curve data across separate spreadsheet tabs.</li>
+<li><strong>Run UQ:</strong> The system safely bypasses the fast-caches. It locks the mathematical shape chosen in Tab 3 and runs thousands of Monte Carlo iterations to calculate the exact uncertainty bounds.</li>
+<li><strong>Select Reliability Targets:</strong> Select a specific <strong>Target PoD</strong> (50%, 90%, 95%, 99%) and a <strong>Confidence Level</strong> (50%, 90%, 95%, 99%) to annotate and display the exact reliability sizing point (e.g., <code>a90/95</code> or <code>a90/90</code>) on the curve.</li>
+<li><strong>Reliability Index Matrix (aX/Y):</strong> When a single Parameter of Interest is analyzed, the app displays a complete matrix table showing the flaw sizing values required to reach standard combinations of Target Probability of Detection (rows) and Confidence Levels (columns).</li>
+<li><strong>Threshold Sensitivity Plot:</strong> The app displays a curve plotting the Probability of Detection against the Detection Threshold for representative defect sizes, showing how changing the threshold affects reliability.</li>
+<li><strong>Export Results:</strong> Download a comprehensive Excel workbook containing your configuration metrics, LaTeX equations, the raw numerical curve data, and the newly added <strong>Reliability Matrix</strong> spreadsheet tab.</li>
 </ol>
 
 

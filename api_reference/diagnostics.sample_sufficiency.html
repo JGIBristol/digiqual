@@ -280,9 +280,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    min_r2_score<span class="op">=</span><span class="fl">0.5</span>,</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    max_avg_cv<span class="op">=</span><span class="fl">0.15</span>,</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    max_max_cv<span class="op">=</span><span class="fl">0.3</span>,</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    max_allowed_vif<span class="op">=</span><span class="fl">5.0</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Performs a suite of statistical diagnostics to evaluate if the current sample size is sufficient.</p>
-<p>This function tests input space coverage, basic model fit (signal-to-noise), and prediction stability via bootstrapping. It uses user-defined thresholds to determine if the sampling passes the sufficiency criteria required for reliable PoD analysis.</p>
+<p>This function tests input space coverage, basic model fit (signal-to-noise), prediction stability via bootstrapping, and multicollinearity. It uses user-defined thresholds to determine if the sampling passes the sufficiency criteria required for reliable PoD analysis.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
@@ -348,6 +349,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>float</td>
 <td>The maximum allowable relative width at the tail ends (10th and 90th percentiles) of the predictions. Defaults to 0.30.</td>
 <td><code>0.3</code></td>
+</tr>
+<tr class="odd">
+<td>max_allowed_vif</td>
+<td>float</td>
+<td>The maximum allowable Variance Inflation Factor (VIF) to detect multicollinearity. Defaults to 5.0.</td>
+<td><code>5.0</code></td>
 </tr>
 </tbody>
 </table>

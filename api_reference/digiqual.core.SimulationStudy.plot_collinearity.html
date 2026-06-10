@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>index – digiqual</title>
+<title>digiqual.core.simulationstudy.plot_collinearity – digiqual</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -23,6 +23,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -33,7 +68,6 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../docs/caching.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
@@ -108,7 +142,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../api_reference/index.html">API Reference</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -206,7 +240,7 @@ ul.task-list li input[type="checkbox"] {
   </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../api_reference/index.html" class="sidebar-item-text sidebar-link active">
+  <a href="../api_reference/index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">API Reference</span></a>
   </div>
 </li>
@@ -220,14 +254,13 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#all-functions" id="toc-all-functions" class="nav-link active" data-scroll-target="#all-functions">All Functions</a>
+  <li><a href="#digiqual.core.SimulationStudy.plot_collinearity" id="toc-digiqual.core.SimulationStudy.plot_collinearity" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.plot_collinearity">plot_collinearity</a>
   <ul class="collapse">
-  <li><a href="#standard-workflow" id="toc-standard-workflow" class="nav-link" data-scroll-target="#standard-workflow">Standard Workflow</a></li>
-  <li><a href="#graphical-user-interface" id="toc-graphical-user-interface" class="nav-link" data-scroll-target="#graphical-user-interface">Graphical User Interface</a></li>
-  <li><a href="#functional-api" id="toc-functional-api" class="nav-link" data-scroll-target="#functional-api">Functional API</a></li>
+  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
+  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
   </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.plot_collinearity.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
@@ -235,152 +268,46 @@ ul.task-list li input[type="checkbox"] {
 
 
 
-<section id="all-functions" class="level1 doc doc-index">
-<h1 class="doc doc-index">All Functions</h1>
-<section id="standard-workflow" class="level2">
-<h2 class="anchored" data-anchor-id="standard-workflow">Standard Workflow</h2>
-<p>The core class for managing reliability studies.</p>
+<section id="digiqual.core.SimulationStudy.plot_collinearity" class="level1">
+<h1>plot_collinearity</h1>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>plot_collinearity(ax<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Plots a correlation matrix heatmap of the input variables to inspect collinearity.</p>
+<section id="parameters" class="level2 doc-section doc-section-parameters">
+<h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
 <tbody>
 <tr class="odd">
-<td><a href="../api_reference/core.SimulationStudy.html#digiqual.core.SimulationStudy">core.SimulationStudy</a></td>
-<td>A workflow manager for simulation reliability assessment.</td>
+<td>ax</td>
+<td>plt.Axes</td>
+<td>Matplotlib axes to plot on.</td>
+<td><code>None</code></td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="graphical-user-interface" class="level2">
-<h2 class="anchored" data-anchor-id="graphical-user-interface">Graphical User Interface</h2>
-<p>Launch the standalone DigiQual dashboard locally.</p>
+<section id="returns" class="level2 doc-section doc-section-returns">
+<h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
 <table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
 <tbody>
 <tr class="odd">
-<td><a href="../api_reference/dq_ui.html#digiqual.dq_ui">dq_ui</a></td>
-<td>User Interface for DigiQual Shiny Application</td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="functional-api" class="level2">
-<h2 class="anchored" data-anchor-id="functional-api">Functional API</h2>
-<p>Standalone tools for Sampling, Diagnostics, PoD, and Plotting.</p>
-<table class="caption-top table">
-<tbody>
-<tr class="odd">
-<td><a href="../api_reference/sampling.generate_lhs.html#digiqual.sampling.generate_lhs">sampling.generate_lhs</a></td>
-<td>Generates a Latin Hypercube Sample and scales it to the provided variable bounds.</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/diagnostics.validate_simulation.html#digiqual.diagnostics.validate_simulation">diagnostics.validate_simulation</a></td>
-<td>Validates simulation data, coercing to numeric and removing invalid rows.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/diagnostics.sample_sufficiency.html#digiqual.diagnostics.sample_sufficiency">diagnostics.sample_sufficiency</a></td>
-<td>Performs a suite of statistical diagnostics to evaluate if the current sample size is sufficient.</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/diagnostics.ValidationError.html#digiqual.diagnostics.ValidationError">diagnostics.ValidationError</a></td>
-<td>Raised when simulation data fails validation checks.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/adaptive.run_adaptive_search.html#digiqual.adaptive.run_adaptive_search">adaptive.run_adaptive_search</a></td>
-<td>Orchestrates the Active Learning loop on raw DataFrames using the Executor architecture.</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/adaptive.generate_targeted_samples.html#digiqual.adaptive.generate_targeted_samples">adaptive.generate_targeted_samples</a></td>
-<td>Active Learning Engine: Generates new samples based on diagnostic failures.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/pod.fit_all_robust_mean_models.html#digiqual.pod.fit_all_robust_mean_models">pod.fit_all_robust_mean_models</a></td>
-<td>Fits all polynomial models (and optionally Kriging) and returns them for caching.</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/pod.generate_latex_equation.html#digiqual.pod.generate_latex_equation">pod.generate_latex_equation</a></td>
-<td>Extracts a LaTeX formatted equation from a fitted Polynomial Pipeline.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/pod.optimise_bandwidth.html#digiqual.pod.optimise_bandwidth">pod.optimise_bandwidth</a></td>
-<td>Finds the optimal kernel smoothing bandwidth using Leave-One-Out Cross-Validation (LOO-CV).</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/pod.fit_variance_model.html#digiqual.pod.fit_variance_model">pod.fit_variance_model</a></td>
-<td>Calculates residuals and defines the smoothing bandwidth for variance estimation.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/pod.infer_best_distribution.html#digiqual.pod.infer_best_distribution">pod.infer_best_distribution</a></td>
-<td>Selects the best statistical distribution for the standardized residuals using AIC.</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/pod.plot_model_selection.html#digiqual.pod.plot_model_selection">pod.plot_model_selection</a></td>
-<td>Generates a normalized bar chart of the Bias-Variance Tradeoff from CV scores,</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/pod.predict_local_std.html#digiqual.pod.predict_local_std">pod.predict_local_std</a></td>
-<td>Estimates the local standard deviation using Gaussian Kernel Smoothing.</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/pod.compute_pod_curve.html#digiqual.pod.compute_pod_curve">pod.compute_pod_curve</a></td>
-<td>Calculates the Probability of Detection (PoD) curve.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/pod.bootstrap_pod_ci.html#digiqual.pod.bootstrap_pod_ci">pod.bootstrap_pod_ci</a></td>
-<td>Estimates Confidence Bounds for the PoD curve via Bootstrapping.</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/pod.calculate_reliability_point.html#digiqual.pod.calculate_reliability_point">pod.calculate_reliability_point</a></td>
-<td>Calculates the defect size (a90/95) where the Lower Confidence Bound</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/integration.compute_multi_dim_pod.html#digiqual.integration.compute_multi_dim_pod">integration.compute_multi_dim_pod</a></td>
-<td>Calculates the marginal Probability of Detection (PoD) across a grid of Parameters of Interest (PoI).</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/ahat.fit_linear_a_hat_model.html#digiqual.ahat.fit_linear_a_hat_model">ahat.fit_linear_a_hat_model</a></td>
-<td>Fits a simple linear regression model according to the standard a-hat vs a method.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/ahat.compute_linear_pod_curve.html#digiqual.ahat.compute_linear_pod_curve">ahat.compute_linear_pod_curve</a></td>
-<td>Calculates the PoD curve using the standard a-hat vs a analytical assumptions.</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/ahat.bootstrap_linear_pod_ci.html#digiqual.ahat.bootstrap_linear_pod_ci">ahat.bootstrap_linear_pod_ci</a></td>
-<td>Estimates Confidence Bounds for the classical linear PoD curve via Bootstrapping.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/ahat.plot_linear_signal_model.html#digiqual.ahat.plot_linear_signal_model">ahat.plot_linear_signal_model</a></td>
-<td>Diagnostic Plot: Visualizes the standard linear a-hat vs a model.</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/plotting.plot_signal_model.html#digiqual.plotting.plot_signal_model">plotting.plot_signal_model</a></td>
-<td>Diagnostic Plot 1: Signal vs Parameter of Interest (The Physics).</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/plotting.plot_pod_curve.html#digiqual.plotting.plot_pod_curve">plotting.plot_pod_curve</a></td>
-<td>Result Plot 2: Probability of Detection (The Reliability).</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/plotting.plot_pod_surface.html#digiqual.plotting.plot_pod_surface">plotting.plot_pod_surface</a></td>
-<td>Plots a 2D heatmap / contour for multi-dimensional PoD (2 Parameters of Interest).</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/plotting.plot_signal_surface.html#digiqual.plotting.plot_signal_surface">plotting.plot_signal_surface</a></td>
-<td>Result Plot 1 (Multi-Dimensional): Signal vs Parameters of Interest.</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/executors.Executor.html#digiqual.executors.Executor">executors.Executor</a></td>
-<td>THE BLUEPRINT:</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/executors.PythonExecutor.html#digiqual.executors.PythonExecutor">executors.PythonExecutor</a></td>
-<td>THE IN-MEMORY TRANSLATOR:</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/executors.CLIExecutor.html#digiqual.executors.CLIExecutor">executors.CLIExecutor</a></td>
-<td>THE HEAVY-DUTY TRANSLATOR (Process Isolation):</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/executors.MatlabExecutor.html#digiqual.executors.MatlabExecutor">executors.MatlabExecutor</a></td>
-<td>THE MATLAB TRANSLATOR:</td>
+<td></td>
+<td>Any</td>
+<td>plt.Axes: The plotted axes.</td>
 </tr>
 </tbody>
 </table>
@@ -790,18 +717,9 @@ ul.task-list li input[type="checkbox"] {
     }
   });
   </script>
-<nav class="page-navigation">
-  <div class="nav-page nav-page-previous">
-      <a href="../docs/caching.html" class="pagination-link" aria-label="DigiQual Caching Architecture">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">DigiQual Caching Architecture</span>
-      </a>          
-  </div>
-  <div class="nav-page nav-page-next">
-  </div>
-</nav>
 </div> <!-- /content -->
 
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.plot_collinearity.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

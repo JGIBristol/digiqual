@@ -347,7 +347,7 @@ window.Quarto = {
 <li><p>Completely physically re-fit the mean model, variance model, and error distribution.</p></li>
 <li><p>Calculate the PoD curve.</p></li>
 <li><p>Repeat this <span class="math inline">\(B\)</span> times (typically <span class="math inline">\(B=1000\)</span>).</p></li>
-<li><p>Extract the <span class="math inline">\(2.5^{th}\)</span> and <span class="math inline">\(97.5^{th}\)</span> percentiles at every point <span class="math inline">\(a\)</span> to form the robust 95% confidence interval <span class="math inline">\(PoD_{95}\)</span>.</p></li>
+<li><p>Extract the percentiles at every point <span class="math inline">\(a\)</span> to form the robust confidence interval curves across multiple standard confidence levels (50%, 90%, 95%, 99%) simultaneously (e.g., <span class="math inline">\(PoD_{50}\)</span>, <span class="math inline">\(PoD_{90}\)</span>, <span class="math inline">\(PoD_{95}\)</span>, <span class="math inline">\(PoD_{99}\)</span>). This builds the complete reliability matrix mapping target PoDs and confidence bounds.</p></li>
 </ol>
 </section>
 <section id="summary-the-3-tier-parameter-taxonomy" class="level3">

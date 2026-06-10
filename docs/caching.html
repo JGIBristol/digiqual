@@ -360,7 +360,7 @@ ul.task-list li input[type="checkbox"] {
 <li>The function calls <code>study.pod(threshold=22.5, n_boot=1000)</code>.</li>
 <li>The engine recognizes <code>n_boot &gt; 0</code>.</li>
 <li>It completely bypasses the Layer 4 slider approximation.</li>
-<li>It calls <code>bootstrap_pod_ci()</code>, firing up 10 parallel CPU cores to resample the data 1,000 times, refitting the models and running strict Layer 3 math on every iteration to build rigorous 95% Confidence Bounds.</li>
+<li>It calls <code>bootstrap_pod_ci()</code>, firing up parallel CPU cores to resample the data 1,000 times, refitting the models and running strict Layer 3 math on every iteration to build robust Confidence Bounds for a range of levels (50%, 90%, 95%, 99%) simultaneously. These bounds are stored in a <code>ci_bounds</code> dictionary and a full <code>reliability_table</code> matrix.</li>
 </ol>
 <p><em>Total Compute Time: ~6.0 seconds.</em></p>
 <hr>
