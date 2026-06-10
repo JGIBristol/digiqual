@@ -251,3 +251,54 @@ def plot_signal_surface(
     ax.set_title(f"{outcome_name} Surface ({poi_names[0]} vs {poi_names[1]})")
 
     return ax
+
+
+def plot_collinearity_matrix(
+    df,
+    input_cols: list,
+    ax: Optional[plt.Axes] = None
+) -> plt.Axes:
+    """
+    Plots a Pearson correlation matrix heatmap of the input variables to visualize collinearity.
+    """
+    import pandas as pd
+    import matplotlib.pyplot as plt
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(6, 5))
+    else:
+        fig = ax.get_figure()
+
+    # 1. Calculate correlation matrix
+    corr_matrix = df[input_cols].corr()
+
+    # 2. Plot heatmap
+    im = ax.imshow(corr_matrix.values, cmap='coolwarm', vmin=-1.0, vmax=1.0)
+
+    # 3. Add colorbar
+    cbar = fig.colorbar(im, ax=ax, shrink=0.8)
+    cbar.set_label("Pearson Correlation Coefficient")
+
+    # 4. Show ticks and label them with input variable names
+    n = len(input_cols)
+    ax.set_xticks(np.arange(n))
+    ax.set_yticks(np.arange(n))
+    ax.set_xticklabels(input_cols, rotation=45, ha="right")
+    ax.set_yticklabels(input_cols)
+
+    # 5. Annotate each cell with the correlation value
+    for i in range(n):
+        for j in range(n):
+            val = corr_matrix.iloc[i, j]
+            if np.isnan(val):
+                text = "N/A"
+                text_color = "black"
+            else:
+                text = f"{val:.2f}"
+                text_color = "white" if abs(val) > 0.5 else "black"
+            ax.text(j, i, text, ha="center", va="center", color=text_color, fontweight="bold")
+
+    ax.set_title("Input Collinearity Matrix (Correlation Heatmap)")
+    fig.tight_layout()
+    return ax
+

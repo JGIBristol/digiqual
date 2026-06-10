@@ -5,7 +5,7 @@ import os
 
 from .diagnostics import validate_simulation, sample_sufficiency, ValidationError
 from .adaptive import generate_targeted_samples, run_adaptive_search
-from .plotting import plot_signal_model, plot_pod_curve
+from .plotting import plot_signal_model, plot_pod_curve, plot_collinearity_matrix
 from . import pod
 from .executors import Executor
 from .ahat import fit_linear_a_hat_model, compute_linear_pod_curve, plot_linear_signal_model, bootstrap_linear_pod_ci
@@ -216,7 +216,8 @@ class SimulationStudy:
         max_gap_ratio: float = 0.20,
         min_r2_score: float = 0.50,
         max_avg_cv: float = 0.15,
-        max_max_cv: float = 0.30
+        max_max_cv: float = 0.30,
+        max_allowed_vif: float = 5.0
     ) -> pd.DataFrame:
         """
         Runs statistical diagnostics to evaluate if the current sample size is sufficient.
@@ -240,7 +241,8 @@ class SimulationStudy:
             max_gap_ratio=max_gap_ratio,
             min_r2_score=min_r2_score,
             max_avg_cv=max_avg_cv,
-            max_max_cv=max_max_cv
+            max_max_cv=max_max_cv,
+            max_allowed_vif=max_allowed_vif
         )
         return self.sufficiency_results
 
@@ -1244,3 +1246,31 @@ class SimulationStudy:
             plt.show()
 
         return fig
+
+    def plot_collinearity(self, ax: Optional[Any] = None) -> Any:
+        """
+        Plots a correlation matrix heatmap of the input variables to inspect collinearity.
+
+        Args:
+            ax (plt.Axes, optional): Matplotlib axes to plot on.
+
+        Returns:
+            plt.Axes: The plotted axes.
+        """
+        import matplotlib.pyplot as plt
+        if self.clean_data.empty:
+            self._validate()
+            if self.clean_data.empty:
+                raise ValueError("Cannot plot collinearity: No valid data available.")
+
+        if len(self.inputs) < 2:
+            if ax is None:
+                fig, ax = plt.subplots(figsize=(6, 5))
+            ax.text(0.5, 0.5, "Collinearity analysis requires\nat least 2 input variables.",
+                    ha="center", va="center", transform=ax.transAxes, color="gray", fontsize=12)
+            ax.set_title("Collinearity Analysis")
+            ax.set_axis_off()
+            return ax
+
+        return plot_collinearity_matrix(self.clean_data, self.inputs, ax=ax)
+

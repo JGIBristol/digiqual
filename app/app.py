@@ -256,9 +256,17 @@ h1, h2, h3, h4, h5, h6 {
 .text-muted { color: #605e5c !important; }
 .bg-light { background-color: #f3f2f1 !important; }
 
-hr {
-    border-top: 1px solid #edebe9;
-    opacity: 1;
+
+/* Center the collinearity matrix plot image */
+#viz_collinearity_matrix {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+#viz_collinearity_matrix img {
+    position: static !important;
+    margin: 0 auto !important;
+    display: block !important;
 }
 """
 
@@ -582,6 +590,7 @@ ui.nav_panel(
                                 ui.input_numeric("ui_min_r2", "Min R² Score", value=0.50, step=0.01),
                                 ui.input_numeric("ui_avg_cv", "Max Allowed Avg CV", value=0.15, step=0.01),
                                 ui.input_numeric("ui_max_cv", "Max Allowed Peak CV", value=0.30, step=0.01),
+                                ui.input_numeric("ui_max_vif", "Max Allowed VIF", value=5.0, step=0.1),
                             ),
                             open=False
                         ),
@@ -950,9 +959,67 @@ def server(input, output, session):
                 class_="alert alert-success mt-3"
             )
         else:
+            diag = diagnostic_table()
+            warnings = []
+            if diag is not None and not diag.empty:
+                # 1. Input Coverage
+                coverage_rows = diag[diag["Test"] == "Input Coverage"]
+                if not coverage_rows.empty and not coverage_rows["Pass"].all():
+                    failed_vars = coverage_rows.loc[~coverage_rows["Pass"].astype(bool), "Variable"].tolist()
+                    warnings.append(
+                        ui.p(
+                            ui.span(icon_svg("triangle-exclamation"), class_="text-danger me-1"),
+                            ui.tags.strong("Input Coverage Gaps: "),
+                            f"Large gaps in parameter coverage detected for: {', '.join(failed_vars)}.",
+                            class_="small mb-1 text-danger"
+                        )
+                    )
+
+                # 2. Model Fit (CV)
+                fit_rows = diag[diag["Test"] == "Model Fit (CV)"]
+                if not fit_rows.empty and not fit_rows["Pass"].all():
+                    warnings.append(
+                        ui.p(
+                            ui.span(icon_svg("triangle-exclamation"), class_="text-danger me-1"),
+                            ui.tags.strong("Weak Model Fit: "),
+                            "The surrogate model R² score is below the required threshold. The relationship might be too noisy or non-linear for the current sample size.",
+                            class_="small mb-1 text-danger"
+                        )
+                    )
+
+                # 3. Bootstrap Convergence
+                boot_rows = diag[diag["Test"] == "Bootstrap Convergence"]
+                if not boot_rows.empty and not boot_rows["Pass"].all():
+                    warnings.append(
+                        ui.p(
+                            ui.span(icon_svg("triangle-exclamation"), class_="text-danger me-1"),
+                            ui.tags.strong("Bootstrap Instability: "),
+                            "Model predictions are highly sensitive to sample variance (insufficient convergence). Confidence intervals may be too wide.",
+                            class_="small mb-1 text-danger"
+                        )
+                    )
+
+                # 4. Collinearity Check
+                col_rows = diag[diag["Test"] == "Collinearity Check"]
+                if not col_rows.empty and not col_rows["Pass"].all():
+                    failed_vars = col_rows.loc[~col_rows["Pass"].astype(bool), "Variable"].tolist()
+                    warnings.append(
+                        ui.p(
+                            ui.span(icon_svg("triangle-exclamation"), class_="text-danger me-1"),
+                            ui.tags.strong("High Multicollinearity: "),
+                            f"Strong correlation detected among inputs for: {', '.join(failed_vars)}. This can make the surrogate model fit unstable and predictions unreliable.",
+                            class_="small mb-1 text-danger"
+                        )
+                    )
+
+            warning_content = ui.div(
+                *warnings,
+                ui.p("See the visualisations below and the Remediation options for next steps.", class_="small mb-0 text-muted mt-2")
+            ) if warnings else ui.p("See the visualisations below and the Remediation options for next steps.", class_="small mb-0")
+
             return ui.div(
                 ui.h5(icon_svg("triangle-exclamation"), " Issues Detected"),
-                ui.p("See the visualisations below and the Remediation options for next steps.", class_="small mb-0"),
+                warning_content,
                 class_="alert alert-danger mt-3"
             )
 
@@ -981,7 +1048,8 @@ def server(input, output, session):
                 max_gap_ratio=input.ui_max_gap(),
                 min_r2_score=input.ui_min_r2(),
                 max_avg_cv=input.ui_avg_cv(),
-                max_max_cv=input.ui_max_cv()
+                max_max_cv=input.ui_max_cv(),
+                max_allowed_vif=input.ui_max_vif()
             )
 
             if diag_df is None:
@@ -1071,16 +1139,48 @@ def server(input, output, session):
         if validation_passed():
             return None
 
-        # 4. Show the Remediation card
-        return ui.card(
-            ui.card_header("Remediation: Generate New Samples"),
-            ui.p("Your data has coverage issues. Use the Refine tool to generate new samples."),
+        diag = diagnostic_table()
+        has_coverage_issues = not diag[diag["Test"] == "Input Coverage"]["Pass"].all()
+        has_fit_issues = not diag[diag["Test"].isin(["Model Fit (CV)", "Bootstrap Convergence"])]["Pass"].all()
+        has_collinearity_issues = not diag[diag["Test"] == "Collinearity Check"]["Pass"].all()
 
-            ui.layout_columns(
-                ui.input_numeric("n_new_samples", "Count", value=10, min=1),
-                ui.input_task_button("btn_refine", "Generate New Samples", icon=icon_svg("wand-magic-sparkles"), class_="btn-warning"),
-            ),
-            ui.output_ui("download_new_samples_ui"),
+        remediation_texts = []
+        if has_coverage_issues:
+            remediation_texts.append("Your data has coverage issues (gaps in parameter space).")
+        if has_fit_issues:
+            remediation_texts.append("Your data has model fit or convergence issues (noisy or unstable predictions).")
+
+        # If there are coverage or fit issues, show the Refine tool
+        if has_coverage_issues or has_fit_issues:
+            refine_section = ui.div(
+                ui.p("Use the Refine tool below to generate targeted new samples to fix these issues:"),
+                ui.layout_columns(
+                    ui.input_numeric("n_new_samples", "Count", value=10, min=1),
+                    ui.input_task_button("btn_refine", "Generate New Samples", icon=icon_svg("wand-magic-sparkles"), class_="btn-warning"),
+                ),
+                ui.output_ui("download_new_samples_ui")
+            )
+        else:
+            refine_section = ui.div()
+
+        collinearity_section = ui.div()
+        if has_collinearity_issues:
+            collinearity_section = ui.div(
+                ui.p(
+                    ui.span(icon_svg("triangle-exclamation"), class_="text-danger me-1"),
+                    ui.tags.strong("Collinearity Detected: "),
+                    "High multicollinearity (VIF > threshold) means your inputs are highly correlated. "
+                    "Surrogate model fitting can be unstable or misleading. "
+                    "Consider removing or decoupling highly correlated variables in your experimental design.",
+                    class_="small text-danger bg-light rounded p-2 border border-danger-subtle mt-2"
+                )
+            )
+
+        return ui.card(
+            ui.card_header("Remediation & Suggestions"),
+            ui.HTML("<br>".join(remediation_texts)) if remediation_texts else ui.div(),
+            refine_section,
+            collinearity_section,
             class_="border-warning shadow-sm"
         )
 
@@ -1185,6 +1285,21 @@ def server(input, output, session):
                     class_="small text-muted px-3 pt-2 mb-0"
                 ),
                 ui.output_plot("viz_coverage_overview", height="300px"),
+                full_screen=True,
+            ),
+
+            # ── Row 4: Collinearity Matrix ─────────────────────────────────────
+            ui.card(
+                ui.card_header("Collinearity Analysis"),
+                ui.p(
+                    "Pearson correlation coefficients between input variables. "
+                    "High collinearity (VIF > Max Allowed VIF) can make model fits unstable.",
+                    class_="small text-muted px-3 pt-2 mb-0 text-center"
+                ),
+                ui.div(
+                    ui.output_plot("viz_collinearity_matrix", width="500px", height="400px"),
+                    style="display: flex; justify-content: center; width: 100%;"
+                ),
                 full_screen=True,
             ),
         )
@@ -1477,6 +1592,17 @@ def server(input, output, session):
 
         return fig
 
+    @render.plot
+    def viz_collinearity_matrix():
+        study = current_study()
+        if study is None or study.clean_data.empty:
+            return None
+
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots(figsize=(6, 5))
+        study.plot_collinearity(ax=ax)
+        return fig
+
 
 
 #### Server - Model Fit & UQ Logic (Tabs 4 & 5) ####
@@ -1608,7 +1734,7 @@ def server(input, output, session):
     @reactive.effect
     @reactive.event(
         uploaded_data, input.input_cols, input.outcome_col,
-        input.ui_max_gap, input.ui_min_r2, input.ui_avg_cv, input.ui_max_cv
+        input.ui_max_gap, input.ui_min_r2, input.ui_avg_cv, input.ui_max_cv, input.ui_max_vif
     )
     def reset_core_data_state():
         """TIER 1: Wipes EVERYTHING when the physical data or core definitions change."""
@@ -1804,8 +1930,23 @@ def server(input, output, session):
             return ui.layout_columns(ui.div(ui.p("Please run diagnostics in the 'Simulation Diagnostics' tab before configuring your model.", class_="text-center p-4 text-muted bg-light rounded border")), col_widths=[-1,10,-1])
 
         if not validation_passed():
-            return ui.layout_columns(ui.div(ui.h5(icon_svg("triangle-exclamation"), " Caution: Validation Issues"),
-                       ui.p("The diagnostic tests found potential issues. Results may be unreliable.", class_="mb-0"), class_="alert alert-warning shadow-sm"), col_widths=[-1,10,-1])
+            diag = diagnostic_table()
+            collinearity_failed = False
+            if diag is not None and not diag.empty:
+                collinearity_failed = not diag[diag["Test"] == "Collinearity Check"]["Pass"].all()
+
+            msg = "The diagnostic tests found potential issues. Results may be unreliable."
+            if collinearity_failed:
+                msg = "High multicollinearity detected among input variables. Your model fit and reliability predictions might be unstable or unreliable."
+
+            return ui.layout_columns(
+                ui.div(
+                    ui.h5(icon_svg("triangle-exclamation"), " Caution: Validation Issues"),
+                    ui.p(msg, class_="mb-0"),
+                    class_="alert alert-warning shadow-sm"
+                ),
+                col_widths=[-1,10,-1]
+            )
         return ui.div()
 
 
@@ -2397,7 +2538,7 @@ def server(input, output, session):
         fit_passed = r2_val >= thresh_r2
         fit_colour = "#107c10" if fit_passed else "#d13438"
         fit_status = "✓ Pass" if fit_passed else "✗ Fail"
-        
+
         model_name_str = f"Poly Degree {model_degree}" if model_type == 'Polynomial' else "Kriging"
         ax_fit.set_title(f"Model Fit ({model_name_str})  —  {fit_status}",
                             color=fit_colour, fontweight="bold")
@@ -2427,7 +2568,7 @@ def server(input, output, session):
         for _ in range(n_boot):
             idx = rng.choice(len(y), len(y), replace=True)
             X_b, y_b = X[idx], y[idx]
-            
+
             if model_type == 'Polynomial':
                 m = make_pipeline(PolynomialFeatures(degree=model_degree), LinearRegression())
             elif model_type == 'Kriging':
@@ -2435,7 +2576,7 @@ def server(input, output, session):
                 m = GaussianProcessRegressor(
                     kernel=model.kernel_, alpha=np.var(y_b)*0.01, optimizer=None
                 )
-            
+
             m.fit(X_b, y_b)
             accumulated_preds.append(m.predict(probe_points))
 
@@ -2468,7 +2609,7 @@ def server(input, output, session):
         boot_passed = (final_avg_cv < thresh_avg) and (final_max_cv < thresh_max)
         boot_colour = "#107c10" if boot_passed else "#d13438"
         boot_status = "✓ Pass" if boot_passed else "✗ Fail"
-        
+
         ax_boot.set_title(f"Bootstrap Convergence  —  {boot_status}",
                             color=boot_colour, fontweight="bold")
         ax_boot.set_xlabel("Bootstrap Iteration", fontsize=9)
@@ -2505,15 +2646,15 @@ def server(input, output, session):
         try:
             target_pod = float(input.pod_target_val()) / 100.0
             conf_level = int(input.pod_conf_val())
-            
+
             poi_cols = study.pod_results.get("poi_cols", [])
-            
+
             table = study.pod_results.get("reliability_table", {})
             val = table.get((int(target_pod * 100), conf_level), np.nan)
             aX_Y_str = "N/A (Surface)" if len(poi_cols) > 1 else (f"{val:.3f}" if not np.isnan(val) else "Not Reached")
-            
+
             selected_label = f"a{int(target_pod*100)}/{conf_level} Reliability Index"
-            
+
             return {
                 "Detection Threshold": study.pod_results["threshold"],
                 "Bootstrap Iterations": study.pod_results["n_boot"],
@@ -2530,17 +2671,17 @@ def server(input, output, session):
         study = current_study()
         if study is None or not study.pod_results:
             return
-            
+
         try:
             target_pod = float(input.pod_target_val()) / 100.0
             conf_level = int(input.pod_conf_val())
-            
+
             study.visualise(
                 show=False,
                 target_pod=target_pod,
                 confidence_level=conf_level
             )
-            
+
             with reactive.isolate():
                 global_plot_trigger.set(global_plot_trigger() + 1)
         except Exception:
@@ -2576,7 +2717,7 @@ def server(input, output, session):
         study = current_study()
         if study is None or not study.threshold_spectrum_cache:
             return None
-            
+
         poi_cols = study.pod_results.get("poi_cols", [])
         if len(poi_cols) > 1:
             return None

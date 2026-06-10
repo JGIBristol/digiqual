@@ -176,6 +176,39 @@ def _check_bootstrap_convergence(
     }
 
 
+
+
+def _check_collinearity(df: pd.DataFrame, input_cols: List[str], max_allowed_vif: float = 5.0) -> Dict[str, float]:
+    """
+    Checks for multicollinearity using the Variance Inflation Factor (VIF).
+    If an input variable has a VIF > max_allowed_vif, it is flagged as collinear.
+    """
+    vifs = {}
+    if len(input_cols) > 1:
+        for col in input_cols:
+            other_cols = [c for c in input_cols if c != col]
+            X = df[other_cols].values
+            y = df[col].values
+            
+            try:
+                model = LinearRegression()
+                model.fit(X, y)
+                r2 = model.score(X, y)
+                if r2 >= 1.0 - 1e-10:
+                    vif = float('inf')
+                else:
+                    vif = 1.0 / (1.0 - r2)
+            except Exception:
+                vif = float('inf')
+                
+            vifs[col] = round(vif, 4)
+    else:
+        for col in input_cols:
+            vifs[col] = 1.0
+            
+    return vifs
+
+
 #### Main Function: sample_sufficiency() ####
 
 def sample_sufficiency(
@@ -186,13 +219,14 @@ def sample_sufficiency(
     max_gap_ratio: float = 0.20,
     min_r2_score: float = 0.50,
     max_avg_cv: float = 0.15,
-    max_max_cv: float = 0.30
+    max_max_cv: float = 0.30,
+    max_allowed_vif: float = 5.0
 ) -> pd.DataFrame:
     """
     Performs a suite of statistical diagnostics to evaluate if the current sample size is sufficient.
 
     This function tests input space coverage, basic model fit (signal-to-noise),
-    and prediction stability via bootstrapping. It uses user-defined thresholds
+    prediction stability via bootstrapping, and multicollinearity. It uses user-defined thresholds
     to determine if the sampling passes the sufficiency criteria required for reliable PoD analysis.
 
     Args:
@@ -204,6 +238,7 @@ def sample_sufficiency(
         min_r2_score (float, optional): The minimum cross-validated R-squared score required to pass the fit test. Defaults to 0.50.
         max_avg_cv (float, optional): The maximum allowable average relative width of the bootstrap predictions. Defaults to 0.15.
         max_max_cv (float, optional): The maximum allowable relative width at the tail ends (10th and 90th percentiles) of the predictions. Defaults to 0.30.
+        max_allowed_vif (float, optional): The maximum allowable Variance Inflation Factor (VIF) to detect multicollinearity. Defaults to 5.0.
 
     Returns:
         pd.DataFrame: A formatted table detailing the results of each diagnostic test,
@@ -251,6 +286,7 @@ def sample_sufficiency(
     coverage_res = _check_input_coverage(df_clean, input_cols, max_gap_ratio)
     fit_res = _check_model_fit(df_clean, input_cols, outcome_col, min_r2_score)
     boot_res = _check_bootstrap_convergence(df_clean, input_cols, outcome_col, 100, max_avg_cv, max_max_cv)
+    vif_res = _check_collinearity(df_clean, input_cols, max_allowed_vif)
 
     flat_results = []
 
@@ -291,4 +327,15 @@ def sample_sufficiency(
         "Pass": boot_res['max_converged']
     })
 
+    for col, vif in vif_res.items():
+        flat_results.append({
+            "Test": "Collinearity Check",
+            "Variable": col,
+            "Metric": "VIF",
+            "Value": vif,
+            "Threshold": f"< {max_allowed_vif:.2f}",
+            "Pass": bool(vif <= max_allowed_vif)
+        })
+
     return pd.DataFrame(flat_results)
+

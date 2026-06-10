@@ -58,3 +58,15 @@ def test_plot_signal_surface_no_ax():
 
     ax = plot_signal_surface(poi_grids, mean_curve, X_raw, y_raw, threshold, poi_names)
     assert isinstance(ax, plt.Axes)
+
+
+def test_plot_collinearity_matrix():
+    import pandas as pd
+    df = pd.DataFrame({
+        'A': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        'B': [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+    })
+    from digiqual.plotting import plot_collinearity_matrix
+    ax = plot_collinearity_matrix(df, ['A', 'B'])
+    assert isinstance(ax, plt.Axes)
+

@@ -15,10 +15,19 @@ def basic_df():
     """Creates a 'perfect' dataset that should pass all checks."""
     np.random.seed(123)
     n = 100
+    
+    length_vals = np.linspace(0, 10, n)
+    
+    angle_vals = np.linspace(-90, 90, n)
+    np.random.shuffle(angle_vals)
+    
+    roughness_vals = np.linspace(0, 1, n)
+    np.random.shuffle(roughness_vals)
+    
     df = pd.DataFrame({
-        'Length': np.linspace(0, 10, n),
-        'Angle': np.linspace(-90, 90, n),
-        'Roughness': np.linspace(0, 1, n)
+        'Length': length_vals,
+        'Angle': angle_vals,
+        'Roughness': roughness_vals
     })
 
     df['Signal'] = 2 * df['Length'] + 10
