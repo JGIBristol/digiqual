@@ -18,7 +18,7 @@ flowchart TD
 ### Breakdowns of the Steps
 1. **Initialisation**: If you have no existing data, DigiQual generates an initial batch of input coordinates using Latin Hypercube Sampling (LHS) to ensure a good spread across your variable ranges.
 2. **Execution**: It passes these coordinates to your solver and waits for the results.
-3. **Diagnostics (Sense)**: Once the results are back, DigiQual runs statistical checks. It looks for "gaps" in your input coverage and measures "model uncertainty" using a technique called Bootstrap Query-by-Committee.
+3. **Diagnostics (Sense)**: Once the results are back, DigiQual runs statistical checks. It looks for "gaps" in your input coverage, measures "model uncertainty" using a technique called Bootstrap Query-by-Committee, and checks for **multicollinearity (VIF)** to ensure your input variables are not highly correlated (which could cause model fit instability).
 4. **Refinement (Decide & Act)**: If the diagnostics fail, DigiQual generates *targeted* new samples exactly where the model needs them most (e.g., in the middle of an empty gap, or in highly uncertain regions) and repeats the loop.
 
 ## Connecting Your External Solver
@@ -238,6 +238,7 @@ if __name__ == "__main__":
     # sys.argv[1] is the {input} path, sys.argv[2] is the {output} path
     run_simulation(sys.argv[1], sys.argv[2])
 ```
+
 #### B2. The DigiQual Execution
 
 You define the exact terminal command needed to run the script above, and pass it to the `CLIExecutor`.

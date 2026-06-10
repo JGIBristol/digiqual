@@ -73,13 +73,25 @@ print(f"Auto-Threshold suggestion (Median Signal): {threshold_defaults['median']
 We ask the `SimulationStudy` manager to diagnose the health of our experiment.
 
 ::: {.callout-warning}
-Because of our deliberate gap, we expect the diagnostic engine to flag the **Input Coverage** test as failed.
+Because of our deliberate gap, we expect the diagnostic engine to flag the **Input Coverage** test as failed. 
+
+Additionally, the diagnostic suite now automatically checks for multicollinearity by calculating the **Variance Inflation Factor (VIF)** for each input variable (controlled by the `max_allowed_vif` parameter, which defaults to `5.0`).
 :::
 
 
 ```{python}
+# Run the diagnostic tests
 study.diagnose()
 ```
+
+You can also visually inspect collinearity using the `plot_collinearity()` method, which renders a correlation matrix heatmap with VIF and correlation coefficient annotations.
+
+```{python}
+#| label: fig-collinearity
+#| fig-cap: "Collinearity analysis matrix"
+study.plot_collinearity()
+```
+
 
 ### 3. Adaptive Refinement (The Fix)
 
@@ -130,7 +142,7 @@ The single `pod()` method automatically handles:
 # --- RUN 1: Baseline Analysis ---
 # Expect this to take a moment as it trains models and optimizes variance bandwidth
 t0 = time.time()
-_ = study.pod(
+results = study.pod(
     poi_col="Length",
     nuisance_col=["Roughness"],  # Integrate over roughness
     slice_values={"Angle": 0.0},  # Hold Angle strictly at 0.0!
@@ -160,6 +172,60 @@ print(f"New a90/95 point at Angle 5.0: {new_results['a90_95']:.3f}")
 # Visualise the results of the final active slice
 study.visualise()
 ```
+
+### 5. Uncertainty Quantification & Threshold Sensitivity
+
+To calculate reliability indices with confidence intervals, we run the bootstrapping algorithm.
+
+Unlike traditional tools that compute only a single confidence interval (e.g., 95%), `digiqual` runs bootstrapping once to extract bounds for **multiple confidence levels** (50%, 90%, 95%, 99%) across standard target PoDs (50%, 90%, 95%, 99%) simultaneously.
+
+These are saved in the results dictionaries:
+- `results['ci_bounds']`: Maps confidence levels to lower/upper curves.
+- `results['reliability_table']`: Maps `(target_pod_percent, confidence_level)` tuples to their corresponding flaw sizing reliability indices (e.g., `a90/95`).
+
+```{python}
+# Run the parallelised bootstrap to get multi-level confidence bounds
+t2 = time.time()
+uq_results = study.pod(
+    poi_col="Length",
+    nuisance_col=["Roughness"],
+    slice_values={"Angle": 5.0},
+    threshold=34.0,
+    n_boot=100,  # Small value for quick demonstration
+    n_jobs=-1    # Use all available CPU cores
+)
+print(f"UQ Bootstrapping completed in: {time.time() - t2:.4f} seconds")
+
+# Access the custom reliability matrix values
+# Print the calculated a90/95 and a90/90 values
+a90_95 = uq_results["reliability_table"].get((90, 95))
+a90_90 = uq_results["reliability_table"].get((90, 90))
+print(f"a90/95: {a90_95:.3f} mm")
+print(f"a90/90: {a90_90:.3f} mm")
+```
+
+We can specify a custom `target_pod` and `confidence_level` when calling `visualise()` to draw and annotate the selected point.
+
+```{python}
+#| label: fig-uq-results
+#| fig-cap: "UQ Reliability S-curve with 90% Confidence Bounds for a 90% target PoD"
+study.visualise(target_pod=0.90, confidence_level=90)
+```
+
+#### Threshold Sensitivity Plots
+
+Using the cached 100-threshold spectrum, we can also generate a sensitivity plot using `plot_pod_vs_threshold()` to see how changing the threshold affects PoD across defect sizes.
+
+```{python}
+#| label: fig-sensitivity
+#| fig-cap: "PoD vs. Threshold Sensitivity Plot"
+# Generate threshold spectrum (using Layer 4 caching)
+study.compute_pod_spectrum(poi_col="Length")
+
+# Plot sensitivity curves
+study.plot_pod_vs_threshold()
+```
+
 
 ### Appendix: Full Script
 
@@ -210,6 +276,8 @@ study.add_data(df_initial, outcome_col="Signal", overwrite=True)
 
 # --- 4. Diagnose & Refine ---
 study.diagnose()
+study.plot_collinearity()
+
 new_samples = study.refine(n_points=20)
 
 if not new_samples.empty:
@@ -224,12 +292,18 @@ study.pod(poi_col="Length", threshold=15.0, n_boot=0)
 spectrum = study.compute_pod_spectrum(poi_col="Length")
 print("Spectrum generated for thresholds:", spectrum["thresholds"][:3], "...")
 
-# --- 6. Uncertainty Quantification (Bootstrapping) ---
-# Run the heavy, parallelised bootstrap to get 95% Confidence Intervals
-results = study.pod(poi_col="Length", threshold=15.0, n_boot=1000, n_jobs=-1)
+# Plot threshold sensitivity curves
+study.plot_pod_vs_threshold()
 
-print(f"Classical a90/95: {results['a90_95']:.2f}")
+# --- 6. Uncertainty Quantification (Bootstrapping) ---
+# Run the heavy, parallelised bootstrap to get multi-level Confidence Intervals
+results = study.pod(poi_col="Length", threshold=15.0, n_boot=100, n_jobs=-1)
+
+# Print specific reliability matrix values (e.g. a90/95)
+a90_95 = results["reliability_table"].get((90, 95))
+print(f"a90/95: {a90_95:.2f}")
 
 # --- 7. Visualisation ---
-study.visualise()
+# Annotate target PoD of 90% and confidence level of 95%
+study.visualise(target_pod=0.90, confidence_level=95)
 ```

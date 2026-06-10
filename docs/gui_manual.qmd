@@ -20,12 +20,18 @@ Instead of writing scripts to generate arrays, you can visually define your para
 
 ## 2. Simulation Diagnostics
 
-**Purpose:** Validate your dataset and identify regions where the physics solver failed to provide sufficient coverage or converged poorly.
+**Purpose:** Validate your dataset, detect input correlations, and identify regions where the physics solver failed to provide sufficient coverage or converged poorly.
 
 1. **Upload Data:** Upload the CSV containing your completed simulation results.
 2. **Configure Columns:** Select which variables are the inputs (e.g., Flaw Size, Angle) and which is the output (the Signal Response).
-3. **Run Diagnostics:** The engine will evaluate the data against four rigorous statistical tests (Gap Ratio, R² Fit, Average CV, Peak CV).
-4. **Remediation:** If the data fails the coverage checks, the app will offer an Active Learning "Remediation" tool. Enter the number of new samples you want, and it will generate a targeted CSV of new coordinates specifically designed to fill the detected gaps and stabilize the model.
+3. **Run Diagnostics:** The engine evaluates the data against **five** rigorous statistical tests:
+   - **Gap Ratio**: Checks for gaps in input space coverage.
+   - **R² Fit**: Measures whether a basic surrogate model can capture a meaningful signal-to-noise relationship.
+   - **Average CV & Peak CV**: Evaluates bootstrap prediction stability.
+   - **Collinearity Check**: Calculates the Variance Inflation Factor (VIF) for each input variable to detect multicollinearity.
+4. **Configure Thresholds:** Adjust diagnostic tolerances (including a **Max Allowed VIF** setting, defaulting to `5.0`) to define custom limits for passing.
+5. **Collinearity Analysis:** A dedicated card displays a correlation heatmap of your input variables, complete with VIF values and correlation coefficients, highlighting any strongly correlated variables that could destabilize model fitting.
+6. **Remediation:** If the data fails the coverage or collinearity checks, the app will offer an Active Learning "Remediation" tool or highlight issues. Enter the number of new samples you want, and it will generate a targeted CSV of new coordinates specifically designed to fill the detected gaps and stabilize the model.
 
 ## 3. Model Fit (Physics)
 
@@ -49,10 +55,13 @@ This tab relies entirely on **Layer 3 and Layer 4** of the caching architecture.
 
 ## 5. UQ Analysis (Confidence)
 
-**Purpose:** Construct rigorous Probability of Detection bounds via parallelised Bootstrapping.
+**Purpose:** Construct rigorous Probability of Detection bounds via parallelised Bootstrapping, and inspect threshold sensitivity and multi-confidence level reliability matrices.
 
-Once you have used the PoD Explorer to find the exact threshold and parameter slice you care about, you move to this final tab to wrap it in 95% Confidence Intervals.
+Once you have used the PoD Explorer to find the exact threshold and parameter slice you care about, you move to this final tab to perform Uncertainty Quantification (UQ).
 
 1. **Bootstrap Configuration:** Define the number of resampling iterations (typically 1000). Ensure Parallel Compute is enabled to utilize all your CPU cores.
-2. **Run UQ:** The system safely bypasses the fast-caches. It locks the mathematical shape chosen in Tab 3 and runs thousands of Monte Carlo integrations to calculate the exact uncertainty bounds.
-3. **Export Results:** Download a comprehensive Excel workbook containing your configuration metrics, LaTeX equations, and the raw numerical curve data across separate spreadsheet tabs.
+2. **Run UQ:** The system safely bypasses the fast-caches. It locks the mathematical shape chosen in Tab 3 and runs thousands of Monte Carlo iterations to calculate the exact uncertainty bounds.
+3. **Select Reliability Targets:** Select a specific **Target PoD** (50%, 90%, 95%, 99%) and a **Confidence Level** (50%, 90%, 95%, 99%) to annotate and display the exact reliability sizing point (e.g., `a90/95` or `a90/90`) on the curve.
+4. **Reliability Index Matrix (aX/Y):** When a single Parameter of Interest is analyzed, the app displays a complete matrix table showing the flaw sizing values required to reach standard combinations of Target Probability of Detection (rows) and Confidence Levels (columns).
+5. **Threshold Sensitivity Plot:** The app displays a curve plotting the Probability of Detection against the Detection Threshold for representative defect sizes, showing how changing the threshold affects reliability.
+6. **Export Results:** Download a comprehensive Excel workbook containing your configuration metrics, LaTeX equations, the raw numerical curve data, and the newly added **Reliability Matrix** spreadsheet tab.

@@ -63,7 +63,7 @@ Because the model is non-linear and non-normal, traditional analytical confidenc
 
 4. Repeat this $B$ times (typically $B=1000$).
 
-5. Extract the $2.5^{th}$ and $97.5^{th}$ percentiles at every point $a$ to form the robust 95% confidence interval $PoD_{95}$.
+5. Extract the percentiles at every point $a$ to form the robust confidence interval curves across multiple standard confidence levels (50%, 90%, 95%, 99%) simultaneously (e.g., $PoD_{50}$, $PoD_{90}$, $PoD_{95}$, $PoD_{99}$). This builds the complete reliability matrix mapping target PoDs and confidence bounds.
 
 ### Summary: The 3-Tier Parameter Taxonomy
 

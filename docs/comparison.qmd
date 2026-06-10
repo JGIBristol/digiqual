@@ -61,7 +61,7 @@ study.add_data(df, outcome_col="Signal")
 
 We will start with the traditional $\hat{a}$ versus $a$ method. We will apply a logarithmic transformation to the `Length` axis (`xlog=True`) to give the linear model its best chance at fitting the curved data.
 
-*Note: Instead of using the complex analytical formulas from MIL-HDBK-1823A, we are using modern bootstrapping to evaluate the confidence bounds. This strictly maintains the classical assumptions (constant variance and normal errors) while easily calculating the 95% worst-case curve.*
+*Note: Instead of using the complex analytical formulas from MIL-HDBK-1823A, we are using modern bootstrapping to evaluate the confidence bounds. This strictly maintains the classical assumptions (constant variance and normal errors) while easily calculating the worst-case curve. Under the hood, `linear_pod` automatically computes bounds for multiple confidence levels (50%, 90%, 95%, 99%) and saves them to the `reliability_table` and `ci_bounds` dictionaries in the results.*
 
 ```{python}
 # | label: fig-classical
@@ -90,7 +90,7 @@ Pay attention to the 95% Prediction Interval in the generated plot. Because the 
 
 ### 3. The Generalised Approach (Relaxed)
 
-Now, we will run the generalised method. This approach uses cross-validation to select the best non-linear model (Polynomial or Kriging) and automatically models the changing variance using kernel smoothing.
+Now, we will run the generalised method. This approach uses cross-validation to select the best non-linear model (Polynomial or Kriging) and automatically models the changing variance using kernel smoothing. Like the classical path, the bootstrap process computes bounds across all standard confidence levels (50%, 90%, 95%, 99%) simultaneously.
 
 ```{python}
 # | label: fig-generalised

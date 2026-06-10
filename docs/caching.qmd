@@ -102,7 +102,7 @@ The user is happy with a threshold of `22.5 dB` and clicks **"Run Uncertainty Qu
 1. The function calls `study.pod(threshold=22.5, n_boot=1000)`.
 2. The engine recognizes `n_boot > 0`.
 3. It completely bypasses the Layer 4 slider approximation.
-4. It calls `bootstrap_pod_ci()`, firing up 10 parallel CPU cores to resample the data 1,000 times, refitting the models and running strict Layer 3 math on every iteration to build rigorous 95% Confidence Bounds.
+4. It calls `bootstrap_pod_ci()`, firing up parallel CPU cores to resample the data 1,000 times, refitting the models and running strict Layer 3 math on every iteration to build robust Confidence Bounds for a range of levels (50%, 90%, 95%, 99%) simultaneously. These bounds are stored in a `ci_bounds` dictionary and a full `reliability_table` matrix.
 
 *Total Compute Time: ~6.0 seconds.*
 
