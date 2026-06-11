@@ -73,7 +73,7 @@ print(f"Auto-Threshold suggestion (Median Signal): {threshold_defaults['median']
 We ask the `SimulationStudy` manager to diagnose the health of our experiment.
 
 ::: {.callout-warning}
-Because of our deliberate gap, we expect the diagnostic engine to flag the **Input Coverage** test as failed. 
+Because of our deliberate gap, we expect the diagnostic engine to flag the **Input Coverage** test as failed.
 
 Additionally, the diagnostic suite now automatically checks for multicollinearity by calculating the **Variance Inflation Factor (VIF)** for each input variable (controlled by the `max_allowed_vif` parameter, which defaults to `5.0`).
 :::
@@ -140,7 +140,8 @@ The single `pod()` method automatically handles:
 #| label: analysis-run
 
 # --- RUN 1: Baseline Analysis ---
-# Expect this to take a moment as it trains models and optimizes variance bandwidth
+# Expect this to take a moment as it trains models
+# and optimizes variance bandwidth
 t0 = time.time()
 results = study.pod(
     poi_col="Length",
@@ -153,7 +154,8 @@ print(f"Run 1 completed in: {time.time() - t0:.4f} seconds")
 
 
 # --- RUN 2: Interactive Slicing ---
-# Changing the constant 'Angle' slice triggers a Cache Hit for the model and variance!
+# Changing the constant 'Angle' slice triggers
+# a Cache Hit for the model and variance!
 t1 = time.time()
 new_results = study.update_slice({"Angle": 5.0})
 print(f"Run 2 completed in: {time.time() - t1:.4f} seconds (Near Instant!)")
@@ -208,7 +210,12 @@ We can specify a custom `target_pod` and `confidence_level` when calling `visual
 
 ```{python}
 #| label: fig-uq-results
-#| fig-cap: "UQ Reliability S-curve with 90% Confidence Bounds for a 90% target PoD"
+#| fig-cap: "Reliability Analysis Results"
+#| fig-subcap:
+#|   - "Best Fitting Model (Statistics)"
+#|   - "Signal Response Model (Physics)"
+#|   - "UQ Reliability S-curve with 90% Confidence Bounds for a 90% target PoD"
+#| layout-ncol: 1
 study.visualise(target_pod=0.90, confidence_level=90)
 ```
 
@@ -223,7 +230,7 @@ Using the cached 100-threshold spectrum, we can also generate a sensitivity plot
 study.compute_pod_spectrum(poi_col="Length")
 
 # Plot sensitivity curves
-study.plot_pod_vs_threshold()
+_ = study.plot_pod_vs_threshold()
 ```
 
 
