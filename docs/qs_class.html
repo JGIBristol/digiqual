@@ -314,7 +314,7 @@ Note
 <h3 class="anchored" data-anchor-id="setup-generation-smart-initialization">1. Setup, Generation &amp; Smart Initialization</h3>
 <p>We’ll define a simulated physics function with heteroscedastic noise and generate an initial design containing a deliberate gap between 3mm and 7mm.</p>
 <p>Notice that we no longer need to explicitly define our input columns when creating the <code>SimulationStudy</code>; the manager will automatically infer them from the data!</p>
-<div id="c4c68d18" class="cell" data-execution_count="1">
+<div id="5c602c07" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
@@ -368,7 +368,7 @@ Note
 <div class="cell-output cell-output-stdout">
 <pre><code>Data initialized/overwritten. Total rows: 80
 Inferred Inputs: ['Length', 'Angle', 'Roughness']
-Auto-Threshold suggestion (Median Signal): 34.66</code></pre>
+Auto-Threshold suggestion (Median Signal): 34.27</code></pre>
 </div>
 </div>
 </section>
@@ -389,7 +389,7 @@ Warning
 <p>Additionally, the diagnostic suite now automatically checks for multicollinearity by calculating the <strong>Variance Inflation Factor (VIF)</strong> for each input variable (controlled by the <code>max_allowed_vif</code> parameter, which defaults to <code>5.0</code>).</p>
 </div>
 </div>
-<div id="fd42b002" class="cell" data-execution_count="2">
+<div id="1a1144b1" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run the diagnostic tests</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -419,7 +419,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.4397</td>
+<td>0.4140</td>
 <td>&lt; 0.20</td>
 <td>False</td>
 </tr>
@@ -428,7 +428,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.0516</td>
+<td>0.0633</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -437,7 +437,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.0487</td>
+<td>0.0550</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -446,7 +446,7 @@ Checking sample sufficiency...</code></pre>
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9977</td>
+<td>0.9985</td>
 <td>&gt; 0.50</td>
 <td>True</td>
 </tr>
@@ -455,7 +455,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Avg CV (Rel Std Dev)</td>
-<td>0.0241</td>
+<td>0.0102</td>
 <td>&lt; 0.15</td>
 <td>True</td>
 </tr>
@@ -464,7 +464,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Max CV (Rel Std Dev)</td>
-<td>0.0531</td>
+<td>0.0186</td>
 <td>&lt; 0.30</td>
 <td>True</td>
 </tr>
@@ -473,7 +473,7 @@ Checking sample sufficiency...</code></pre>
 <td>Collinearity Check</td>
 <td>Length</td>
 <td>VIF</td>
-<td>1.0006</td>
+<td>1.0069</td>
 <td>&lt; 5.00</td>
 <td>True</td>
 </tr>
@@ -482,7 +482,7 @@ Checking sample sufficiency...</code></pre>
 <td>Collinearity Check</td>
 <td>Angle</td>
 <td>VIF</td>
-<td>1.0007</td>
+<td>1.0141</td>
 <td>&lt; 5.00</td>
 <td>True</td>
 </tr>
@@ -491,7 +491,7 @@ Checking sample sufficiency...</code></pre>
 <td>Collinearity Check</td>
 <td>Roughness</td>
 <td>VIF</td>
-<td>1.0002</td>
+<td>1.0089</td>
 <td>&lt; 5.00</td>
 <td>True</td>
 </tr>
@@ -526,7 +526,7 @@ Figure&nbsp;1: Collinearity analysis matrix
 <li><strong>Generate:</strong> It outputs a dataframe of new input coordinates.</li>
 <li><strong>Execute &amp; Store:</strong> Appending the results back using <code>add_data()</code> automatically clears the mathematical caches to ensure your next analysis uses the updated physics!</li>
 </ol>
-<div id="deb2f6e0" class="cell" data-execution_count="4">
+<div id="2b59e68e" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate active learning samples (20 points to fill the gap)</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>new_samples <span class="op">=</span> study.refine(n_points<span class="op">=</span><span class="dv">20</span>)</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -569,7 +569,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.0673</td>
+<td>0.0690</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -578,7 +578,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.0463</td>
+<td>0.0451</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -587,7 +587,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.0369</td>
+<td>0.0518</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -596,7 +596,7 @@ Checking sample sufficiency...</code></pre>
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9976</td>
+<td>0.9983</td>
 <td>&gt; 0.50</td>
 <td>True</td>
 </tr>
@@ -605,7 +605,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Avg CV (Rel Std Dev)</td>
-<td>0.0163</td>
+<td>0.0082</td>
 <td>&lt; 0.15</td>
 <td>True</td>
 </tr>
@@ -614,7 +614,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Max CV (Rel Std Dev)</td>
-<td>0.0369</td>
+<td>0.0148</td>
 <td>&lt; 0.30</td>
 <td>True</td>
 </tr>
@@ -623,7 +623,7 @@ Checking sample sufficiency...</code></pre>
 <td>Collinearity Check</td>
 <td>Length</td>
 <td>VIF</td>
-<td>1.0005</td>
+<td>1.0074</td>
 <td>&lt; 5.00</td>
 <td>True</td>
 </tr>
@@ -632,7 +632,7 @@ Checking sample sufficiency...</code></pre>
 <td>Collinearity Check</td>
 <td>Angle</td>
 <td>VIF</td>
-<td>1.0005</td>
+<td>1.0102</td>
 <td>&lt; 5.00</td>
 <td>True</td>
 </tr>
@@ -641,7 +641,7 @@ Checking sample sufficiency...</code></pre>
 <td>Collinearity Check</td>
 <td>Roughness</td>
 <td>VIF</td>
-<td>1.0002</td>
+<td>1.0059</td>
 <td>&lt; 5.00</td>
 <td>True</td>
 </tr>
@@ -678,24 +678,26 @@ Tip
 </div>
 <div id="analysis-run" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- RUN 1: Baseline Analysis ---</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Expect this to take a moment as it trains models and optimizes variance bandwidth</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>t0 <span class="op">=</span> time.time()</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> study.pod(</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    poi_col<span class="op">=</span><span class="st">"Length"</span>,</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    nuisance_col<span class="op">=</span>[<span class="st">"Roughness"</span>],  <span class="co"># Integrate over roughness</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    slice_values<span class="op">=</span>{<span class="st">"Angle"</span>: <span class="fl">0.0</span>},  <span class="co"># Hold Angle strictly at 0.0!</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    threshold<span class="op">=</span><span class="fl">34.0</span>,</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    n_boot<span class="op">=</span><span class="dv">0</span>,  <span class="co"># Skipping bootstrap for the speed demonstration</span></span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Run 1 completed in: </span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.4f}</span><span class="ss"> seconds"</span>)</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Expect this to take a moment as it trains models</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># and optimizes variance bandwidth</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>t0 <span class="op">=</span> time.time()</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> study.pod(</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    poi_col<span class="op">=</span><span class="st">"Length"</span>,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    nuisance_col<span class="op">=</span>[<span class="st">"Roughness"</span>],  <span class="co"># Integrate over roughness</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    slice_values<span class="op">=</span>{<span class="st">"Angle"</span>: <span class="fl">0.0</span>},  <span class="co"># Hold Angle strictly at 0.0!</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    threshold<span class="op">=</span><span class="fl">34.0</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    n_boot<span class="op">=</span><span class="dv">0</span>,  <span class="co"># Skipping bootstrap for the speed demonstration</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Run 1 completed in: </span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.4f}</span><span class="ss"> seconds"</span>)</span>
 <span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="co"># --- RUN 2: Interactive Slicing ---</span></span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Changing the constant 'Angle' slice triggers a Cache Hit for the model and variance!</span></span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>t1 <span class="op">=</span> time.time()</span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>new_results <span class="op">=</span> study.update_slice({<span class="st">"Angle"</span>: <span class="fl">5.0</span>})</span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Run 2 completed in: </span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t1<span class="sc">:.4f}</span><span class="ss"> seconds (Near Instant!)"</span>)</span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"New a90/95 point at Angle 5.0: </span><span class="sc">{</span>new_results[<span class="st">'a90_95'</span>]<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="co"># --- RUN 2: Interactive Slicing ---</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Changing the constant 'Angle' slice triggers</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="co"># a Cache Hit for the model and variance!</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>t1 <span class="op">=</span> time.time()</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>new_results <span class="op">=</span> study.update_slice({<span class="st">"Angle"</span>: <span class="fl">5.0</span>})</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Run 2 completed in: </span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t1<span class="sc">:.4f}</span><span class="ss"> seconds (Near Instant!)"</span>)</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"New a90/95 point at Angle 5.0: </span><span class="sc">{</span>new_results[<span class="st">'a90_95'</span>]<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>--- Starting Reliability Analysis (PoIs: ['Length'] - Nuisance: ['Roughness']) ---
 -&gt; Slicing surface at: {'Angle': 0.0}
@@ -704,23 +706,23 @@ Tip
 2. Fitting Variance Model &amp; Inferring Distribution (Cache Miss)...
    -&gt; Optimizing bandwidth via LOO-CV...
 -&gt; Calculating Total-Order Sobol Indices...
-   -&gt; Smoothing Bandwidth: 9.5658
+   -&gt; Smoothing Bandwidth: 9.6550
    -&gt; Selected Distribution: logistic
 3. Integrating PoD Curve from Scratch (Cache Miss)...
 4. Skipping Bootstrap (n_boot=0)...
 --- Analysis Complete ---
-Run 1 completed in: 0.8997 seconds
+Run 1 completed in: 0.8161 seconds
 --- Starting Reliability Analysis (PoIs: ['Length'] - Nuisance: ['Roughness']) ---
 -&gt; Slicing surface at: {'Angle': 5.0}
 1. Loading surrogate models from cache (Cache Hit)...
 -&gt; Selected Model: Polynomial (Degree 2)
 2. Loading Variance Model, Distribution &amp; Sobol from cache (Cache Hit)...
-   -&gt; Smoothing Bandwidth: 9.5658
+   -&gt; Smoothing Bandwidth: 9.6550
    -&gt; Selected Distribution: logistic
 3. Integrating PoD Curve from Scratch (Cache Miss)...
 4. Skipping Bootstrap (n_boot=0)...
 --- Analysis Complete ---
-Run 2 completed in: 0.2269 seconds (Near Instant!)
+Run 2 completed in: 0.2312 seconds (Near Instant!)
 New a90/95 point at Angle 5.0: nan</code></pre>
 </div>
 </div>
@@ -783,7 +785,7 @@ Figure&nbsp;2: Reliability Analysis Results
 <p>To calculate reliability indices with confidence intervals, we run the bootstrapping algorithm.</p>
 <p>Unlike traditional tools that compute only a single confidence interval (e.g., 95%), <code>digiqual</code> runs bootstrapping once to extract bounds for <strong>multiple confidence levels</strong> (50%, 90%, 95%, 99%) across standard target PoDs (50%, 90%, 95%, 99%) simultaneously.</p>
 <p>These are saved in the results dictionaries: - <code>results['ci_bounds']</code>: Maps confidence levels to lower/upper curves. - <code>results['reliability_table']</code>: Maps <code>(target_pod_percent, confidence_level)</code> tuples to their corresponding flaw sizing reliability indices (e.g., <code>a90/95</code>).</p>
-<div id="b55d9d47" class="cell" data-execution_count="7">
+<div id="3fb9c5f3" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run the parallelised bootstrap to get multi-level confidence bounds</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>t2 <span class="op">=</span> time.time()</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>uq_results <span class="op">=</span> study.pod(</span>
@@ -808,92 +810,96 @@ Figure&nbsp;2: Reliability Analysis Results
 1. Loading surrogate models from cache (Cache Hit)...
 -&gt; Selected Model: Polynomial (Degree 2)
 2. Loading Variance Model, Distribution &amp; Sobol from cache (Cache Hit)...
-   -&gt; Smoothing Bandwidth: 9.5658
+   -&gt; Smoothing Bandwidth: 9.6550
    -&gt; Selected Distribution: logistic
 3. Loading PoD Curve from Individual Cache (Layer 3 Hit)...
 4. Running Bootstrap (100 iterations on 11 cores)...</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>[Parallel(n_jobs=11)]: Using backend MultiprocessingBackend with 11 concurrent workers.
-[Parallel(n_jobs=11)]: Done  19 tasks      | elapsed:   12.1s</code></pre>
+[Parallel(n_jobs=11)]: Done  19 tasks      | elapsed:   11.8s</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   -&gt; a90/95 Reliability Index: 5.444
+<pre><code>   -&gt; a90/95 Reliability Index: 5.433
 --- Analysis Complete ---
-UQ Bootstrapping completed in: 13.0258 seconds
-a90/95: 5.444 mm
-a90/90: 5.428 mm</code></pre>
+UQ Bootstrapping completed in: 12.7094 seconds
+a90/95: 5.433 mm
+a90/90: 5.426 mm</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>[Parallel(n_jobs=11)]: Done 100 out of 100 | elapsed:   13.0s finished</code></pre>
+<pre><code>[Parallel(n_jobs=11)]: Done 100 out of 100 | elapsed:   12.7s finished</code></pre>
 </div>
 </div>
 <p>We can specify a custom <code>target_pod</code> and <code>confidence_level</code> when calling <code>visualise()</code> to draw and annotate the selected point.</p>
-<div class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>study.visualise(target_pod<span class="op">=</span><span class="fl">0.90</span>, confidence_level<span class="op">=</span><span class="dv">90</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div id="fig-uq-results" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="8">
+<div id="fig-uq-results" class="quarto-layout-panel">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-uq-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display">
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-uq-results" style="flex-basis: 100.0%;justify-content: flex-start;">
 <div id="fig-uq-results-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-uq-results-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="qs_class_files/figure-html/fig-uq-results-output-1.png" data-ref-parent="fig-uq-results" width="950" height="465" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-uq-results-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-(a) UQ Reliability S-curve with 90% Confidence Bounds for a 90% target PoD
+(a) Best Fitting Model (Statistics)
 </figcaption>
 </figure>
 </div>
 </div>
-<div class="cell-output cell-output-display">
-<div id="fig-uq-results-2" class="quarto-float quarto-figure quarto-figure-center anchored" height="449" width="585">
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-uq-results" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-uq-results-2" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-uq-results-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="qs_class_files/figure-html/fig-uq-results-output-2.png" id="fig-uq-results-2" data-ref-parent="fig-uq-results" width="585" height="449" class="figure-img">
+<img src="qs_class_files/figure-html/fig-uq-results-output-2.png" data-ref-parent="fig-uq-results" width="585" height="449" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-uq-results-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-(b)
+(b) Signal Response Model (Physics)
 </figcaption>
 </figure>
 </div>
 </div>
-<div class="cell-output cell-output-display">
-<div id="fig-uq-results-3" class="quarto-float quarto-figure quarto-figure-center anchored" height="449" width="589">
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-uq-results" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-uq-results-3" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-uq-results-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="qs_class_files/figure-html/fig-uq-results-output-3.png" id="fig-uq-results-3" data-ref-parent="fig-uq-results" width="589" height="449" class="figure-img">
+<img src="qs_class_files/figure-html/fig-uq-results-output-3.png" data-ref-parent="fig-uq-results" width="589" height="449" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-uq-results-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-(c)
+(c) UQ Reliability S-curve with 90% Confidence Bounds for a 90% target PoD
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-uq-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;3
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-uq-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Reliability Analysis Results
 </figcaption>
 </figure>
-</div>
 </div>
 <section id="threshold-sensitivity-plots" class="level4">
 <h4 class="anchored" data-anchor-id="threshold-sensitivity-plots">Threshold Sensitivity Plots</h4>
 <p>Using the cached 100-threshold spectrum, we can also generate a sensitivity plot using <code>plot_pod_vs_threshold()</code> to see how changing the threshold affects PoD across defect sizes.</p>
-<div class="cell" data-execution_count="9">
+<div id="cell-fig-sensitivity" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate threshold spectrum (using Layer 4 caching)</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>study.compute_pod_spectrum(poi_col<span class="op">=</span><span class="st">"Length"</span>)</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot sensitivity curves</span></span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>study.plot_pod_vs_threshold()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>_ <span class="op">=</span> study.plot_pod_vs_threshold()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>--- Initiating Threshold Spectrum Generation ---
 --- Starting Reliability Analysis (PoIs: ['Length'] - Nuisance: []) ---
--&gt; Slicing surface at: {'Angle': -0.4455663706012096, 'Roughness': 0.28704927618573417}
+-&gt; Slicing surface at: {'Angle': -1.7765070085798769, 'Roughness': 0.21456758239813112}
 1. Loading surrogate models from cache (Cache Hit)...
 -&gt; Selected Model: Polynomial (Degree 2)
 2. Loading Variance Model, Distribution &amp; Sobol from cache (Cache Hit)...
-   -&gt; Smoothing Bandwidth: 9.5658
+   -&gt; Smoothing Bandwidth: 9.6550
    -&gt; Selected Distribution: logistic
 3. Integrating PoD Curve from Scratch (Cache Miss)...
 4. Skipping Bootstrap (n_boot=0)...
@@ -901,38 +907,17 @@ Figure&nbsp;3
 4. Computing PoD Spectrum for 100 thresholds (Layer 4 Cache Miss)...
 --- Spectrum Generation Complete ---</code></pre>
 </div>
-<div id="fig-sensitivity" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="9">
+<div class="cell-output cell-output-display">
+<div id="fig-sensitivity" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-sensitivity-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell-output cell-output-display">
-<div id="fig-sensitivity-1" class="quarto-float quarto-figure quarto-figure-center anchored">
-<figure class="quarto-float quarto-subfloat-fig figure">
-<div aria-describedby="fig-sensitivity-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="qs_class_files/figure-html/fig-sensitivity-output-2.png" data-ref-parent="fig-sensitivity" width="758" height="566" class="figure-img">
+<img src="qs_class_files/figure-html/fig-sensitivity-output-2.png" width="758" height="566" class="figure-img">
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-sensitivity-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-(a) PoD vs.&nbsp;Threshold Sensitivity Plot
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-sensitivity-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: PoD vs.&nbsp;Threshold Sensitivity Plot
 </figcaption>
 </figure>
 </div>
-</div>
-<div class="cell-output cell-output-display" data-execution_count="9">
-<div id="fig-sensitivity-2" class="quarto-float quarto-figure quarto-figure-center anchored" height="566" width="758">
-<figure class="quarto-float quarto-subfloat-fig figure">
-<div aria-describedby="fig-sensitivity-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="qs_class_files/figure-html/fig-sensitivity-output-3.png" id="fig-sensitivity-2" data-ref-parent="fig-sensitivity" width="758" height="566" class="figure-img">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-sensitivity-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-(b)
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-sensitivity-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;4
-</figcaption>
-</figure>
 </div>
 </div>
 </section>
