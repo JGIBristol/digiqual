@@ -135,7 +135,6 @@ The SimulationStudy engine uses a **Layered Caching Architecture**.
 When you run `.pod()` for the first time, it evaluates all possible models and stores the mathematical heavy-lifting in memory. If you want to change a parameter slice (e.g., investigating a different 'Angle'), you can use `.update_slice()` to instantly generate a new PoD curve without refitting the model!
 
 The single `pod()` method automatically handles:
- 
 - **Monte-Carlo Integration** (marginalising out Nuisance variables using Uniform or custom distributions like Normal, Lognormal, and Weibull)
 - **Sobol Sensitivity Analysis** (calculating total-order parameter sensitivity indices)
 - **Model Selection** (finding the best polynomial fit)
@@ -157,7 +156,7 @@ results = study.pod(
     slice_values={"Angle": 0.0},  # Hold Angle strictly at 0.0!
     threshold=34.0,
     n_boot=0,  # Skipping bootstrap for the speed demonstration
-    nuisance_dists={"Roughness": ("norm", (0.25, 0.08))}
+    nuisance_dists={"Roughness": ("norm", (0.25, 0.08))},
 )
 print(f"Run 1 completed in: {time.time() - t0:.4f} seconds")
 
@@ -165,8 +164,6 @@ print(f"Run 1 completed in: {time.time() - t0:.4f} seconds")
 print("Sobol Sensitivity Indices (Total Effect):")
 for var, val in results["sobol_indices"].items():
     print(f"  {var}: {val * 100:.1f}%")
-```
-
 
 # --- RUN 2: Interactive Slicing ---
 # Changing the constant 'Angle' slice triggers
