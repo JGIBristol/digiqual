@@ -15,7 +15,8 @@ def compute_multi_dim_pod(
     thresholds: Union[float, np.ndarray, list],
     n_mc_samples: int = 3000,
     feature_names: list = None,
-    poi_names: list = None
+    poi_names: list = None,
+    nuisance_dists: Dict[str, Tuple[str, Tuple]] = None
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Calculates the marginal Probability of Detection (PoD) across a grid of Parameters of Interest (PoI).
@@ -49,6 +50,8 @@ def compute_multi_dim_pod(
             their physical array indices.
         poi_names (list, optional): Names of the parameters of interest (PoIs). Each entry must
             correspond to a name in ``feature_names``.
+        nuisance_dists (Dict[str, Tuple[str, Tuple]], optional): The custom distribution name and
+            parameters (e.g. ('norm', (mean, std))) for each active nuisance variable.
 
     Returns:
         Tuple[np.ndarray, np.ndarray]:
@@ -79,9 +82,9 @@ def compute_multi_dim_pod(
     dist_obj = getattr(stats, dist_name)
 
     # --- Explicit Column Index Mapping ---
+    nuisance_names = list(nuisance_ranges.keys()) if nuisance_ranges else []
     if feature_names and poi_names:
         poi_indices = [feature_names.index(p) for p in poi_names]
-        nuisance_names = list(nuisance_ranges.keys())
         nuisance_indices = [feature_names.index(n) for n in nuisance_names]
     else:
         # Fallback if names aren't provided
@@ -103,11 +106,24 @@ def compute_multi_dim_pod(
         n_mc_samples = 1
         lhs_01 = np.zeros((1, n_nuisance))
 
-    # Scale the LHS samples to the physical bounds
+    # Scale the LHS samples to the physical bounds or specified distributions
     if n_nuisance > 0:
         nuisance_samples = np.zeros_like(lhs_01)
-        for i, (min_val, max_val) in enumerate(nuisance_ranges.values()):
-            nuisance_samples[:, i] = lhs_01[:, i] * (max_val - min_val) + min_val
+        for i, name in enumerate(nuisance_names):
+            min_val, max_val = nuisance_ranges[name]
+            if min_val == max_val:
+                # Constant slice
+                nuisance_samples[:, i] = min_val
+            elif nuisance_dists and name in nuisance_dists:
+                custom_dist_name, custom_dist_params = nuisance_dists[name]
+                custom_dist_obj = getattr(stats, custom_dist_name)
+                if not isinstance(custom_dist_params, (tuple, list)):
+                    custom_dist_params = (custom_dist_params,)
+                # Inverse Transform Sampling
+                nuisance_samples[:, i] = custom_dist_obj.ppf(lhs_01[:, i], *custom_dist_params)
+            else:
+                # Default: Uniform distribution over [min_val, max_val]
+                nuisance_samples[:, i] = lhs_01[:, i] * (max_val - min_val) + min_val
     else:
         nuisance_samples = np.empty((n_mc_samples, 0))
 

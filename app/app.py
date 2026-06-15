@@ -335,6 +335,7 @@ ui.nav_panel(
                                 ui.tags.ul(
                                     ui.tags.li("Automated model selection via Cross-Validation."),
                                     ui.tags.li("Extract mathematical equations and visualize the mean response surface."),
+                                    ui.tags.li("Configure Uniform, Normal, Lognormal, or Weibull nuisance parameter distributions."),
                                     class_="mb-0 ps-3 text-muted"
                                 ),
                                 class_="border-start border-3 border-success ps-3 mb-3"
@@ -366,7 +367,7 @@ ui.nav_panel(
                                 ui.p("Lock the structural shape and construct rigorous Probability of Detection bounds.", class_="fw-semibold mb-2"),
                                 ui.tags.ul(
                                     ui.tags.li("Parallelized bootstrap resampling for robust 95% Confidence Intervals."),
-                                    ui.tags.li("Monte Carlo integration to marginalize over nuisance parameters."),
+                                    ui.tags.li("Marginalize over custom (non-uniform) nuisance distributions using Monte Carlo integration."),
                                     class_="mb-0 ps-3 text-muted"
                                 ),
                                 class_="border-start border-3 border-danger ps-3 mb-1"
@@ -469,30 +470,25 @@ ui.nav_panel(
                                     class_="bg-light border rounded p-3 d-flex justify-content-center align-items-center gap-5 text-center"
                                 )
                             ),
+                            ui.hr(class_="my-4"),
+
+                            # Disclaimer & Privacy
+                            ui.div(
+                                ui.h5("Disclaimer & Data Privacy", class_="fw-bold mb-2 text-warning"),
+                                ui.p(
+                                    "This software is provided 'as is', without warranty of any kind. "
+                                    "In no event shall the authors be liable for any claim or damages. All processing is performed locally. "
+                                    "This application does not implement data persistence, nor does it facilitate the outbound transmission "
+                                    "of user-supplied datasets to external servers.",
+                                    class_="text-muted small mb-0"
+                                ),
+                                class_="p-3 rounded border-start border-3 border-warning"
+                            ),
                             class_="p-3"
                         )
                     )
                 ),
                 col_widths=[-1,5,5,-1]
-            ),
-
-            # --- FOOTER: DISCLAIMER CARD ---
-            ui.layout_columns(
-                ui.card(
-                    ui.div(
-                        ui.p(
-                            ui.tags.strong("Disclaimer & Data Privacy: "),
-                            "This software is provided 'as is', without warranty of any kind. "
-                            "In no event shall the authors be liable for any claim or damages. All processing is performed locally. "
-                            "This application does not implement data persistence, nor does it facilitate the outbound transmission "
-                            "of user-supplied datasets to external servers.",
-                            class_="text-center text-muted small mb-0"
-                        ),
-                        class_="p-3 bg-light rounded"
-                    ),
-                    class_="mt-2 mb-4 shadow-sm border-0"
-                ),
-                col_widths=[-1, 10, -1]
             ),
 
             # This class allows just this tab to scroll while respecting your global fillable=True
@@ -710,6 +706,41 @@ def server(input, output, session):
             ),
             col_widths=[-1,10,-1]
         )
+
+    def get_nuisance_dists(nuisance_cols):
+        study = current_study()
+        if not study or not nuisance_cols:
+            return {}
+        df_target = study.clean_data if not study.clean_data.empty else study.data
+        
+        nuisance_dists = {}
+        for col in nuisance_cols:
+            if col not in df_target.columns:
+                continue
+            try:
+                dist_type = input[f"nuis_dist_{col}"]()
+                if dist_type == "Uniform":
+                    continue
+                
+                vals = pd.to_numeric(df_target[col], errors="coerce").dropna()
+                if vals.empty:
+                    continue
+                
+                c_mean = float(vals.mean())
+                c_std = float(vals.std()) if vals.std() > 0 else 1.0
+
+                if dist_type == "Normal":
+                    nuisance_dists[col] = ("norm", (c_mean, c_std))
+                elif dist_type == "Lognormal":
+                    log_vals = np.log(vals[vals > 0])
+                    s_est = float(log_vals.std()) if not log_vals.empty else 0.5
+                    scale_est = float(np.exp(log_vals.mean())) if not log_vals.empty else 1.0
+                    nuisance_dists[col] = ("lognorm", (s_est, 0.0, scale_est))
+                elif dist_type == "Weibull":
+                    nuisance_dists[col] = ("weibull_min", (1.5, 0.0, c_mean))
+            except Exception:
+                pass
+        return nuisance_dists
 
 #### Server - LHS generation (Tab 2) ####
 
@@ -1661,6 +1692,7 @@ def server(input, output, session):
                     ui.div(
                         ui.input_selectize("pod_pois", "Parameters to plot (Select 1 or 2)", choices=valid_inputs, multiple=True),
                         ui.input_selectize("pod_nuisance", "Parameters to integrate over (Max 2)", choices=valid_inputs, multiple=True),
+                        ui.output_ui("nuisance_distribution_ui"),
                     ),
                     ui.div(
                         ui.input_select("pod_model_override", "Model Override", choices=model_choices, selected="Auto (Best Fit)"),
@@ -1673,6 +1705,97 @@ def server(input, output, session):
                 ui.input_task_button("btn_run_fit", "Step 1: Fit Physics Model", class_="btn-primary w-100", icon=icon_svg("bolt")),
             ),
             col_widths=[-1,10,-1]
+        )
+
+    @render.ui
+    def nuisance_distribution_ui():
+        study = current_study()
+        if study is None:
+            return ui.div()
+
+        selected_nuis = list(input.pod_nuisance()) if input.pod_nuisance() else []
+        if not selected_nuis:
+            return ui.div()
+
+        df_target = study.clean_data if not study.clean_data.empty else study.data
+
+        configs = []
+        import scipy.stats as stats
+        for col in selected_nuis:
+            if col not in df_target.columns:
+                continue
+            vals = pd.to_numeric(df_target[col], errors="coerce").dropna()
+            if vals.empty:
+                continue
+
+            c_min = float(vals.min())
+            c_max = float(vals.max())
+            c_mean = float(vals.mean())
+            c_std = float(vals.std()) if vals.std() > 0 else 1.0
+
+            dist_id = f"nuis_dist_{col}"
+            try:
+                selected_dist = input[dist_id]()
+            except Exception:
+                selected_dist = "Uniform"
+
+            preview_text = ""
+
+            if selected_dist == "Uniform":
+                preview_text = f"Uniformly distributed on [{c_min:.2f}, {c_max:.2f}] (matching observed data limits)."
+
+            elif selected_dist == "Normal":
+                preview_text = f"Normally distributed. Mean (μ) = {c_mean:.4f}, Std Dev (σ) = {c_std:.4f}. 95% of values lie in [{c_mean - 1.96 * c_std:.2f}, {c_mean + 1.96 * c_std:.2f}]."
+
+            elif selected_dist == "Lognormal":
+                try:
+                    log_vals = np.log(vals[vals > 0])
+                    s_est = float(log_vals.std()) if not log_vals.empty else 0.5
+                    scale_est = float(np.exp(log_vals.mean())) if not log_vals.empty else 1.0
+                except Exception:
+                    s_est = 0.5
+                    scale_est = 1.0
+
+                try:
+                    low_bound = np.exp(np.log(scale_est) - 1.96 * s_est)
+                    high_bound = np.exp(np.log(scale_est) + 1.96 * s_est)
+                    preview_text = f"Lognormal. Shape (s) = {s_est:.4f}, Scale = {scale_est:.4f}. 95% of values lie in [{low_bound:.2f}, {high_bound:.2f}]."
+                except Exception:
+                    preview_text = "Lognormal distribution configured."
+
+            elif selected_dist == "Weibull":
+                try:
+                    w_dist = stats.weibull_min(1.5, 0.0, c_mean)
+                    low_bound = w_dist.ppf(0.025)
+                    high_bound = w_dist.ppf(0.975)
+                    preview_text = f"Weibull. Shape (c) = 1.5, Scale = {c_mean:.4f}. 95% of values lie in [{low_bound:.2f}, {high_bound:.2f}]."
+                except Exception:
+                    preview_text = "Weibull distribution configured."
+
+            card = ui.div(
+                ui.div(
+                    ui.tags.strong(f"Distribution: '{col}'", class_="text-primary text-uppercase small tracking-wide"),
+                    class_="border-bottom pb-1 mb-2 d-flex justify-content-between align-items-center"
+                ),
+                ui.input_select(
+                    dist_id,
+                    "Distribution Type",
+                    choices=["Uniform", "Normal", "Lognormal", "Weibull"],
+                    selected=selected_dist
+                ),
+                ui.div(
+                    ui.span(icon_svg("circle-info"), class_="me-1"),
+                    ui.span(preview_text, class_="small text-muted"),
+                    class_="mt-2 p-2 bg-light border-start border-primary border-3 rounded-end d-flex align-items-center"
+                ),
+                class_="p-3 mb-3 bg-white border border-light-subtle rounded-3 shadow-sm"
+            )
+            configs.append(card)
+
+        return ui.div(
+            ui.tags.h6("Nuisance Parameters Integration Profile", class_="mt-3 mb-2 text-secondary small text-uppercase fw-bold"),
+            ui.div(*configs),
+            class_="mt-2"
         )
 
     @render.ui
@@ -2094,11 +2217,15 @@ def server(input, output, session):
         await asyncio.sleep(0.1)
 
         try:
+            # Gather non-uniform nuisance distributions
+            nuisance_dists = get_nuisance_dists(nuisance_cols)
+
             # 1. Run the standard fit (n_boot=0) to establish Layer 1, 2, 3
             results = study.pod(
                 poi_col=poi_cols, threshold=float(study.get_data_summary(study.outcome)["median"]),
                 nuisance_col=nuisance_cols, slice_values=slice_values,
-                model_override=model_override, force_degree=force_degree, n_boot=0
+                model_override=model_override, force_degree=force_degree, n_boot=0,
+                nuisance_dists=nuisance_dists
             )
 
             # 2. NEW: Trigger the Threshold Spectrum calculation (Layer 4)
@@ -2106,7 +2233,8 @@ def server(input, output, session):
             study.compute_pod_spectrum(
                 poi_col=poi_cols, nuisance_col=nuisance_cols,
                 slice_values=slice_values, n_threshold_points=100,
-                model_override=model_override, force_degree=force_degree
+                model_override=model_override, force_degree=force_degree,
+                nuisance_dists=nuisance_dists
             )
             ui.notification_remove("spec_toast")
 
@@ -2236,14 +2364,16 @@ def server(input, output, session):
 
         # 3. Re-run .pod() with the new threshold
         # Since Layer 4 is primed, this takes microseconds.
+        nuisance_cols = list(input.pod_nuisance()) if input.pod_nuisance() else []
         study.pod(
             poi_col=list(input.pod_pois()),
             threshold=input.pod_threshold_slider(),
-            nuisance_col=list(input.pod_nuisance()),
+            nuisance_col=nuisance_cols,
             slice_values=current_slices,
             model_override=override,
             force_degree=degree,
-            n_boot=0
+            n_boot=0,
+            nuisance_dists=get_nuisance_dists(nuisance_cols)
         )
 
         study.visualise(show=False)
@@ -2383,7 +2513,8 @@ def server(input, output, session):
                 nuisance_col=nuisance_cols,
                 slice_values=slice_values,
                 model_override=override, force_degree=locked_model_degree(),
-                n_boot=input.pod_n_boot(), n_jobs=-1 if input.pod_parallel() else 1
+                n_boot=input.pod_n_boot(), n_jobs=-1 if input.pod_parallel() else 1,
+                nuisance_dists=get_nuisance_dists(nuisance_cols)
             )
 
             target_pod = float(input.pod_target_val()) / 100.0

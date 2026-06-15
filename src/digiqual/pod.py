@@ -615,7 +615,7 @@ def compute_pod_curve(
 def _single_bootstrap_step(
     X_2d, y, X_eval, threshold, model_type, model_params,
     bandwidth, dist_info, nuisance_ranges, n_samples,
-    feature_names=None, poi_names=None
+    feature_names=None, poi_names=None, nuisance_dists=None
 ):
     """Internal helper to process a single bootstrap iteration."""
     # Resample indices
@@ -658,7 +658,7 @@ def _single_bootstrap_step(
     pod_curve, _ = compute_multi_dim_pod(
         X_eval, nuisance_ranges or {}, mean_model, X_res_2d, res_res,
         bandwidth, new_dist_info, threshold, n_mc_samples=1000,
-        feature_names=feature_names, poi_names=poi_names
+        feature_names=feature_names, poi_names=poi_names, nuisance_dists=nuisance_dists
     )
     return pod_curve
 
@@ -679,7 +679,8 @@ def bootstrap_pod_ci(
     n_jobs: int | None = None,
     feature_names: list = None,
     poi_names: list = None,
-    confidence_levels: list | None = None
+    confidence_levels: list | None = None,
+    nuisance_dists: dict = None
 ) -> Tuple[np.ndarray, np.ndarray] | dict:
     """
     Estimates Confidence Bounds for the PoD curve via Bootstrapping.
@@ -707,6 +708,7 @@ def bootstrap_pod_ci(
         confidence_levels (list | None, optional): Specific confidence levels (e.g. [50, 90, 95, 99])
             to return curves for. If provided, returns a dict of {level: (lower, upper)}.
             Otherwise, returns the standard Tuple (lower_95, upper_95).
+        nuisance_dists (dict, optional): Custom nuisance distribution configuration.
 
     Returns:
         Tuple[np.ndarray, np.ndarray] | dict:
@@ -734,7 +736,7 @@ def bootstrap_pod_ci(
         delayed(_single_bootstrap_step)(
             X_2d, y, X_eval, threshold, model_type, model_params,
             bandwidth, dist_info, nuisance_ranges, n_samples,
-            feature_names, poi_names
+            feature_names, poi_names, nuisance_dists
         ) for _ in range(n_boot)
     )
 

@@ -397,7 +397,8 @@ class SimulationStudy:
         n_threshold_points: int = 100,
         bandwidth_ratio: float = 0.1,
         model_override: str = "auto",
-        force_degree: int | None = None
+        force_degree: int | None = None,
+        nuisance_dists: Dict[str, Tuple[str, Tuple]] = None
     ) -> Dict[str, Any]:
         """Pre-calculates a spectrum of PoD curves across a range of signal thresholds."""
         # 1. Standardize column configurations
@@ -420,16 +421,25 @@ class SimulationStudy:
             bandwidth_ratio=bandwidth_ratio,
             n_boot=0,
             model_override=model_override,
-            force_degree=force_degree
+            force_degree=force_degree,
+            nuisance_dists=nuisance_dists
         )
 
         # Extract the key for cache indexing
         mean_model = temp_results['mean_model']
         selected_key = ('Polynomial', mean_model.model_params_) if mean_model.model_type_ == 'Polynomial' else ('Kriging', None)
 
+        # Format nuisance_dists for caching
+        nuisance_dists_key = frozenset()
+        if nuisance_dists:
+            nuisance_dists_key = frozenset(
+                (k, (v[0], tuple(v[1]) if isinstance(v[1], (tuple, list)) else (v[1],)))
+                for k, v in nuisance_dists.items()
+            )
+
         # Create the Spectrum Key and Layer 3 Key to access our matrices
-        spectrum_key = (selected_key, tuple(poi_cols), tuple(nuisance_cols), frozenset(temp_results['slice_values'].items()))
-        l3_key = (selected_key, median_thresh, tuple(poi_cols), tuple(nuisance_cols), frozenset(temp_results['slice_values'].items()))
+        spectrum_key = (selected_key, tuple(poi_cols), tuple(nuisance_cols), frozenset(temp_results['slice_values'].items()), nuisance_dists_key)
+        l3_key = (selected_key, median_thresh, tuple(poi_cols), tuple(nuisance_cols), frozenset(temp_results['slice_values'].items()), nuisance_dists_key)
 
         # 3. Check if this exact spectrum configuration is already cached
         if spectrum_key in self.threshold_spectrum_cache:
@@ -449,14 +459,15 @@ class SimulationStudy:
         pod_matrix, mean_curve = compute_multi_dim_pod(
             poi_grid=l3_cache['X_eval'],
             nuisance_ranges=l3_cache['nuisance_ranges'],
+            nuisance_dists=l3_cache.get('nuisance_dists', None),
             model=mean_model,
             X_train=temp_results['X'],
             residuals=temp_results['residuals'],
             bandwidth=temp_results['bandwidth'],
             dist_info=temp_results['dist_info'],
             thresholds=thresh_vec,
-            feature_names=self.inputs, # <-- ADD THIS
-            poi_names=poi_cols         # <-- ADD THIS
+            feature_names=self.inputs,
+            poi_names=poi_cols
         )
 
         # 6. Package and store in Layer 4
@@ -537,7 +548,8 @@ class SimulationStudy:
         n_boot: int = 1000,
         model_override: str = "auto",
         force_degree: int | None = None,
-        n_jobs: int | None = None
+        n_jobs: int | None = None,
+        nuisance_dists: Dict[str, Tuple[str, Tuple]] = None
     ) -> Dict[str, Any]:
         """
         Runs the generalized Probability of Detection (PoD) analysis.
@@ -708,9 +720,17 @@ class SimulationStudy:
         # ---------------------------------------------------------
         # 6. LAYER 3 & 4 CACHE: Integration & Spectrum Interpolation
         # ---------------------------------------------------------
+        # Format nuisance_dists for caching
+        nuisance_dists_key = frozenset()
+        if nuisance_dists:
+            nuisance_dists_key = frozenset(
+                (k, (v[0], tuple(v[1]) if isinstance(v[1], (tuple, list)) else (v[1],)))
+                for k, v in nuisance_dists.items()
+            )
+
         # Define keys for the different caching layers
-        spectrum_key = (selected_key, tuple(poi_cols), tuple(nuisance_cols), frozenset(final_slice_values.items()))
-        l3_key = (selected_key, threshold, tuple(poi_cols), tuple(nuisance_cols), frozenset(final_slice_values.items()))
+        spectrum_key = (selected_key, tuple(poi_cols), tuple(nuisance_cols), frozenset(final_slice_values.items()), nuisance_dists_key)
+        l3_key = (selected_key, threshold, tuple(poi_cols), tuple(nuisance_cols), frozenset(final_slice_values.items()), nuisance_dists_key)
 
         # A) Setup Evaluation Grid & Nuisance Parameters (Lightweight Setup)
         poi_grids = []
@@ -759,7 +779,7 @@ class SimulationStudy:
             from .integration import compute_multi_dim_pod
             pod_curve, mean_curve = compute_multi_dim_pod(
                 X_eval, nuisance_ranges, mean_model, X, residuals, bandwidth, (dist_name, dist_params), threshold,
-            feature_names=all_cols, poi_names=poi_cols
+                feature_names=all_cols, poi_names=poi_cols, nuisance_dists=nuisance_dists
             )
 
             # Calculate Preliminary Reliability Point (1D only)
@@ -772,6 +792,7 @@ class SimulationStudy:
                 "X_eval": X_eval,
                 "poi_grids": poi_grids,
                 "nuisance_ranges": nuisance_ranges,
+                "nuisance_dists": nuisance_dists,
                 "pod_curve": pod_curve,
                 "mean_curve": mean_curve,
                 "a90_95": a90_95
@@ -802,7 +823,7 @@ class SimulationStudy:
                 mean_model.model_type_, mean_model.model_params_, bandwidth, (dist_name, dist_params),
                 n_boot=n_boot, nuisance_ranges=nuisance_ranges,
                 n_jobs=n_jobs, feature_names=all_cols, poi_names=poi_cols,
-                confidence_levels=std_conf_levels
+                confidence_levels=std_conf_levels, nuisance_dists=nuisance_dists
             )
             if isinstance(ci_bounds, dict):
                 # Default lower_ci and upper_ci for backward compatibility
