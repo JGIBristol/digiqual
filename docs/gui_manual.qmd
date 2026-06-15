@@ -15,7 +15,7 @@ Instead of writing scripts to generate arrays, you can visually define your para
 1. **Add Variables:** Click "Add Variable" for each continuous parameter in your simulation (e.g., `Length`, `Angle`).
 2. **Define Bounds:** Set the minimum and maximum physical limits for each parameter. The LHS algorithm will ensure these bounds are evenly covered.
 3. **Specify Samples:** Enter the total number of initial simulation runs you plan to execute ($N$).
-4. **Generate Framework:** The tool will instantly construct the multi-dimensional parameter space, attempting to maximize the minimum distance between points.
+4. **Generate Framework:** The tool will instantly construct the multi-dimensional parameter space, attempting to maximize the minimum distance between points. Under the hood, the library automatically reorders coordinates using a **greedy max-min distance algorithm**. This ensures that any prefix of size $k$ is as space-filling as possible, allowing you to stop the physical solver early or execute runs incrementally while maintaining optimal coverage of the parameter space.
 5. **Download CSV:** Save `generated_sample.csv`. You can now feed this CSV into your external solver tool (e.g., MATLAB, Abaqus, ANSYS) to calculate the actual signal responses.
 
 ## 2. Simulation Diagnostics
@@ -40,8 +40,11 @@ Instead of writing scripts to generate arrays, you can visually define your para
 This tab represents **Layer 1 and Layer 2** of the DigiQual caching architecture.
 
 1. **Configure Parameters:** Select up to 2 Parameters of Interest (to plot) and up to 2 Nuisance parameters (to integrate out). Unassigned parameters will automatically be held as constant slices.
-2. **Select Model:** Choose "Auto (Best Fit)" to let Cross-Validation evaluate all Polynomials (Degrees 1-10) and Kriging, or force a specific model type.
-3. **Fit Model:** The engine calculates the fundamental physics regression, optimizes the heteroscedastic variance (noise) profile, and saves the mathematical equations into the high-speed cache.
+2. **Nuisance Parameters Integration Profile:** For each selected Nuisance variable, you can configure its statistical distribution: **Uniform** (defaulting to observed data limits), **Normal** (Gaussian), **Lognormal**, or **Weibull** distributions. The app estimates these parameters automatically from the uploaded data and displays a preview of the 95% bounds.
+3. **Select Model:** Choose "Auto (Best Fit)" to let Cross-Validation evaluate all Polynomials (Degrees 1-10) and Kriging, or force a specific model type.
+4. **Fit Model:** Click the fit button. The engine calculates the fundamental physics regression, optimizes the heteroscedastic variance (noise) profile, and saves the mathematical equations into the high-speed cache.
+5. **Parameter Sensitivity (Sobol):** Once fit, a **Parameter Sensitivity (Total Effect)** card appears. This displays the total-order Sobol indices (as percentages) for each parameter, ranking them by their direct impact on the signal response (including their multi-dimensional interactions).
+6. **Diagnostics plots:** The tab renders the best fitting model cross-validation score comparison, the signal fit surface, and a 4-panel residual validation diagnostic suite.
 
 ## 4. PoD Explorer (Reliability)
 

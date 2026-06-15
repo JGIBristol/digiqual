@@ -33,7 +33,7 @@ Noise is rarely perfectly Gaussian. `digiqual` infers the true shape of the erro
 ### The Mathematics
 Residuals are first standardized into $Z$-scores using the local standard deviation:
 $$ Z_i = \frac{y_i - \hat{f}(x_i)}{\hat{\sigma}(x_i)} $$
-These $Z$-scores are then fitted against a suite of distributions: Normal, Gumbel, Logistic, Laplace, and t-Student. The best-fitting distribution is selected using the **Akaike Information Criterion (AIC)**:
+These $Z$-scores are then fitted against a suite of distributions: Normal, Gumbel Right (`gumbel_r`), Gumbel Left (`gumbel_l` - highly relevant for skewed crack reflection data), Logistic, Laplace, and t-Student. The best-fitting distribution is selected using the **Akaike Information Criterion (AIC)**:
 $$ AIC = 2k - 2\ln(\hat{L}) $$
 Where $k$ is the number of parameters and $\hat{L}$ is the Maximum Likelihood.
 
@@ -45,6 +45,10 @@ For parameters treated as random noise, the expected PoD for a Parameter of Inte
 $$PoD(\mathbf{x}) = \int_{\Omega_z} PoD(\mathbf{x}, \mathbf{z}) p(\mathbf{z}) d\mathbf{z}$$
 
 `digiqual` approximates this integral computationally via Monte Carlo integration (Latin Hypercube Sampling) to average the signal response across the noise spectrum.
+
+If custom nuisance distributions are configured (such as Normal, Lognormal, or Weibull), `digiqual` scales the initial standard LHS samples (lying in $[0, 1]^d$) using **Inverse Transform Sampling**. For each nuisance dimension $j$, the physical values are obtained by applying the target distribution's Cumulative Distribution Function (CDF) inverse, or Percent Point Function (PPF), denoted $F_j^{-1}$:
+$$ z_{i, j} = F_j^{-1}(u_{i, j}) $$
+where $u_{i, j}$ is the $[0,1]$ space-filling LHS coordinate.
 
 ### Parameter Slicing (Constant Parameters)
 For parameters that are neither plotted nor integrated out, `digiqual` treats them as strict mathematical constants. The evaluation grid takes a "slice" through the $n$-dimensional response surface at these specific values (defaulting to the parameter's median), allowing you to explore specific physical scenarios without retraining the underlying model.
@@ -65,6 +69,20 @@ Because the model is non-linear and non-normal, traditional analytical confidenc
 
 5. Extract the percentiles at every point $a$ to form the robust confidence interval curves across multiple standard confidence levels (50%, 90%, 95%, 99%) simultaneously (e.g., $PoD_{50}$, $PoD_{90}$, $PoD_{95}$, $PoD_{99}$). This builds the complete reliability matrix mapping target PoDs and confidence bounds.
 
+## 6. Global Sensitivity Analysis (Sobol Indices)
+To help engineers identify which inputs contribute most to signal variance, `digiqual` calculates **Total-Order Sobol Sensitivity Indices** ($S_T$) using Variance-Based Sensitivity Analysis.
+
+### The Mathematics
+For a model output $Y = f(X_1, X_2, \dots, X_d)$, the total-order sensitivity index $S_{T_i}$ measures the total contribution of input $X_i$ to the variance of $Y$, including its direct effect and all interaction terms of any order:
+$$ S_{T_i} = \frac{E_{\sim i}(V_{i}(Y \mid X_{\sim i}))}{V(Y)} = 1 - \frac{V_{\sim i}(E_i(Y \mid X_{\sim i}))}{V(Y)} $$
+where $X_{\sim i}$ denotes all variables except $X_i$.
+
+`digiqual` uses the `SALib` package to compute these indices:
+1. It defines the parameter space bounds.
+2. It samples the space-filling coordinates.
+3. It evaluates the surrogate expectation model (mean response) at these coordinates.
+4. It estimates the total-order indices $S_T$ for each variable, which are cached and displayed as percentages in the GUI.
+
 ### Summary: The 3-Tier Parameter Taxonomy
 
 To understand how `digiqual` handles high-dimensional data, it is helpful to see exactly how each parameter type is treated during the three phases of reliability assessment:
@@ -73,4 +91,4 @@ To understand how `digiqual` handles high-dimensional data, it is helpful to see
 | :--- | :--- | :--- | :--- |
 | **Parameter(s) of Interest (PoI)** | Treated as a standard geometric dimension to train the n-dimensional surrogate model. | Defines the evaluation grid. Steps evenly from its minimum to maximum value to form the plot axes. | Forms the primary axes for the final Probability of Detection confidence bounds. |
 | **Sliced Parameter (Constant)** | Treated as a standard geometric dimension. The model learns its physical impact globally. | Held **strictly constant** at a user-defined value. Acts as a targeted, multi-dimensional "laser beam" slice. | Remains rigidly locked at the exact same constant value across all bootstrap resamples. |
-| **Nuisance Parameter (Marginalised)** | Treated as a standard geometric dimension. The model learns its physical impact globally. | **Randomly sampled** via Monte Carlo integration across its physical bounds. Results are averaged out. | Re-sampled and averaged inside *every single* bootstrap iteration to capture real-world uncertainty. |
+| **Nuisance Parameter (Marginalised)** | Treated as a standard geometric dimension. The model learns its physical impact globally. | **Randomly sampled** via Monte Carlo integration across its physical bounds (Uniform or custom Normal/Lognormal/Weibull). Results are averaged out. | Re-sampled and averaged inside *every single* bootstrap iteration to capture real-world uncertainty. |

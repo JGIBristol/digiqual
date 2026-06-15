@@ -28,14 +28,14 @@ Instead of only fitting the single "best" model, the engine evaluates *all* poly
 * **Benefit:** If a user looks at the CV bar chart and decides to manually override the "Auto (Best Fit)" selection from Polynomial Degree 3 to Degree 4, the app retrieves the pre-trained Degree 4 model instantly without running regression again.
 
 ### Layer 2: The Variance Model Cache (`variance_cache`)
-**What it does:** Caches the heteroscedastic noise profile.
+**What it does:** Caches the heteroscedastic noise profile and parameter sensitivity results.
 **Trigger:** Resolving a specific mean model.
 
-Once a mean model is selected, the engine must estimate how the noise (variance) changes across the surface. It uses Leave-One-Out Cross-Validation (LOO-CV) to find the optimal smoothing bandwidth for the residuals, and tests 6 different statistical distributions (Normal, Gumbel, Laplace, etc.) to find the best fit.
+Once a mean model is selected, the engine must estimate how the noise (variance) changes across the surface. It uses Leave-One-Out Cross-Validation (LOO-CV) to find the optimal smoothing bandwidth for the residuals, and tests candidate statistical distributions to find the best fit. In addition, the engine computes the Total-Order Sobol Sensitivity Indices to quantify parameter importance.
 
 * **Cache Key:** Inherits the Mean Model key (e.g., `('Polynomial', 3)`).
-* **Stored Data:** `residuals`, `bandwidth`, and `dist_info` (name and parameters).
-* **Benefit:** Bandwidth optimization is slow. By caching it, the system never has to recalculate the noise profile for a model it has already analyzed.
+* **Stored Data:** `residuals`, `bandwidth`, `dist_info` (name and parameters), and `sobol_indices`.
+* **Benefit:** Bandwidth optimization and Sobol sensitivity computations are slow. By caching them, the system never has to recalculate the noise profile or parameter sensitivities for a model it has already analyzed.
 
 ### Layer 3: Individual PoD Curve Cache (`pod_curves_cache`)
 **What it does:** Caches a specific, integrated S-Curve.

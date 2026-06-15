@@ -68,6 +68,12 @@ threshold_defaults = study.get_data_summary("Signal")
 print(f"Auto-Threshold suggestion (Median Signal): {threshold_defaults['median']:.2f}")
 ```
 
+::: {.callout-tip}
+### Note on Design Generation: `generate_lhs`
+When creating initial space-filling designs programmatically (instead of synthetic random samples), you can use the `digiqual.sampling.generate_lhs(n, ranges)` utility.
+The library automatically applies a **greedy max-min distance reordering algorithm** to the generated coordinates. This ensures that any prefix of size $k$ is as space-filling as possible, allowing you to stop the physical solver early or execute runs incrementally while maintaining optimal coverage of the parameter space.
+:::
+
 ### 2. Diagnosis (Detecting the Issue)
 
 We ask the `SimulationStudy` manager to diagnose the health of our experiment.
@@ -129,8 +135,9 @@ The SimulationStudy engine uses a **Layered Caching Architecture**.
 When you run `.pod()` for the first time, it evaluates all possible models and stores the mathematical heavy-lifting in memory. If you want to change a parameter slice (e.g., investigating a different 'Angle'), you can use `.update_slice()` to instantly generate a new PoD curve without refitting the model!
 
 The single `pod()` method automatically handles:
-
-- **Monte-Carlo Integration** (marginalising out Nuisance variables)
+ 
+- **Monte-Carlo Integration** (marginalising out Nuisance variables using Uniform or custom distributions like Normal, Lognormal, and Weibull)
+- **Sobol Sensitivity Analysis** (calculating total-order parameter sensitivity indices)
 - **Model Selection** (finding the best polynomial fit)
 - **Distribution Inference** (finding the best error distribution)
 - **Bootstrapping** (generating confidence bounds)
@@ -141,7 +148,8 @@ The single `pod()` method automatically handles:
 
 # --- RUN 1: Baseline Analysis ---
 # Expect this to take a moment as it trains models
-# and optimizes variance bandwidth
+# and optimizes variance bandwidth.
+# We configure 'Roughness' with a custom Normal distribution: mean=0.25, std=0.08
 t0 = time.time()
 results = study.pod(
     poi_col="Length",
@@ -149,8 +157,15 @@ results = study.pod(
     slice_values={"Angle": 0.0},  # Hold Angle strictly at 0.0!
     threshold=34.0,
     n_boot=0,  # Skipping bootstrap for the speed demonstration
+    nuisance_dists={"Roughness": ("norm", (0.25, 0.08))}
 )
 print(f"Run 1 completed in: {time.time() - t0:.4f} seconds")
+
+# Access the calculated Sobol sensitivity indices for each input parameter
+print("Sobol Sensitivity Indices (Total Effect):")
+for var, val in results["sobol_indices"].items():
+    print(f"  {var}: {val * 100:.1f}%")
+```
 
 
 # --- RUN 2: Interactive Slicing ---
