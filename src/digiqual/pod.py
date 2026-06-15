@@ -641,11 +641,23 @@ def _single_bootstrap_step(
     y_pred = mean_model.predict(X_res_2d)
     res_res = y_res - y_pred
 
+    # Refit distribution parameters on the resampled standardized residuals
+    dist_name, dist_params = dist_info
+    try:
+        local_std_res = predict_local_std(X_res_2d, res_res, X_res_2d, bandwidth)
+        local_std_res = np.maximum(local_std_res, 1e-10)
+        z_res = res_res.flatten() / local_std_res.flatten()
+        dist_obj = getattr(stats, dist_name)
+        new_params = dist_obj.fit(z_res)
+        new_dist_info = (dist_name, new_params)
+    except Exception:
+        new_dist_info = dist_info
+
     # Compute PoD for this iteration
     from .integration import compute_multi_dim_pod
     pod_curve, _ = compute_multi_dim_pod(
         X_eval, nuisance_ranges or {}, mean_model, X_res_2d, res_res,
-        bandwidth, dist_info, threshold, n_mc_samples=1000,
+        bandwidth, new_dist_info, threshold, n_mc_samples=1000,
         feature_names=feature_names, poi_names=poi_names
     )
     return pod_curve

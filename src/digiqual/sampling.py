@@ -96,4 +96,57 @@ def generate_lhs(
     sample_01 = sampler.random(n=n)
     sample_scaled = qmc.scale(sample_01, l_bounds, u_bounds)
 
-    return pd.DataFrame(sample_scaled, columns=vars_df["Name"])
+    df = pd.DataFrame(sample_scaled, columns=vars_df["Name"])
+    return reorder_max_min(df)
+
+
+def reorder_max_min(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Reorders a DataFrame of coordinates using a greedy max-min distance algorithm.
+    This ensures that any prefix of size k (where k < len(df)) is as space-filling
+    as possible, maximizing the spread and minimizing clustering.
+
+    Args:
+        df (pd.DataFrame): Coordinates to reorder.
+
+    Returns:
+        pd.DataFrame: The reordered DataFrame.
+    """
+    import numpy as np
+    from scipy.spatial.distance import cdist
+
+    if len(df) <= 2:
+        return df.copy()
+
+    # Scale coordinates to [0, 1] range to ensure fair distance calculation across variables
+    X = df.values
+    min_vals = X.min(axis=0)
+    max_vals = X.max(axis=0)
+    range_vals = max_vals - min_vals
+    range_vals[range_vals == 0] = 1.0  # Prevent division by zero
+
+    X_scaled = (X - min_vals) / range_vals
+
+    n_points = len(df)
+    ordered_indices = [0]  # Start with the first point
+    remaining_indices = list(range(1, n_points))
+
+    while remaining_indices:
+        # Calculate distance from remaining points to the already selected points
+        selected_points = X_scaled[ordered_indices]
+        remaining_points = X_scaled[remaining_indices]
+
+        # dists shape: (n_remaining, n_selected)
+        dists = cdist(remaining_points, selected_points, metric='euclidean')
+
+        # For each remaining point, find its minimum distance to any selected point
+        min_dists = dists.min(axis=1)
+
+        # Choose the remaining point that has the LARGEST minimum distance to the selected pool
+        best_idx_in_remaining = np.argmax(min_dists)
+        best_global_idx = remaining_indices[best_idx_in_remaining]
+
+        ordered_indices.append(best_global_idx)
+        remaining_indices.remove(best_global_idx)
+
+    return df.iloc[ordered_indices].copy()
