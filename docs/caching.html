@@ -284,12 +284,12 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="layer-2-the-variance-model-cache-variance_cache" class="level3">
 <h3 class="anchored" data-anchor-id="layer-2-the-variance-model-cache-variance_cache">Layer 2: The Variance Model Cache (<code>variance_cache</code>)</h3>
-<p><strong>What it does:</strong> Caches the heteroscedastic noise profile. <strong>Trigger:</strong> Resolving a specific mean model.</p>
-<p>Once a mean model is selected, the engine must estimate how the noise (variance) changes across the surface. It uses Leave-One-Out Cross-Validation (LOO-CV) to find the optimal smoothing bandwidth for the residuals, and tests 6 different statistical distributions (Normal, Gumbel, Laplace, etc.) to find the best fit.</p>
+<p><strong>What it does:</strong> Caches the heteroscedastic noise profile and parameter sensitivity results. <strong>Trigger:</strong> Resolving a specific mean model.</p>
+<p>Once a mean model is selected, the engine must estimate how the noise (variance) changes across the surface. It uses Leave-One-Out Cross-Validation (LOO-CV) to find the optimal smoothing bandwidth for the residuals, and tests candidate statistical distributions to find the best fit. In addition, the engine computes the Total-Order Sobol Sensitivity Indices to quantify parameter importance.</p>
 <ul>
 <li><strong>Cache Key:</strong> Inherits the Mean Model key (e.g., <code>('Polynomial', 3)</code>).</li>
-<li><strong>Stored Data:</strong> <code>residuals</code>, <code>bandwidth</code>, and <code>dist_info</code> (name and parameters).</li>
-<li><strong>Benefit:</strong> Bandwidth optimization is slow. By caching it, the system never has to recalculate the noise profile for a model it has already analyzed.</li>
+<li><strong>Stored Data:</strong> <code>residuals</code>, <code>bandwidth</code>, <code>dist_info</code> (name and parameters), and <code>sobol_indices</code>.</li>
+<li><strong>Benefit:</strong> Bandwidth optimization and Sobol sensitivity computations are slow. By caching them, the system never has to recalculate the noise profile or parameter sensitivities for a model it has already analyzed.</li>
 </ul>
 </section>
 <section id="layer-3-individual-pod-curve-cache-pod_curves_cache" class="level3">

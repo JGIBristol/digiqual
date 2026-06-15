@@ -283,7 +283,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    n_mc_samples<span class="op">=</span><span class="dv">3000</span>,</span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    feature_names<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    poi_names<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    nuisance_dists<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Calculates the marginal Probability of Detection (PoD) across a grid of Parameters of Interest (PoI).</p>
 <p>This function determines the probability that a signal will exceed a given threshold. It features a dual-path architecture for maximum efficiency:</p>
 <ol type="1">
@@ -372,6 +373,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>poi_names</td>
 <td>list</td>
 <td>Names of the parameters of interest (PoIs). Each entry must correspond to a name in <code>feature_names</code>.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="even">
+<td>nuisance_dists</td>
+<td>Dict[str, Tuple[str, Tuple]]</td>
+<td>The custom distribution name and parameters (e.g.&nbsp;(‘norm’, (mean, std))) for each active nuisance variable.</td>
 <td><code>None</code></td>
 </tr>
 </tbody>

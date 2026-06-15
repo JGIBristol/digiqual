@@ -290,7 +290,7 @@ window.Quarto = {
 <li><strong>Add Variables:</strong> Click “Add Variable” for each continuous parameter in your simulation (e.g., <code>Length</code>, <code>Angle</code>).</li>
 <li><strong>Define Bounds:</strong> Set the minimum and maximum physical limits for each parameter. The LHS algorithm will ensure these bounds are evenly covered.</li>
 <li><strong>Specify Samples:</strong> Enter the total number of initial simulation runs you plan to execute (<span class="math inline">\(N\)</span>).</li>
-<li><strong>Generate Framework:</strong> The tool will instantly construct the multi-dimensional parameter space, attempting to maximize the minimum distance between points.</li>
+<li><strong>Generate Framework:</strong> The tool will instantly construct the multi-dimensional parameter space, attempting to maximize the minimum distance between points. Under the hood, the library automatically reorders coordinates using a <strong>greedy max-min distance algorithm</strong>. This ensures that any prefix of size <span class="math inline">\(k\)</span> is as space-filling as possible, allowing you to stop the physical solver early or execute runs incrementally while maintaining optimal coverage of the parameter space.</li>
 <li><strong>Download CSV:</strong> Save <code>generated_sample.csv</code>. You can now feed this CSV into your external solver tool (e.g., MATLAB, Abaqus, ANSYS) to calculate the actual signal responses.</li>
 </ol>
 </section>
@@ -318,8 +318,11 @@ window.Quarto = {
 <p>This tab represents <strong>Layer 1 and Layer 2</strong> of the DigiQual caching architecture.</p>
 <ol type="1">
 <li><strong>Configure Parameters:</strong> Select up to 2 Parameters of Interest (to plot) and up to 2 Nuisance parameters (to integrate out). Unassigned parameters will automatically be held as constant slices.</li>
+<li><strong>Nuisance Parameters Integration Profile:</strong> For each selected Nuisance variable, you can configure its statistical distribution: <strong>Uniform</strong> (defaulting to observed data limits), <strong>Normal</strong> (Gaussian), <strong>Lognormal</strong>, or <strong>Weibull</strong> distributions. The app estimates these parameters automatically from the uploaded data and displays a preview of the 95% bounds.</li>
 <li><strong>Select Model:</strong> Choose “Auto (Best Fit)” to let Cross-Validation evaluate all Polynomials (Degrees 1-10) and Kriging, or force a specific model type.</li>
-<li><strong>Fit Model:</strong> The engine calculates the fundamental physics regression, optimizes the heteroscedastic variance (noise) profile, and saves the mathematical equations into the high-speed cache.</li>
+<li><strong>Fit Model:</strong> Click the fit button. The engine calculates the fundamental physics regression, optimizes the heteroscedastic variance (noise) profile, and saves the mathematical equations into the high-speed cache.</li>
+<li><strong>Parameter Sensitivity (Sobol):</strong> Once fit, a <strong>Parameter Sensitivity (Total Effect)</strong> card appears. This displays the total-order Sobol indices (as percentages) for each parameter, ranking them by their direct impact on the signal response (including their multi-dimensional interactions).</li>
+<li><strong>Diagnostics plots:</strong> The tab renders the best fitting model cross-validation score comparison, the signal fit surface, and a 4-panel residual validation diagnostic suite.</li>
 </ol>
 </section>
 <section id="pod-explorer-reliability" class="level2">
