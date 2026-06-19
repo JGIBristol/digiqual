@@ -124,6 +124,7 @@ quartodoc:
         - pod.compute_pod_curve
         - pod.bootstrap_pod_ci
         - pod.calculate_reliability_point
+        - pod.calculate_sobol_indices
 
         # -- Integration --
         - integration.compute_multi_dim_pod
@@ -139,6 +140,7 @@ quartodoc:
         - plotting.plot_pod_curve
         - plotting.plot_pod_surface
         - plotting.plot_signal_surface
+        - plotting.plot_collinearity_matrix
 
         # -- Optimise/Executor --
         - executors.Executor
