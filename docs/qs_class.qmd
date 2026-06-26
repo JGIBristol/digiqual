@@ -135,11 +135,22 @@ The SimulationStudy engine uses a **Layered Caching Architecture**.
 When you run `.pod()` for the first time, it evaluates all possible models and stores the mathematical heavy-lifting in memory. If you want to change a parameter slice (e.g., investigating a different 'Angle'), you can use `.update_slice()` to instantly generate a new PoD curve without refitting the model!
 
 The single `pod()` method automatically handles:
+
 - **Monte-Carlo Integration** (marginalising out Nuisance variables using Uniform or custom distributions like Normal, Lognormal, and Weibull)
 - **Sobol Sensitivity Analysis** (calculating total-order parameter sensitivity indices)
 - **Model Selection** (finding the best polynomial fit)
 - **Distribution Inference** (finding the best error distribution)
 - **Bootstrapping** (generating confidence bounds)
+
+:::
+
+::: {.callout-note}
+
+### Why Configure Custom Nuisance Profiles?
+In the code snippet below, we pass `nuisance_dists={"Roughness": ("norm", (0.25, 0.08))}` to the `.pod()` engine instead of letting it default to a Uniform distribution.
+
+If we assume surface roughness is Uniformly distributed between its extreme bounds, the Monte Carlo integration treats an incredibly rough, worst-case surface as just as likely to occur as a nominal, well-machined surface. This would unnecessarily degrade our final Probability of Detection curve. By specifying a **Normal distribution** centered around the nominal design specification ($0.25$ with a standard deviation of $0.08$), `digiqual` samples coordinates that mirror real-world production distributions. This ensures your final calculated reliability curves represent field performance, rather than an unphysical worst-case scenario.
+
 :::
 
 ```{python}
@@ -194,6 +205,7 @@ To calculate reliability indices with confidence intervals, we run the bootstrap
 Unlike traditional tools that compute only a single confidence interval (e.g., 95%), `digiqual` runs bootstrapping once to extract bounds for **multiple confidence levels** (50%, 90%, 95%, 99%) across standard target PoDs (50%, 90%, 95%, 99%) simultaneously.
 
 These are saved in the results dictionaries:
+
 - `results['ci_bounds']`: Maps confidence levels to lower/upper curves.
 - `results['reliability_table']`: Maps `(target_pod_percent, confidence_level)` tuples to their corresponding flaw sizing reliability indices (e.g., `a90/95`).
 
