@@ -343,7 +343,7 @@ Note
 <h3 class="anchored" data-anchor-id="setup-generation-smart-initialization">1. Setup, Generation &amp; Smart Initialization</h3>
 <p>We’ll define a simulated physics function with heteroscedastic noise and generate an initial design containing a deliberate gap between 3mm and 7mm.</p>
 <p>Notice that we no longer need to explicitly define our input columns when creating the <code>SimulationStudy</code>; the manager will automatically infer them from the data!</p>
-<div id="1a4f1dda" class="cell" data-execution_count="1">
+<div id="ee584183" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
@@ -397,7 +397,7 @@ Note
 <div class="cell-output cell-output-stdout">
 <pre><code>Data initialized/overwritten. Total rows: 80
 Inferred Inputs: ['Length', 'Angle', 'Roughness']
-Auto-Threshold suggestion (Median Signal): 34.37</code></pre>
+Auto-Threshold suggestion (Median Signal): 34.22</code></pre>
 </div>
 </div>
 <div class="callout callout-style-default callout-tip callout-titled">
@@ -431,7 +431,7 @@ Warning
 <p>Additionally, the diagnostic suite now automatically checks for multicollinearity by calculating the <strong>Variance Inflation Factor (VIF)</strong> for each input variable (controlled by the <code>max_allowed_vif</code> parameter, which defaults to <code>5.0</code>).</p>
 </div>
 </div>
-<div id="5e644ba7" class="cell" data-execution_count="2">
+<div id="1957d457" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run the diagnostic tests</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>study.diagnose()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -461,7 +461,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.4109</td>
+<td>0.4227</td>
 <td>&lt; 0.20</td>
 <td>False</td>
 </tr>
@@ -470,7 +470,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.0469</td>
+<td>0.0453</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -479,7 +479,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.0618</td>
+<td>0.1141</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -488,7 +488,7 @@ Checking sample sufficiency...</code></pre>
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9977</td>
+<td>0.9985</td>
 <td>&gt; 0.50</td>
 <td>True</td>
 </tr>
@@ -497,7 +497,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Avg CV (Rel Std Dev)</td>
-<td>0.0150</td>
+<td>0.0166</td>
 <td>&lt; 0.15</td>
 <td>True</td>
 </tr>
@@ -506,7 +506,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Max CV (Rel Std Dev)</td>
-<td>0.0299</td>
+<td>0.0334</td>
 <td>&lt; 0.30</td>
 <td>True</td>
 </tr>
@@ -515,7 +515,7 @@ Checking sample sufficiency...</code></pre>
 <td>Collinearity Check</td>
 <td>Length</td>
 <td>VIF</td>
-<td>1.0100</td>
+<td>1.0107</td>
 <td>&lt; 5.00</td>
 <td>True</td>
 </tr>
@@ -524,7 +524,7 @@ Checking sample sufficiency...</code></pre>
 <td>Collinearity Check</td>
 <td>Angle</td>
 <td>VIF</td>
-<td>1.0013</td>
+<td>1.0036</td>
 <td>&lt; 5.00</td>
 <td>True</td>
 </tr>
@@ -533,7 +533,7 @@ Checking sample sufficiency...</code></pre>
 <td>Collinearity Check</td>
 <td>Roughness</td>
 <td>VIF</td>
-<td>1.0098</td>
+<td>1.0112</td>
 <td>&lt; 5.00</td>
 <td>True</td>
 </tr>
@@ -568,7 +568,7 @@ Figure&nbsp;1: Collinearity analysis matrix
 <li><strong>Generate:</strong> It outputs a dataframe of new input coordinates.</li>
 <li><strong>Execute &amp; Store:</strong> Appending the results back using <code>add_data()</code> automatically clears the mathematical caches to ensure your next analysis uses the updated physics!</li>
 </ol>
-<div id="c71f2d09" class="cell" data-execution_count="4">
+<div id="5933b875" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate active learning samples (20 points to fill the gap)</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>new_samples <span class="op">=</span> study.refine(n_points<span class="op">=</span><span class="dv">20</span>)</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -611,7 +611,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Length</td>
 <td>Max Gap Ratio</td>
-<td>0.0654</td>
+<td>0.0689</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -620,7 +620,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Angle</td>
 <td>Max Gap Ratio</td>
-<td>0.0469</td>
+<td>0.0379</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -629,7 +629,7 @@ Checking sample sufficiency...</code></pre>
 <td>Input Coverage</td>
 <td>Roughness</td>
 <td>Max Gap Ratio</td>
-<td>0.0618</td>
+<td>0.0903</td>
 <td>&lt; 0.20</td>
 <td>True</td>
 </tr>
@@ -638,7 +638,7 @@ Checking sample sufficiency...</code></pre>
 <td>Model Fit (CV)</td>
 <td>Signal</td>
 <td>Mean R2 Score</td>
-<td>0.9977</td>
+<td>0.9979</td>
 <td>&gt; 0.50</td>
 <td>True</td>
 </tr>
@@ -647,7 +647,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Avg CV (Rel Std Dev)</td>
-<td>0.0124</td>
+<td>0.0142</td>
 <td>&lt; 0.15</td>
 <td>True</td>
 </tr>
@@ -656,7 +656,7 @@ Checking sample sufficiency...</code></pre>
 <td>Bootstrap Convergence</td>
 <td>Signal</td>
 <td>Max CV (Rel Std Dev)</td>
-<td>0.0243</td>
+<td>0.0295</td>
 <td>&lt; 0.30</td>
 <td>True</td>
 </tr>
@@ -665,7 +665,7 @@ Checking sample sufficiency...</code></pre>
 <td>Collinearity Check</td>
 <td>Length</td>
 <td>VIF</td>
-<td>1.0054</td>
+<td>1.0056</td>
 <td>&lt; 5.00</td>
 <td>True</td>
 </tr>
@@ -674,7 +674,7 @@ Checking sample sufficiency...</code></pre>
 <td>Collinearity Check</td>
 <td>Angle</td>
 <td>VIF</td>
-<td>1.0005</td>
+<td>1.0036</td>
 <td>&lt; 5.00</td>
 <td>True</td>
 </tr>
@@ -683,7 +683,7 @@ Checking sample sufficiency...</code></pre>
 <td>Collinearity Check</td>
 <td>Roughness</td>
 <td>VIF</td>
-<td>1.0049</td>
+<td>1.0053</td>
 <td>&lt; 5.00</td>
 <td>True</td>
 </tr>
@@ -709,7 +709,28 @@ Tip
 <div class="callout-body-container callout-body">
 <p>The SimulationStudy engine uses a <strong>Layered Caching Architecture</strong>.</p>
 <p>When you run <code>.pod()</code> for the first time, it evaluates all possible models and stores the mathematical heavy-lifting in memory. If you want to change a parameter slice (e.g., investigating a different ‘Angle’), you can use <code>.update_slice()</code> to instantly generate a new PoD curve without refitting the model!</p>
-<p>The single <code>pod()</code> method automatically handles: - <strong>Monte-Carlo Integration</strong> (marginalising out Nuisance variables using Uniform or custom distributions like Normal, Lognormal, and Weibull) - <strong>Sobol Sensitivity Analysis</strong> (calculating total-order parameter sensitivity indices) - <strong>Model Selection</strong> (finding the best polynomial fit) - <strong>Distribution Inference</strong> (finding the best error distribution) - <strong>Bootstrapping</strong> (generating confidence bounds)</p>
+<p>The single <code>pod()</code> method automatically handles:</p>
+<ul>
+<li><strong>Monte-Carlo Integration</strong> (marginalising out Nuisance variables using Uniform or custom distributions like Normal, Lognormal, and Weibull)</li>
+<li><strong>Sobol Sensitivity Analysis</strong> (calculating total-order parameter sensitivity indices)</li>
+<li><strong>Model Selection</strong> (finding the best polynomial fit)</li>
+<li><strong>Distribution Inference</strong> (finding the best error distribution)</li>
+<li><strong>Bootstrapping</strong> (generating confidence bounds)</li>
+</ul>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Why Configure Custom Nuisance Profiles?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In the code snippet below, we pass <code>nuisance_dists={"Roughness": ("norm", (0.25, 0.08))}</code> to the <code>.pod()</code> engine instead of letting it default to a Uniform distribution.</p>
+<p>If we assume surface roughness is Uniformly distributed between its extreme bounds, the Monte Carlo integration treats an incredibly rough, worst-case surface as just as likely to occur as a nominal, well-machined surface. This would unnecessarily degrade our final Probability of Detection curve. By specifying a <strong>Normal distribution</strong> centered around the nominal design specification (<span class="math inline">\(0.25\)</span> with a standard deviation of <span class="math inline">\(0.08\)</span>), <code>digiqual</code> samples coordinates that mirror real-world production distributions. This ensures your final calculated reliability curves represent field performance, rather than an unphysical worst-case scenario.</p>
 </div>
 </div>
 <div id="analysis-run" class="cell" data-execution_count="5">
@@ -748,12 +769,12 @@ Tip
 2. Fitting Variance Model &amp; Inferring Distribution (Cache Miss)...
    -&gt; Optimizing bandwidth via LOO-CV...
 -&gt; Calculating Total-Order Sobol Indices...
-   -&gt; Smoothing Bandwidth: 9.9668
+   -&gt; Smoothing Bandwidth: 9.9128
    -&gt; Selected Distribution: norm
 3. Integrating PoD Curve from Scratch (Cache Miss)...
 4. Skipping Bootstrap (n_boot=0)...
 --- Analysis Complete ---
-Run 1 completed in: 0.9392 seconds
+Run 1 completed in: 0.8677 seconds
 Sobol Sensitivity Indices (Total Effect):
   Length: 100.0%
   Angle: 0.0%
@@ -763,12 +784,12 @@ Sobol Sensitivity Indices (Total Effect):
 1. Loading surrogate models from cache (Cache Hit)...
 -&gt; Selected Model: Polynomial (Degree 2)
 2. Loading Variance Model, Distribution &amp; Sobol from cache (Cache Hit)...
-   -&gt; Smoothing Bandwidth: 9.9668
+   -&gt; Smoothing Bandwidth: 9.9128
    -&gt; Selected Distribution: norm
 3. Integrating PoD Curve from Scratch (Cache Miss)...
 4. Skipping Bootstrap (n_boot=0)...
 --- Analysis Complete ---
-Run 2 completed in: 0.2292 seconds (Near Instant!)
+Run 2 completed in: 0.2376 seconds (Near Instant!)
 New a90/95 point at Angle 5.0: nan</code></pre>
 </div>
 </div>
@@ -830,8 +851,12 @@ Figure&nbsp;2: Reliability Analysis Results
 <h3 class="anchored" data-anchor-id="uncertainty-quantification-threshold-sensitivity">5. Uncertainty Quantification &amp; Threshold Sensitivity</h3>
 <p>To calculate reliability indices with confidence intervals, we run the bootstrapping algorithm.</p>
 <p>Unlike traditional tools that compute only a single confidence interval (e.g., 95%), <code>digiqual</code> runs bootstrapping once to extract bounds for <strong>multiple confidence levels</strong> (50%, 90%, 95%, 99%) across standard target PoDs (50%, 90%, 95%, 99%) simultaneously.</p>
-<p>These are saved in the results dictionaries: - <code>results['ci_bounds']</code>: Maps confidence levels to lower/upper curves. - <code>results['reliability_table']</code>: Maps <code>(target_pod_percent, confidence_level)</code> tuples to their corresponding flaw sizing reliability indices (e.g., <code>a90/95</code>).</p>
-<div id="a9b3c6f5" class="cell" data-execution_count="7">
+<p>These are saved in the results dictionaries:</p>
+<ul>
+<li><code>results['ci_bounds']</code>: Maps confidence levels to lower/upper curves.</li>
+<li><code>results['reliability_table']</code>: Maps <code>(target_pod_percent, confidence_level)</code> tuples to their corresponding flaw sizing reliability indices (e.g., <code>a90/95</code>).</li>
+</ul>
+<div id="38b20931" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run the parallelised bootstrap to get multi-level confidence bounds</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>t2 <span class="op">=</span> time.time()</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>uq_results <span class="op">=</span> study.pod(</span>
@@ -856,24 +881,24 @@ Figure&nbsp;2: Reliability Analysis Results
 1. Loading surrogate models from cache (Cache Hit)...
 -&gt; Selected Model: Polynomial (Degree 2)
 2. Loading Variance Model, Distribution &amp; Sobol from cache (Cache Hit)...
-   -&gt; Smoothing Bandwidth: 9.9668
+   -&gt; Smoothing Bandwidth: 9.9128
    -&gt; Selected Distribution: norm
 3. Loading PoD Curve from Individual Cache (Layer 3 Hit)...
 4. Running Bootstrap (100 iterations on 11 cores)...</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>[Parallel(n_jobs=11)]: Using backend MultiprocessingBackend with 11 concurrent workers.
-[Parallel(n_jobs=11)]: Done  19 tasks      | elapsed:   12.8s</code></pre>
+[Parallel(n_jobs=11)]: Done  19 tasks      | elapsed:   12.3s</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   -&gt; a90/95 Reliability Index: 5.456
+<pre><code>   -&gt; a90/95 Reliability Index: 5.468
 --- Analysis Complete ---
-UQ Bootstrapping completed in: 13.6812 seconds
-a90/95: 5.456 mm
-a90/90: 5.451 mm</code></pre>
+UQ Bootstrapping completed in: 13.1797 seconds
+a90/95: 5.468 mm
+a90/90: 5.456 mm</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>[Parallel(n_jobs=11)]: Done 100 out of 100 | elapsed:   13.7s finished</code></pre>
+<pre><code>[Parallel(n_jobs=11)]: Done 100 out of 100 | elapsed:   13.2s finished</code></pre>
 </div>
 </div>
 <p>We can specify a custom <code>target_pod</code> and <code>confidence_level</code> when calling <code>visualise()</code> to draw and annotate the selected point.</p>
@@ -941,11 +966,11 @@ Figure&nbsp;3: Reliability Analysis Results
 <div class="cell-output cell-output-stdout">
 <pre><code>--- Initiating Threshold Spectrum Generation ---
 --- Starting Reliability Analysis (PoIs: ['Length'] - Nuisance: []) ---
--&gt; Slicing surface at: {'Angle': -0.8274982924692242, 'Roughness': 0.255838971504394}
+-&gt; Slicing surface at: {'Angle': -1.4553177127323036, 'Roughness': 0.22251375591659994}
 1. Loading surrogate models from cache (Cache Hit)...
 -&gt; Selected Model: Polynomial (Degree 2)
 2. Loading Variance Model, Distribution &amp; Sobol from cache (Cache Hit)...
-   -&gt; Smoothing Bandwidth: 9.9668
+   -&gt; Smoothing Bandwidth: 9.9128
    -&gt; Selected Distribution: norm
 3. Integrating PoD Curve from Scratch (Cache Miss)...
 4. Skipping Bootstrap (n_boot=0)...
