@@ -1,7 +1,6 @@
 import pytest
 import pandas as pd
 import numpy as np
-import scipy.stats as stats
 from unittest.mock import patch, MagicMock
 from digiqual.core import SimulationStudy
 from digiqual.integration import compute_multi_dim_pod
