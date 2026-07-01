@@ -274,8 +274,8 @@ window.Quarto = {
   <li><a href="#global-sensitivity-analysis-sobol-indices" id="toc-global-sensitivity-analysis-sobol-indices" class="nav-link" data-scroll-target="#global-sensitivity-analysis-sobol-indices">6. Global Sensitivity Analysis (Sobol Indices)</a>
   <ul class="collapse">
   <li><a href="#the-mathematics-3" id="toc-the-mathematics-3" class="nav-link" data-scroll-target="#the-mathematics-3">The Mathematics</a></li>
-  <li><a href="#summary-the-3-tier-parameter-taxonomy" id="toc-summary-the-3-tier-parameter-taxonomy" class="nav-link" data-scroll-target="#summary-the-3-tier-parameter-taxonomy">Summary: The 3-Tier Parameter Taxonomy</a></li>
   </ul></li>
+  <li><a href="#summary-the-3-tier-parameter-taxonomy" id="toc-summary-the-3-tier-parameter-taxonomy" class="nav-link" data-scroll-target="#summary-the-3-tier-parameter-taxonomy">Summary: The 3-Tier Parameter Taxonomy</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/generalised_pod.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -364,8 +364,9 @@ window.Quarto = {
 <p>For a model output <span class="math inline">\(Y = f(X_1, X_2, \dots, X_d)\)</span>, the total-order sensitivity index <span class="math inline">\(S_{T_i}\)</span> measures the total contribution of input <span class="math inline">\(X_i\)</span> to the variance of <span class="math inline">\(Y\)</span>, including its direct effect and all interaction terms of any order: <span class="math display">\[ S_{T_i} = \frac{E_{\sim i}(V_{i}(Y \mid X_{\sim i}))}{V(Y)} = 1 - \frac{V_{\sim i}(E_i(Y \mid X_{\sim i}))}{V(Y)} \]</span> where <span class="math inline">\(X_{\sim i}\)</span> denotes all variables except <span class="math inline">\(X_i\)</span>.</p>
 <p><code>digiqual</code> uses the <code>SALib</code> package to compute these indices: 1. It defines the parameter space bounds. 2. It samples the space-filling coordinates. 3. It evaluates the surrogate expectation model (mean response) at these coordinates. 4. It estimates the total-order indices <span class="math inline">\(S_T\)</span> for each variable, which are cached and displayed as percentages in the GUI.</p>
 </section>
-<section id="summary-the-3-tier-parameter-taxonomy" class="level3">
-<h3 class="anchored" data-anchor-id="summary-the-3-tier-parameter-taxonomy">Summary: The 3-Tier Parameter Taxonomy</h3>
+</section>
+<section id="summary-the-3-tier-parameter-taxonomy" class="level2">
+<h2 class="anchored" data-anchor-id="summary-the-3-tier-parameter-taxonomy">Summary: The 3-Tier Parameter Taxonomy</h2>
 <p>To understand how <code>digiqual</code> handles high-dimensional data, it is helpful to see exactly how each parameter type is treated during the three phases of reliability assessment:</p>
 <table class="caption-top table">
 <colgroup>
@@ -405,7 +406,6 @@ window.Quarto = {
 </table>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->
