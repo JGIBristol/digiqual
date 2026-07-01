@@ -83,7 +83,7 @@ where $X_{\sim i}$ denotes all variables except $X_i$.
 3. It evaluates the surrogate expectation model (mean response) at these coordinates.
 4. It estimates the total-order indices $S_T$ for each variable, which are cached and displayed as percentages in the GUI.
 
-### Summary: The 3-Tier Parameter Taxonomy
+## Summary: The 3-Tier Parameter Taxonomy
 
 To understand how `digiqual` handles high-dimensional data, it is helpful to see exactly how each parameter type is treated during the three phases of reliability assessment:
 
