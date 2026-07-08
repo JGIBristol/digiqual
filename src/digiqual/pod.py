@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.stats as stats
 from typing import Tuple, Any, Dict
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import Ridge
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score, KFold
@@ -64,9 +64,13 @@ def fit_all_robust_mean_models(
 
     cv = KFold(n_splits=n_folds, shuffle=True, random_state=42)
 
-    # 1. Evaluate & Fit ALL Polynomials
+    # 1. Evaluate & Fit ALL Polynomials using Regularized Ridge Pipelines
     for d in range(1, max_degree + 1):
-        model = make_pipeline(PolynomialFeatures(degree=d), LinearRegression())
+        # alpha=0.1 provides a gentle penalty that clamps down on wild coefficient swings
+        model = make_pipeline(
+            PolynomialFeatures(degree=d),
+            Ridge(alpha=0.1, random_state=42)
+        )
 
         # A) Run CV for the bias-variance tradeoff evaluation
         scores = cross_val_score(model, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
@@ -119,25 +123,22 @@ def generate_latex_equation(model: Any, feature_names: list, outcome_name: str =
         return "Equation not available for Kriging models (Gaussian Process)."
 
     poly = model.named_steps['polynomialfeatures']
-    lr = model.named_steps['linearregression']
+    # Changed from linearregression to ridge to match our new pipeline step
+    lr = model.named_steps['ridge']
 
     terms = poly.get_feature_names_out(feature_names)
-    # Ensure coefs and intercept are flattened correctly
     import numpy as np
     coefs = lr.coef_[0] if lr.coef_.ndim > 1 else lr.coef_
     intercept = lr.intercept_[0] if np.ndim(lr.intercept_) > 0 else lr.intercept_
 
-    # Format outcome name for LaTeX (escape underscores)
     latex_outcome = outcome_name.replace("_", "\\_")
     equation = f"{latex_outcome} = {intercept:.4g}"
 
     import re
     for coef, term in zip(coefs, terms):
-        # Skip the constant term (intercept is already added) or zero coefficients
-        if term == "1" or coef == 0:
+        if term == "1" or abs(coef) < 1e-7:  # Skip intercept or terms shrunk near zero
             continue
 
-        # Format the feature names for LaTeX
         formatted_term = term.replace(" ", " \\cdot ")
         formatted_term = re.sub(r'\^(\d+)', r'^{\1}', formatted_term)
         formatted_term = formatted_term.replace("_", "\\_")
@@ -623,12 +624,15 @@ def _single_bootstrap_step(
     X_res_2d = X_2d[idx]
     y_res = y[idx]
 
-    # Fit Mean Model
+    # Fit Mean Model with regularized Ridge regression to prevent bumpy intervals
     if model_type == 'Polynomial':
         from sklearn.preprocessing import PolynomialFeatures
-        from sklearn.linear_model import LinearRegression
+        from sklearn.linear_model import Ridge  # <-- regularized bootstrap model
         from sklearn.pipeline import make_pipeline
-        mean_model = make_pipeline(PolynomialFeatures(model_params), LinearRegression())
+        mean_model = make_pipeline(
+            PolynomialFeatures(model_params),
+            Ridge(alpha=0.1, random_state=42)
+        )
     elif model_type == 'Kriging':
         from sklearn.gaussian_process import GaussianProcessRegressor
         mean_model = GaussianProcessRegressor(
@@ -637,11 +641,9 @@ def _single_bootstrap_step(
 
     mean_model.fit(X_res_2d, y_res)
 
-    # Calculate Residuals
     y_pred = mean_model.predict(X_res_2d)
     res_res = y_res - y_pred
 
-    # Refit distribution parameters on the resampled standardized residuals
     dist_name, dist_params = dist_info
     try:
         local_std_res = predict_local_std(X_res_2d, res_res, X_res_2d, bandwidth)
@@ -653,7 +655,6 @@ def _single_bootstrap_step(
     except Exception:
         new_dist_info = dist_info
 
-    # Compute PoD for this iteration
     from .integration import compute_multi_dim_pod
     pod_curve, _ = compute_multi_dim_pod(
         X_eval, nuisance_ranges or {}, mean_model, X_res_2d, res_res,
@@ -741,10 +742,10 @@ def bootstrap_pod_ci(
     )
 
     pod_matrix = np.array(results)
-    
+
     if confidence_levels is None:
         return np.percentile(pod_matrix, 2.5, axis=0), np.percentile(pod_matrix, 97.5, axis=0)
-    
+
     bounds = {}
     for cl in confidence_levels:
         low_p = (100.0 - cl) / 2.0
