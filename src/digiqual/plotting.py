@@ -261,7 +261,6 @@ def plot_collinearity_matrix(
     """
     Plots a Pearson correlation matrix heatmap of the input variables to visualize collinearity.
     """
-    import pandas as pd
     import matplotlib.pyplot as plt
 
     if ax is None:
@@ -272,15 +271,22 @@ def plot_collinearity_matrix(
     # 1. Calculate correlation matrix
     corr_matrix = df[input_cols].corr()
 
-    # 2. Plot heatmap
-    im = ax.imshow(corr_matrix.values, cmap='coolwarm', vmin=-1.0, vmax=1.0)
+    # 2. Plot heatmap (diagonal masked so it doesn't affect the color scale)
+    n = len(input_cols)
+    matrix_values = corr_matrix.values.copy()
+    off_diag_mask = np.eye(n, dtype=bool)
+    masked_values = np.ma.masked_array(matrix_values, mask=off_diag_mask)
+
+    cmap = plt.get_cmap('coolwarm').copy()
+    cmap.set_bad(color='green')
+
+    im = ax.imshow(masked_values, cmap=cmap, vmin=-1.0, vmax=1.0)
 
     # 3. Add colorbar
     cbar = fig.colorbar(im, ax=ax, shrink=0.8)
     cbar.set_label("Pearson Correlation Coefficient")
 
     # 4. Show ticks and label them with input variable names
-    n = len(input_cols)
     ax.set_xticks(np.arange(n))
     ax.set_yticks(np.arange(n))
     ax.set_xticklabels(input_cols, rotation=45, ha="right")
@@ -293,6 +299,9 @@ def plot_collinearity_matrix(
             if np.isnan(val):
                 text = "N/A"
                 text_color = "black"
+            elif i == j:
+                text = f"{val:.2f}"
+                text_color = "white"
             else:
                 text = f"{val:.2f}"
                 text_color = "white" if abs(val) > 0.5 else "black"
@@ -301,4 +310,3 @@ def plot_collinearity_matrix(
     ax.set_title("Input Collinearity Matrix (Correlation Heatmap)")
     fig.tight_layout()
     return ax
-
