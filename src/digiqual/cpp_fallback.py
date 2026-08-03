@@ -27,7 +27,12 @@ def predict_local_std_fast(
     res = np.asarray(residuals, dtype=np.float64).flatten()
 
     if HAS_CPP:
-        return _digiqual_cpp.predict_local_std(X_source, res, X_target, float(bandwidth), out)
+        if out is not None:
+            try:
+                return _digiqual_cpp.predict_local_std(X_source, res, X_target, float(bandwidth), out)
+            except TypeError:
+                pass
+        return _digiqual_cpp.predict_local_std(X_source, res, X_target, float(bandwidth))
 
     # Vectorized Python Fallback (batch cdist across all evaluation points)
     sq_residuals = res ** 2
@@ -61,7 +66,12 @@ def compute_pod_probs_fast(
     sigma_arr = np.asarray(sigma_resp, dtype=np.float64)
 
     if HAS_CPP and dist_name in ("norm", "gumbel_r", "logistic", "laplace"):
-        return _digiqual_cpp.compute_pod_probs(mean_arr, sigma_arr, float(threshold), dist_name, dist_params, out)
+        if out is not None:
+            try:
+                return _digiqual_cpp.compute_pod_probs(mean_arr, sigma_arr, float(threshold), dist_name, dist_params, out)
+            except TypeError:
+                pass
+        return _digiqual_cpp.compute_pod_probs(mean_arr, sigma_arr, float(threshold), dist_name, dist_params)
 
     sig = np.maximum(sigma_arr, 1e-10)
     z_threshold = (threshold - mean_arr) / sig
