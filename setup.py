@@ -22,13 +22,16 @@ ext_modules = [
             "src/cpp/kernel_smoothing.cpp",
             "src/cpp/mc_integration.cpp",
         ],
+        include_dirs=[
+            "src/cpp",
+        ],
         cxx_std=17,
     ),
 ]
 
 setup(
     name="digiqual",
-    version="0.23.1",
+    version="0.24.1",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     ext_modules=ext_modules,

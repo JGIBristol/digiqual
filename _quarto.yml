@@ -10,6 +10,11 @@ project:
     - "!materials/"
     - "!todo.qmd"
 
+execute:
+  warning: false
+  message: false
+  freeze: auto
+
 website:
   title: "digiqual"
   repo-url: https://github.com/JGIBristol/digiqual

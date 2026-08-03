@@ -24,13 +24,13 @@ Heavy computational routines—specifically Nadaraya-Watson local variance kerne
      • 10x - 50x Execution Speedup        • Pure Python Compatibility
 ```
 
----
+
 
 ## Executable Benchmark Workflow Script
 
 Below is a self-contained executable Python script that benchmarks a large realistic dataset ($N=300$ samples, 3D input domain: Length, Angle, Roughness) across **Workflow A (C++ Accelerated)** and **Workflow B (Python-Only Fallback)** step-by-step, recording precise execution times for each phase.
 
-```python
+```{python}
 import time
 import numpy as np
 import pandas as pd
@@ -141,49 +141,13 @@ if __name__ == "__main__":
     run_performance_comparison()
 ```
 
----
-
-## Step-by-Step Timing & Benchmark Comparison
-
-Table 1 summarizes the empirical execution times recorded from running the benchmark comparison script on a large dataset ($N=300$ samples, 100 PoI grid points $\times$ 1,000 MC draws, 100 bootstrap iterations).
-
-| Computation Phase / Module | Workflow B (Python Fallback) | Workflow A (C++ Accelerated) | Speedup Factor |
-| :--- | :---: | :---: | :---: |
-| **Monte Carlo Nuisance Marginalisation (`compute_multi_dim_pod`)** | 0.4089 s | **0.0174 s** | **23.44x Speedup** 🚀 |
-| **Bootstrap Confidence Bounds (`bootstrap_pod_ci`)** | 21.0462 s | **1.7511 s** | **12.02x Speedup** 🚀 |
-| **Local Noise Kernel Smoothing (`predict_local_std`)** | 0.0015 s | **0.0002 s** | **7.50x Speedup** 🚀 |
-| **Full Study Execution Time ($N_{\text{boot}}=1,000$)** | ~210.5 s | **~17.5 s** | **12.0x Total Speedup** 🚀 |
-
-: Performance Comparison Between C++ Accelerated Engine and Python Fallback {#tbl-benchmark}
-
----
-
-## Performance Impact Visualization
-
-```
-Execution Time (seconds) - Lower is Better
-========================================================================================
-[Monte Carlo Integration]
-Python Fallback : [████████████████████████] 0.4089s
-C++ Accelerated : [█] 0.0174s  (23.44x Faster)
-
-[Bootstrap Uncertainty (100 Iterations)]
-Python Fallback : [██████████████████████████████████████████████████] 21.0462s
-C++ Accelerated : [████] 1.7511s  (12.02x Faster)
-========================================================================================
-```
-
-: Execution Acceleration Profile Across Core `digiqual` Modules {#fig-speedup}
-
----
-
 ## Automatic Fallback System
 
 `digiqual` guarantees full cross-platform compatibility. If the C++ binaries are not compiled (for example, in lightweight embedded environments or minimal Python installations), the toolkit **automatically and seamlessly defaults back to Python**.
 
 The fallback manager (`src/digiqual/cpp_fallback.py`) checks extension availability at import time:
 
-```python
+```{python}
 from digiqual.cpp_fallback import HAS_CPP, predict_local_std_fast
 
 if HAS_CPP:
@@ -194,13 +158,11 @@ else:
 
 Both C++ and Python fallback implementations produce **identical numerical results** down to double-precision floating-point machine epsilon ($\le 10^{-16}$).
 
----
-
 ## Building and Installation
 
 When installing `digiqual` from source, `setup.py` automatically detects available compilers (GCC, Clang, or MSVC) and compiles the native C++ extension module `_digiqual_cpp`:
 
-```bash
+```{bash}
 # Install in editable mode with C++ extension compilation
 uv pip install -e .
 
