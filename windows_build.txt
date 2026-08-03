@@ -1,17 +1,22 @@
-# 1. Ensure 'uv' is in the PATH for this specific session
+# 1. Ensure 'uv' is in PATH for this session
 $env:Path += ";$env:USERPROFILE\.local\bin"
 
-# 2. Clean old build artifacts using Python
+# 2. Clean old build artifacts
 python -c "import shutil, os, glob; [shutil.rmtree(p, ignore_errors=True) for p in ['app/dist', 'app/build'] + glob.glob('app/*.spec')]"
 
-# 3. Navigate to the app folder
+# 3. Locate the Python DLL dynamically within the uv environment
+$PYTHON_DLL_PATH = uv run python -c "import sys, os; print(os.path.join(sys.base_prefix, 'python311.dll'))"
+
+Write-Host "Found Python DLL at: $PYTHON_DLL_PATH" -ForegroundColor Cyan
+
+# 4. Navigate to app folder
 cd app
 
-# 4. Execute the build using uv and pyinstaller
-# This targets run_app.py and collects necessary assets
+# 5. Execute PyInstaller with the explicit DLL binary inclusion
 uv run pyinstaller --name "Digiqual" `
     --noconfirm `
     --windowed `
+    --add-binary "${PYTHON_DLL_PATH};." `
     --collect-all digiqual `
     --collect-all shiny `
     --collect-all faicons `
@@ -19,13 +24,14 @@ uv run pyinstaller --name "Digiqual" `
     --collect-all htmltools `
     --collect-all pywebview `
     --collect-all matplotlib `
+    --collect-binaries webview `
     --hidden-import="uvicorn.loops.auto" `
     --hidden-import="uvicorn.protocols.http.auto" `
     --hidden-import="uvicorn.lifespan.on" `
     --hidden-import="engineio.async_drivers.threading" `
     run_app.py
 
-# 5. Return to the root directory
+# 6. Return to root
 cd ..
 
-Write-Host "✅ Real build process finished! Your .exe is in app/dist/Digiqual/Digiqual.exe" -ForegroundColor Green
+Write-Host "✅ Fixed build process finished! Executable located at app/dist/Digiqual/Digiqual.exe" -ForegroundColor Green
