@@ -2502,20 +2502,30 @@ def server(input, output, session):
 
         time_str = f"~{max(1, int(est_seconds))} seconds" if est_seconds < 90 else f"~{int(est_seconds / 60)} minutes"
 
+        n_boot = input.pod_n_boot()
         ui.notification_show(f"Running Bootstrap on {actual_cores} core(s). Estimated time: {time_str}...", id="uq_toast", duration=None, type="message")
         await asyncio.sleep(0.1)
 
         try:
             override = "polynomial" if locked_model_type() == "Polynomial" else "kriging"
-            results = study.pod(
-                poi_col=poi_cols,
-                threshold=input.pod_threshold_slider(),
-                nuisance_col=nuisance_cols,
-                slice_values=slice_values,
-                model_override=override, force_degree=locked_model_degree(),
-                n_boot=input.pod_n_boot(), n_jobs=-1 if input.pod_parallel() else 1,
-                nuisance_dists=get_nuisance_dists(nuisance_cols)
-            )
+
+            with ui.Progress(min=0, max=n_boot) as p:
+                p.set(message="Running Parallel Bootstrap...", detail=f"0/{n_boot} iterations (0%)")
+
+                def uq_progress_cb(current, total):
+                    pct = int((current / total) * 100)
+                    p.set(value=current, message="Bootstrapping Confidence Bounds...", detail=f"{current}/{total} iterations ({pct}%)")
+
+                results = study.pod(
+                    poi_col=poi_cols,
+                    threshold=input.pod_threshold_slider(),
+                    nuisance_col=nuisance_cols,
+                    slice_values=slice_values,
+                    model_override=override, force_degree=locked_model_degree(),
+                    n_boot=n_boot, n_jobs=-1 if input.pod_parallel() else 1,
+                    nuisance_dists=get_nuisance_dists(nuisance_cols),
+                    progress_callback=uq_progress_cb
+                )
 
             target_pod = float(input.pod_target_val()) / 100.0
             conf_level = int(input.pod_conf_val())

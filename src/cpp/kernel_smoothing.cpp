@@ -25,44 +25,49 @@ void predict_local_std_cpp(
     const double inv_2bw2 = 1.0 / (2.0 * bandwidth * bandwidth);
     const double inv_sqrt_2pi_bw = 1.0 / (std::sqrt(2.0 * M_PI) * bandwidth);
 
-#ifdef _OPENMP
-    #pragma omp parallel for schedule(static)
-    for (size_t i = 0; i < N_eval; ++i) {
+    double stack_sq_res[4096];
+    std::vector<double> heap_sq_res;
+    const double* sq_res_ptr = nullptr;
+    if (N_train <= 4096) {
+        for (size_t j = 0; j < N_train; ++j) {
+            stack_sq_res[j] = residuals[j] * residuals[j];
+        }
+        sq_res_ptr = stack_sq_res;
+    } else {
+        heap_sq_res.resize(N_train);
+        for (size_t j = 0; j < N_train; ++j) {
+            heap_sq_res[j] = residuals[j] * residuals[j];
+        }
+        sq_res_ptr = heap_sq_res.data();
+    }
+
+    auto compute_i = [&](size_t i) {
         const double* eval_pt = X_eval + i * D;
         double weight_sum = 0.0;
         double weighted_sq_res_sum = 0.0;
 
-        for (size_t j = 0; j < N_train; ++j) {
-            const double* train_pt = X_train + j * D;
-            double sq_dist = 0.0;
-            for (size_t k = 0; k < D; ++k) {
-                double diff = eval_pt[k] - train_pt[k];
-                sq_dist += diff * diff;
+        if (D == 1) {
+            double eval0 = eval_pt[0];
+            for (size_t j = 0; j < N_train; ++j) {
+                double diff = eval0 - X_train[j];
+                double sq_dist = diff * diff;
+                double w = inv_sqrt_2pi_bw * std::exp(-sq_dist * inv_2bw2);
+                weight_sum += w;
+                weighted_sq_res_sum += w * sq_res_ptr[j];
             }
-            double w = inv_sqrt_2pi_bw * std::exp(-sq_dist * inv_2bw2);
-            double sq_res_j = residuals[j] * residuals[j];
-            weight_sum += w;
-            weighted_sq_res_sum += w * sq_res_j;
-        }
-
-        if (weight_sum <= 1e-12) {
-            weight_sum = 1e-10;
-        }
-
-        out[i] = std::sqrt(std::max(0.0, weighted_sq_res_sum / weight_sum));
-    }
-#else
-    // Fallback: Multithreading via std::thread across hardware cores
-    unsigned int num_threads = std::thread::hardware_concurrency();
-    if (num_threads == 0) num_threads = 4;
-    num_threads = std::min(num_threads, static_cast<unsigned int>(N_eval));
-
-    if (num_threads <= 1 || N_eval < 64) {
-        for (size_t i = 0; i < N_eval; ++i) {
-            const double* eval_pt = X_eval + i * D;
-            double weight_sum = 0.0;
-            double weighted_sq_res_sum = 0.0;
-
+        } else if (D == 2) {
+            double eval0 = eval_pt[0];
+            double eval1 = eval_pt[1];
+            for (size_t j = 0; j < N_train; ++j) {
+                const double* train_pt = X_train + j * 2;
+                double diff0 = eval0 - train_pt[0];
+                double diff1 = eval1 - train_pt[1];
+                double sq_dist = diff0 * diff0 + diff1 * diff1;
+                double w = inv_sqrt_2pi_bw * std::exp(-sq_dist * inv_2bw2);
+                weight_sum += w;
+                weighted_sq_res_sum += w * sq_res_ptr[j];
+            }
+        } else {
             for (size_t j = 0; j < N_train; ++j) {
                 const double* train_pt = X_train + j * D;
                 double sq_dist = 0.0;
@@ -71,16 +76,31 @@ void predict_local_std_cpp(
                     sq_dist += diff * diff;
                 }
                 double w = inv_sqrt_2pi_bw * std::exp(-sq_dist * inv_2bw2);
-                double sq_res_j = residuals[j] * residuals[j];
                 weight_sum += w;
-                weighted_sq_res_sum += w * sq_res_j;
+                weighted_sq_res_sum += w * sq_res_ptr[j];
             }
+        }
 
-            if (weight_sum <= 1e-12) {
-                weight_sum = 1e-10;
-            }
+        if (weight_sum <= 1e-12) {
+            weight_sum = 1e-10;
+        }
 
-            out[i] = std::sqrt(std::max(0.0, weighted_sq_res_sum / weight_sum));
+        out[i] = std::sqrt(std::max(0.0, weighted_sq_res_sum / weight_sum));
+    };
+
+#ifdef _OPENMP
+    #pragma omp parallel for schedule(static)
+    for (size_t i = 0; i < N_eval; ++i) {
+        compute_i(i);
+    }
+#else
+    unsigned int num_threads = std::thread::hardware_concurrency();
+    if (num_threads == 0) num_threads = 4;
+    num_threads = std::min(num_threads, static_cast<unsigned int>(N_eval));
+
+    if (num_threads <= 1 || N_eval < 64) {
+        for (size_t i = 0; i < N_eval; ++i) {
+            compute_i(i);
         }
     } else {
         std::vector<std::thread> threads;
@@ -95,28 +115,7 @@ void predict_local_std_cpp(
 
             threads.emplace_back([=]() {
                 for (size_t i = start; i < end; ++i) {
-                    const double* eval_pt = X_eval + i * D;
-                    double weight_sum = 0.0;
-                    double weighted_sq_res_sum = 0.0;
-
-                    for (size_t j = 0; j < N_train; ++j) {
-                        const double* train_pt = X_train + j * D;
-                        double sq_dist = 0.0;
-                        for (size_t k = 0; k < D; ++k) {
-                            double diff = eval_pt[k] - train_pt[k];
-                            sq_dist += diff * diff;
-                        }
-                        double w = inv_sqrt_2pi_bw * std::exp(-sq_dist * inv_2bw2);
-                        double sq_res_j = residuals[j] * residuals[j];
-                        weight_sum += w;
-                        weighted_sq_res_sum += w * sq_res_j;
-                    }
-
-                    if (weight_sum <= 1e-12) {
-                        weight_sum = 1e-10;
-                    }
-
-                    out[i] = std::sqrt(std::max(0.0, weighted_sq_res_sum / weight_sum));
+                    compute_i(i);
                 }
             });
         }

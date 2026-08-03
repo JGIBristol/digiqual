@@ -549,7 +549,8 @@ class SimulationStudy:
         model_override: str = "auto",
         force_degree: int | None = None,
         n_jobs: int | None = None,
-        nuisance_dists: Dict[str, Tuple[str, Tuple]] = None
+        nuisance_dists: Dict[str, Tuple[str, Tuple]] = None,
+        progress_callback: Any = None
     ) -> Dict[str, Any]:
         """
         Runs the generalized Probability of Detection (PoD) analysis.
@@ -823,7 +824,8 @@ class SimulationStudy:
                 mean_model.model_type_, mean_model.model_params_, bandwidth, (dist_name, dist_params),
                 n_boot=n_boot, nuisance_ranges=nuisance_ranges,
                 n_jobs=n_jobs, feature_names=all_cols, poi_names=poi_cols,
-                confidence_levels=std_conf_levels, nuisance_dists=nuisance_dists
+                confidence_levels=std_conf_levels, nuisance_dists=nuisance_dists,
+                progress_callback=progress_callback
             )
             if isinstance(ci_bounds, dict):
                 # Default lower_ci and upper_ci for backward compatibility
@@ -1072,7 +1074,8 @@ class SimulationStudy:
         xlog: bool = False,
         ylog: bool = False,
         n_boot: int = 1000,
-        n_jobs: int | None = None
+        n_jobs: int | None = None,
+        progress_callback: Any = None
     ) -> Dict[str, Any]:
         """
         Runs the classical linear a-hat vs a PoD analysis with bootstrapped bounds.
@@ -1106,7 +1109,8 @@ class SimulationStudy:
 
         if n_boot > 0:
             ci_bounds = bootstrap_linear_pod_ci(
-                X, y, X_eval, threshold, xlog, ylog, n_boot, n_jobs, confidence_levels=std_conf_levels
+                X, y, X_eval, threshold, xlog, ylog, n_boot, n_jobs, confidence_levels=std_conf_levels,
+                progress_callback=progress_callback
             )
             if isinstance(ci_bounds, dict):
                 lower_ci, upper_ci = ci_bounds[95]

@@ -589,7 +589,7 @@ def _single_bootstrap_step(
     X_2d, y, X_eval, threshold, model_type, model_params,
     bandwidth, dist_info, nuisance_ranges, n_samples,
     feature_names=None, poi_names=None, nuisance_dists=None,
-    seed=None
+    seed=None, n_mc_samples=500
 ):
     """Internal helper to process a single bootstrap iteration."""
     os.environ["OMP_NUM_THREADS"] = "1"
@@ -640,7 +640,7 @@ def _single_bootstrap_step(
     from .integration import compute_multi_dim_pod
     pod_curve, _ = compute_multi_dim_pod(
         X_eval, nuisance_ranges or {}, mean_model, X_res_2d, res_res,
-        bandwidth, new_dist_info, threshold, n_mc_samples=1000,
+        bandwidth, new_dist_info, threshold, n_mc_samples=n_mc_samples,
         feature_names=feature_names, poi_names=poi_names, nuisance_dists=nuisance_dists
     )
     return pod_curve
@@ -663,7 +663,9 @@ def bootstrap_pod_ci(
     feature_names: list = None,
     poi_names: list = None,
     confidence_levels: list | None = None,
-    nuisance_dists: dict = None
+    nuisance_dists: dict = None,
+    progress_callback: Any = None,
+    n_mc_samples: int = 500
 ) -> Tuple[np.ndarray, np.ndarray] | dict:
     """
     Estimates Confidence Bounds for the PoD curve via Bootstrapping.
@@ -687,6 +689,8 @@ def bootstrap_pod_ci(
     else:
         n_jobs_actual = min(max(1, n_jobs), total_cores)
 
+    print(f"   -> [Bootstrap] Running {n_boot} iterations on {n_jobs_actual} worker core(s)...", flush=True)
+
     N_eval_len = len(X_eval)
     pod_matrix = np.empty((n_boot, N_eval_len))
 
@@ -701,7 +705,7 @@ def bootstrap_pod_ci(
                     X_2d, y, X_eval, threshold, model_type, model_params,
                     bandwidth, dist_info, nuisance_ranges, n_samples,
                     feature_names, poi_names, nuisance_dists,
-                    seed=b_start + i
+                    seed=b_start + i, n_mc_samples=n_mc_samples
                 ) for i in range(n_chunk)
             )
         else:
@@ -710,12 +714,22 @@ def bootstrap_pod_ci(
                     X_2d, y, X_eval, threshold, model_type, model_params,
                     bandwidth, dist_info, nuisance_ranges, n_samples,
                     feature_names, poi_names, nuisance_dists,
-                    seed=b_start + i
+                    seed=b_start + i, n_mc_samples=n_mc_samples
                 ) for i in range(n_chunk)
             ]
 
         for i, res in enumerate(chunk_results):
             pod_matrix[b_start + i] = res
+
+        completed = b_end
+        pct = int((completed / n_boot) * 100)
+        print(f"   -> [Bootstrap Progress] Completed {completed}/{n_boot} iterations ({pct}%)...", flush=True)
+
+        if progress_callback is not None:
+            try:
+                progress_callback(completed, n_boot)
+            except Exception as e:
+                print(f"   -> Progress Callback Warning: {e}", flush=True)
 
         del chunk_results
         gc.collect()

@@ -2,7 +2,7 @@ import numpy as np
 import scipy.stats as stats
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Any
 import os
 from joblib import Parallel, delayed
 
@@ -154,7 +154,8 @@ def bootstrap_linear_pod_ci(
     ylog: bool = False,
     n_boot: int = 1000,
     n_jobs: int | None = None,
-    confidence_levels: list | None = None
+    confidence_levels: list | None = None,
+    progress_callback: Any = None
 ) -> Tuple[np.ndarray, np.ndarray] | dict:
     """
     Estimates Confidence Bounds for the classical linear PoD curve via Bootstrapping.
@@ -169,6 +170,8 @@ def bootstrap_linear_pod_ci(
         n_jobs_actual = 1
     else:
         n_jobs_actual = min(max(1, n_jobs), total_cores)
+
+    print(f"   -> [Linear Bootstrap] Running {n_boot} iterations on {n_jobs_actual} worker core(s)...", flush=True)
 
     N_eval_len = len(X_eval)
     pod_matrix = np.empty((n_boot, N_eval_len))
@@ -193,6 +196,16 @@ def bootstrap_linear_pod_ci(
 
         for i, res in enumerate(chunk_results):
             pod_matrix[b_start + i] = res
+
+        completed = b_end
+        pct = int((completed / n_boot) * 100)
+        print(f"   -> [Linear Bootstrap Progress] Completed {completed}/{n_boot} iterations ({pct}%)...", flush=True)
+
+        if progress_callback is not None:
+            try:
+                progress_callback(completed, n_boot)
+            except Exception as e:
+                print(f"   -> Progress Callback Warning: {e}", flush=True)
 
         del chunk_results
         gc.collect()
