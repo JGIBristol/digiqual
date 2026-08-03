@@ -29,11 +29,17 @@ dependencies = [
     "pywebview",
     "openpyxl>=3.1.5",
     "salib>=1.5.2",
+    "pybind11>=3.0.4",
 ]
 
 [build-system]
 requires = ["setuptools>=61.0", "pybind11>=2.12.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.1",
+]
 
 
 [project.optional-dependencies]
