@@ -158,39 +158,48 @@ def compute_multi_dim_pod(
         return pod_integrated, mean_resp
 
     # ---------------------------------------------------------
-    # VECTORIZED PATH: Monte Carlo Integration Across All Grid Points
+    # VECTORIZED PATH: Monte Carlo Integration Across All Grid Points (Memory-Bounded)
     # ---------------------------------------------------------
     N_grid = len(poi_grid)
-    N_total_evals = N_grid * n_mc_samples
+    max_eval_batch = 20000
+    grid_chunk_size = max(1, max_eval_batch // max(1, n_mc_samples))
 
-    X_eval_all = np.zeros((N_total_evals, total_vars))
+    mean_integrated = np.zeros(N_grid)
+    if is_vector:
+        pod_integrated = np.zeros((N_grid, n_thresholds))
+    else:
+        pod_integrated = np.zeros(N_grid)
 
-    # Expand PoI grid points: repeat each grid point n_mc_samples times
-    poi_expanded = np.repeat(poi_grid, n_mc_samples, axis=0)
-    for j, idx in enumerate(poi_indices):
-        X_eval_all[:, idx] = poi_expanded[:, j]
+    for start_idx in range(0, N_grid, grid_chunk_size):
+        end_idx = min(start_idx + grid_chunk_size, N_grid)
+        sub_poi = poi_grid[start_idx:end_idx]
+        sub_n_grid = len(sub_poi)
+        sub_total_evals = sub_n_grid * n_mc_samples
 
-    # Map Nuisance samples: tile nuisance samples for every grid point
-    if n_nuisance > 0:
-        nuisance_tiled = np.tile(nuisance_samples, (N_grid, 1))
-        for j, idx in enumerate(nuisance_indices):
-            X_eval_all[:, idx] = nuisance_tiled[:, j]
+        X_eval_sub = np.zeros((sub_total_evals, total_vars))
 
-    # Evaluate surrogate model predictions and local noise in a single batch call
-    mean_resp_all = model.predict(X_eval_all).flatten()
-    sigma_resp_all = predict_local_std_fast(X_train, residuals, X_eval_all, bandwidth).flatten()
+        poi_expanded = np.repeat(sub_poi, n_mc_samples, axis=0)
+        for j, idx in enumerate(poi_indices):
+            X_eval_sub[:, idx] = poi_expanded[:, j]
 
-    mean_integrated = mean_resp_all.reshape(N_grid, n_mc_samples).mean(axis=1)
+        if n_nuisance > 0:
+            nuisance_tiled = np.tile(nuisance_samples, (sub_n_grid, 1))
+            for j, idx in enumerate(nuisance_indices):
+                X_eval_sub[:, idx] = nuisance_tiled[:, j]
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", RuntimeWarning)
-        if is_vector:
-            pod_integrated = np.zeros((N_grid, n_thresholds))
-            for t_idx, t_val in enumerate(thresh_array):
-                probs_all = compute_pod_probs_fast(mean_resp_all, sigma_resp_all, t_val, dist_info)
-                pod_integrated[:, t_idx] = probs_all.reshape(N_grid, n_mc_samples).mean(axis=1)
-        else:
-            probs_all = compute_pod_probs_fast(mean_resp_all, sigma_resp_all, thresholds, dist_info)
-            pod_integrated = probs_all.reshape(N_grid, n_mc_samples).mean(axis=1)
+        sub_mean_resp = model.predict(X_eval_sub).flatten()
+        sub_sigma_resp = predict_local_std_fast(X_train, residuals, X_eval_sub, bandwidth).flatten()
+
+        mean_integrated[start_idx:end_idx] = sub_mean_resp.reshape(sub_n_grid, n_mc_samples).mean(axis=1)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            if is_vector:
+                for t_idx, t_val in enumerate(thresh_array):
+                    probs_sub = compute_pod_probs_fast(sub_mean_resp, sub_sigma_resp, t_val, dist_info)
+                    pod_integrated[start_idx:end_idx, t_idx] = probs_sub.reshape(sub_n_grid, n_mc_samples).mean(axis=1)
+            else:
+                probs_sub = compute_pod_probs_fast(sub_mean_resp, sub_sigma_resp, thresholds, dist_info)
+                pod_integrated[start_idx:end_idx] = probs_sub.reshape(sub_n_grid, n_mc_samples).mean(axis=1)
 
     return pod_integrated, mean_integrated

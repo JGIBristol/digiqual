@@ -52,29 +52,38 @@ void compute_pod_probs_cpp(
     if (num_threads == 0) num_threads = 4;
     num_threads = std::min(num_threads, static_cast<unsigned int>(N_points));
 
-    std::vector<std::thread> threads;
-    threads.reserve(num_threads);
+    if (num_threads <= 1 || N_points < 64) {
+        for (size_t i = 0; i < N_points; ++i) {
+            double sig = std::max(sigma_resp[i], 1e-10);
+            double z = (threshold - mean_resp[i]) / sig;
+            double z_std = (z - loc) / scale;
+            out[i] = std::clamp(calc_prob(z_std, dist_name), 0.0, 1.0);
+        }
+    } else {
+        std::vector<std::thread> threads;
+        threads.reserve(num_threads);
 
-    size_t chunk_size = (N_points + num_threads - 1) / num_threads;
+        size_t chunk_size = (N_points + num_threads - 1) / num_threads;
 
-    for (unsigned int t = 0; t < num_threads; ++t) {
-        size_t start = t * chunk_size;
-        size_t end = std::min(start + chunk_size, N_points);
-        if (start >= end) break;
+        for (unsigned int t = 0; t < num_threads; ++t) {
+            size_t start = t * chunk_size;
+            size_t end = std::min(start + chunk_size, N_points);
+            if (start >= end) break;
 
-        threads.emplace_back([=]() {
-            for (size_t i = start; i < end; ++i) {
-                double sig = std::max(sigma_resp[i], 1e-10);
-                double z = (threshold - mean_resp[i]) / sig;
-                double z_std = (z - loc) / scale;
-                out[i] = std::clamp(calc_prob(z_std, dist_name), 0.0, 1.0);
+            threads.emplace_back([=]() {
+                for (size_t i = start; i < end; ++i) {
+                    double sig = std::max(sigma_resp[i], 1e-10);
+                    double z = (threshold - mean_resp[i]) / sig;
+                    double z_std = (z - loc) / scale;
+                    out[i] = std::clamp(calc_prob(z_std, dist_name), 0.0, 1.0);
+                }
+            });
+        }
+
+        for (auto& th : threads) {
+            if (th.joinable()) {
+                th.join();
             }
-        });
-    }
-
-    for (auto& th : threads) {
-        if (th.joinable()) {
-            th.join();
         }
     }
 #endif

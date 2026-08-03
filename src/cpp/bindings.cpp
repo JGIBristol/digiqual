@@ -10,7 +10,8 @@ py::array_t<double> py_predict_local_std(
     py::array_t<double, py::array::c_style | py::array::forcecast> X_train,
     py::array_t<double, py::array::c_style | py::array::forcecast> residuals,
     py::array_t<double, py::array::c_style | py::array::forcecast> X_eval,
-    double bandwidth
+    double bandwidth,
+    py::object out_arr = py::none()
 ) {
     py::buffer_info buf_X_train = X_train.request();
     py::buffer_info buf_res = residuals.request();
@@ -20,7 +21,12 @@ py::array_t<double> py_predict_local_std(
     size_t D = (buf_X_train.ndim > 1) ? buf_X_train.shape[1] : 1;
     size_t N_eval = buf_X_eval.shape[0];
 
-    auto out = py::array_t<double>(N_eval);
+    py::array_t<double, py::array::c_style> out;
+    if (!out_arr.is_none()) {
+        out = py::cast<py::array_t<double, py::array::c_style>>(out_arr);
+    } else {
+        out = py::array_t<double>(N_eval);
+    }
     py::buffer_info buf_out = out.request();
 
     const double* ptr_X_train = static_cast<const double*>(buf_X_train.ptr);
@@ -41,7 +47,8 @@ py::array_t<double> py_compute_pod_probs(
     py::array_t<double, py::array::c_style | py::array::forcecast> sigma_resp,
     double threshold,
     const std::string& dist_name,
-    py::tuple dist_params
+    py::tuple dist_params,
+    py::object out_arr = py::none()
 ) {
     py::buffer_info buf_mean = mean_resp.request();
     py::buffer_info buf_sigma = sigma_resp.request();
@@ -57,7 +64,12 @@ py::array_t<double> py_compute_pod_probs(
         scale = dist_params[0].cast<double>();
     }
 
-    auto out = py::array_t<double>(N_points);
+    py::array_t<double, py::array::c_style> out;
+    if (!out_arr.is_none()) {
+        out = py::cast<py::array_t<double, py::array::c_style>>(out_arr);
+    } else {
+        out = py::array_t<double>(N_points);
+    }
     py::buffer_info buf_out = out.request();
 
     const double* ptr_mean = static_cast<const double*>(buf_mean.ptr);
@@ -82,6 +94,7 @@ PYBIND11_MODULE(_digiqual_cpp, m) {
         py::arg("residuals"),
         py::arg("X_eval"),
         py::arg("bandwidth"),
+        py::arg("out") = py::none(),
         "Predict local standard deviation using OpenMP Nadaraya-Watson kernel smoothing."
     );
 
@@ -93,6 +106,7 @@ PYBIND11_MODULE(_digiqual_cpp, m) {
         py::arg("threshold"),
         py::arg("dist_name"),
         py::arg("dist_params"),
+        py::arg("out") = py::none(),
         "Compute PoD survival CDF probabilities."
     );
 }

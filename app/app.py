@@ -335,7 +335,7 @@ ui.nav_panel(
                                 ui.tags.ul(
                                     ui.tags.li("Automated model selection via Cross-Validation."),
                                     ui.tags.li("Extract mathematical equations and visualize the mean response surface."),
-                                    ui.tags.li("Configure Uniform, Normal, Lognormal, or Weibull nuisance parameter distributions."),
+                                    ui.tags.li("Configure Uniform or Normal nuisance parameter distributions."),
                                     class_="mb-0 ps-3 text-muted"
                                 ),
                                 class_="border-start border-3 border-success ps-3 mb-3"
@@ -712,7 +712,7 @@ def server(input, output, session):
         if not study or not nuisance_cols:
             return {}
         df_target = study.clean_data if not study.clean_data.empty else study.data
-        
+
         nuisance_dists = {}
         for col in nuisance_cols:
             if col not in df_target.columns:
@@ -721,11 +721,11 @@ def server(input, output, session):
                 dist_type = input[f"nuis_dist_{col}"]()
                 if dist_type == "Uniform":
                     continue
-                
+
                 vals = pd.to_numeric(df_target[col], errors="coerce").dropna()
                 if vals.empty:
                     continue
-                
+
                 c_mean = float(vals.mean())
                 c_std = float(vals.std()) if vals.std() > 0 else 1.0
 
@@ -1780,7 +1780,7 @@ def server(input, output, session):
                 ui.input_select(
                     dist_id,
                     "Distribution Type",
-                    choices=["Uniform", "Normal", "Lognormal", "Weibull"],
+                    choices=["Uniform", "Normal"],
                     selected=selected_dist
                 ),
                 ui.div(

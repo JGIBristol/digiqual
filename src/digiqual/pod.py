@@ -588,11 +588,20 @@ def compute_pod_curve(
 def _single_bootstrap_step(
     X_2d, y, X_eval, threshold, model_type, model_params,
     bandwidth, dist_info, nuisance_ranges, n_samples,
-    feature_names=None, poi_names=None, nuisance_dists=None
+    feature_names=None, poi_names=None, nuisance_dists=None,
+    seed=None
 ):
     """Internal helper to process a single bootstrap iteration."""
+    os.environ["OMP_NUM_THREADS"] = "1"
+    os.environ["OPENBLAS_NUM_THREADS"] = "1"
+    os.environ["MKL_NUM_THREADS"] = "1"
+
     # Resample indices
-    idx = np.random.choice(n_samples, n_samples, replace=True)
+    if seed is not None:
+        rng = np.random.default_rng(seed)
+        idx = rng.choice(n_samples, n_samples, replace=True)
+    else:
+        idx = np.random.choice(n_samples, n_samples, replace=True)
     X_res_2d = X_2d[idx]
     y_res = y[idx]
 
@@ -664,57 +673,52 @@ def bootstrap_pod_ci(
     a Polynomial or Kriging model), recalculates residuals, and generates a new PoD curve.
     If Kriging is selected, the optimizer is disabled during bootstrapping to remain
     computationally tractable.
-
-    Args:
-        X (np.ndarray): Original input data.
-        y (np.ndarray): Original outcome data.
-        X_eval (np.ndarray): Grid points for evaluation.
-        threshold (float): Detection threshold.
-        model_type (str): The type of mean model ('Polynomial' or 'Kriging').
-        model_params (Any): Model parameters (integer degree for Poly, kernel for Kriging).
-        bandwidth (float): Smoothing bandwidth (fixed from original fit).
-        dist_info (Tuple[str, Tuple]): Error distribution (fixed from original fit).
-        n_boot (int, optional): Number of bootstrap iterations. Defaults to 1000.
-        nuisance_ranges (dict, optional): Nuisance ranges.
-        n_jobs (int | None, optional): Number of CPU cores to use.
-        feature_names (list, optional): Names of all feature columns in ``X``.
-        poi_names (list, optional): Names of the parameters of interest (PoIs).
-        confidence_levels (list | None, optional): Specific confidence levels (e.g. [50, 90, 95, 99])
-            to return curves for. If provided, returns a dict of {level: (lower, upper)}.
-            Otherwise, returns the standard Tuple (lower_95, upper_95).
-        nuisance_dists (dict, optional): Custom nuisance distribution configuration.
-
-    Returns:
-        Tuple[np.ndarray, np.ndarray] | dict:
-            If confidence_levels is None:
-                - lower_ci: The 2.5th percentile PoD curve (Lower 95% Bound).
-                - upper_ci: The 97.5th percentile PoD curve (Upper 95% Bound).
-            If confidence_levels is a list:
-                - dict: Mapping each confidence level to its (lower_ci, upper_ci) curves.
     """
+    import gc
 
     n_samples = len(y)
     X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
 
-    # Standardize joblib convention: None or 1 = single core, -1 = auto max
-    if n_jobs is None or n_jobs == 1:
+    total_cores = os.cpu_count() or 4
+    if n_jobs is None or n_jobs == -1:
+        n_jobs_actual = max(1, total_cores - 2)
+    elif n_jobs == 1:
         n_jobs_actual = 1
-    elif n_jobs == -1:
-        total_cores = os.cpu_count() or 1
-        n_jobs_actual = max(total_cores - 1, 1)
     else:
-        n_jobs_actual = n_jobs
+        n_jobs_actual = min(max(1, n_jobs), total_cores)
 
-    # Parallel execution via Joblib
-    results = Parallel(n_jobs=n_jobs_actual,backend="multiprocessing", verbose=2)(
-        delayed(_single_bootstrap_step)(
-            X_2d, y, X_eval, threshold, model_type, model_params,
-            bandwidth, dist_info, nuisance_ranges, n_samples,
-            feature_names, poi_names, nuisance_dists
-        ) for _ in range(n_boot)
-    )
+    N_eval_len = len(X_eval)
+    pod_matrix = np.empty((n_boot, N_eval_len))
 
-    pod_matrix = np.array(results)
+    chunk_size = 50
+    for b_start in range(0, n_boot, chunk_size):
+        b_end = min(b_start + chunk_size, n_boot)
+        n_chunk = b_end - b_start
+
+        if n_jobs_actual > 1:
+            chunk_results = Parallel(n_jobs=n_jobs_actual, backend="multiprocessing", verbose=0)(
+                delayed(_single_bootstrap_step)(
+                    X_2d, y, X_eval, threshold, model_type, model_params,
+                    bandwidth, dist_info, nuisance_ranges, n_samples,
+                    feature_names, poi_names, nuisance_dists,
+                    seed=b_start + i
+                ) for i in range(n_chunk)
+            )
+        else:
+            chunk_results = [
+                _single_bootstrap_step(
+                    X_2d, y, X_eval, threshold, model_type, model_params,
+                    bandwidth, dist_info, nuisance_ranges, n_samples,
+                    feature_names, poi_names, nuisance_dists,
+                    seed=b_start + i
+                ) for i in range(n_chunk)
+            ]
+
+        for i, res in enumerate(chunk_results):
+            pod_matrix[b_start + i] = res
+
+        del chunk_results
+        gc.collect()
 
     if confidence_levels is None:
         return np.percentile(pod_matrix, 2.5, axis=0), np.percentile(pod_matrix, 97.5, axis=0)
