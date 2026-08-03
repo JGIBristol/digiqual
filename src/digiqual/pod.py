@@ -2,7 +2,7 @@ import numpy as np
 import scipy.stats as stats
 from typing import Tuple, Any, Dict
 from sklearn.linear_model import Ridge
-from sklearn.preprocessing import PolynomialFeatures
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score, KFold
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -64,19 +64,17 @@ def fit_all_robust_mean_models(
 
     cv = KFold(n_splits=n_folds, shuffle=True, random_state=42)
 
-    # 1. Evaluate & Fit ALL Polynomials using Regularized Ridge Pipelines
+    # 1. Evaluate & Fit ALL Polynomials using Regularized Ridge Pipelines with Feature Scaling
     for d in range(1, max_degree + 1):
-        # alpha=0.1 provides a gentle penalty that clamps down on wild coefficient swings
         model = make_pipeline(
             PolynomialFeatures(degree=d),
+            StandardScaler(),
             Ridge(alpha=0.1, random_state=42)
         )
 
-        # A) Run CV for the bias-variance tradeoff evaluation
         scores = cross_val_score(model, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
         cv_scores[('Polynomial', d)] = -np.mean(scores)
 
-        # B) Fit to the FULL dataset and store it
         model.fit(X_2d, y)
         model.model_type_ = 'Polynomial'
         model.model_params_ = d
@@ -600,11 +598,12 @@ def _single_bootstrap_step(
 
     # Fit Mean Model with regularized Ridge regression to prevent bumpy intervals
     if model_type == 'Polynomial':
-        from sklearn.preprocessing import PolynomialFeatures
+        from sklearn.preprocessing import PolynomialFeatures, StandardScaler
         from sklearn.linear_model import Ridge  # <-- regularized bootstrap model
         from sklearn.pipeline import make_pipeline
         mean_model = make_pipeline(
             PolynomialFeatures(model_params),
+            StandardScaler(),
             Ridge(alpha=0.1, random_state=42)
         )
     elif model_type == 'Kriging':

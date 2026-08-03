@@ -3,7 +3,7 @@ import numpy as np
 from typing import List, Dict, Tuple, Optional
 from scipy.stats import qmc
 from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import PolynomialFeatures
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.utils import resample
 
@@ -160,7 +160,7 @@ def _sample_uncertainty(
     best_degree = 1
     best_mse = float('inf')
     for d in [1, 2, 3]:
-        m = make_pipeline(PolynomialFeatures(d), LinearRegression())
+        m = make_pipeline(PolynomialFeatures(d), StandardScaler(), LinearRegression())
         try:
             scores = cross_val_score(m, X, y, cv=5, scoring='neg_mean_squared_error')
             mse = -np.mean(scores)
@@ -175,8 +175,8 @@ def _sample_uncertainty(
         # A) Resample: Create a 'bootstrap' dataset (same size as original, but shuffled with duplicates)
         X_res, y_res = resample(X, y, random_state=i)
 
-        # B) Define Model: Polynomial (curves) + Linear Regression (solver)
-        model = make_pipeline(PolynomialFeatures(best_degree), LinearRegression())
+        # B) Define Model: Polynomial (curves) + Feature Scaling + Linear Regression (solver)
+        model = make_pipeline(PolynomialFeatures(best_degree), StandardScaler(), LinearRegression())
 
         # C) Train: The model learns the relationship based on this specific bootstrap sample
         model.fit(X_res, y_res)

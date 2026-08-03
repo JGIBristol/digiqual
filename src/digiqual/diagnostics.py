@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import List, Dict, Tuple
 from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import PolynomialFeatures
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.model_selection import cross_val_score, KFold
 from sklearn.pipeline import make_pipeline
 
@@ -114,7 +114,7 @@ def _check_model_fit(df: pd.DataFrame, input_cols: List[str], outcome_col: str, 
     X = df[input_cols]
     y = df[outcome_col]
 
-    model = make_pipeline(PolynomialFeatures(degree=3), LinearRegression())
+    model = make_pipeline(PolynomialFeatures(degree=3), StandardScaler(), LinearRegression())
 
     k = 10 if len(df) > 50 else 5
     cv = KFold(n_splits=k, shuffle=True, random_state=42)
@@ -150,7 +150,7 @@ def _check_bootstrap_convergence(
         idx = rng.choice(n_samples, n_samples, replace=True)
         X_res, y_res = X[idx], y[idx]
 
-        model = make_pipeline(PolynomialFeatures(degree=2), LinearRegression())
+        model = make_pipeline(PolynomialFeatures(degree=2), StandardScaler(), LinearRegression())
         model.fit(X_res, y_res)
         preds = model.predict(probe_points)
         all_predictions.append(preds)
