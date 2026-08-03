@@ -127,7 +127,7 @@ def compute_multi_dim_pod(
     else:
         nuisance_samples = np.empty((n_mc_samples, 0))
 
-    from .pod import predict_local_std
+    from .cpp_fallback import predict_local_std_fast, compute_pod_probs_fast
 
     # ---------------------------------------------------------
     # FAST PATH: Fully Vectorized (No active nuisances)
@@ -135,65 +135,62 @@ def compute_multi_dim_pod(
     if active_nuisances == 0:
         X_eval_full = np.zeros((len(poi_grid), total_vars))
 
-        # Map PoIs to their correct physical columns
         for i, idx in enumerate(poi_indices):
             X_eval_full[:, idx] = poi_grid[:, i]
 
-        # Map Slices/Nuisances to their correct physical columns
         if n_nuisance > 0:
             for i, idx in enumerate(nuisance_indices):
                 X_eval_full[:, idx] = nuisance_samples[0, i]
 
         mean_resp = model.predict(X_eval_full).flatten()
-        sigma_resp = predict_local_std(X_train, residuals, X_eval_full, bandwidth).flatten()
+        sigma_resp = predict_local_std_fast(X_train, residuals, X_eval_full, bandwidth).flatten()
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             if is_vector:
-                z_scores = (thresh_array[np.newaxis, :] - mean_resp[:, np.newaxis]) / sigma_resp[:, np.newaxis]
-                pod_integrated = 1 - dist_obj.cdf(z_scores, *dist_params)
+                pod_list = []
+                for t in thresh_array:
+                    pod_list.append(compute_pod_probs_fast(mean_resp, sigma_resp, t, dist_info))
+                pod_integrated = np.column_stack(pod_list)
             else:
-                z_scores = (thresholds - mean_resp) / sigma_resp
-                pod_integrated = 1 - dist_obj.cdf(z_scores, *dist_params)
+                pod_integrated = compute_pod_probs_fast(mean_resp, sigma_resp, thresholds, dist_info)
 
         return pod_integrated, mean_resp
 
     # ---------------------------------------------------------
-    # SLOW PATH: Monte Carlo Integration
+    # VECTORIZED PATH: Monte Carlo Integration Across All Grid Points
     # ---------------------------------------------------------
-    if is_vector:
-        pod_integrated = np.zeros((len(poi_grid), n_thresholds))
-    else:
-        pod_integrated = np.zeros(len(poi_grid))
+    N_grid = len(poi_grid)
+    N_total_evals = N_grid * n_mc_samples
 
-    mean_integrated = np.zeros(len(poi_grid))
+    X_eval_all = np.zeros((N_total_evals, total_vars))
 
-    for i, poi_point in enumerate(poi_grid):
-        X_eval = np.zeros((n_mc_samples, total_vars))
+    # Expand PoI grid points: repeat each grid point n_mc_samples times
+    poi_expanded = np.repeat(poi_grid, n_mc_samples, axis=0)
+    for j, idx in enumerate(poi_indices):
+        X_eval_all[:, idx] = poi_expanded[:, j]
 
-        # Map PoIs
-        for j, idx in enumerate(poi_indices):
-            X_eval[:, idx] = poi_point[j]
+    # Map Nuisance samples: tile nuisance samples for every grid point
+    if n_nuisance > 0:
+        nuisance_tiled = np.tile(nuisance_samples, (N_grid, 1))
+        for j, idx in enumerate(nuisance_indices):
+            X_eval_all[:, idx] = nuisance_tiled[:, j]
 
-        # Map Nuisances
-        if n_nuisance > 0:
-            for j, idx in enumerate(nuisance_indices):
-                X_eval[:, idx] = nuisance_samples[:, j]
+    # Evaluate surrogate model predictions and local noise in a single batch call
+    mean_resp_all = model.predict(X_eval_all).flatten()
+    sigma_resp_all = predict_local_std_fast(X_train, residuals, X_eval_all, bandwidth).flatten()
 
-        mean_resp = model.predict(X_eval)
-        sigma_resp = predict_local_std(X_train, residuals, X_eval, bandwidth)
+    mean_integrated = mean_resp_all.reshape(N_grid, n_mc_samples).mean(axis=1)
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", RuntimeWarning)
-            if is_vector:
-                z_scores = (thresh_array[:, np.newaxis] - mean_resp) / sigma_resp
-                probs = 1 - dist_obj.cdf(z_scores, *dist_params)
-                pod_integrated[i, :] = np.mean(probs, axis=1)
-            else:
-                z_scores = (thresholds - mean_resp) / sigma_resp
-                probs = 1 - dist_obj.cdf(z_scores, *dist_params)
-                pod_integrated[i] = np.mean(probs)
-
-        mean_integrated[i] = np.mean(mean_resp)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        if is_vector:
+            pod_integrated = np.zeros((N_grid, n_thresholds))
+            for t_idx, t_val in enumerate(thresh_array):
+                probs_all = compute_pod_probs_fast(mean_resp_all, sigma_resp_all, t_val, dist_info)
+                pod_integrated[:, t_idx] = probs_all.reshape(N_grid, n_mc_samples).mean(axis=1)
+        else:
+            probs_all = compute_pod_probs_fast(mean_resp_all, sigma_resp_all, thresholds, dist_info)
+            pod_integrated = probs_all.reshape(N_grid, n_mc_samples).mean(axis=1)
 
     return pod_integrated, mean_integrated

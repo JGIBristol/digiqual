@@ -49,6 +49,8 @@ website:
             href: docs/gui_manual.qmd
           - text: "Automated Optimisation"
             href: docs/optimisation.qmd
+          - text: "C++ Acceleration & Fallback"
+            href: docs/cpp_acceleration.qmd
           - text: "Generalised PoD Theory"
             href: docs/generalised_pod.qmd
           - text: "Classical vs Generalised PoD"

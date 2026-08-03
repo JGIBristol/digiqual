@@ -456,35 +456,9 @@ def predict_local_std(
 
     This implements a Nadaraya-Watson estimator specifically for the squared
     residuals to model how noise varies across the input domain (heteroscedasticity).
-
-    Args:
-        X (np.ndarray): The source locations (original data inputs).
-        residuals (np.ndarray): The residuals observed at `X`.
-        X_eval (np.ndarray): The target locations to estimate variance at.
-        bandwidth (float): The width of the Gaussian kernel (sigma).
-
-    Returns:
-        np.ndarray: An array of standard deviation estimates corresponding to `X_eval`.
-
-    Examples:
-        ```python
-        local_std = predict_local_std(X, residuals, X_eval, bandwidth)
-        ```
     """
-    from scipy.spatial.distance import cdist
-    X_source = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
-    X_target = np.atleast_2d(X_eval).T if np.asarray(X_eval).ndim == 1 else np.asarray(X_eval)
-
-    sq_residuals = residuals.flatten() ** 2
-
-    dists = cdist(X_target, X_source, metric='euclidean')
-    weights = stats.norm.pdf(dists, loc=0, scale=bandwidth)
-
-    row_sums = weights.sum(axis=1, keepdims=True)
-    row_sums[row_sums == 0] = 1e-10
-    weights = weights / row_sums
-
-    return np.sqrt(weights @ sq_residuals)
+    from .cpp_fallback import predict_local_std_fast
+    return predict_local_std_fast(X, residuals, X_eval, bandwidth)
 
 
 #### Residual Distribution Fitting ####
