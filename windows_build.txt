@@ -15,6 +15,7 @@ cd app
 # 5. Execute PyInstaller with the explicit DLL binary inclusion
 uv run pyinstaller --name "Digiqual" `
     --noconfirm `
+    --onefile `
     --windowed `
     --add-binary "${PYTHON_DLL_PATH};." `
     --collect-all digiqual `
