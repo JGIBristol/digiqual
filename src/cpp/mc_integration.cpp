@@ -12,6 +12,8 @@ static inline double calc_prob(double z_std, const std::string& dist_name) {
         return 0.5 * std::erfc(z_std * M_SQRT1_2);
     } else if (dist_name == "gumbel_r") {
         return 1.0 - std::exp(-std::exp(-z_std));
+    } else if (dist_name == "gumbel_l") {
+        return std::exp(-std::exp(z_std));
     } else if (dist_name == "logistic") {
         return 1.0 / (1.0 + std::exp(z_std));
     } else if (dist_name == "laplace") {

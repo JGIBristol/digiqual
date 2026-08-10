@@ -143,6 +143,21 @@ def test_infer_best_distribution_gumbel(gumbel_data):
     assert dist_name == 'gumbel_r'
     assert isinstance(params, tuple)
 
+def test_infer_best_distribution_weibull():
+    """Test that Weibull min data correctly evaluates candidates including weibull_min."""
+    np.random.seed(42)
+    X = np.linspace(0.1, 3.0, 100)
+    noise = stats.weibull_min.rvs(c=1.5, loc=0, scale=0.5, size=len(X))
+    y = 2.0 * X + noise
+    models, scores, best_key = fit_all_robust_mean_models(X, y)
+    mean_model = models[best_key]
+
+    residuals, bw = fit_variance_model(X.reshape(-1, 1), y, mean_model)
+    dist_name, params = infer_best_distribution(residuals, X.reshape(-1, 1), bw)
+
+    assert dist_name in ['weibull_min', 'weibull_max', 'gumbel_r', 'gumbel_l', 'expon', 'gamma']
+    assert isinstance(params, tuple)
+
 def test_infer_best_distribution_safety():
     np.random.seed(123)
     X = np.linspace(0, 10, 20).reshape(-1, 1)

@@ -40,14 +40,15 @@ def test_cpp_compute_pod_probs_equivalence():
     mean_resp = np.random.uniform(10, 30, size=N)
     sigma_resp = np.random.uniform(0.5, 2.0, size=N)
     threshold = 20.0
-    dist_info = ('norm', (0, 1))
 
-    # Reference calculation
-    sig = np.maximum(sigma_resp, 1e-10)
-    z = (threshold - mean_resp) / sig
-    expected = 1.0 - stats.norm.cdf(z, 0, 1)
+    for dist_name in ["norm", "gumbel_r", "gumbel_l", "logistic", "laplace"]:
+        sig = np.maximum(sigma_resp, 1e-10)
+        z = (threshold - mean_resp) / sig
+        dist_obj = getattr(stats, dist_name)
+        expected = 1.0 - dist_obj.cdf(z, loc=0, scale=1)
 
-    # C++ calculation
-    cpp_actual = _digiqual_cpp.compute_pod_probs(mean_resp, sigma_resp, threshold, "norm", (0, 1))
+        # C++ calculation
+        cpp_actual = _digiqual_cpp.compute_pod_probs(mean_resp, sigma_resp, threshold, dist_name, (0, 1))
 
-    np.testing.assert_allclose(cpp_actual, expected, rtol=1e-5, atol=1e-7)
+        np.testing.assert_allclose(cpp_actual, expected, rtol=1e-5, atol=1e-7, err_msg=f"C++ calculation failed for {dist_name}")
+

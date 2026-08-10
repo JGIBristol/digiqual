@@ -494,12 +494,18 @@ def infer_best_distribution(
     z_scores = residuals.flatten() / local_std.flatten()
 
     candidates = [
-        "norm",         # Gaussian (The Standard)
+        "norm",         # Gaussian (Classical standard)
         "gumbel_r",     # Right-skewed Extreme Value
         "gumbel_l",     # Left-skewed Extreme Value (Common for cracks)
+        "weibull_min",  # Weibull Minimum (Malkiel 2025)
+        "weibull_max",  # Weibull Maximum
+        "gamma",        # Gamma distribution
+        "expon",        # Exponential distribution
         "logistic",     # Heavier tails than Normal
         "laplace",      # Sharper peak, heavy tails
         "t",            # Student's t (Very robust to outliers)
+        "beta",         # Beta distribution
+        "uniform",      # Uniform distribution
     ]
 
     best_aic = np.inf

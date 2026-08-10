@@ -33,7 +33,7 @@ Noise is rarely perfectly Gaussian. `digiqual` infers the true shape of the erro
 ### The Mathematics
 Residuals are first standardized into $Z$-scores using the local standard deviation:
 $$ Z_i = \frac{y_i - \hat{f}(x_i)}{\hat{\sigma}(x_i)} $$
-These $Z$-scores are then fitted against a suite of distributions: Normal, Gumbel Right (`gumbel_r`), Gumbel Left (`gumbel_l` - highly relevant for skewed crack reflection data), Logistic, Laplace, and t-Student. The best-fitting distribution is selected using the **Akaike Information Criterion (AIC)**:
+These $Z$-scores are then fitted against an expanded suite of candidate distributions: Normal (`norm`), Gumbel Right (`gumbel_r`), Gumbel Left (`gumbel_l` - highly relevant for skewed ultrasonic crack reflection data), Weibull Minimum (`weibull_min`), Weibull Maximum (`weibull_max`), Gamma (`gamma`), Exponential (`expon`), Logistic (`logistic`), Laplace (`laplace`), Student's t (`t`), Beta (`beta`), and Uniform (`uniform`). The best-fitting distribution is selected using the **Akaike Information Criterion (AIC)**:
 $$ AIC = 2k - 2\ln(\hat{L}) $$
 Where $k$ is the number of parameters and $\hat{L}$ is the Maximum Likelihood.
 
