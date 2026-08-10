@@ -232,6 +232,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../docs/kriging_metamodeling.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Kriging Metamodeling &amp; Calibration</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Classical vs Generalised PoD</span></a>
   </div>
@@ -260,11 +266,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.pod.bootstrap_pod_ci" id="toc-digiqual.pod.bootstrap_pod_ci" class="nav-link active" data-scroll-target="#digiqual.pod.bootstrap_pod_ci">pod.bootstrap_pod_ci</a>
-  <ul class="collapse">
-  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
-  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
-  </ul></li>
+  <li><a href="#digiqual.pod.bootstrap_pod_ci" id="toc-digiqual.pod.bootstrap_pod_ci" class="nav-link active" data-scroll-target="#digiqual.pod.bootstrap_pod_ci">pod.bootstrap_pod_ci</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/pod.bootstrap_pod_ci.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -292,146 +294,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    poi_names<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    confidence_levels<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    nuisance_dists<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    progress_callback<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    n_mc_samples<span class="op">=</span><span class="dv">500</span>,</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Estimates Confidence Bounds for the PoD curve via Bootstrapping.</p>
 <p>This function resamples the original data with replacement <code>n_boot</code> times. For each resample, it refits the Mean Model (dynamically rebuilding either a Polynomial or Kriging model), recalculates residuals, and generates a new PoD curve. If Kriging is selected, the optimizer is disabled during bootstrapping to remain computationally tractable.</p>
-<section id="parameters" class="level2 doc-section doc-section-parameters">
-<h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 7%">
-<col style="width: 8%">
-<col style="width: 78%">
-<col style="width: 4%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>X</td>
-<td>np.ndarray</td>
-<td>Original input data.</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>y</td>
-<td>np.ndarray</td>
-<td>Original outcome data.</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>X_eval</td>
-<td>np.ndarray</td>
-<td>Grid points for evaluation.</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>threshold</td>
-<td>float</td>
-<td>Detection threshold.</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>model_type</td>
-<td>str</td>
-<td>The type of mean model (‘Polynomial’ or ‘Kriging’).</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>model_params</td>
-<td>Any</td>
-<td>Model parameters (integer degree for Poly, kernel for Kriging).</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>bandwidth</td>
-<td>float</td>
-<td>Smoothing bandwidth (fixed from original fit).</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>dist_info</td>
-<td>Tuple[str, Tuple]</td>
-<td>Error distribution (fixed from original fit).</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>n_boot</td>
-<td>int</td>
-<td>Number of bootstrap iterations. Defaults to 1000.</td>
-<td><code>1000</code></td>
-</tr>
-<tr class="even">
-<td>nuisance_ranges</td>
-<td>dict</td>
-<td>Nuisance ranges.</td>
-<td><code>None</code></td>
-</tr>
-<tr class="odd">
-<td>n_jobs</td>
-<td>int | None</td>
-<td>Number of CPU cores to use.</td>
-<td><code>None</code></td>
-</tr>
-<tr class="even">
-<td>feature_names</td>
-<td>list</td>
-<td>Names of all feature columns in <code>X</code>.</td>
-<td><code>None</code></td>
-</tr>
-<tr class="odd">
-<td>poi_names</td>
-<td>list</td>
-<td>Names of the parameters of interest (PoIs).</td>
-<td><code>None</code></td>
-</tr>
-<tr class="even">
-<td>confidence_levels</td>
-<td>list | None</td>
-<td>Specific confidence levels (e.g.&nbsp;[50, 90, 95, 99]) to return curves for. If provided, returns a dict of {level: (lower, upper)}. Otherwise, returns the standard Tuple (lower_95, upper_95).</td>
-<td><code>None</code></td>
-</tr>
-<tr class="odd">
-<td>nuisance_dists</td>
-<td>dict</td>
-<td>Custom nuisance distribution configuration.</td>
-<td><code>None</code></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="returns" class="level2 doc-section doc-section-returns">
-<h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 2%">
-<col style="width: 11%">
-<col style="width: 86%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td>Tuple[np.ndarray, np.ndarray] | dict</td>
-<td>Tuple[np.ndarray, np.ndarray] | dict: If confidence_levels is None: - lower_ci: The 2.5th percentile PoD curve (Lower 95% Bound). - upper_ci: The 97.5th percentile PoD curve (Upper 95% Bound). If confidence_levels is a list: - dict: Mapping each confidence level to its (lower_ci, upper_ci) curves.</td>
-</tr>
-</tbody>
-</table>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->

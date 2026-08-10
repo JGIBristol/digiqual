@@ -33,7 +33,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../docs/comparison.html" rel="next">
+<link href="../docs/kriging_metamodeling.html" rel="next">
 <link href="../docs/cpp_acceleration.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -228,6 +228,12 @@ window.Quarto = {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../docs/kriging_metamodeling.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Kriging Metamodeling &amp; Calibration</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Classical vs Generalised PoD</span></a>
   </div>
@@ -258,15 +264,16 @@ window.Quarto = {
   <ul>
   <li><a href="#automated-model-selection-relaxing-linearity" id="toc-automated-model-selection-relaxing-linearity" class="nav-link active" data-scroll-target="#automated-model-selection-relaxing-linearity">1. Automated Model Selection (Relaxing Linearity)</a>
   <ul class="collapse">
-  <li><a href="#the-mathematics" id="toc-the-mathematics" class="nav-link" data-scroll-target="#the-mathematics">The Mathematics</a></li>
+  <li><a href="#kriging-covariance-optimization-anisotropic-fitting-malkiel-2026" id="toc-kriging-covariance-optimization-anisotropic-fitting-malkiel-2026" class="nav-link" data-scroll-target="#kriging-covariance-optimization-anisotropic-fitting-malkiel-2026">Kriging Covariance Optimization &amp; Anisotropic Fitting (Malkiel 2026)</a></li>
+  <li><a href="#standardized-loo-residual-outlier-calibration-malkiel-2026" id="toc-standardized-loo-residual-outlier-calibration-malkiel-2026" class="nav-link" data-scroll-target="#standardized-loo-residual-outlier-calibration-malkiel-2026">Standardized LOO Residual Outlier Calibration (Malkiel 2026)</a></li>
   </ul></li>
   <li><a href="#modeling-heteroscedasticity-relaxing-constant-variance" id="toc-modeling-heteroscedasticity-relaxing-constant-variance" class="nav-link" data-scroll-target="#modeling-heteroscedasticity-relaxing-constant-variance">2. Modeling Heteroscedasticity (Relaxing Constant Variance)</a>
   <ul class="collapse">
-  <li><a href="#the-mathematics-1" id="toc-the-mathematics-1" class="nav-link" data-scroll-target="#the-mathematics-1">The Mathematics</a></li>
+  <li><a href="#the-mathematics" id="toc-the-mathematics" class="nav-link" data-scroll-target="#the-mathematics">The Mathematics</a></li>
   </ul></li>
   <li><a href="#inferring-error-distributions-relaxing-normality" id="toc-inferring-error-distributions-relaxing-normality" class="nav-link" data-scroll-target="#inferring-error-distributions-relaxing-normality">3. Inferring Error Distributions (Relaxing Normality)</a>
   <ul class="collapse">
-  <li><a href="#the-mathematics-2" id="toc-the-mathematics-2" class="nav-link" data-scroll-target="#the-mathematics-2">The Mathematics</a></li>
+  <li><a href="#the-mathematics-1" id="toc-the-mathematics-1" class="nav-link" data-scroll-target="#the-mathematics-1">The Mathematics</a></li>
   </ul></li>
   <li><a href="#multi-dimensional-evaluation-marginalisation-slicing" id="toc-multi-dimensional-evaluation-marginalisation-slicing" class="nav-link" data-scroll-target="#multi-dimensional-evaluation-marginalisation-slicing">4. Multi-Dimensional Evaluation (Marginalisation &amp; Slicing)</a>
   <ul class="collapse">
@@ -279,7 +286,7 @@ window.Quarto = {
   </ul></li>
   <li><a href="#global-sensitivity-analysis-sobol-indices" id="toc-global-sensitivity-analysis-sobol-indices" class="nav-link" data-scroll-target="#global-sensitivity-analysis-sobol-indices">6. Global Sensitivity Analysis (Sobol Indices)</a>
   <ul class="collapse">
-  <li><a href="#the-mathematics-3" id="toc-the-mathematics-3" class="nav-link" data-scroll-target="#the-mathematics-3">The Mathematics</a></li>
+  <li><a href="#the-mathematics-2" id="toc-the-mathematics-2" class="nav-link" data-scroll-target="#the-mathematics-2">The Mathematics</a></li>
   </ul></li>
   <li><a href="#summary-the-3-tier-parameter-taxonomy" id="toc-summary-the-3-tier-parameter-taxonomy" class="nav-link" data-scroll-target="#summary-the-3-tier-parameter-taxonomy">Summary: The 3-Tier Parameter Taxonomy</a></li>
   </ul>
@@ -312,25 +319,31 @@ window.Quarto = {
 <section id="automated-model-selection-relaxing-linearity" class="level2">
 <h2 class="anchored" data-anchor-id="automated-model-selection-relaxing-linearity">1. Automated Model Selection (Relaxing Linearity)</h2>
 <p>Instead of forcing a linear relationship <span class="math inline">\(\hat{a} = \beta_0 + \beta_1 a\)</span>, <code>digiqual</code> treats the expectation model as a selection problem.</p>
-<section id="the-mathematics" class="level3">
-<h3 class="anchored" data-anchor-id="the-mathematics">The Mathematics</h3>
 <p>It evaluates a pool of candidate models <span class="math inline">\(f(x)\)</span> including polynomials up to degree <span class="math inline">\(10\)</span> and Gaussian Process (Kriging) models. For each model, it performs <strong><span class="math inline">\(K\)</span>-fold Cross-Validation (CV)</strong> to estimate the Mean Squared Error (MSE): <span class="math display">\[ MSE_{CV} = \frac{1}{n} \sum_{i=1}^n (y_i - \hat{f}^{-k(i)}(x_i))^2 \]</span> Where <span class="math inline">\(\hat{f}^{-k(i)}\)</span> is the model trained without the <span class="math inline">\(k\)</span>-th fold containing observation <span class="math inline">\(i\)</span>. The model minimizing this error is automatically selected, balancing bias and variance.</p>
+<section id="kriging-covariance-optimization-anisotropic-fitting-malkiel-2026" class="level3">
+<h3 class="anchored" data-anchor-id="kriging-covariance-optimization-anisotropic-fitting-malkiel-2026">Kriging Covariance Optimization &amp; Anisotropic Fitting (Malkiel 2026)</h3>
+<p>When Kriging metamodeling is active, <code>digiqual</code> optimizes the covariance structure across 4 candidate kernel families with anisotropic per-dimension length scale vectors <span class="math inline">\(\boldsymbol{\theta} = [\theta_1, \dots, \theta_d]\)</span>: - <strong>Matérn 3/2:</strong> Smoothness <span class="math inline">\(\nu=1.5\)</span> - <strong>Matérn 5/2:</strong> Smoothness <span class="math inline">\(\nu=2.5\)</span> - <strong>Gaussian (RBF):</strong> Infinite smoothness - <strong>Rational Quadratic:</strong> Scale mixture of Gaussian kernels</p>
+<p>It calculates Leave-One-Out predictions <span class="math inline">\(\mu_{\hat{Y}_{-i}}\)</span> and variances <span class="math inline">\(\sigma_{\hat{Y}_{-i}}^2\)</span> via matrix inverse <span class="math inline">\(B = S^{-1}\)</span>, selecting the kernel minimizing <span class="math inline">\(MSE_{LOO}\)</span>.</p>
+</section>
+<section id="standardized-loo-residual-outlier-calibration-malkiel-2026" class="level3">
+<h3 class="anchored" data-anchor-id="standardized-loo-residual-outlier-calibration-malkiel-2026">Standardized LOO Residual Outlier Calibration (Malkiel 2026)</h3>
+<p><code>digiqual</code> validates surrogate uncertainty by computing standardized LOO residual errors: <span class="math display">\[ e_i = \frac{y_i - \mu_{\hat{Y}_{-i}}}{\sigma_{\hat{Y}_{-i}}} \]</span> If extreme outliers occur where <span class="math inline">\(\max |e_i| &gt; 3\)</span>, the engine automatically computes a conservative variance scaling factor: <span class="math display">\[ \gamma = \max\left(1.0, \frac{\max |e_i|}{3}\right) \]</span> and inflates prediction variance <span class="math inline">\(\hat{\sigma}^2 \leftarrow \gamma \cdot \hat{\sigma}^2\)</span> to guarantee mathematically reliable 95% worst-case bounds.</p>
 </section>
 </section>
 <section id="modeling-heteroscedasticity-relaxing-constant-variance" class="level2">
 <h2 class="anchored" data-anchor-id="modeling-heteroscedasticity-relaxing-constant-variance">2. Modeling Heteroscedasticity (Relaxing Constant Variance)</h2>
 <p>Signal scatter often increases with flaw size. <code>digiqual</code> abandons the constant variance assumption <span class="math inline">\(\sigma^2 = c\)</span>, replacing it with a localized estimation <span class="math inline">\(\sigma^2(x)\)</span>.</p>
-<section id="the-mathematics-1" class="level3">
-<h3 class="anchored" data-anchor-id="the-mathematics-1">The Mathematics</h3>
+<section id="the-mathematics" class="level3">
+<h3 class="anchored" data-anchor-id="the-mathematics">The Mathematics</h3>
 <p>It implements a <strong>Nadaraya-Watson Gaussian kernel average smoother</strong>. The variance at any point <span class="math inline">\(x\)</span> is calculated as a weighted average of the surrounding squared residuals <span class="math inline">\(e_i^2 = (y_i - \hat{y}_i)^2\)</span>: <span class="math display">\[ \hat{\sigma}^2(x) = \frac{\sum_{i=1}^n K_h(x - x_i) e_i^2}{\sum_{i=1}^n K_h(x - x_i)} \]</span> Where <span class="math inline">\(K_h\)</span> is the Gaussian kernel with bandwidth <span class="math inline">\(h\)</span>: <span class="math display">\[ K_h(u) = \frac{1}{\sqrt{2\pi h^2}} \exp\left(-\frac{u^2}{2h^2}\right) \]</span> The optimal bandwidth <span class="math inline">\(h\)</span> is determined automatically via <strong>Leave-One-Out Cross-Validation (LOO-CV)</strong>.</p>
 </section>
 </section>
 <section id="inferring-error-distributions-relaxing-normality" class="level2">
 <h2 class="anchored" data-anchor-id="inferring-error-distributions-relaxing-normality">3. Inferring Error Distributions (Relaxing Normality)</h2>
 <p>Noise is rarely perfectly Gaussian. <code>digiqual</code> infers the true shape of the error.</p>
-<section id="the-mathematics-2" class="level3">
-<h3 class="anchored" data-anchor-id="the-mathematics-2">The Mathematics</h3>
-<p>Residuals are first standardized into <span class="math inline">\(Z\)</span>-scores using the local standard deviation: <span class="math display">\[ Z_i = \frac{y_i - \hat{f}(x_i)}{\hat{\sigma}(x_i)} \]</span> These <span class="math inline">\(Z\)</span>-scores are then fitted against a suite of distributions: Normal, Gumbel Right (<code>gumbel_r</code>), Gumbel Left (<code>gumbel_l</code> - highly relevant for skewed crack reflection data), Logistic, Laplace, and t-Student. The best-fitting distribution is selected using the <strong>Akaike Information Criterion (AIC)</strong>: <span class="math display">\[ AIC = 2k - 2\ln(\hat{L}) \]</span> Where <span class="math inline">\(k\)</span> is the number of parameters and <span class="math inline">\(\hat{L}\)</span> is the Maximum Likelihood.</p>
+<section id="the-mathematics-1" class="level3">
+<h3 class="anchored" data-anchor-id="the-mathematics-1">The Mathematics</h3>
+<p>Residuals are first standardized into <span class="math inline">\(Z\)</span>-scores using the local standard deviation: <span class="math display">\[ Z_i = \frac{y_i - \hat{f}(x_i)}{\hat{\sigma}(x_i)} \]</span> These <span class="math inline">\(Z\)</span>-scores are then fitted against an expanded suite of candidate distributions: Normal (<code>norm</code>), Gumbel Right (<code>gumbel_r</code>), Gumbel Left (<code>gumbel_l</code> - highly relevant for skewed ultrasonic crack reflection data), Weibull Minimum (<code>weibull_min</code>), Weibull Maximum (<code>weibull_max</code>), Gamma (<code>gamma</code>), Exponential (<code>expon</code>), Logistic (<code>logistic</code>), Laplace (<code>laplace</code>), Student’s t (<code>t</code>), Beta (<code>beta</code>), and Uniform (<code>uniform</code>). The best-fitting distribution is selected using the <strong>Akaike Information Criterion (AIC)</strong>: <span class="math display">\[ AIC = 2k - 2\ln(\hat{L}) \]</span> Where <span class="math inline">\(k\)</span> is the number of parameters and <span class="math inline">\(\hat{L}\)</span> is the Maximum Likelihood.</p>
 </section>
 </section>
 <section id="multi-dimensional-evaluation-marginalisation-slicing" class="level2">
@@ -365,8 +378,8 @@ window.Quarto = {
 <section id="global-sensitivity-analysis-sobol-indices" class="level2">
 <h2 class="anchored" data-anchor-id="global-sensitivity-analysis-sobol-indices">6. Global Sensitivity Analysis (Sobol Indices)</h2>
 <p>To help engineers identify which inputs contribute most to signal variance, <code>digiqual</code> calculates <strong>Total-Order Sobol Sensitivity Indices</strong> (<span class="math inline">\(S_T\)</span>) using Variance-Based Sensitivity Analysis.</p>
-<section id="the-mathematics-3" class="level3">
-<h3 class="anchored" data-anchor-id="the-mathematics-3">The Mathematics</h3>
+<section id="the-mathematics-2" class="level3">
+<h3 class="anchored" data-anchor-id="the-mathematics-2">The Mathematics</h3>
 <p>For a model output <span class="math inline">\(Y = f(X_1, X_2, \dots, X_d)\)</span>, the total-order sensitivity index <span class="math inline">\(S_{T_i}\)</span> measures the total contribution of input <span class="math inline">\(X_i\)</span> to the variance of <span class="math inline">\(Y\)</span>, including its direct effect and all interaction terms of any order: <span class="math display">\[ S_{T_i} = \frac{E_{\sim i}(V_{i}(Y \mid X_{\sim i}))}{V(Y)} = 1 - \frac{V_{\sim i}(E_i(Y \mid X_{\sim i}))}{V(Y)} \]</span> where <span class="math inline">\(X_{\sim i}\)</span> denotes all variables except <span class="math inline">\(X_i\)</span>.</p>
 <p><code>digiqual</code> uses the <code>SALib</code> package to compute these indices: 1. It defines the parameter space bounds. 2. It samples the space-filling coordinates. 3. It evaluates the surrogate expectation model (mean response) at these coordinates. 4. It estimates the total-order indices <span class="math inline">\(S_T\)</span> for each variable, which are cached and displayed as percentages in the GUI.</p>
 </section>
@@ -822,8 +835,8 @@ window.Quarto = {
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../docs/comparison.html" class="pagination-link" aria-label="Classical vs Generalised PoD">
-        <span class="nav-page-text">Classical vs Generalised PoD</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../docs/kriging_metamodeling.html" class="pagination-link" aria-label="Kriging Metamodeling &amp; Calibration">
+        <span class="nav-page-text">Kriging Metamodeling &amp; Calibration</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>adaptive.run_adaptive_search – digiqual</title>
+<title>Kriging Metamodeling &amp; Uncertainty Calibration – digiqual</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -68,6 +68,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
+<link href="../docs/comparison.html" rel="next">
+<link href="../docs/generalised_pod.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
@@ -106,6 +108,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -142,7 +173,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">Detailed Manuals &amp; Theory</a></li><li class="breadcrumb-item"><a href="../docs/kriging_metamodeling.html">Kriging Metamodeling &amp; Calibration</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -199,13 +230,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
  <span class="menu-text">Detailed Manuals &amp; Theory</span></a>
-          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/gui_manual.html" class="sidebar-item-text sidebar-link">
@@ -232,7 +263,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../docs/kriging_metamodeling.html" class="sidebar-item-text sidebar-link">
+  <a href="../docs/kriging_metamodeling.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Kriging Metamodeling &amp; Calibration</span></a>
   </div>
 </li>
@@ -266,170 +297,178 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.adaptive.run_adaptive_search" id="toc-digiqual.adaptive.run_adaptive_search" class="nav-link active" data-scroll-target="#digiqual.adaptive.run_adaptive_search">adaptive.run_adaptive_search</a>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#covariance-kernel-selection-anisotropic-fitting" id="toc-covariance-kernel-selection-anisotropic-fitting" class="nav-link" data-scroll-target="#covariance-kernel-selection-anisotropic-fitting">1. Covariance Kernel Selection &amp; Anisotropic Fitting</a>
   <ul class="collapse">
-  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
-  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
+  <li><a href="#candidate-kernel-families" id="toc-candidate-kernel-families" class="nav-link" data-scroll-target="#candidate-kernel-families">Candidate Kernel Families</a></li>
+  <li><a href="#selection-metric-mse_textloo" id="toc-selection-metric-mse_textloo" class="nav-link" data-scroll-target="#selection-metric-mse_textloo">Selection Metric (<span class="math inline">\(MSE_{\text{LOO}}\)</span>)</a></li>
   </ul></li>
+  <li><a href="#loo-residuals-outlier-calibration" id="toc-loo-residuals-outlier-calibration" class="nav-link" data-scroll-target="#loo-residuals-outlier-calibration">2. LOO Residuals &amp; Outlier Calibration</a>
+  <ul class="collapse">
+  <li><a href="#augmented-covariance-inversion" id="toc-augmented-covariance-inversion" class="nav-link" data-scroll-target="#augmented-covariance-inversion">Augmented Covariance Inversion</a></li>
+  <li><a href="#standardized-residuals-e_i" id="toc-standardized-residuals-e_i" class="nav-link" data-scroll-target="#standardized-residuals-e_i">Standardized Residuals (<span class="math inline">\(e_i\)</span>)</a></li>
+  <li><a href="#variance-inflation-factor-gamma" id="toc-variance-inflation-factor-gamma" class="nav-link" data-scroll-target="#variance-inflation-factor-gamma">Variance Inflation Factor (<span class="math inline">\(\gamma\)</span>)</a></li>
+  </ul></li>
+  <li><a href="#python-usage-example" id="toc-python-usage-example" class="nav-link" data-scroll-target="#python-usage-example">3. Python Usage Example</a></li>
+  <li><a href="#summary-of-api-functions" id="toc-summary-of-api-functions" class="nav-link" data-scroll-target="#summary-of-api-functions">Summary of API Functions</a></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/adaptive.run_adaptive_search.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/kriging_metamodeling.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">Detailed Manuals &amp; Theory</a></li><li class="breadcrumb-item"><a href="../docs/kriging_metamodeling.html">Kriging Metamodeling &amp; Calibration</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Kriging Metamodeling &amp; Uncertainty Calibration</h1>
+</div>
 
 
 
+<div class="quarto-title-meta">
 
-<section id="digiqual.adaptive.run_adaptive_search" class="level1">
-<h1>adaptive.run_adaptive_search</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>run_adaptive_search(</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    executor,</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    input_cols,</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    outcome_col,</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    ranges,</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    existing_data<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    n_start<span class="op">=</span><span class="dv">10</span>,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    n_step<span class="op">=</span><span class="dv">5</span>,</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    max_iter<span class="op">=</span><span class="dv">5</span>,</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    max_hours<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    max_gap_ratio<span class="op">=</span><span class="fl">0.2</span>,</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    min_r2_score<span class="op">=</span><span class="fl">0.5</span>,</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    max_avg_cv<span class="op">=</span><span class="fl">0.15</span>,</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    max_max_cv<span class="op">=</span><span class="fl">0.3</span>,</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    output_csv<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Orchestrates the Active Learning loop on raw DataFrames using the Executor architecture.</p>
-<section id="parameters" class="level2 doc-section doc-section-parameters">
-<h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>In simulation-based reliability assessment of Non-Destructive Evaluation (NDE) inspections, <strong>Gaussian Process (Kriging) metamodeling</strong> provides a powerful non-parametric surrogate for mapping complex physics across multi-dimensional input domains, as formalized in <strong>Malkiel et al.&nbsp;(2026)</strong>.</p>
+<p><code>digiqual</code> includes a complete Kriging suite featuring: 1. <strong>Anisotropic Covariance Function Selection (Rank 2):</strong> Automated evaluation and selection across Matérn 3/2, Matérn 5/2, Gaussian (RBF), and Rational Quadratic kernels with per-dimension anisotropic length scale vectors <span class="math inline">\(\boldsymbol{\theta} = [\theta_1, \dots, \theta_d]\)</span>. 2. <strong>Matrix-Based Leave-One-Out Cross-Validation (<span class="math inline">\(MSE_{\text{LOO}}\)</span>):</strong> Fast <span class="math inline">\(O(N^3)\)</span> matrix inverse <span class="math inline">\(B = S^{-1}\)</span> for exact LOO predictions <span class="math inline">\(\mu_{\hat{Y}_{-i}}\)</span> and variances <span class="math inline">\(\sigma_{\hat{Y}_{-i}}^2\)</span>. 3. <strong>Standardized LOO Residual Outlier Calibration (Rank 4):</strong> Automated detection of extreme observation errors <span class="math inline">\(|e_i| &gt; 3\)</span> and prior variance scaling (<span class="math inline">\(\hat{\sigma}^2 \leftarrow \gamma \cdot \hat{\sigma}^2\)</span>) to guarantee conservative 95% worst-case bounds.</p>
+<hr>
+</section>
+<section id="covariance-kernel-selection-anisotropic-fitting" class="level2">
+<h2 class="anchored" data-anchor-id="covariance-kernel-selection-anisotropic-fitting">1. Covariance Kernel Selection &amp; Anisotropic Fitting</h2>
+<p>Unlike classical isotropic models that assume equal sensitivity across all directions, <code>digiqual</code> optimizes anisotropic length scale parameters <span class="math inline">\(\boldsymbol{\theta} = [\theta_1, \theta_2, \dots, \theta_d]\)</span> for each input dimension.</p>
+<section id="candidate-kernel-families" class="level3">
+<h3 class="anchored" data-anchor-id="candidate-kernel-families">Candidate Kernel Families</h3>
+<p>During model training (<a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>fit_all_robust_mean_models</code></a>), <code>digiqual</code> evaluates four physical covariance functions:</p>
+<ul>
+<li><p><strong>Matérn 3/2:</strong> <span class="math display">\[ R(\mathbf{x}, \mathbf{x}') = \left(1 + \sqrt{3} d\right) \exp\left(-\sqrt{3} d\right) \]</span></p></li>
+<li><p><strong>Matérn 5/2:</strong> <span class="math display">\[R(\mathbf{x}, \mathbf{x}') = \left(1 + \sqrt{5} d + \frac{5}{3} d^2\right) \exp\left(-\sqrt{5} d\right)\]</span></p></li>
+<li><p><strong>Gaussian (RBF):</strong> <span class="math display">\[ R(\mathbf{x}, \mathbf{x}') = \exp\left(-\frac{1}{2} d^2\right) \]</span></p></li>
+<li><p><strong>Rational Quadratic:</strong> <span class="math display">\[ R(\mathbf{x}, \mathbf{x}') = \left(1 + \frac{d^2}{2 \alpha \ell^2}\right)^{-\alpha} \]</span></p></li>
+</ul>
+<p>where the anisotropic distance <span class="math inline">\(d\)</span> is given by: <span class="math display">\[ d = \sqrt{\sum_{j=1}^d \left( \frac{x_j - x_j'}{\theta_j} \right)^2 } \]</span></p>
+</section>
+<section id="selection-metric-mse_textloo" class="level3">
+<h3 class="anchored" data-anchor-id="selection-metric-mse_textloo">Selection Metric (<span class="math inline">\(MSE_{\text{LOO}}\)</span>)</h3>
+<p>Each kernel family is evaluated via Leave-One-Out Cross-Validation. The kernel candidate achieving the lowest normalized LOO Mean Squared Error is automatically selected:</p>
+<p><span class="math display">\[ MSE_{\text{LOO}} = \frac{1}{m} \sum_{i=1}^m \frac{\left(y_i - \mu_{\hat{Y}_{-i}}\right)^2}{\text{var}(y)} \]</span></p>
+<hr>
+</section>
+</section>
+<section id="loo-residuals-outlier-calibration" class="level2">
+<h2 class="anchored" data-anchor-id="loo-residuals-outlier-calibration">2. LOO Residuals &amp; Outlier Calibration</h2>
+<p>To ensure that Kriging surrogate uncertainty bounds are mathematically valid for safety-critical inspection qualification, <code>digiqual</code> validates prediction errors using standardized LOO residuals.</p>
+<section id="augmented-covariance-inversion" class="level3">
+<h3 class="anchored" data-anchor-id="augmented-covariance-inversion">Augmented Covariance Inversion</h3>
+<p>Construct the augmented covariance matrix <span class="math inline">\(S\)</span>: <span class="math display">\[ S = \begin{bmatrix} \hat{\sigma}^2 R + \alpha I &amp; \mathbf{1} \\ \mathbf{1}^T &amp; 0 \end{bmatrix} \]</span></p>
+<p>Inverting <span class="math inline">\(S\)</span> yields matrix <span class="math inline">\(B = S^{-1}\)</span>. The Leave-One-Out prediction mean <span class="math inline">\(\mu_{\hat{Y}_{-i}}\)</span> and standard deviation <span class="math inline">\(\sigma_{\hat{Y}_{-i}}\)</span> for training observation <span class="math inline">\(i\)</span> are calculated analytically:</p>
+<p><span class="math display">\[ \mu_{\hat{Y}_{-i}} = -\sum_{j \neq i} \frac{B_{ij}}{B_{ii}} y_j, \qquad \sigma_{\hat{Y}_{-i}} = \sqrt{\frac{1}{B_{ii}}} \]</span></p>
+</section>
+<section id="standardized-residuals-e_i" class="level3">
+<h3 class="anchored" data-anchor-id="standardized-residuals-e_i">Standardized Residuals (<span class="math inline">\(e_i\)</span>)</h3>
+<p>The standardized LOO residual vector measures how many standard deviations each prediction deviates from the observed signal:</p>
+<p><span class="math display">\[ e_i = \frac{y_i - \mu_{\hat{Y}_{-i}}}{\sigma_{\hat{Y}_{-i}}} \]</span></p>
+</section>
+<section id="variance-inflation-factor-gamma" class="level3">
+<h3 class="anchored" data-anchor-id="variance-inflation-factor-gamma">Variance Inflation Factor (<span class="math inline">\(\gamma\)</span>)</h3>
+<p>Standardized residuals are expected to follow a Standard Normal distribution <span class="math inline">\(\mathcal{N}(0, 1)\)</span>. Residuals outside <span class="math inline">\([-3, 3]\)</span> indicate localized surrogate mismatch or extreme scatter.</p>
+<p>If <span class="math inline">\(\max |e_i| &gt; 3\)</span>, <code>digiqual</code> calculates a conservative variance scaling factor: <span class="math display">\[ \gamma = \max\left(1.0, \frac{\max |e_i|}{3.0}\right) \]</span></p>
+<p>During noise estimation in <a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>fit_variance_model</code></a>, raw residuals are scaled by <span class="math inline">\(\sqrt{\gamma}\)</span>, inflating local prediction variance <span class="math inline">\(\hat{\sigma}^2(x)\)</span> by factor <span class="math inline">\(\gamma\)</span>. This guarantees mathematically reliable 95% worst-case confidence bounds even in the presence of extreme outliers.</p>
+<hr>
+</section>
+</section>
+<section id="python-usage-example" class="level2">
+<h2 class="anchored" data-anchor-id="python-usage-example">3. Python Usage Example</h2>
+<p>Below is a complete Python script demonstrating Kriging surrogate model fitting, kernel optimization, residual computation, diagnostic plotting, and PoD generation:</p>
+<div id="83a7cc7e" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.pod <span class="im">import</span> (</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    fit_all_robust_mean_models,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    compute_kriging_loo_residuals,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    fit_variance_model,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    infer_best_distribution,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    compute_pod_curve</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.plotting <span class="im">import</span> plot_kriging_diagnostics</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Generate Synthetic 2D NDE Data (Flaw Length &amp; Probe Angle)</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>N <span class="op">=</span> <span class="dv">100</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>length <span class="op">=</span> np.random.uniform(<span class="fl">0.5</span>, <span class="fl">5.0</span>, N)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>angle <span class="op">=</span> np.random.uniform(<span class="op">-</span><span class="fl">15.0</span>, <span class="fl">15.0</span>, N)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> np.column_stack([length, angle])</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Signal response with non-smooth physical behavior</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> <span class="fl">2.0</span> <span class="op">*</span> length <span class="op">-</span> <span class="fl">0.3</span> <span class="op">*</span> (length<span class="op">**</span><span class="dv">2</span>) <span class="op">+</span> <span class="fl">0.05</span> <span class="op">*</span> angle <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="fl">0.3</span>, N)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Inject an outlier to test calibration</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>y[<span class="dv">10</span>] <span class="op">+=</span> <span class="fl">3.5</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Fit Surrogate Pool &amp; Evaluate Anisotropic Kernels</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>models, cv_scores, winner_key <span class="op">=</span> fit_all_robust_mean_models(X, y)</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>gpr <span class="op">=</span> models[(<span class="st">'Kriging'</span>, <span class="va">None</span>)]</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Selected Kriging Kernel: </span><span class="sc">{</span>gpr<span class="sc">.</span>best_kernel_name_<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Outlier Calibration Factor (gamma): </span><span class="sc">{</span>gpr<span class="sc">.</span>outlier_scale_factor_<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Compute LOO Residuals</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>loo_means, loo_stds, std_res, gamma <span class="op">=</span> compute_kriging_loo_residuals(gpr, X, y)</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Generate Diagnostic Plot</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> plot_kriging_diagnostics(</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    std_residuals<span class="op">=</span>std_res,</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    outlier_scale_factor<span class="op">=</span>gamma,</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    best_kernel_name<span class="op">=</span>gpr.best_kernel_name_</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Selected Kriging Kernel: RBF (Gaussian)
+Outlier Calibration Factor (gamma): 1.912</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="kriging_metamodeling_files/figure-html/cell-2-output-2.png" width="950" height="422" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="summary-of-api-functions" class="level2">
+<h2 class="anchored" data-anchor-id="summary-of-api-functions">Summary of API Functions</h2>
 <table class="caption-top table">
-<colgroup>
-<col style="width: 8%">
-<col style="width: 9%">
-<col style="width: 75%">
-<col style="width: 6%">
-</colgroup>
 <thead>
 <tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
+<th style="text-align: left;">Function Name</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>executor</td>
-<td>Executor | str</td>
-<td>An instance of an Executor (Python, CLI, Matlab). Accepts a legacy command string for backward compatibility.</td>
-<td><em>required</em></td>
+<td style="text-align: left;"><a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>pod.fit_all_robust_mean_models</code></a></td>
+<td style="text-align: left;">Fits polynomial pool and evaluates anisotropic Kriging kernel candidates via <span class="math inline">\(MSE_{\text{LOO}}\)</span>.</td>
 </tr>
 <tr class="even">
-<td>input_cols</td>
-<td>List[str]</td>
-<td>Input names.</td>
-<td><em>required</em></td>
+<td style="text-align: left;"><a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>pod.compute_kriging_loo_residuals</code></a></td>
+<td style="text-align: left;">Inverts augmented matrix <span class="math inline">\(S\)</span> to compute exact LOO predictions, standardized residuals <span class="math inline">\(e_i\)</span>, and scale factor <span class="math inline">\(\gamma\)</span>.</td>
 </tr>
 <tr class="odd">
-<td>outcome_col</td>
-<td>str</td>
-<td>Outcome name.</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>ranges</td>
-<td>Dict</td>
-<td>Input bounds.</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>existing_data</td>
-<td>pd.DataFrame</td>
-<td>Start data.</td>
-<td><code>None</code></td>
-</tr>
-<tr class="even">
-<td>n_start</td>
-<td>int</td>
-<td>Init batch size.</td>
-<td><code>10</code></td>
-</tr>
-<tr class="odd">
-<td>n_step</td>
-<td>int</td>
-<td>Points added per refinement step.</td>
-<td><code>5</code></td>
-</tr>
-<tr class="even">
-<td>max_iter</td>
-<td>int</td>
-<td>Max loops.</td>
-<td><code>5</code></td>
-</tr>
-<tr class="odd">
-<td>max_hours</td>
-<td>float</td>
-<td>Physical time limit in hours.</td>
-<td><code>None</code></td>
-</tr>
-<tr class="even">
-<td>max_gap_ratio</td>
-<td>float</td>
-<td>Decimal Percentage threshold for maximum gap diagnostics,</td>
-<td><code>0.2</code></td>
-</tr>
-<tr class="odd">
-<td>min_r2_score</td>
-<td>float</td>
-<td>Decimal Percentage threshold for minimum r2 diagnostics,</td>
-<td><code>0.5</code></td>
-</tr>
-<tr class="even">
-<td>max_avg_cv</td>
-<td>float</td>
-<td>Decimal Percentage threshold for average CI diagnostics,</td>
-<td><code>0.15</code></td>
-</tr>
-<tr class="odd">
-<td>max_max_cv</td>
-<td>float</td>
-<td>Decimal Percentage threshold for maximum CI diagnostics</td>
-<td><code>0.3</code></td>
-</tr>
-<tr class="even">
-<td>output_csv</td>
-<td>str</td>
-<td>Path to write the output CSV results incrementally.</td>
-<td><code>None</code></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="returns" class="level2 doc-section doc-section-returns">
-<h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 9%">
-<col style="width: 16%">
-<col style="width: 73%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td>pd.DataFrame</td>
-<td>pd.DataFrame: Final dataset containing all successful runs.</td>
+<td style="text-align: left;"><a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/plotting.py"><code>plotting.plot_kriging_diagnostics</code></a></td>
+<td style="text-align: left;">Generates dual-panel diagnostic plot visualizing standardized residual distribution vs <span class="math inline">\(\mathcal{N}(0, 1)\)</span> and <span class="math inline">\([-3, 3]\)</span> bounds.</td>
 </tr>
 </tbody>
 </table>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->
@@ -833,9 +872,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
   });
   </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../docs/generalised_pod.html" class="pagination-link" aria-label="Generalised PoD Theory">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Generalised PoD Theory</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../docs/comparison.html" class="pagination-link" aria-label="Classical vs Generalised PoD">
+        <span class="nav-page-text">Classical vs Generalised PoD</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
 </div> <!-- /content -->
 
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/adaptive.run_adaptive_search.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/kriging_metamodeling.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

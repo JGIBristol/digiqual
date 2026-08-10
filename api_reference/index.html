@@ -198,6 +198,12 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../docs/kriging_metamodeling.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Kriging Metamodeling &amp; Calibration</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Classical vs Generalised PoD</span></a>
   </div>
@@ -325,60 +331,68 @@ ul.task-list li input[type="checkbox"] {
 <td>Estimates the local standard deviation using Gaussian Kernel Smoothing.</td>
 </tr>
 <tr class="even">
+<td><a href="../api_reference/pod.compute_kriging_loo_residuals.html#digiqual.pod.compute_kriging_loo_residuals">pod.compute_kriging_loo_residuals</a></td>
+<td>Computes exact LOO predictions, variances, standardized residuals e_i,</td>
+</tr>
+<tr class="odd">
 <td><a href="../api_reference/pod.compute_pod_curve.html#digiqual.pod.compute_pod_curve">pod.compute_pod_curve</a></td>
 <td>Calculates the Probability of Detection (PoD) curve.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/pod.bootstrap_pod_ci.html#digiqual.pod.bootstrap_pod_ci">pod.bootstrap_pod_ci</a></td>
 <td>Estimates Confidence Bounds for the PoD curve via Bootstrapping.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/pod.calculate_reliability_point.html#digiqual.pod.calculate_reliability_point">pod.calculate_reliability_point</a></td>
 <td>Calculates the defect size (a90/95) where the Lower Confidence Bound</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/pod.calculate_sobol_indices.html#digiqual.pod.calculate_sobol_indices">pod.calculate_sobol_indices</a></td>
 <td>Calculates the Total-Order Sobol sensitivity index for the fitted mean model.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/integration.compute_multi_dim_pod.html#digiqual.integration.compute_multi_dim_pod">integration.compute_multi_dim_pod</a></td>
 <td>Calculates the marginal Probability of Detection (PoD) across a grid of Parameters of Interest (PoI).</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/ahat.fit_linear_a_hat_model.html#digiqual.ahat.fit_linear_a_hat_model">ahat.fit_linear_a_hat_model</a></td>
 <td>Fits a simple linear regression model according to the standard a-hat vs a method.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/ahat.compute_linear_pod_curve.html#digiqual.ahat.compute_linear_pod_curve">ahat.compute_linear_pod_curve</a></td>
 <td>Calculates the PoD curve using the standard a-hat vs a analytical assumptions.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/ahat.bootstrap_linear_pod_ci.html#digiqual.ahat.bootstrap_linear_pod_ci">ahat.bootstrap_linear_pod_ci</a></td>
 <td>Estimates Confidence Bounds for the classical linear PoD curve via Bootstrapping.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/ahat.plot_linear_signal_model.html#digiqual.ahat.plot_linear_signal_model">ahat.plot_linear_signal_model</a></td>
 <td>Diagnostic Plot: Visualizes the standard linear a-hat vs a model.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/plotting.plot_signal_model.html#digiqual.plotting.plot_signal_model">plotting.plot_signal_model</a></td>
 <td>Diagnostic Plot 1: Signal vs Parameter of Interest (The Physics).</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/plotting.plot_pod_curve.html#digiqual.plotting.plot_pod_curve">plotting.plot_pod_curve</a></td>
 <td>Result Plot 2: Probability of Detection (The Reliability).</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/plotting.plot_pod_surface.html#digiqual.plotting.plot_pod_surface">plotting.plot_pod_surface</a></td>
 <td>Plots a 2D heatmap / contour for multi-dimensional PoD (2 Parameters of Interest).</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/plotting.plot_signal_surface.html#digiqual.plotting.plot_signal_surface">plotting.plot_signal_surface</a></td>
 <td>Result Plot 1 (Multi-Dimensional): Signal vs Parameters of Interest.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/plotting.plot_collinearity_matrix.html#digiqual.plotting.plot_collinearity_matrix">plotting.plot_collinearity_matrix</a></td>
 <td>Plots a Pearson correlation matrix heatmap of the input variables to visualize collinearity.</td>
+</tr>
+<tr class="odd">
+<td><a href="../api_reference/plotting.plot_kriging_diagnostics.html#digiqual.plotting.plot_kriging_diagnostics">plotting.plot_kriging_diagnostics</a></td>
+<td>Diagnostic Plot: Visualizes Standardized LOO Residuals and Outlier Calibration.</td>
 </tr>
 <tr class="even">
 <td><a href="../api_reference/executors.Executor.html#digiqual.executors.Executor">executors.Executor</a></td>

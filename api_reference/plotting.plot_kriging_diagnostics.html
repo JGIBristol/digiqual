@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>adaptive.run_adaptive_search – digiqual</title>
+<title>plotting.plot_kriging_diagnostics – digiqual</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -266,13 +266,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.adaptive.run_adaptive_search" id="toc-digiqual.adaptive.run_adaptive_search" class="nav-link active" data-scroll-target="#digiqual.adaptive.run_adaptive_search">adaptive.run_adaptive_search</a>
+  <li><a href="#digiqual.plotting.plot_kriging_diagnostics" id="toc-digiqual.plotting.plot_kriging_diagnostics" class="nav-link active" data-scroll-target="#digiqual.plotting.plot_kriging_diagnostics">plotting.plot_kriging_diagnostics</a>
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
   <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
+  <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
   </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/adaptive.run_adaptive_search.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/plotting.plot_kriging_diagnostics.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
@@ -280,33 +281,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<section id="digiqual.adaptive.run_adaptive_search" class="level1">
-<h1>adaptive.run_adaptive_search</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>run_adaptive_search(</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    executor,</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    input_cols,</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    outcome_col,</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    ranges,</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    existing_data<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    n_start<span class="op">=</span><span class="dv">10</span>,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    n_step<span class="op">=</span><span class="dv">5</span>,</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    max_iter<span class="op">=</span><span class="dv">5</span>,</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    max_hours<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    max_gap_ratio<span class="op">=</span><span class="fl">0.2</span>,</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    min_r2_score<span class="op">=</span><span class="fl">0.5</span>,</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    max_avg_cv<span class="op">=</span><span class="fl">0.15</span>,</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    max_max_cv<span class="op">=</span><span class="fl">0.3</span>,</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    output_csv<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Orchestrates the Active Learning loop on raw DataFrames using the Executor architecture.</p>
+<section id="digiqual.plotting.plot_kriging_diagnostics" class="level1">
+<h1>plotting.plot_kriging_diagnostics</h1>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>plot_kriging_diagnostics(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    std_residuals,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    outlier_scale_factor<span class="op">=</span><span class="fl">1.0</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    best_kernel_name<span class="op">=</span><span class="st">'Matérn 5/2'</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Diagnostic Plot: Visualizes Standardized LOO Residuals and Outlier Calibration.</p>
+<p>Plots a histogram of standardized LOO residuals e_i against the Standard Normal distribution N(0, 1) alongside a scatter plot against the [-3, 3] outlier threshold bounds. Equivalent to Figure 10 in Malkiel et al.&nbsp;(2026).</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 8%">
-<col style="width: 9%">
-<col style="width: 75%">
-<col style="width: 6%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 51%">
+<col style="width: 12%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -318,87 +310,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td>executor</td>
-<td>Executor | str</td>
-<td>An instance of an Executor (Python, CLI, Matlab). Accepts a legacy command string for backward compatibility.</td>
+<td>std_residuals</td>
+<td>np.ndarray</td>
+<td>Array of standardized LOO residuals e_i.</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
-<td>input_cols</td>
-<td>List[str]</td>
-<td>Input names.</td>
-<td><em>required</em></td>
+<td>outlier_scale_factor</td>
+<td>float</td>
+<td>Outlier scaling factor gamma. Defaults to 1.0.</td>
+<td><code>1.0</code></td>
 </tr>
 <tr class="odd">
-<td>outcome_col</td>
+<td>best_kernel_name</td>
 <td>str</td>
-<td>Outcome name.</td>
-<td><em>required</em></td>
+<td>Name of the selected Kriging kernel. Defaults to “Matérn 5/2”.</td>
+<td><code>'Matérn 5/2'</code></td>
 </tr>
 <tr class="even">
-<td>ranges</td>
-<td>Dict</td>
-<td>Input bounds.</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>existing_data</td>
-<td>pd.DataFrame</td>
-<td>Start data.</td>
-<td><code>None</code></td>
-</tr>
-<tr class="even">
-<td>n_start</td>
-<td>int</td>
-<td>Init batch size.</td>
-<td><code>10</code></td>
-</tr>
-<tr class="odd">
-<td>n_step</td>
-<td>int</td>
-<td>Points added per refinement step.</td>
-<td><code>5</code></td>
-</tr>
-<tr class="even">
-<td>max_iter</td>
-<td>int</td>
-<td>Max loops.</td>
-<td><code>5</code></td>
-</tr>
-<tr class="odd">
-<td>max_hours</td>
-<td>float</td>
-<td>Physical time limit in hours.</td>
-<td><code>None</code></td>
-</tr>
-<tr class="even">
-<td>max_gap_ratio</td>
-<td>float</td>
-<td>Decimal Percentage threshold for maximum gap diagnostics,</td>
-<td><code>0.2</code></td>
-</tr>
-<tr class="odd">
-<td>min_r2_score</td>
-<td>float</td>
-<td>Decimal Percentage threshold for minimum r2 diagnostics,</td>
-<td><code>0.5</code></td>
-</tr>
-<tr class="even">
-<td>max_avg_cv</td>
-<td>float</td>
-<td>Decimal Percentage threshold for average CI diagnostics,</td>
-<td><code>0.15</code></td>
-</tr>
-<tr class="odd">
-<td>max_max_cv</td>
-<td>float</td>
-<td>Decimal Percentage threshold for maximum CI diagnostics</td>
-<td><code>0.3</code></td>
-</tr>
-<tr class="even">
-<td>output_csv</td>
-<td>str</td>
-<td>Path to write the output CSV results incrementally.</td>
+<td>ax</td>
+<td>Optional[plt.Axes]</td>
+<td>Matplotlib axes to plot on. Defaults to None.</td>
 <td><code>None</code></td>
 </tr>
 </tbody>
@@ -409,8 +341,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <table class="caption-top table">
 <colgroup>
 <col style="width: 9%">
-<col style="width: 16%">
-<col style="width: 73%">
+<col style="width: 12%">
+<col style="width: 77%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -422,11 +354,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td></td>
-<td>pd.DataFrame</td>
-<td>pd.DataFrame: Final dataset containing all successful runs.</td>
+<td>plt.Axes</td>
+<td>plt.Axes: The configured Matplotlib axis containing the plot.</td>
 </tr>
 </tbody>
 </table>
+</section>
+<section id="examples" class="level2 doc-section doc-section-examples">
+<h2 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.plotting <span class="im">import</span> plot_kriging_diagnostics</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>std_res <span class="op">=</span> np.random.normal(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">50</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> plot_kriging_diagnostics(std_res, outlier_scale_factor<span class="op">=</span><span class="fl">1.2</span>, best_kernel_name<span class="op">=</span><span class="st">"Matérn 5/2"</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 </section>
@@ -838,4 +780,4 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/adaptive.run_adaptive_search.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/plotting.plot_kriging_diagnostics.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
