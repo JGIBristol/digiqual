@@ -678,7 +678,9 @@ class SimulationStudy:
         if mean_model.model_type_ == 'Polynomial':
             print(f"-> Selected Model: Polynomial (Degree {mean_model.model_params_})")
         else:
-            print("-> Selected Model: Kriging (Gaussian Process)")
+            best_kernel = getattr(mean_model, 'best_kernel_name_', 'Gaussian Process')
+            outlier_gamma = getattr(mean_model, 'outlier_scale_factor_', 1.0)
+            print(f"-> Selected Model: Kriging ({best_kernel}) | Outlier Calibration Gamma: {outlier_gamma:.3f}")
 
         # ---------------------------------------------------------
         # 5. LAYER 2 CACHE: Variance Model, Distribution & Sobol
@@ -876,6 +878,9 @@ class SimulationStudy:
             "residuals": residuals,
             "dist_info": (dist_name, dist_params),
             "sobol_indices": sobol_indices,
+            "outlier_scale_factor": getattr(mean_model, "outlier_scale_factor_", 1.0),
+            "best_kernel_name": getattr(mean_model, "best_kernel_name_", None),
+            "kriging_loo_residuals": getattr(mean_model, "loo_residuals_", None),
             "curves": {
                 "mean_response": mean_curve,
                 "pod": pod_curve,
@@ -1050,10 +1055,21 @@ class SimulationStudy:
                 ci_lower=res["curves"]["ci_lower"] # <-- ADD THIS
             )
 
+        # 3. Kriging Diagnostics Plot (If Kriging is active)
+        if getattr(res["mean_model"], "model_type_", None) == "Kriging" and hasattr(res["mean_model"], "loo_residuals_"):
+            from .plotting import plot_kriging_diagnostics
+            self.plots["kriging_diagnostics"] = plot_kriging_diagnostics(
+                std_residuals=res["mean_model"].loo_residuals_,
+                outlier_scale_factor=getattr(res["mean_model"], "outlier_scale_factor_", 1.0),
+                best_kernel_name=getattr(res["mean_model"], "best_kernel_name_", "Matérn 5/2")
+            )
+
         # Handle Saving
         if save_path:
             if "model_selection" in self.plots:
                 self.plots["model_selection"].savefig(f"{save_path}_model_selection.png")
+            if "kriging_diagnostics" in self.plots:
+                self.plots["kriging_diagnostics"].get_figure().savefig(f"{save_path}_kriging_diagnostics.png")
             self.plots["signal_model"].get_figure().savefig(f"{save_path}_signal.png")
             self.plots["pod_curve"].get_figure().savefig(f"{save_path}_pod.png")
             print(f"Plots saved to {save_path}_*.png")

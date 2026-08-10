@@ -12,10 +12,25 @@ Interaction with complex physics—such as crack roughness or angle variations�
 ## 1. Automated Model Selection (Relaxing Linearity)
 Instead of forcing a linear relationship $\hat{a} = \beta_0 + \beta_1 a$, `digiqual` treats the expectation model as a selection problem.
 
-### The Mathematics
 It evaluates a pool of candidate models $f(x)$ including polynomials up to degree $10$ and Gaussian Process (Kriging) models. For each model, it performs **$K$-fold Cross-Validation (CV)** to estimate the Mean Squared Error (MSE):
 $$ MSE_{CV} = \frac{1}{n} \sum_{i=1}^n (y_i - \hat{f}^{-k(i)}(x_i))^2 $$
 Where $\hat{f}^{-k(i)}$ is the model trained without the $k$-th fold containing observation $i$. The model minimizing this error is automatically selected, balancing bias and variance.
+
+### Kriging Covariance Optimization & Anisotropic Fitting (Malkiel 2026)
+When Kriging metamodeling is active, `digiqual` optimizes the covariance structure across 4 candidate kernel families with anisotropic per-dimension length scale vectors $\boldsymbol{\theta} = [\theta_1, \dots, \theta_d]$:
+- **Matérn 3/2:** Smoothness $\nu=1.5$
+- **Matérn 5/2:** Smoothness $\nu=2.5$
+- **Gaussian (RBF):** Infinite smoothness
+- **Rational Quadratic:** Scale mixture of Gaussian kernels
+
+It calculates Leave-One-Out predictions $\mu_{\hat{Y}_{-i}}$ and variances $\sigma_{\hat{Y}_{-i}}^2$ via matrix inverse $B = S^{-1}$, selecting the kernel minimizing $MSE_{LOO}$.
+
+### Standardized LOO Residual Outlier Calibration (Malkiel 2026)
+`digiqual` validates surrogate uncertainty by computing standardized LOO residual errors:
+$$ e_i = \frac{y_i - \mu_{\hat{Y}_{-i}}}{\sigma_{\hat{Y}_{-i}}} $$
+If extreme outliers occur where $\max |e_i| > 3$, the engine automatically computes a conservative variance scaling factor:
+$$ \gamma = \max\left(1.0, \frac{\max |e_i|}{3}\right) $$
+and inflates prediction variance $\hat{\sigma}^2 \leftarrow \gamma \cdot \hat{\sigma}^2$ to guarantee mathematically reliable 95% worst-case bounds.
 
 ## 2. Modeling Heteroscedasticity (Relaxing Constant Variance)
 Signal scatter often increases with flaw size. `digiqual` abandons the constant variance assumption $\sigma^2 = c$, replacing it with a localized estimation $\sigma^2(x)$.

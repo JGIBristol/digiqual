@@ -58,6 +58,8 @@ website:
             href: docs/cpp_acceleration.qmd
           - text: "Generalised PoD Theory"
             href: docs/generalised_pod.qmd
+          - text: "Kriging Metamodeling & Calibration"
+            href: docs/kriging_metamodeling.qmd
           - text: "Classical vs Generalised PoD"
             href: docs/comparison.qmd
           - docs/caching.qmd
@@ -128,6 +130,7 @@ quartodoc:
         - pod.infer_best_distribution
         - pod.plot_model_selection
         - pod.predict_local_std
+        - pod.compute_kriging_loo_residuals
         - pod.compute_pod_curve
         - pod.bootstrap_pod_ci
         - pod.calculate_reliability_point
@@ -148,6 +151,7 @@ quartodoc:
         - plotting.plot_pod_surface
         - plotting.plot_signal_surface
         - plotting.plot_collinearity_matrix
+        - plotting.plot_kriging_diagnostics
 
         # -- Optimise/Executor --
         - executors.Executor

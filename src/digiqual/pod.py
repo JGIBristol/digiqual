@@ -6,7 +6,7 @@ from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score, KFold
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
+from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic, ConstantKernel as C
 from scipy.optimize import minimize_scalar
 
 import os
@@ -14,6 +14,88 @@ from joblib import Parallel, delayed
 
 import warnings
 from sklearn.exceptions import ConvergenceWarning
+
+def compute_kriging_loo_residuals(
+    gpr: GaussianProcessRegressor,
+    X_2d: np.ndarray,
+    y: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float]:
+    """
+    Computes exact LOO predictions, variances, standardized residuals e_i,
+    and outlier scaling factor gamma according to Malkiel et al. (2026).
+
+    Inverts the augmented covariance matrix S = [[K + alpha*I, F], [F^T, 0]] to obtain B = S^-1,
+    calculating Leave-One-Out means mu_{-i} and variances sigma_{-i}^2. It then derives
+    standardized residuals e_i = (y_i - mu_{-i}) / sigma_{-i} and outlier scale factor
+    gamma = max(1.0, max|e_i| / 3.0).
+
+    Args:
+        gpr (GaussianProcessRegressor): A fitted scikit-learn Gaussian Process model.
+        X_2d (np.ndarray): 2D matrix of input training coordinates (N_samples, N_features).
+        y (np.ndarray): 1D array of observed responses (N_samples,).
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray, np.ndarray, float]:
+            - loo_means: Array of Leave-One-Out predicted mean responses.
+            - loo_stds: Array of Leave-One-Out predicted standard deviations.
+            - std_residuals: Array of standardized LOO residuals e_i = (y_i - mu_{-i}) / sigma_{-i}.
+            - gamma: Outlier scaling factor gamma = max(1.0, max|e_i| / 3.0).
+
+    Examples:
+        ```python
+        import numpy as np
+        from sklearn.gaussian_process import GaussianProcessRegressor
+        from digiqual.pod import compute_kriging_loo_residuals
+
+        X = np.linspace(0, 5, 20).reshape(-1, 1)
+        y = 2.0 * X.flatten() + np.random.normal(0, 0.1, 20)
+
+        gpr = GaussianProcessRegressor()
+        gpr.fit(X, y)
+
+        loo_means, loo_stds, std_res, gamma = compute_kriging_loo_residuals(gpr, X, y)
+        print(f"Outlier scaling factor gamma: {gamma:.3f}")
+        ```
+    """
+    m = len(y)
+    y_flat = np.asarray(y, dtype=np.float64).flatten()
+    X_2d = np.atleast_2d(X_2d)
+
+    K = gpr.kernel_(X_2d)
+    alpha = gpr.alpha if isinstance(gpr.alpha, (int, float)) else 1e-6
+    K_alpha = K + np.eye(m) * alpha
+
+    F = np.ones((m, 1))
+    S = np.zeros((m + 1, m + 1))
+    S[:m, :m] = K_alpha
+    S[:m, m:] = F
+    S[m:, :m] = F.T
+
+    try:
+        B = np.linalg.inv(S)
+        B_mm = B[:m, :m]
+        diag_B = np.diag(B_mm)
+        diag_B = np.where(np.abs(diag_B) < 1e-12, 1e-12, diag_B)
+
+        loo_means = np.zeros(m)
+        loo_stds = np.zeros(m)
+
+        for i in range(m):
+            row_B = B_mm[i, :]
+            loo_means[i] = - (np.dot(row_B, y_flat) - row_B[i] * y_flat[i]) / diag_B[i]
+            loo_stds[i] = np.sqrt(np.maximum(1e-10, 1.0 / diag_B[i]))
+
+    except np.linalg.LinAlgError:
+        loo_means = y_flat.copy()
+        loo_stds = np.ones(m) * (np.std(y_flat) if np.std(y_flat) > 0 else 1.0)
+
+    residuals = y_flat - loo_means
+    std_residuals = residuals / np.maximum(loo_stds, 1e-10)
+
+    max_abs_e = float(np.max(np.abs(std_residuals))) if len(std_residuals) > 0 else 0.0
+    gamma = max(1.0, max_abs_e / 3.0)
+
+    return loo_means, loo_stds, std_residuals, gamma
 
 #### Mean Model - Robust Regression (Polynomial + Kriging) ####
 
@@ -80,30 +162,59 @@ def fit_all_robust_mean_models(
         model.model_params_ = d
         fitted_models[('Polynomial', d)] = model
 
-    # 2. Evaluate & Fit Kriging (With safeguard for large datasets)
+    # 2. Evaluate & Fit Kriging (Anisotropic Kernel Selection & LOO Residual Outlier Calibration)
     n_samples = len(y)
     if n_samples <= 1000:
-        kernel = C(1.0, (1e-5, 1e6)) * RBF(1.0, (1e-3, 1e5))
-        gpr = GaussianProcessRegressor(
-            kernel=kernel,
-            n_restarts_optimizer=10,
-            alpha=np.var(y) * 0.01,
-            random_state=42
-        )
+        n_features = X_2d.shape[1]
+        candidate_kernels = {
+            'Matern 3/2': C(1.0, (1e-5, 1e6)) * Matern(length_scale=np.ones(n_features), length_scale_bounds=(1e-3, 1e5), nu=1.5),
+            'Matern 5/2': C(1.0, (1e-5, 1e6)) * Matern(length_scale=np.ones(n_features), length_scale_bounds=(1e-3, 1e5), nu=2.5),
+            'RBF (Gaussian)': C(1.0, (1e-5, 1e6)) * RBF(length_scale=np.ones(n_features), length_scale_bounds=(1e-3, 1e5)),
+            'Rational Quadratic': C(1.0, (1e-5, 1e6)) * RationalQuadratic(length_scale=np.ones(n_features), length_scale_bounds=(1e-3, 1e5))
+        }
+
+        best_kriging_gpr = None
+        best_kriging_mse = float('inf')
+        best_kernel_name = 'Matern 5/2'
+        kriging_scores_dict = {}
 
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=ConvergenceWarning)
-            # A) Run CV
-            gpr_scores = cross_val_score(gpr, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
-            cv_scores[('Kriging', None)] = -np.mean(gpr_scores)
+            for kname, kernel in candidate_kernels.items():
+                gpr_cand = GaussianProcessRegressor(
+                    kernel=kernel,
+                    n_restarts_optimizer=5,
+                    alpha=np.var(y) * 0.01,
+                    random_state=42
+                )
+                try:
+                    scores = cross_val_score(gpr_cand, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
+                    mse = -np.mean(scores)
+                    kriging_scores_dict[kname] = mse
 
-            # B) Fit to FULL dataset using more restarts for the final fit
-            gpr.n_restarts_optimizer = 15
-            gpr.fit(X_2d, y)
+                    if mse < best_kriging_mse:
+                        best_kriging_mse = mse
+                        best_kernel_name = kname
+                        best_kriging_gpr = gpr_cand
+                except Exception:
+                    continue
 
-            gpr.model_type_ = 'Kriging'
-            gpr.model_params_ = gpr.kernel_
-            fitted_models[('Kriging', None)] = gpr
+        if best_kriging_gpr is not None:
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=ConvergenceWarning)
+                best_kriging_gpr.n_restarts_optimizer = 10
+                best_kriging_gpr.fit(X_2d, y)
+
+            loo_means, loo_stds, std_residuals, gamma = compute_kriging_loo_residuals(best_kriging_gpr, X_2d, y)
+            best_kriging_gpr.loo_residuals_ = std_residuals
+            best_kriging_gpr.outlier_scale_factor_ = gamma
+            best_kriging_gpr.best_kernel_name_ = best_kernel_name
+            best_kriging_gpr.kernel_cv_scores_ = kriging_scores_dict
+            best_kriging_gpr.model_type_ = 'Kriging'
+            best_kriging_gpr.model_params_ = best_kriging_gpr.kernel_
+
+            cv_scores[('Kriging', None)] = best_kriging_mse
+            fitted_models[('Kriging', None)] = best_kriging_gpr
     else:
         print(f"Skipping Kriging evaluation to prevent timeout (Dataset N={n_samples} > 1000).")
 
@@ -432,6 +543,11 @@ def fit_variance_model(
     X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
     y_pred = mean_model.predict(X_2d)
     residuals = y - y_pred
+
+    outlier_scale = getattr(mean_model, 'outlier_scale_factor_', 1.0)
+    if outlier_scale > 1.0:
+        print(f"   -> Outlier calibration active: Inflating variance by factor gamma = {outlier_scale:.3f} (max |e_i| > 3)")
+        residuals = residuals * np.sqrt(outlier_scale)
 
     if auto_bandwidth:
         print("   -> Optimizing bandwidth via LOO-CV...")

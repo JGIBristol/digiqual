@@ -310,3 +310,78 @@ def plot_collinearity_matrix(
     ax.set_title("Input Collinearity Matrix (Correlation Heatmap)")
     fig.tight_layout()
     return ax
+
+
+def plot_kriging_diagnostics(
+    std_residuals: np.ndarray,
+    outlier_scale_factor: float = 1.0,
+    best_kernel_name: str = "Matérn 5/2",
+    ax: Optional[plt.Axes] = None
+) -> plt.Axes:
+    """
+    Diagnostic Plot: Visualizes Standardized LOO Residuals and Outlier Calibration.
+
+    Plots a histogram of standardized LOO residuals e_i against the Standard Normal
+    distribution N(0, 1) alongside a scatter plot against the [-3, 3] outlier threshold bounds.
+    Equivalent to Figure 10 in Malkiel et al. (2026).
+
+    Args:
+        std_residuals (np.ndarray): Array of standardized LOO residuals e_i.
+        outlier_scale_factor (float, optional): Outlier scaling factor gamma. Defaults to 1.0.
+        best_kernel_name (str, optional): Name of the selected Kriging kernel. Defaults to "Matérn 5/2".
+        ax (Optional[plt.Axes], optional): Matplotlib axes to plot on. Defaults to None.
+
+    Returns:
+        plt.Axes: The configured Matplotlib axis containing the plot.
+
+    Examples:
+        ```python
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from digiqual.plotting import plot_kriging_diagnostics
+
+        std_res = np.random.normal(0, 1, 50)
+        ax = plot_kriging_diagnostics(std_res, outlier_scale_factor=1.2, best_kernel_name="Matérn 5/2")
+        plt.show()
+        ```
+    """
+    import scipy.stats as stats
+
+    if ax is None:
+        fig, (ax_hist, ax_scatter) = plt.subplots(1, 2, figsize=(10, 4.5))
+    else:
+        fig = ax.get_figure()
+        ax_hist, ax_scatter = ax, None
+
+    # 1. Histogram of Standardized LOO Residuals vs Standard Normal N(0,1)
+    std_res = np.asarray(std_residuals).flatten()
+    n, bins, patches = ax_hist.hist(std_res, bins=15, density=True, alpha=0.6, color='skyblue', edgecolor='black', label='LOO Residuals')
+    x_pdf = np.linspace(min(-4.0, std_res.min() - 0.5), max(4.0, std_res.max() + 0.5), 200)
+    pdf = stats.norm.pdf(x_pdf, 0, 1)
+    ax_hist.plot(x_pdf, pdf, 'r-', linewidth=2, label='Standard Normal N(0,1)')
+    ax_hist.set_xlabel("Standardized LOO Residuals e_i")
+    ax_hist.set_ylabel("Probability Density")
+    ax_hist.set_title(f"Kriging Residual Distribution ({best_kernel_name})")
+    ax_hist.legend(loc='upper right')
+    ax_hist.grid(True, alpha=0.3)
+
+    if ax_scatter is not None:
+        # 2. Scatter plot vs Outlier Threshold Bounds [-3, 3]
+        indices = np.arange(len(std_res))
+        ax_scatter.scatter(indices, std_res, color='blue', alpha=0.7, s=25, label='LOO Residuals e_i')
+        ax_scatter.axhline(3.0, color='red', linestyle='--', linewidth=1.5, label='Outlier Threshold (+/- 3)')
+        ax_scatter.axhline(-3.0, color='red', linestyle='--', linewidth=1.5)
+        ax_scatter.axhline(0.0, color='black', linestyle=':', alpha=0.5)
+
+        if outlier_scale_factor > 1.0:
+            calibrated_res = std_res / np.sqrt(outlier_scale_factor)
+            ax_scatter.scatter(indices, calibrated_res, color='green', marker='x', alpha=0.8, s=25, label=f'Calibrated (gamma={outlier_scale_factor:.2f})')
+
+        ax_scatter.set_xlabel("Observation Index")
+        ax_scatter.set_ylabel("Standardized Residual")
+        ax_scatter.set_title(f"LOO Residual Outliers (gamma={outlier_scale_factor:.2f})")
+        ax_scatter.legend(loc='upper right')
+        ax_scatter.grid(True, alpha=0.3)
+
+    fig.tight_layout()
+    return ax_hist
