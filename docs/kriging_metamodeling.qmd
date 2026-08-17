@@ -8,11 +8,14 @@ format: html
 In simulation-based reliability assessment of Non-Destructive Evaluation (NDE) inspections, **Gaussian Process (Kriging) metamodeling** provides a powerful non-parametric surrogate for mapping complex physics across multi-dimensional input domains, as formalized in **Malkiel et al. (2026)**.
 
 `digiqual` includes a complete Kriging suite featuring:
+
 1. **Anisotropic Covariance Function Selection (Rank 2):** Automated evaluation and selection across Matérn 3/2, Matérn 5/2, Gaussian (RBF), and Rational Quadratic kernels with per-dimension anisotropic length scale vectors $\boldsymbol{\theta} = [\theta_1, \dots, \theta_d]$.
+
 2. **Matrix-Based Leave-One-Out Cross-Validation ($MSE_{\text{LOO}}$):** Fast $O(N^3)$ matrix inverse $B = S^{-1}$ for exact LOO predictions $\mu_{\hat{Y}_{-i}}$ and variances $\sigma_{\hat{Y}_{-i}}^2$.
+
 3. **Standardized LOO Residual Outlier Calibration (Rank 4):** Automated detection of extreme observation errors $|e_i| > 3$ and prior variance scaling ($\hat{\sigma}^2 \leftarrow \gamma \cdot \hat{\sigma}^2$) to guarantee conservative 95% worst-case bounds.
 
----
+
 
 ## 1. Covariance Kernel Selection & Anisotropic Fitting
 
@@ -41,7 +44,6 @@ Each kernel family is evaluated via Leave-One-Out Cross-Validation. The kernel c
 
 $$ MSE_{\text{LOO}} = \frac{1}{m} \sum_{i=1}^m \frac{\left(y_i - \mu_{\hat{Y}_{-i}}\right)^2}{\text{var}(y)} $$
 
----
 
 ## 2. LOO Residuals & Outlier Calibration
 
@@ -68,13 +70,15 @@ $$ \gamma = \max\left(1.0, \frac{\max |e_i|}{3.0}\right) $$
 
 During noise estimation in [`fit_variance_model`](file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py), raw residuals are scaled by $\sqrt{\gamma}$, inflating local prediction variance $\hat{\sigma}^2(x)$ by factor $\gamma$. This guarantees mathematically reliable 95% worst-case confidence bounds even in the presence of extreme outliers.
 
----
 
 ## 3. Python Usage Example
 
 Below is a complete Python script demonstrating Kriging surrogate model fitting, kernel optimization, residual computation, diagnostic plotting, and PoD generation:
 
 ```{python}
+#| label: fig-kriging-results
+#| fig-cap: "Kriging Model Fitting"
+#| layout-ncol: 1
 import numpy as np
 import matplotlib.pyplot as plt
 from digiqual.pod import (
@@ -82,7 +86,7 @@ from digiqual.pod import (
     compute_kriging_loo_residuals,
     fit_variance_model,
     infer_best_distribution,
-    compute_pod_curve
+    compute_pod_curve,
 )
 from digiqual.plotting import plot_kriging_diagnostics
 
@@ -100,7 +104,7 @@ y[10] += 3.5
 
 # 2. Fit Surrogate Pool & Evaluate Anisotropic Kernels
 models, cv_scores, winner_key = fit_all_robust_mean_models(X, y)
-gpr = models[('Kriging', None)]
+gpr = models[("Kriging", None)]
 
 print(f"Selected Kriging Kernel: {gpr.best_kernel_name_}")
 print(f"Outlier Calibration Factor (gamma): {gpr.outlier_scale_factor_:.3f}")
@@ -112,7 +116,7 @@ loo_means, loo_stds, std_res, gamma = compute_kriging_loo_residuals(gpr, X, y)
 ax = plot_kriging_diagnostics(
     std_residuals=std_res,
     outlier_scale_factor=gamma,
-    best_kernel_name=gpr.best_kernel_name_
+    best_kernel_name=gpr.best_kernel_name_,
 )
 plt.show()
 ```

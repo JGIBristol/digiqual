@@ -108,7 +108,7 @@ cls: clean
 
 # Removes all generated artifacts to keep the workspace pristine
 clean:
-    rm -rf _site/ api_reference/ .pytest_cache/ .ruff_cache/ .quarto objects.json _sidebar.yml docs/*.csv **/*.spec *.csv *.egg-info
+    rm -rf _site/ api_reference/ .pytest_cache/ .ruff_cache/ .quarto objects.json _sidebar.yml docs/*.csv **/*.spec *.csv *.egg-info build/ dist/ src/*.egg-info src/digiqual/*.so src/digiqual/*.pyd src/digiqual/*.dylib
     find . -type d -name "__pycache__" -exec rm -rf {} +
 
 

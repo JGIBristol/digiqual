@@ -16,6 +16,12 @@ venv/
 *.egg-info/
 dist/
 build/
+*.so
+*.pyd
+*.dylib
+*.dll
+*.o
+*.obj
 _site/
 api_reference/
 objects.json
