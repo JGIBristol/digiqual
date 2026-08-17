@@ -1,25 +1,29 @@
-import numpy as np
-import scipy.stats as stats
-from typing import Tuple, Any, Dict
-from sklearn.linear_model import Ridge
-from sklearn.preprocessing import PolynomialFeatures, StandardScaler
-from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import cross_val_score, KFold
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic, ConstantKernel as C
-from scipy.optimize import minimize_scalar
-
+import logging
 import os
-from joblib import Parallel, delayed
-
 import warnings
+from typing import Any
+
+import numpy as np
+from joblib import Parallel, delayed
+from scipy import stats
+from scipy.optimize import minimize_scalar
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic
+from sklearn.gaussian_process.kernels import ConstantKernel as C
+from sklearn.linear_model import Ridge
+from sklearn.model_selection import KFold, cross_val_score
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+
+logger = logging.getLogger(__name__)
+
 
 def compute_kriging_loo_residuals(
     gpr: GaussianProcessRegressor,
     X_2d: np.ndarray,
     y: np.ndarray
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
     """
     Computes exact LOO predictions, variances, standardized residuals e_i,
     and outlier scaling factor gamma according to Malkiel et al. (2026).
@@ -35,7 +39,7 @@ def compute_kriging_loo_residuals(
         y (np.ndarray): 1D array of observed responses (N_samples,).
 
     Returns:
-        Tuple[np.ndarray, np.ndarray, np.ndarray, float]:
+        tuple[np.ndarray, np.ndarray, np.ndarray, float]:
             - loo_means: Array of Leave-One-Out predicted mean responses.
             - loo_stds: Array of Leave-One-Out predicted standard deviations.
             - std_residuals: Array of standardized LOO residuals e_i = (y_i - mu_{-i}) / sigma_{-i}.
@@ -104,7 +108,7 @@ def fit_all_robust_mean_models(
     y: np.ndarray,
     max_degree: int = 10,
     n_folds: int = 10
-) -> Tuple[Dict[Tuple[str, Any], Any], Dict[Tuple[str, Any], float], Tuple[str, Any]]:
+) -> tuple[dict[tuple[str, Any], Any], dict[tuple[str, Any], float], tuple[str, Any]]:
     """
     Fits all polynomial models (and optionally Kriging) and returns them for caching.
 
@@ -120,7 +124,7 @@ def fit_all_robust_mean_models(
         n_folds (int, optional): Number of folds for Cross Validation. Defaults to 10.
 
     Returns:
-        Tuple[Dict, Dict, Tuple]:
+        tuple[dict, dict, tuple]:
             - `fitted_models`: A dictionary mapping a key like `('Polynomial', 3)` to the fully trained scikit-learn model.
             - `cv_scores`: A dictionary mapping the same keys to their Cross-Validation MSE scores.
             - `cv_winner_key`: The key of the model that achieved the lowest MSE.
@@ -143,17 +147,15 @@ def fit_all_robust_mean_models(
 
     fitted_models = {}
     cv_scores = {}
-
     cv = KFold(n_splits=n_folds, shuffle=True, random_state=42)
 
-    # 1. Evaluate & Fit ALL Polynomials using Regularized Ridge Pipelines with Feature Scaling
+    # 1. Evaluate & Fit Polynomials
     for d in range(1, max_degree + 1):
         model = make_pipeline(
             PolynomialFeatures(degree=d),
             StandardScaler(),
             Ridge(alpha=0.1, random_state=42)
         )
-
         scores = cross_val_score(model, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
         cv_scores[('Polynomial', d)] = -np.mean(scores)
 
@@ -162,7 +164,7 @@ def fit_all_robust_mean_models(
         model.model_params_ = d
         fitted_models[('Polynomial', d)] = model
 
-    # 2. Evaluate & Fit Kriging (Anisotropic Kernel Selection & LOO Residual Outlier Calibration)
+    # 2. Evaluate & Fit Kriging (Proper Candidate Isolation)
     n_samples = len(y)
     if n_samples <= 1000:
         n_features = X_2d.shape[1]
@@ -173,9 +175,8 @@ def fit_all_robust_mean_models(
             'Rational Quadratic': C(1.0, (1e-5, 1e6)) * RationalQuadratic(length_scale=np.ones(n_features), length_scale_bounds=(1e-3, 1e5))
         }
 
-        best_kriging_gpr = None
+        best_kernel_name = None
         best_kriging_mse = float('inf')
-        best_kernel_name = 'Matern 5/2'
         kriging_scores_dict = {}
 
         with warnings.catch_warnings():
@@ -195,17 +196,23 @@ def fit_all_robust_mean_models(
                     if mse < best_kriging_mse:
                         best_kriging_mse = mse
                         best_kernel_name = kname
-                        best_kriging_gpr = gpr_cand
-                except Exception:
+                except Exception as e:  # noqa: BLE001 - candidate kernel fit can fail in many ways
+                    logger.debug("Kriging candidate kernel '%s' failed to fit/score: %s", kname, e)
                     continue
 
-        if best_kriging_gpr is not None:
+        if best_kernel_name is not None:
+            # Instantiate and fit a fresh instance of the winning kernel
+            best_kriging_gpr = GaussianProcessRegressor(
+                kernel=candidate_kernels[best_kernel_name],
+                n_restarts_optimizer=10,
+                alpha=np.var(y) * 0.01,
+                random_state=42
+            )
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=ConvergenceWarning)
-                best_kriging_gpr.n_restarts_optimizer = 10
                 best_kriging_gpr.fit(X_2d, y)
 
-            loo_means, loo_stds, std_residuals, gamma = compute_kriging_loo_residuals(best_kriging_gpr, X_2d, y)
+            _loo_means, _loo_stds, std_residuals, gamma = compute_kriging_loo_residuals(best_kriging_gpr, X_2d, y)
             best_kriging_gpr.loo_residuals_ = std_residuals
             best_kriging_gpr.outlier_scale_factor_ = gamma
             best_kriging_gpr.best_kernel_name_ = best_kernel_name
@@ -218,7 +225,7 @@ def fit_all_robust_mean_models(
     else:
         print(f"Skipping Kriging evaluation to prevent timeout (Dataset N={n_samples} > 1000).")
 
-    # 3. Determine the overall CV winner
+    # 3. Overall Winner Selection
     cv_winner_key = min(cv_scores, key=cv_scores.get)
 
     return fitted_models, cv_scores, cv_winner_key
@@ -278,12 +285,12 @@ def plot_model_selection(
         cv_winner_key (tuple | None): The ``(type, params)`` key of the CV winner.
             If ``None``, falls back to the bar with the lowest MSE.
     """
-    import matplotlib.pyplot as plt
     import matplotlib.patches as mpatches
+    import matplotlib.pyplot as plt
     import numpy as np
 
     # --- 1. Build ordered labels and MSE values ---
-    poly_keys = [k for k in cv_scores.keys() if k[0] == 'Polynomial']
+    poly_keys = [k for k in cv_scores if k[0] == 'Polynomial']
     poly_degrees = sorted([k[1] for k in poly_keys])
 
     labels = []
@@ -347,12 +354,12 @@ def plot_model_selection(
                 '',
                 xy=(i, y_limit),
                 xytext=(i, y_limit - 0.4),
-                arrowprops=dict(
-                    facecolor='black',
-                    shrink=0.05,
-                    width=2,
-                    headwidth=8
-                )
+                arrowprops={
+                    'facecolor': 'black',
+                    'shrink': 0.05,
+                    'width': 2,
+                    'headwidth': 8
+                }
             )
 
     ax_plot.axhline(1.0, color='red', linestyle='-.', linewidth=1.5, label='Min Error (CV)')
@@ -491,7 +498,7 @@ def fit_variance_model(
     mean_model: Any,
     auto_bandwidth: bool = True,
     bandwidth_ratio: float = 0.1
-) -> Tuple[np.ndarray, float]:
+) -> tuple[np.ndarray, float]:
     """
     Calculates residuals and defines the smoothing bandwidth for variance estimation.
 
@@ -513,7 +520,7 @@ def fit_variance_model(
             `auto_bandwidth` is False. Defaults to 0.1.
 
     Returns:
-        Tuple[np.ndarray, float]:
+        tuple[np.ndarray, float]:
             - residuals: Raw differences between `y` and the mean model predictions.
             - bandwidth: The selected smoothing window size (in absolute units of X).
 
@@ -581,7 +588,7 @@ def infer_best_distribution(
     residuals: np.ndarray,
     X: np.ndarray,
     bandwidth: float
-) -> Tuple[str, Tuple]:
+) -> tuple[str, tuple]:
     """
     Selects the best statistical distribution for the standardized residuals using AIC.
 
@@ -595,7 +602,7 @@ def infer_best_distribution(
         bandwidth (float): Bandwidth used for local standardization.
 
     Returns:
-        Tuple[str, Tuple]:
+        tuple[str, tuple]:
             - best_name: The SciPy name of the best-fitting distribution (e.g., 'norm').
             - best_params: The fitted parameters for that distribution (e.g., loc, scale).
 
@@ -605,7 +612,6 @@ def infer_best_distribution(
         print(f"Best distribution: {dist_name}")
         ```
     """
-    #
     local_std = predict_local_std(X, residuals, X, bandwidth)
     z_scores = residuals.flatten() / local_std.flatten()
 
@@ -639,7 +645,8 @@ def infer_best_distribution(
             if aic < best_aic:
                 best_aic = aic
                 best_result = (dist_name, params)
-        except Exception:
+        except Exception as e:  # noqa: BLE001 - distribution fit can fail in many ways
+            logger.debug("Distribution '%s' failed to fit: %s", dist_name, e)
             continue
 
     return best_result
@@ -653,9 +660,9 @@ def compute_pod_curve(
     X: np.ndarray,
     residuals: np.ndarray,
     bandwidth: float,
-    dist_info: Tuple[str, Tuple],
+    dist_info: tuple[str, tuple],
     threshold: float
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Calculates the Probability of Detection (PoD) curve.
 
@@ -668,11 +675,11 @@ def compute_pod_curve(
         X (np.ndarray): Original input data (needed for variance prediction).
         residuals (np.ndarray): Original residuals (needed for variance prediction).
         bandwidth (float): Smoothing bandwidth.
-        dist_info (Tuple[str, Tuple]): The (name, params) of the error distribution.
+        dist_info (tuple[str, tuple]): The (name, params) of the error distribution.
         threshold (float): The detection threshold value.
 
     Returns:
-        Tuple[np.ndarray, np.ndarray]:
+        tuple[np.ndarray, np.ndarray]:
             - pod_curve: Array of probabilities [0, 1] for each point in X_eval.
             - mean_curve: Array of mean signal response values for X_eval.
 
@@ -691,7 +698,6 @@ def compute_pod_curve(
         )
         ```
     """
-    #
     dist_name, dist_params = dist_info
 
     X_eval_2d = np.atleast_2d(X_eval).T if np.asarray(X_eval).ndim == 1 else np.asarray(X_eval)
@@ -729,9 +735,9 @@ def _single_bootstrap_step(
 
     # Fit Mean Model with regularized Ridge regression to prevent bumpy intervals
     if model_type == 'Polynomial':
-        from sklearn.preprocessing import PolynomialFeatures, StandardScaler
         from sklearn.linear_model import Ridge  # <-- regularized bootstrap model
         from sklearn.pipeline import make_pipeline
+        from sklearn.preprocessing import PolynomialFeatures, StandardScaler
         mean_model = make_pipeline(
             PolynomialFeatures(model_params),
             StandardScaler(),
@@ -748,7 +754,7 @@ def _single_bootstrap_step(
     y_pred = mean_model.predict(X_res_2d)
     res_res = y_res - y_pred
 
-    dist_name, dist_params = dist_info
+    dist_name, _dist_params = dist_info
     try:
         local_std_res = predict_local_std(X_res_2d, res_res, X_res_2d, bandwidth)
         local_std_res = np.maximum(local_std_res, 1e-10)
@@ -756,7 +762,8 @@ def _single_bootstrap_step(
         dist_obj = getattr(stats, dist_name)
         new_params = dist_obj.fit(z_res)
         new_dist_info = (dist_name, new_params)
-    except Exception:
+    except Exception as e:  # noqa: BLE001 - fall back to original distribution on any fit failure
+        logger.debug("Bootstrap re-fit of distribution '%s' failed, reusing original: %s", dist_name, e)
         new_dist_info = dist_info
 
     from .integration import compute_multi_dim_pod
@@ -778,17 +785,17 @@ def bootstrap_pod_ci(
     model_type: str,
     model_params: Any,
     bandwidth: float,
-    dist_info: Tuple[str, Tuple],
+    dist_info: tuple[str, tuple],
     n_boot: int = 1000,
-    nuisance_ranges: dict = None,
+    nuisance_ranges: dict | None = None,
     n_jobs: int | None = None,
-    feature_names: list = None,
-    poi_names: list = None,
+    feature_names: list | None = None,
+    poi_names: list | None = None,
     confidence_levels: list | None = None,
-    nuisance_dists: dict = None,
+    nuisance_dists: dict | None = None,
     progress_callback: Any = None,
     n_mc_samples: int = 500
-) -> Tuple[np.ndarray, np.ndarray] | dict:
+) -> tuple[np.ndarray, np.ndarray] | dict:
     """
     Estimates Confidence Bounds for the PoD curve via Bootstrapping.
 
@@ -850,8 +857,8 @@ def bootstrap_pod_ci(
         if progress_callback is not None:
             try:
                 progress_callback(completed, n_boot)
-            except Exception as e:
-                print(f"   -> Progress Callback Warning: {e}", flush=True)
+            except Exception as e:  # noqa: BLE001 - user-supplied callback, must not abort bootstrap
+                logger.warning("Progress callback raised an exception: %s", e)
 
         del chunk_results
         gc.collect()
@@ -906,8 +913,8 @@ def calculate_sobol_indices(mean_model: Any, feature_names: list, data_df, n_sam
     Optimized for speed by disabling second-order interaction matrices.
     """
     try:
-        from SALib.sample import sobol as salib_sample
         from SALib.analyze import sobol as salib_analyze
+        from SALib.sample import sobol as salib_sample
     except ImportError:
         print("Warning: SALib not found. Skipping Sobol index calculation.")
         return None
