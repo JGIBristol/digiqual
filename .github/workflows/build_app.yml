@@ -33,12 +33,13 @@ jobs:
           uv sync --all-extras --dev
           uv pip install -e .
 
-      # Windows requires pythonnet to be installed in the venv so PyInstaller can bundle it
+      # Windows requires pythonnet installed in the build environment for PyInstaller to bundle it
       - name: Install Windows GUI dependencies
         if: runner.os == 'Windows'
         run: |
           uv pip install pythonnet
 
+      # Windows Build Step
       - name: Build App Executable (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -63,9 +64,36 @@ jobs:
             --hidden-import="engineio.async_drivers.threading" `
             run_app.py
 
-          # Compress folder into a zip archive for distribution
-          Compress-Archive -Path "dist/Digiqual" -DestinationPath "dist/Digiqual-Windows-x64.zip"
+      # Verification step: runs on the Windows virtual machine to confirm no missing DLL errors
+      - name: Verify Windows Executable Startup
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Write-Host "Verifying Digiqual.exe launches without fatal DLL/runtime exceptions..."
+          # Start the process in the background
+          $proc = Start-Process -FilePath "app/dist/Digiqual/Digiqual.exe" -PassThru
 
+          # Wait 8 seconds to allow .NET, pythonnet, and pywebview initialization
+          Start-Sleep -Seconds 8
+
+          # If the process terminated prematurely, it likely encountered the unhandled startup error
+          if ($proc.HasExited -and$proc.ExitCode -ne 0) {
+              Write-Error "Digiqual.exe crashed immediately on startup with exit code $($proc.ExitCode)!"
+              exit 1
+          }
+
+          # Cleanly terminate the test instance
+          Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+          Write-Host "✅ Digiqual.exe successfully launched without initialization crashes."
+
+      # Packaging step for Windows
+      - name: Compress Windows Executable
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "app/dist/Digiqual" -DestinationPath "app/dist/Digiqual-Windows-x64.zip"
+
+      # macOS Build Step
       - name: Build App Executable (macOS)
         if: runner.os == 'macOS'
         run: |
@@ -87,9 +115,9 @@ jobs:
             --hidden-import="engineio.async_drivers.threading" \
             run_app.py
 
-          # Archive using ditto to preserve Apple bundle signatures, symlinks, and permissions
           ditto -c -k --sequesterRsrc --keepParent "dist/Digiqual.app" "dist/Digiqual-macOS.zip"
 
+      # Upload the final archive for each OS
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
