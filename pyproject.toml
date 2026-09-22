@@ -56,6 +56,11 @@ linux-gui = [
     "pywebview[qt]"
 ]
 
+[tool.pytest.ini_options]
+markers = [
+    "stress: marks tests as stress tests (deselect with '-m \"not stress\"')",
+]
+
 
 [project.urls]
 Documentation = "https://jgibristol.github.io/digiqual/"

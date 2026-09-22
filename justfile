@@ -17,12 +17,14 @@ test:
 test_matrix:
     @for ver in 3.11 3.12 3.13 3.14; do \
         echo "\n🚀 ======================================"; \
-        echo "🧪 Testing with Python $ver..."; \
+        echo "🧪 Testing with Python $$ver..."; \
         echo "========================================\n"; \
-        uv run --python $ver --extra dev pytest || exit 1; \
+        uv run --python $$ver --extra dev python setup.py build_ext --inplace || exit 1; \
+        uv run --python $$ver --extra dev pytest || exit 1; \
     done
     @echo "\n🧹 Cleaning up: Reverting .venv back to Python 3.11..."
     uv sync --python 3.11 --extra dev
+    uv run python setup.py build_ext --inplace
     @echo "✅ All tests passed and development environment restored!"
 
 # Run the app in "Browser Mode" (Best for coding/debugging)
