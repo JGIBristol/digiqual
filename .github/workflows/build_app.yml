@@ -13,10 +13,10 @@ jobs:
         include:
           - os: windows-latest
             artifact_name: Digiqual-Windows-x64
-            build_path: app/dist/Digiqual
+            archive_path: app/dist/Digiqual-Windows-x64.zip
           - os: macos-latest
             artifact_name: Digiqual-macOS
-            build_path: app/dist/Digiqual.app
+            archive_path: app/dist/Digiqual-macOS.zip
 
     steps:
       - name: Checkout Code
@@ -55,6 +55,9 @@ jobs:
             --hidden-import="engineio.async_drivers.threading" `
             run_app.py
 
+          # Compress folder to retain executable properties
+          Compress-Archive -Path "dist/Digiqual" -DestinationPath "dist/Digiqual-Windows-x64.zip"
+
       - name: Build App Executable (macOS)
         if: runner.os == 'macOS'
         run: |
@@ -76,9 +79,12 @@ jobs:
             --hidden-import="engineio.async_drivers.threading" \
             run_app.py
 
+          # Archive using ditto to preserve Apple bundle signatures, symlinks, and permissions
+          ditto -c -k --sequesterRsrc --keepParent "dist/Digiqual.app" "dist/Digiqual-macOS.zip"
+
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.build_path }}
+          path: ${{ matrix.archive_path }}
           retention-days: 90
