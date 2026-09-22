@@ -15,11 +15,8 @@ jobs:
             artifact_name: Digiqual-Windows-x64
             zip_name: Digiqual-Windows-x64.zip
           - os: macos-latest
-            artifact_name: Digiqual-macOS-arm64
-            zip_name: Digiqual-macOS-arm64.zip
-          - os: macos-13
-            artifact_name: Digiqual-macOS-x86_64
-            zip_name: Digiqual-macOS-x86_64.zip
+            artifact_name: Digiqual-macOS
+            zip_name: Digiqual-macOS.zip
 
     steps:
       - name: Checkout Code
