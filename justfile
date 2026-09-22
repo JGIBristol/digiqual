@@ -77,18 +77,10 @@ build_app_local: clean
 
 # Triggers the cross-platform GitHub Action workflow to build Windows & Mac app executables
 trigger_build:
-    @if command -v gh >/dev/null 2>&1; then \
         gh workflow run build_app.yml && \
         echo "🚀 Cross-platform app build workflow triggered on GitHub Actions!" && \
         echo "Run 'gh run list --workflow=build_app.yml' or check GitHub UI to monitor progress."; \
-    else \
-        echo "⚠️  GitHub CLI ('gh') is not installed on your system."; \
-        echo "👉 To trigger builds from your terminal, install GitHub CLI with:"; \
-        echo "     brew install gh"; \
-        echo "     gh auth login"; \
-        echo "👉 Or trigger it manually on GitHub web UI under: Actions -> Build App Executables -> Run workflow"; \
-        exit 1; \
-    fi
+
 
 # Uploads the package to PyPI (bump version before)
 build_pypi: clean
