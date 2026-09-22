@@ -33,6 +33,12 @@ jobs:
           uv sync --all-extras --dev
           uv pip install -e .
 
+      # Windows requires pythonnet to be installed in the venv so PyInstaller can bundle it
+      - name: Install Windows GUI dependencies
+        if: runner.os == 'Windows'
+        run: |
+          uv pip install pythonnet
+
       - name: Build App Executable (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -48,6 +54,8 @@ jobs:
             --collect-all htmltools `
             --collect-all pywebview `
             --collect-all matplotlib `
+            --collect-all pythonnet `
+            --collect-all clr_loader `
             --collect-binaries webview `
             --hidden-import="uvicorn.loops.auto" `
             --hidden-import="uvicorn.protocols.http.auto" `
@@ -55,7 +63,7 @@ jobs:
             --hidden-import="engineio.async_drivers.threading" `
             run_app.py
 
-          # Compress folder to retain executable properties
+          # Compress folder into a zip archive for distribution
           Compress-Archive -Path "dist/Digiqual" -DestinationPath "dist/Digiqual-Windows-x64.zip"
 
       - name: Build App Executable (macOS)

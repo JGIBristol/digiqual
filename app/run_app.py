@@ -1,11 +1,23 @@
-import sys
-import os
-import threading
-import socket
-import webview
 import multiprocessing
-from webview.menu import Menu, MenuAction, MenuSeparator
+import os
+import socket
+import sys
+import threading
+from pathlib import Path
+
+# --- 0. Fix for Windows PyInstaller + pythonnet / pywebview ---
+# Python.Runtime.dll requires an explicit pointer to python311.dll in frozen bundles
+if sys.platform == 'win32' and getattr(sys, 'frozen', False):
+    bundle_dir = Path(getattr(sys, '_MEIPASS', Path(sys.executable).parent))
+    # Look for python3XX.dll in the bundle directory or its _internal folder
+    py_dlls = list(bundle_dir.glob("python3*.dll")) or list((bundle_dir / "_internal").glob("python3*.dll"))
+    if py_dlls:
+        os.environ["PYTHONNET_PYDLL"] = str(py_dlls[0].resolve())
+
+import webview
 from shiny import run_app
+from webview.menu import Menu, MenuAction, MenuSeparator
+
 from app import app
 
 # --- 1. Set Working Directory ---
@@ -60,17 +72,15 @@ def start_server():
     run_app(app, port=SELECTED_PORT, host=HOST, launch_browser=False, reload=False)
 
 if __name__ == '__main__':
-    # 1. Standard PyInstaller intercept for workers
+    # Standard PyInstaller intercept for workers
     multiprocessing.freeze_support()
 
-    # 2. THE ULTIMATE FAILSAFE: Environment Variable Inheritance
-    # If a process sees this flag already exists, it knows it is a child and skips the GUI!
+    # The failsafe: prevent child processes from spawning secondary GUIs
     if os.environ.get('DIGIQUAL_IS_SPAWNED') == '1':
-        pass # We are a stray background process. Do nothing and let it quietly exit.
+        pass
     else:
-        # We are the true main process! Set the flag for any future children.
         os.environ['DIGIQUAL_IS_SPAWNED'] = '1'
-        
+
         t = threading.Thread(target=start_server)
         t.daemon = True
         t.start()
@@ -83,4 +93,6 @@ if __name__ == '__main__':
             resizable=True
         )
 
-        webview.start(private_mode=False, menu=menu_items)
+        # On Windows, prefer the native Edge Chromium (WebView2) engine
+        gui_backend = 'edgechromium' if sys.platform == 'win32' else None
+        webview.start(gui=gui_backend, private_mode=False, menu=menu_items)
