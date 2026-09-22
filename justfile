@@ -81,6 +81,12 @@ build_app: clean
     @echo "Build complete. App is located at app/dist/Digiqual.app"
 
 
+# Triggers the cross-platform GitHub Action workflow to build Windows & Mac app executables
+trigger_build:
+    gh workflow run build_app.yml
+    @echo "🚀 Cross-platform app build workflow triggered on GitHub Actions!"
+    @echo "Run 'gh run list --workflow=build_app.yml' or check GitHub UI to monitor progress."
+
 # Uploads the package to PyPI (bump version before)
 build_pypi: clean
     # uv publish takes everything in your custom package/ directory
@@ -108,7 +114,7 @@ cls: clean
 
 # Removes all generated artifacts to keep the workspace pristine
 clean:
-    rm -rf _site/ api_reference/ .pytest_cache/ .ruff_cache/ .quarto objects.json _sidebar.yml docs/*.csv **/*.spec *.csv *.egg-info build/ dist/ src/*.egg-info src/digiqual/*.so src/digiqual/*.pyd src/digiqual/*.dylib
+    rm -rf _site/ api_reference/ .pytest_cache/ .ruff_cache/ .quarto objects.json _sidebar.yml docs/*.csv **/*.spec *.csv *.egg-info build/ dist/ app/build/ app/dist/ *.zip src/*.egg-info src/digiqual/*.so src/digiqual/*.pyd src/digiqual/*.dylib
     find . -type d -name "__pycache__" -exec rm -rf {} +
 
 

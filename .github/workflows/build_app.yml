@@ -1,0 +1,91 @@
+name: Build App Executables
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (${{ matrix.artifact_name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact_name: Digiqual-Windows-x64
+            zip_name: Digiqual-Windows-x64.zip
+          - os: macos-latest
+            artifact_name: Digiqual-macOS-arm64
+            zip_name: Digiqual-macOS-arm64.zip
+          - os: macos-13
+            artifact_name: Digiqual-macOS-x86_64
+            zip_name: Digiqual-macOS-x86_64.zip
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python & uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+          enable-cache: true
+
+      - name: Install Dependencies
+        run: |
+          uv sync --all-extras --dev
+          uv pip install -e .
+
+      - name: Build App Executable (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cd app
+          uv run pyinstaller --name "Digiqual" `
+            --noconfirm `
+            --windowed `
+            --collect-all digiqual `
+            --collect-all shiny `
+            --collect-all faicons `
+            --collect-all shinyswatch `
+            --collect-all htmltools `
+            --collect-all pywebview `
+            --collect-all matplotlib `
+            --collect-binaries webview `
+            --hidden-import="uvicorn.loops.auto" `
+            --hidden-import="uvicorn.protocols.http.auto" `
+            --hidden-import="uvicorn.lifespan.on" `
+            --hidden-import="engineio.async_drivers.threading" `
+            run_app.py
+          cd dist
+          Compress-Archive -Path "Digiqual" -DestinationPath "../../${{ matrix.zip_name }}"
+
+      - name: Build App Executable (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cd app
+          uv run pyinstaller --name "Digiqual" \
+            --noconfirm \
+            --windowed \
+            --collect-all digiqual \
+            --collect-all shiny \
+            --collect-all faicons \
+            --collect-all shinyswatch \
+            --collect-all htmltools \
+            --collect-all pywebview \
+            --collect-all matplotlib \
+            --collect-binaries webview \
+            --hidden-import="uvicorn.loops.auto" \
+            --hidden-import="uvicorn.protocols.http.auto" \
+            --hidden-import="uvicorn.lifespan.on" \
+            --hidden-import="engineio.async_drivers.threading" \
+            run_app.py
+          cd dist
+          zip -r "../../${{ matrix.zip_name }}" Digiqual.app
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.zip_name }}
+          retention-days: 90
