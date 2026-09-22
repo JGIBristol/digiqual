@@ -1,98 +1,160 @@
+import logging
 import multiprocessing
 import os
 import socket
+import subprocess
 import sys
 import threading
+import time
+import webbrowser
 from pathlib import Path
 
 # --- 0. Fix for Windows PyInstaller + pythonnet / pywebview ---
-# Python.Runtime.dll requires an explicit pointer to python311.dll in frozen bundles
-if sys.platform == 'win32' and getattr(sys, 'frozen', False):
-    bundle_dir = Path(getattr(sys, '_MEIPASS', Path(sys.executable).parent))
-    # Look for python3XX.dll in the bundle directory or its _internal folder
-    py_dlls = list(bundle_dir.glob("python3*.dll")) or list((bundle_dir / "_internal").glob("python3*.dll"))
+# Ensure Python.Runtime.dll points to the packaged Python runtime DLL
+if sys.platform == "win32" and getattr(sys, "frozen", False):
+    bundle_dir = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+    py_dlls = list(bundle_dir.glob("python3*.dll")) or list(
+        (bundle_dir / "_internal").glob("python3*.dll")
+    )
     if py_dlls:
         os.environ["PYTHONNET_PYDLL"] = str(py_dlls[0].resolve())
 
-import webview
 from shiny import run_app
-from webview.menu import Menu, MenuAction, MenuSeparator
 
 from app import app
 
+logger = logging.getLogger(__name__)
+
 # --- 1. Set Working Directory ---
-if getattr(sys, 'frozen', False):
+if getattr(sys, "frozen", False):
     os.chdir(sys._MEIPASS)
     sys.path.insert(0, sys._MEIPASS)
 
+
 # --- 2. Port Helper ---
-def get_free_port():
+def get_free_port() -> int:
+    """Finds an available local TCP port dynamically."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(('127.0.0.1', 0))
+    sock.bind(("127.0.0.1", 0))
     port = sock.getsockname()[1]
     sock.close()
     return port
 
-SELECTED_PORT = get_free_port()
-HOST = '127.0.0.1'
 
-# Dev mode pathing
-if not getattr(sys, 'frozen', False):
+SELECTED_PORT = get_free_port()
+HOST = "127.0.0.1"
+APP_URL = f"http://{HOST}:{SELECTED_PORT}"
+
+# Development mode path resolution
+if not getattr(sys, "frozen", False):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     sys.path.insert(0, os.path.join(base_dir, "..", "src"))
 
-# --- 3. Enable Native Downloads ---
-webview.settings['ALLOW_DOWNLOADS'] = True
 
-# --- 4. Menu Bar Actions ---
-def show_about():
-    """Triggers an alert box with version info inside the app."""
-    if webview.windows:
-        webview.windows[0].evaluate_js(
-            'alert("DigiQual\\nVersion 0.25.1\\nStatistical Toolkit for Reliability Assessment in NDT");'
-        )
+# --- 3. Background Shiny Server ---
+def start_server() -> None:
+    """Runs the Shiny application server."""
+    run_app(
+        app, port=SELECTED_PORT, host=HOST, launch_browser=False, reload=False
+    )
 
-def open_documentation():
-    """Opens the Quarto docs in the user's default web browser."""
-    if webview.windows:
-        webview.windows[0].evaluate_js(
-            'window.open("https://jgibristol.github.io/digiqual/", "_blank");'
-        )
 
-menu_items = [
-    Menu('Help', [
-        MenuAction('View Documentation', open_documentation),
-        MenuSeparator(),
-        MenuAction('About DigiQual', show_about)
-    ])
-]
+# --- 4. Fallback Desktop Window for Windows ---
+def launch_fallback_window(url: str) -> None:
+    """Launches Microsoft Edge in dedicated '--app' mode.
+
+    Provides a clean standalone window without tabs or an address bar,
+    completely bypassing .NET/pythonnet constraints.
+    """
+    edge_paths = [
+        os.path.expandvars(
+            r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
+        ),
+        os.path.expandvars(
+            r"%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"
+        ),
+    ]
+
+    for edge_exe in edge_paths:
+        if os.path.exists(edge_exe):
+            try:
+                proc = subprocess.Popen([edge_exe, f"--app={url}"])
+                proc.wait()
+                return
+            except (OSError, subprocess.SubprocessError) as exc:
+                logger.debug(
+                    "Unable to launch Edge from %s: %s. Trying next option.",
+                    edge_exe,
+                    exc,
+                )
+
+    # If Edge cannot be launched, open the system default browser
+    webbrowser.open(url)
+    while True:
+        time.sleep(1)
+
 
 # --- 5. Application Startup ---
-def start_server():
-    run_app(app, port=SELECTED_PORT, host=HOST, launch_browser=False, reload=False)
-
-if __name__ == '__main__':
-    # Standard PyInstaller intercept for workers
+if __name__ == "__main__":
     multiprocessing.freeze_support()
 
-    # The failsafe: prevent child processes from spawning secondary GUIs
-    if os.environ.get('DIGIQUAL_IS_SPAWNED') == '1':
+    if os.environ.get("DIGIQUAL_IS_SPAWNED") == "1":
         pass
     else:
-        os.environ['DIGIQUAL_IS_SPAWNED'] = '1'
+        os.environ["DIGIQUAL_IS_SPAWNED"] = "1"
 
+        # Start the Shiny server on a background daemon thread
         t = threading.Thread(target=start_server)
         t.daemon = True
         t.start()
 
-        window = webview.create_window(
-            'DigiQual',
-            f'http://{HOST}:{SELECTED_PORT}',
-            width=1200,
-            height=800,
-            resizable=True
-        )
+        # Attempt to launch the webview window
+        try:
+            import webview
+            from webview.menu import Menu, MenuAction, MenuSeparator
 
-        # On Windows, prefer the native Edge Chromium (WebView2) engine
-        gui_backend = 'edgechromium' if sys.platform == 'win32' else None
-        webview.start(gui=gui_backend, private_mode=False, menu=menu_items)
+            webview.settings["ALLOW_DOWNLOADS"] = True
+
+            def show_about() -> None:
+                if webview.windows:
+                    webview.windows[0].evaluate_js(
+                        'alert("DigiQual\\nVersion 0.25.1\\nStatistical Toolkit for Reliability Assessment in NDT");'
+                    )
+
+            def open_documentation() -> None:
+                if webview.windows:
+                    webview.windows[0].evaluate_js(
+                        'window.open("https://jgibristol.github.io/digiqual/", "_blank");'
+                    )
+
+            menu_items = [
+                Menu(
+                    "Help",
+                    [
+                        MenuAction(
+                            "View Documentation", open_documentation
+                        ),
+                        MenuSeparator(),
+                        MenuAction("About DigiQual", show_about),
+                    ],
+                )
+            ]
+
+            window = webview.create_window(
+                "DigiQual", APP_URL, width=1200, height=800, resizable=True
+            )
+
+            gui_backend = "edgechromium" if sys.platform == "win32" else None
+            webview.start(gui=gui_backend, private_mode=False, menu=menu_items)
+
+        except (ImportError, RuntimeError, OSError) as exc:
+            # If pywebview fails (e.g., .NET or WebView2 initialization blocked),
+            # fall back to Edge app mode on Windows or re-raise on other platforms
+            if sys.platform == "win32":
+                logger.warning(
+                    "Pywebview failed (%s). Falling back to Edge app window.",
+                    exc,
+                )
+                launch_fallback_window(APP_URL)
+            else:
+                raise
