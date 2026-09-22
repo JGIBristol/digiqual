@@ -31,7 +31,7 @@ ext_modules = [
 
 setup(
     name="digiqual",
-    version="0.25.0",
+    version="0.25.1",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     ext_modules=ext_modules,
