@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -12,10 +12,13 @@
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
 */
-code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -76,10 +79,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-831061df6c70ccdfa1370a25a7cb3c32.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2d657960e500577e6d3bd4c9cdeced8c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -109,7 +112,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -345,7 +348,6 @@ window.Quarto = {
 <li><p><strong>Matrix-Based Leave-One-Out Cross-Validation (<span class="math inline">\(MSE_{\text{LOO}}\)</span>):</strong> Fast <span class="math inline">\(O(N^3)\)</span> matrix inverse <span class="math inline">\(B = S^{-1}\)</span> for exact LOO predictions <span class="math inline">\(\mu_{\hat{Y}_{-i}}\)</span> and variances <span class="math inline">\(\sigma_{\hat{Y}_{-i}}^2\)</span>.</p></li>
 <li><p><strong>Standardized LOO Residual Outlier Calibration (Rank 4):</strong> Automated detection of extreme observation errors <span class="math inline">\(|e_i| &gt; 3\)</span> and prior variance scaling (<span class="math inline">\(\hat{\sigma}^2 \leftarrow \gamma \cdot \hat{\sigma}^2\)</span>) to guarantee conservative 95% worst-case bounds.</p></li>
 </ol>
-<hr>
 </section>
 <section id="covariance-kernel-selection-anisotropic-fitting" class="level2">
 <h2 class="anchored" data-anchor-id="covariance-kernel-selection-anisotropic-fitting">1. Covariance Kernel Selection &amp; Anisotropic Fitting</h2>
@@ -365,7 +367,6 @@ window.Quarto = {
 <h3 class="anchored" data-anchor-id="selection-metric-mse_textloo">Selection Metric (<span class="math inline">\(MSE_{\text{LOO}}\)</span>)</h3>
 <p>Each kernel family is evaluated via Leave-One-Out Cross-Validation. The kernel candidate achieving the lowest normalized LOO Mean Squared Error is automatically selected:</p>
 <p><span class="math display">\[ MSE_{\text{LOO}} = \frac{1}{m} \sum_{i=1}^m \frac{\left(y_i - \mu_{\hat{Y}_{-i}}\right)^2}{\text{var}(y)} \]</span></p>
-<hr>
 </section>
 </section>
 <section id="loo-residuals-outlier-calibration" class="level2">
@@ -387,7 +388,6 @@ window.Quarto = {
 <p>Standardized residuals are expected to follow a Standard Normal distribution <span class="math inline">\(\mathcal{N}(0, 1)\)</span>. Residuals outside <span class="math inline">\([-3, 3]\)</span> indicate localized surrogate mismatch or extreme scatter.</p>
 <p>If <span class="math inline">\(\max |e_i| &gt; 3\)</span>, <code>digiqual</code> calculates a conservative variance scaling factor: <span class="math display">\[ \gamma = \max\left(1.0, \frac{\max |e_i|}{3.0}\right) \]</span></p>
 <p>During noise estimation in <a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>fit_variance_model</code></a>, raw residuals are scaled by <span class="math inline">\(\sqrt{\gamma}\)</span>, inflating local prediction variance <span class="math inline">\(\hat{\sigma}^2(x)\)</span> by factor <span class="math inline">\(\gamma\)</span>. This guarantees mathematically reliable 95% worst-case confidence bounds even in the presence of extreme outliers.</p>
-<hr>
 </section>
 </section>
 <section id="python-usage-example" class="level2">
@@ -433,7 +433,7 @@ window.Quarto = {
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    best_kernel_name<span class="op">=</span>gpr.best_kernel_name_,</span>
 <span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div id="cell-fig-kriging-results" class="cell quarto-layout-panel" data-layout-ncol="1" data-execution_count="1">
+<div id="cell-fig-kriging-results" class="cell quarto-layout-panel" data-execution_count="1" data-layout-ncol="1">
 <div class="quarto-layout-row">
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
 <pre><code>Selected Kriging Kernel: RBF (Gaussian)
