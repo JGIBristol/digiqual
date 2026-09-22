@@ -110,7 +110,7 @@ jobs:
 
           # 5. Launch the process and verify health
           Write-Host "🚀 Launching Digiqual.exe to test process startup and stability..."
-          $proc = Start-Process -FilePath$exePath -PassThru
+          $proc = Start-Process -FilePath $exePath -PassThru
 
           # Wait 8 seconds to allow the process, .NET loader, and server thread to spin up
           Start-Sleep -Seconds 8
