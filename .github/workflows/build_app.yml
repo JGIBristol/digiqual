@@ -13,10 +13,10 @@ jobs:
         include:
           - os: windows-latest
             artifact_name: Digiqual-Windows-x64
-            zip_name: Digiqual-Windows-x64.zip
+            build_path: app/dist/Digiqual
           - os: macos-latest
             artifact_name: Digiqual-macOS
-            zip_name: Digiqual-macOS.zip
+            build_path: app/dist/Digiqual.app
 
     steps:
       - name: Checkout Code
@@ -54,8 +54,6 @@ jobs:
             --hidden-import="uvicorn.lifespan.on" `
             --hidden-import="engineio.async_drivers.threading" `
             run_app.py
-          cd dist
-          Compress-Archive -Path "Digiqual" -DestinationPath "../../${{ matrix.zip_name }}"
 
       - name: Build App Executable (macOS)
         if: runner.os == 'macOS'
@@ -77,12 +75,10 @@ jobs:
             --hidden-import="uvicorn.lifespan.on" \
             --hidden-import="engineio.async_drivers.threading" \
             run_app.py
-          cd dist
-          zip -r "../../${{ matrix.zip_name }}" Digiqual.app
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.zip_name }}
+          path: ${{ matrix.build_path }}
           retention-days: 90
