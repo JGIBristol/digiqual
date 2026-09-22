@@ -60,6 +60,10 @@ linux-gui = [
 markers = [
     "stress: marks tests as stress tests (deselect with '-m \"not stress\"')",
 ]
+filterwarnings = [
+    "ignore:invalid value encountered in sqrt:RuntimeWarning:scipy.stats._continuous_distns",
+    "ignore:The iteration is not making good progress.*:RuntimeWarning:scipy.stats._continuous_distns",
+]
 
 
 [project.urls]
