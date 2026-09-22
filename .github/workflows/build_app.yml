@@ -33,18 +33,13 @@ jobs:
           uv sync --all-extras --dev
           uv pip install -e .
 
-      # Windows requires pythonnet installed in the build environment for PyInstaller to bundle it
-      - name: Install Windows GUI dependencies
-        if: runner.os == 'Windows'
-        run: |
-          uv pip install pythonnet
-
       # Windows Build Step
       - name: Build App Executable (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           cd app
+          uv pip install pythonnet
           uv run pyinstaller --name "Digiqual" `
             --noconfirm `
             --windowed `
@@ -64,27 +59,72 @@ jobs:
             --hidden-import="engineio.async_drivers.threading" `
             run_app.py
 
-      # Verification step: runs on the Windows virtual machine to confirm no missing DLL errors
-      - name: Verify Windows Executable Startup
+          # Create .NET config to allow loading assemblies from OneDrive / remote directories
+          $configContent = @"
+          <configuration>
+            <runtime>
+              <loadFromRemoteSources enabled="true"/>
+            </runtime>
+          </configuration>
+          "@
+          Set-Content -Path "dist/Digiqual/Digiqual.exe.config" -Value $configContent
+
+      # Comprehensive Windows Integrity & Smoke Test
+      - name: Validate Windows Build Integrity & Startup
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Write-Host "Verifying Digiqual.exe launches without fatal DLL/runtime exceptions..."
-          # Start the process in the background
-          $proc = Start-Process -FilePath "app/dist/Digiqual/Digiqual.exe" -PassThru
+          Write-Host "🔍 Running Windows Build Integrity Checks..."
 
-          # Wait 8 seconds to allow .NET, pythonnet, and pywebview initialization
+          # 1. Check for Primary Executable
+          $exePath = "app/dist/Digiqual/Digiqual.exe"
+          if (-not (Test-Path $exePath)) {
+              Write-Error "❌ Missing primary executable: $exePath"
+              exit 1
+          }
+          Write-Host "  ✔ Found Digiqual.exe"
+
+          # 2. Check for App Config file
+          $configPath = "app/dist/Digiqual/Digiqual.exe.config"
+          if (-not (Test-Path $configPath)) {
+              Write-Error "❌ Missing configuration file: $configPath"
+              exit 1
+          }
+          Write-Host "  ✔ Found Digiqual.exe.config"
+
+          # 3. Check for core Python DLL
+          $pyDll = Get-ChildItem -Path "app/dist/Digiqual" -Recurse -Filter "python3*.dll" | Select-Object -First 1
+          if (-not $pyDll) {
+              Write-Error "❌ Could not find python3*.dll inside build bundle!"
+              exit 1
+          }
+          Write-Host "  ✔ Found Python DLL at: $($pyDll.FullName)"
+
+          # 4. Check for pythonnet runtime library
+          $pythonnetDll = Get-ChildItem -Path "app/dist/Digiqual" -Recurse -Filter "Python.Runtime.dll" | Select-Object -First 1
+          if (-not $pythonnetDll) {
+              Write-Error "❌ Missing Python.Runtime.dll required by pythonnet!"
+              exit 1
+          }
+          Write-Host "  ✔ Found Python.Runtime.dll at: $($pythonnetDll.FullName)"
+
+          # 5. Launch the process and verify health
+          Write-Host "🚀 Launching Digiqual.exe to test process startup and stability..."
+          $proc = Start-Process -FilePath$exePath -PassThru
+
+          # Wait 8 seconds to allow the process, .NET loader, and server thread to spin up
           Start-Sleep -Seconds 8
 
-          # If the process terminated prematurely, it likely encountered the unhandled startup error
-          if ($proc.HasExited -and$proc.ExitCode -ne 0) {
-              Write-Error "Digiqual.exe crashed immediately on startup with exit code $($proc.ExitCode)!"
+          if ($proc.HasExited) {
+              Write-Error "❌ Digiqual.exe terminated prematurely with exit code $($proc.ExitCode)!"
               exit 1
           }
 
-          # Cleanly terminate the test instance
+          Write-Host "  ✔ Process stayed alive without early runtime exceptions (PID: $($proc.Id))"
+
+          # Cleanly terminate the test process
           Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
-          Write-Host "✅ Digiqual.exe successfully launched without initialization crashes."
+          Write-Host "✅ All Windows verification checks passed successfully!"
 
       # Packaging step for Windows
       - name: Compress Windows Executable
