@@ -57,10 +57,8 @@ build_package: clean
     # 4. Clean up the now-empty root dist folder
     rm -rf dist
 
-# Cleans old artifacts then creates .app file
-build_app: clean
-    # 1. Enter app folder AND run pyinstaller in one chain
-    # We use --directory to tell uv where to run
+# (Optional) Builds the .app bundle locally on Mac for quick dev testing
+build_app_local: clean
     cd app && uv run pyinstaller --name "Digiqual" \
         --noconfirm \
         --windowed \
@@ -75,15 +73,22 @@ build_app: clean
         --hidden-import="uvicorn.lifespan.on" \
         --hidden-import="engineio.async_drivers.threading" \
         run_app.py
-
-    # 2. Organize the output (PyInstaller creates dist/ inside app/ now)
-    # We just need to make sure the final .app is where you expect it
-    @echo "Build complete. App is located at app/dist/Digiqual.app"
-
+    @echo "Local macOS build complete. App located at app/dist/Digiqual.app"
 
 # Triggers the cross-platform GitHub Action workflow to build Windows & Mac app executables
 trigger_build:
-    gh workflow run build_app.yml
+    @if command -v gh >/dev/null 2>&1; then \
+        gh workflow run build_app.yml && \
+        echo "🚀 Cross-platform app build workflow triggered on GitHub Actions!" && \
+        echo "Run 'gh run list --workflow=build_app.yml' or check GitHub UI to monitor progress."; \
+    else \
+        echo "⚠️  GitHub CLI ('gh') is not installed on your system."; \
+        echo "👉 To trigger builds from your terminal, install GitHub CLI with:"; \
+        echo "     brew install gh"; \
+        echo "     gh auth login"; \
+        echo "👉 Or trigger it manually on GitHub web UI under: Actions -> Build App Executables -> Run workflow"; \
+        exit 1; \
+    fi
 
 # Uploads the package to PyPI (bump version before)
 build_pypi: clean
@@ -123,7 +128,6 @@ patch: clean
     just test_matrix
     just bump patch
     just build_package
-    just build_app
     just build_pypi
     just build_website
     just cls
@@ -133,7 +137,6 @@ minor: clean
     just test_matrix
     just bump minor
     just build_package
-    just build_app
     just build_pypi
     just build_website
     just cls
