@@ -7,7 +7,7 @@ class CustomBuildExt(build_ext):
         for ext in self.extensions:
             compiler_type = self.compiler.compiler_type
             if compiler_type == "msvc":
-                ext.extra_compile_args.extend(["/O2", "/std:c++17"])
+                ext.extra_compile_args.extend(["/O2", "/std:c++17", "/D_USE_MATH_DEFINES"])
             else:
                 ext.extra_compile_args.extend(["-O3", "-std=c++17"])
 

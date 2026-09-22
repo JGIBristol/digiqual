@@ -84,8 +84,6 @@ build_app: clean
 # Triggers the cross-platform GitHub Action workflow to build Windows & Mac app executables
 trigger_build:
     gh workflow run build_app.yml
-    @echo "🚀 Cross-platform app build workflow triggered on GitHub Actions!"
-    @echo "Run 'gh run list --workflow=build_app.yml' or check GitHub UI to monitor progress."
 
 # Uploads the package to PyPI (bump version before)
 build_pypi: clean

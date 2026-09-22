@@ -1,7 +1,14 @@
+#ifndef _USE_MATH_DEFINES
+#define _USE_MATH_DEFINES
+#endif
 #include "mc_integration.hpp"
 #include <cmath>
 #include <algorithm>
 #include <thread>
+
+#ifndef M_SQRT1_2
+#define M_SQRT1_2 0.70710678118654752440
+#endif
 
 #ifdef _OPENMP
 #include <omp.h>
