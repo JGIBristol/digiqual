@@ -15,17 +15,27 @@ test:
 
 # Runs pytest across all supported Python versions (3.11 to 3.14)
 test_matrix:
-    @for ver in 3.11 3.12 3.13 3.14; do \
-        echo "\n🚀 ======================================"; \
-        echo "🧪 Testing with Python $$ver..."; \
-        echo "========================================\n"; \
-        uv run --python $$ver --extra dev python setup.py build_ext --inplace || exit 1; \
-        uv run --python $$ver --extra dev pytest || exit 1; \
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Ensure Apple Silicon builds target macOS 11.0+ to prevent libc++ deprecation warnings
+    export MACOSX_DEPLOYMENT_TARGET="11.0"
+
+    for ver in 3.11 3.12 3.13 3.14; do
+        echo ""
+        echo "🚀 ======================================"
+        echo "🧪 Testing with Python $ver..."
+        echo "========================================"
+        echo ""
+        uv run --python "$ver" --extra dev python setup.py build_ext --inplace
+        uv run --python "$ver" --extra dev pytest
     done
-    @echo "\n🧹 Cleaning up: Reverting .venv back to Python 3.11..."
+
+    echo ""
+    echo "🧹 Cleaning up: Reverting .venv back to Python 3.11..."
     uv sync --python 3.11 --extra dev
     uv run python setup.py build_ext --inplace
-    @echo "✅ All tests passed and development environment restored!"
+    echo "✅ All tests passed and development environment restored!"
 
 # Run the app in "Browser Mode" (Best for coding/debugging)
 app_dev:
