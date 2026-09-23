@@ -2,6 +2,7 @@
 .DS_Store
 .vscode/
 todo.qmd
+.claude/
 
 # --- Python Essentials ---
 __pycache__/
@@ -29,6 +30,7 @@ _sidebar.yml
 
 app/dist/
 app/*.spec
+!app/digiqual.spec
 
 package
 

@@ -11,6 +11,28 @@ import urllib.request
 import webbrowser
 from pathlib import Path
 
+
+# --- Logging: write to a fixed, discoverable file so a crashed --windowed
+# build (no console) can still be diagnosed after the fact. ---
+def _resolve_log_path() -> Path:
+    """Picks a per-user, writable location for the app's log file."""
+    if sys.platform == "win32":
+        base = Path(os.environ.get("LOCALAPPDATA", Path.home()))
+    elif sys.platform == "darwin":
+        base = Path.home() / "Library" / "Logs"
+    else:
+        base = Path.home() / ".local" / "share"
+    log_dir = base / "Digiqual"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    return log_dir / "digiqual.log"
+
+
+logging.basicConfig(
+    filename=_resolve_log_path(),
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+
 # --- 0. Environment Fixes (Windows PyInstaller, Proxies, pythonnet) ---
 # Ensure local connections bypass any corporate/university proxy servers
 os.environ["NO_PROXY"] = "127.0.0.1,localhost"
@@ -128,7 +150,12 @@ if __name__ == "__main__":
         server_thread.start()
 
         # 2. Block until the server is actually answering requests
-        _ = wait_for_server(APP_URL, timeout=25.0)
+        server_ready = wait_for_server(APP_URL, timeout=20.0)
+        if not server_ready:
+            logger.warning(
+                "Server did not respond within timeout; opening window anyway "
+                "(it may still be starting up)."
+            )
 
         # 3. Attempt to launch the webview window
         try:
@@ -168,11 +195,9 @@ if __name__ == "__main__":
             webview.start(gui=gui_backend, private_mode=False, menu=menu_items)
 
         except (ImportError, RuntimeError, OSError) as exc:
+            logger.exception("Webview failed to start: %s", exc)
             if sys.platform == "win32":
-                logger.warning(
-                    "Pywebview failed (%s). Falling back to Edge app window.",
-                    exc,
-                )
+                logger.warning("Falling back to Edge app window.")
                 launch_fallback_window(APP_URL)
             else:
                 raise

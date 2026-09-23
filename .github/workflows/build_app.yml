@@ -37,126 +37,25 @@ jobs:
       - name: Build App Executable (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: |
-          cd app
-          uv pip install pythonnet
-          uv run pyinstaller --name "Digiqual" `
-            --noconfirm `
-            --windowed `
-            --collect-all digiqual `
-            --collect-all shiny `
-            --collect-all faicons `
-            --collect-all shinyswatch `
-            --collect-all htmltools `
-            --collect-all pywebview `
-            --collect-all matplotlib `
-            --collect-all pythonnet `
-            --collect-all clr_loader `
-            --collect-binaries webview `
-            --hidden-import="uvicorn.loops.auto" `
-            --hidden-import="uvicorn.protocols.http.auto" `
-            --hidden-import="uvicorn.lifespan.on" `
-            --hidden-import="engineio.async_drivers.threading" `
-            run_app.py
-
-          # Create .NET config to allow loading assemblies from OneDrive / remote directories
-          $configContent = @"
-          <configuration>
-            <runtime>
-              <loadFromRemoteSources enabled="true"/>
-            </runtime>
-          </configuration>
-          "@
-          Set-Content -Path "dist/Digiqual/Digiqual.exe.config" -Value $configContent
+        run: pwsh -File .github/scripts/windows/build.ps1
 
       # Comprehensive Windows Integrity, File & HTTP Startup Check
       - name: Validate Windows Build Integrity & Startup
         if: runner.os == 'Windows'
         shell: pwsh
-        run: |
-          Write-Host "🔍 1. Running Pre-Flight File Integrity Checks..."
+        run: pwsh -File .github/scripts/windows/validate.ps1
 
-          # 1. Check for Primary Executable
-          $exePath = "app/dist/Digiqual/Digiqual.exe"
-          if (-not (Test-Path $exePath)) {
-              Write-Error "❌ Missing primary executable: $exePath"
-              exit 1
-          }
-          Write-Host "  ✔ Found Digiqual.exe"
-
-          # 2. Check for App Config file
-          $configPath = "app/dist/Digiqual/Digiqual.exe.config"
-          if (-not (Test-Path $configPath)) {
-              Write-Error "❌ Missing configuration file: $configPath"
-              exit 1
-          }
-          Write-Host "  ✔ Found Digiqual.exe.config"
-
-          # 3. Check for core Python DLL
-          $pyDll = Get-ChildItem -Path "app/dist/Digiqual" -Recurse -Filter "python3*.dll" | Select-Object -First 1
-          if (-not $pyDll) {
-              Write-Error "❌ Could not find python3*.dll inside build bundle!"
-              exit 1
-          }
-          Write-Host "  ✔ Found Python DLL at: $($pyDll.FullName)"
-
-          # 4. Check for pythonnet runtime library
-          $pythonnetDll = Get-ChildItem -Path "app/dist/Digiqual" -Recurse -Filter "Python.Runtime.dll" | Select-Object -First 1
-          if (-not $pythonnetDll) {
-              Write-Error "❌ Missing Python.Runtime.dll required by pythonnet!"
-              exit 1
-          }
-          Write-Host "  ✔ Found Python.Runtime.dll at: $($pythonnetDll.FullName)"
-
-          # 5. Launch the process and verify HTTP server connectivity
-          Write-Host "🚀 2. Launching Digiqual.exe to test HTTP server and network connectivity..."
-          $proc = Start-Process -FilePath $exePath -PassThru
-
-          $serverOnline =$false
-          $maxAttempts = 15$attempt = 0
-          $boundPort =$null
-
-          while ($attempt -lt $maxAttempts -and -not$serverOnline) {
-              Start-Sleep -Seconds 2
-              $attempt++
-
-              # Ensure process has not crashed
-              if ($proc.HasExited) {
-                  Write-Error "❌ Digiqual.exe exited prematurely with exit code $($proc.ExitCode)!"
-                  exit 1
-              }
-
-              # Detect the TCP port opened by the background process
-              $connections = Get-NetTCPConnection -OwningProcess$proc.Id -State Listen -ErrorAction SilentlyContinue
-              if ($connections) {
-                  $boundPort =$connections[0].LocalPort
-                  Write-Host "  Detected listening port: $boundPort (Attempt $attempt/$maxAttempts)"
-
-                  try {
-                      # Test local loopback connection while bypassing system proxy settings
-                      $response = Invoke-WebRequest -Uri "http://127.0.0.1:$boundPort" -NoProxy -UseBasicParsing -TimeoutSec 3
-                      if ($response.StatusCode -eq 200) {
-                          Write-Host "  ✔ HTTP 200 OK received from http://127.0.0.1:$boundPort"
-                          $serverOnline =$true
-                          break
-                      }
-                  } catch {
-                      Write-Host "  Waiting for HTTP response on port $boundPort... ($($_.Exception.Message))"
-                  }
-              } else {
-                  Write-Host "  Waiting for Digiqual.exe to bind a TCP port... (Attempt $attempt/$maxAttempts)"
-              }
-          }
-
-          # Cleanly terminate the background test process
-          Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
-
-          if (-not $serverOnline) {
-              Write-Error "❌ Failed to connect to the internal Shiny server within timeout! Network or proxy error detected."
-              exit 1
-          }
-
-          Write-Host "✅ All Windows verification and HTTP health checks passed successfully!"
+      # Upload startup logs regardless of outcome, so failures are debuggable from the run
+      - name: Upload Windows Startup Logs
+        if: always() && runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Digiqual-Windows-startup-logs
+          path: |
+            app/dist/digiqual-stdout.log
+            app/dist/digiqual-stderr.log
+          retention-days: 14
+          if-no-files-found: ignore
 
       # Packaging step for Windows
       - name: Compress Windows Executable
@@ -170,22 +69,10 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           cd app
-          uv run pyinstaller --name "Digiqual" \
-            --noconfirm \
-            --windowed \
-            --collect-all digiqual \
-            --collect-all shiny \
-            --collect-all faicons \
-            --collect-all shinyswatch \
-            --collect-all htmltools \
-            --collect-all pywebview \
-            --collect-all matplotlib \
-            --collect-binaries webview \
-            --hidden-import="uvicorn.loops.auto" \
-            --hidden-import="uvicorn.protocols.http.auto" \
-            --hidden-import="uvicorn.lifespan.on" \
-            --hidden-import="engineio.async_drivers.threading" \
-            run_app.py
+          # PyInstaller flags live in digiqual.spec, shared with the Windows
+          # build, so the two platforms' bundling configuration can't
+          # silently drift apart.
+          uv run pyinstaller digiqual.spec --noconfirm
 
           ditto -c -k --sequesterRsrc --keepParent "dist/Digiqual.app" "dist/Digiqual-macOS.zip"
 
