@@ -6,11 +6,17 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.error
+import urllib.request
 import webbrowser
 from pathlib import Path
 
-# --- 0. Fix for Windows PyInstaller + pythonnet / pywebview ---
-# Ensure Python.Runtime.dll points to the packaged Python runtime DLL
+# --- 0. Environment Fixes (Windows PyInstaller, Proxies, pythonnet) ---
+# Ensure local connections bypass any corporate/university proxy servers
+os.environ["NO_PROXY"] = "127.0.0.1,localhost"
+os.environ["no_proxy"] = "127.0.0.1,localhost"
+
+# Python.Runtime.dll requires an explicit pointer to python311.dll in frozen bundles
 if sys.platform == "win32" and getattr(sys, "frozen", False):
     bundle_dir = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
     py_dlls = list(bundle_dir.glob("python3*.dll")) or list(
@@ -59,13 +65,27 @@ def start_server() -> None:
     )
 
 
+def wait_for_server(url: str, timeout: float = 20.0) -> bool:
+    """Polls the server URL until it responds or the timeout is reached."""
+    start_time = time.time()
+    # Configure an opener that explicitly ignores proxy settings
+    proxy_handler = urllib.request.ProxyHandler({})
+    opener = urllib.request.build_opener(proxy_handler)
+
+    while time.time() - start_time < timeout:
+        try:
+            with opener.open(url, timeout=1.0) as response:
+                if response.status in (200, 302, 404):
+                    return True
+        except (urllib.error.URLError, TimeoutError, OSError):
+            # Server is still starting up; sleep briefly and retry
+            time.sleep(0.3)
+    return False
+
+
 # --- 4. Fallback Desktop Window for Windows ---
 def launch_fallback_window(url: str) -> None:
-    """Launches Microsoft Edge in dedicated '--app' mode.
-
-    Provides a clean standalone window without tabs or an address bar,
-    completely bypassing .NET/pythonnet constraints.
-    """
+    """Launches Microsoft Edge in dedicated '--app' mode without tabs/URL bar."""
     edge_paths = [
         os.path.expandvars(
             r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
@@ -88,7 +108,6 @@ def launch_fallback_window(url: str) -> None:
                     exc,
                 )
 
-    # If Edge cannot be launched, open the system default browser
     webbrowser.open(url)
     while True:
         time.sleep(1)
@@ -103,12 +122,15 @@ if __name__ == "__main__":
     else:
         os.environ["DIGIQUAL_IS_SPAWNED"] = "1"
 
-        # Start the Shiny server on a background daemon thread
-        t = threading.Thread(target=start_server)
-        t.daemon = True
-        t.start()
+        # 1. Start the Shiny server in a background daemon thread
+        server_thread = threading.Thread(target=start_server)
+        server_thread.daemon = True
+        server_thread.start()
 
-        # Attempt to launch the webview window
+        # 2. Block until the server is actually answering requests
+        _ = wait_for_server(APP_URL, timeout=25.0)
+
+        # 3. Attempt to launch the webview window
         try:
             import webview
             from webview.menu import Menu, MenuAction, MenuSeparator
@@ -131,9 +153,7 @@ if __name__ == "__main__":
                 Menu(
                     "Help",
                     [
-                        MenuAction(
-                            "View Documentation", open_documentation
-                        ),
+                        MenuAction("View Documentation", open_documentation),
                         MenuSeparator(),
                         MenuAction("About DigiQual", show_about),
                     ],
@@ -148,8 +168,6 @@ if __name__ == "__main__":
             webview.start(gui=gui_backend, private_mode=False, menu=menu_items)
 
         except (ImportError, RuntimeError, OSError) as exc:
-            # If pywebview fails (e.g., .NET or WebView2 initialization blocked),
-            # fall back to Edge app mode on Windows or re-raise on other platforms
             if sys.platform == "win32":
                 logger.warning(
                     "Pywebview failed (%s). Falling back to Edge app window.",

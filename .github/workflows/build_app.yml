@@ -69,12 +69,12 @@ jobs:
           "@
           Set-Content -Path "dist/Digiqual/Digiqual.exe.config" -Value $configContent
 
-      # Comprehensive Windows Integrity & Smoke Test
+      # Comprehensive Windows Integrity, File & HTTP Startup Check
       - name: Validate Windows Build Integrity & Startup
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Write-Host "🔍 Running Windows Build Integrity Checks..."
+          Write-Host "🔍 1. Running Pre-Flight File Integrity Checks..."
 
           # 1. Check for Primary Executable
           $exePath = "app/dist/Digiqual/Digiqual.exe"
@@ -108,23 +108,55 @@ jobs:
           }
           Write-Host "  ✔ Found Python.Runtime.dll at: $($pythonnetDll.FullName)"
 
-          # 5. Launch the process and verify health
-          Write-Host "🚀 Launching Digiqual.exe to test process startup and stability..."
-          $proc = Start-Process -FilePath $exePath -PassThru
+          # 5. Launch the process and verify HTTP server connectivity
+          Write-Host "🚀 2. Launching Digiqual.exe to test HTTP server and network connectivity..."
+          $proc = Start-Process -FilePath$exePath -PassThru
 
-          # Wait 8 seconds to allow the process, .NET loader, and server thread to spin up
-          Start-Sleep -Seconds 8
+          $serverOnline =$false
+          $maxAttempts = 15$attempt = 0
+          $boundPort =$null
 
-          if ($proc.HasExited) {
-              Write-Error "❌ Digiqual.exe terminated prematurely with exit code $($proc.ExitCode)!"
+          while ($attempt -lt $maxAttempts -and -not$serverOnline) {
+              Start-Sleep -Seconds 2
+              $attempt++
+
+              # Ensure process has not crashed
+              if ($proc.HasExited) {
+                  Write-Error "❌ Digiqual.exe exited prematurely with exit code $($proc.ExitCode)!"
+                  exit 1
+              }
+
+              # Detect the TCP port opened by the background process
+              $connections = Get-NetTCPConnection -OwningProcess$proc.Id -State Listen -ErrorAction SilentlyContinue
+              if ($connections) {
+                  $boundPort =$connections[0].LocalPort
+                  Write-Host "  Detected listening port: $boundPort (Attempt $attempt/$maxAttempts)"
+
+                  try {
+                      # Test local loopback connection while bypassing system proxy settings
+                      $response = Invoke-WebRequest -Uri "http://127.0.0.1:$boundPort" -NoProxy -UseBasicParsing -TimeoutSec 3
+                      if ($response.StatusCode -eq 200) {
+                          Write-Host "  ✔ HTTP 200 OK received from http://127.0.0.1:$boundPort"
+                          $serverOnline =$true
+                          break
+                      }
+                  } catch {
+                      Write-Host "  Waiting for HTTP response on port $boundPort... ($($_.Exception.Message))"
+                  }
+              } else {
+                  Write-Host "  Waiting for Digiqual.exe to bind a TCP port... (Attempt $attempt/$maxAttempts)"
+              }
+          }
+
+          # Cleanly terminate the background test process
+          Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+
+          if (-not $serverOnline) {
+              Write-Error "❌ Failed to connect to the internal Shiny server within timeout! Network or proxy error detected."
               exit 1
           }
 
-          Write-Host "  ✔ Process stayed alive without early runtime exceptions (PID: $($proc.Id))"
-
-          # Cleanly terminate the test process
-          Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
-          Write-Host "✅ All Windows verification checks passed successfully!"
+          Write-Host "✅ All Windows verification and HTTP health checks passed successfully!"
 
       # Packaging step for Windows
       - name: Compress Windows Executable
