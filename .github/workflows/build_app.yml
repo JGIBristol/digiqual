@@ -110,7 +110,7 @@ jobs:
 
           # 5. Launch the process and verify HTTP server connectivity
           Write-Host "🚀 2. Launching Digiqual.exe to test HTTP server and network connectivity..."
-          $proc = Start-Process -FilePath$exePath -PassThru
+          $proc = Start-Process -FilePath $exePath -PassThru
 
           $serverOnline =$false
           $maxAttempts = 15$attempt = 0
