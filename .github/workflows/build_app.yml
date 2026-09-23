@@ -113,7 +113,8 @@ jobs:
           $proc = Start-Process -FilePath $exePath -PassThru
 
           $serverOnline =$false
-          $maxAttempts = 15$attempt = 0
+          $maxAttempts = 15
+          $attempt = 0
           $boundPort =$null
 
           while ($attempt -lt $maxAttempts -and -not$serverOnline) {
