@@ -131,34 +131,62 @@ clean:
 
 # --- COMBO ---
 
-# Patch Combo function that cleans, tests, bumps a patch version and publishes docs.
-# Does NOT publish to PyPI -- commit, push, then tag to trigger build_wheels.yml.
+# Patch Combo: cleans, tests, bumps a patch version, publishes docs, then commits,
+# pushes and tags -- the tag push triggers build_wheels.yml, which builds
+# per-platform wheels in CI and publishes them to PyPI. Does NOT create a
+# GitHub Release; run `gh release create vX.Y.Z --generate-notes` yourself once
+# the Actions run is green.
 patch: clean
     #!/usr/bin/env bash
     set -euo pipefail
+    just _preflight_release
     just test_matrix
     just bump patch
     just build_website
     just cls
-    NEW_VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
-    echo ""
-    echo "Version bumped to ${NEW_VERSION}. Now:"
-    echo "  git add -A && git commit -m \"Bump to v${NEW_VERSION}\" && git push"
-    echo "  git tag v${NEW_VERSION} && git push origin v${NEW_VERSION}"
-    echo "The tag push triggers build_wheels.yml, which builds per-platform wheels and publishes to PyPI."
+    just _commit_tag_push
 
-# Minor Combo function that cleans, tests, bumps a minor version and publishes docs.
-# Does NOT publish to PyPI -- commit, push, then tag to trigger build_wheels.yml.
+# Minor Combo: cleans, tests, bumps a minor version, publishes docs, then commits,
+# pushes and tags -- the tag push triggers build_wheels.yml, which builds
+# per-platform wheels in CI and publishes them to PyPI. Does NOT create a
+# GitHub Release; run `gh release create vX.Y.Z --generate-notes` yourself once
+# the Actions run is green.
 minor: clean
     #!/usr/bin/env bash
     set -euo pipefail
+    just _preflight_release
     just test_matrix
     just bump minor
     just build_website
     just cls
+    just _commit_tag_push
+
+# Internal: refuse to start a release combo from a dirty tree or off `main`.
+_preflight_release:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "error: working tree is not clean -- commit or stash first." >&2
+        exit 1
+    fi
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    if [ "$branch" != "main" ]; then
+        echo "error: release combos must run from 'main' (currently on '$branch')." >&2
+        exit 1
+    fi
+
+# Internal: commits the version-bump files, pushes, then tags and pushes the tag.
+_commit_tag_push:
+    #!/usr/bin/env bash
+    set -euo pipefail
     NEW_VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+    git add pyproject.toml uv.lock README.md index.qmd src/digiqual/__init__.py docs/install.qmd app/app.py app/run_app.py setup.py
+    git commit -m "Bump to v${NEW_VERSION}"
+    git push
+    git tag "v${NEW_VERSION}"
+    git push origin "v${NEW_VERSION}"
     echo ""
-    echo "Version bumped to ${NEW_VERSION}. Now:"
-    echo "  git add -A && git commit -m \"Bump to v${NEW_VERSION}\" && git push"
-    echo "  git tag v${NEW_VERSION} && git push origin v${NEW_VERSION}"
-    echo "The tag push triggers build_wheels.yml, which builds per-platform wheels and publishes to PyPI."
+    echo "Pushed commit + tag v${NEW_VERSION}. build_wheels.yml is now building wheels and will publish to PyPI:"
+    echo "  https://github.com/JGIBristol/digiqual/actions"
+    echo "Once that run is green, create the GitHub Release yourself with:"
+    echo "  gh release create v${NEW_VERSION} --generate-notes"

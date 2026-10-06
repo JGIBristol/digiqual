@@ -19,9 +19,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # macos-13 is Intel, macos-14 is Apple Silicon; building natively on
-        # each avoids cross-compiling the C++ extension.
-        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
+        # macos-15-intel is Intel x64, macos-15 is Apple Silicon arm64; building
+        # natively on each avoids cross-compiling the C++ extension. (macos-13
+        # no longer exists and macos-14 is deprecated as of late 2026 -- check
+        # https://github.com/actions/runner-images for current labels before
+        # reusing this matrix much later.)
+        os: [ubuntu-latest, windows-latest, macos-15-intel, macos-15]
 
     steps:
       - name: Checkout Code
