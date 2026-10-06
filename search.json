@@ -109,7 +109,7 @@
     "href": "docs/install.html",
     "title": "Installation",
     "section": "",
-    "text": "You can install digiqual directly from PyPI (or GitHub).\n\n\nIf you are managing a project with uv, add digiqual as a dependency:\n\nTo install the latest stable release (v0.26.1):\n\nuv add \"digiqual\"\n\nTo install the latest development version (main branch from github):\n\nuv add \"digiqual @ git+https://github.com/JGIBristol/digiqual.git\"\nIf you just want to install it into a virtual environment without modifying a project file (e.g., for a quick script), use pip interface:\nuv pip install digiqual\n\n\n\nTo install the latest stable release (v0.26.1):\npip install digiqual\nTo install the latest development version:\npip install \"git+https://github.com/JGIBristol/digiqual.git\"",
+    "text": "You can install digiqual directly from PyPI (or GitHub).\n\n\nIf you are managing a project with uv, add digiqual as a dependency:\n\nTo install the latest stable release (v0.26.2):\n\nuv add \"digiqual\"\n\nTo install the latest development version (main branch from github):\n\nuv add \"digiqual @ git+https://github.com/JGIBristol/digiqual.git\"\nIf you just want to install it into a virtual environment without modifying a project file (e.g., for a quick script), use pip interface:\nuv pip install digiqual\n\n\n\nTo install the latest stable release (v0.26.2):\npip install digiqual\nTo install the latest development version:\npip install \"git+https://github.com/JGIBristol/digiqual.git\"",
     "crumbs": [
       "Getting Started",
       "Installation & Setup"
@@ -120,7 +120,7 @@
     "href": "docs/install.html#option-1-install-via-uv-recommended",
     "title": "Installation",
     "section": "",
-    "text": "If you are managing a project with uv, add digiqual as a dependency:\n\nTo install the latest stable release (v0.26.1):\n\nuv add \"digiqual\"\n\nTo install the latest development version (main branch from github):\n\nuv add \"digiqual @ git+https://github.com/JGIBristol/digiqual.git\"\nIf you just want to install it into a virtual environment without modifying a project file (e.g., for a quick script), use pip interface:\nuv pip install digiqual",
+    "text": "If you are managing a project with uv, add digiqual as a dependency:\n\nTo install the latest stable release (v0.26.2):\n\nuv add \"digiqual\"\n\nTo install the latest development version (main branch from github):\n\nuv add \"digiqual @ git+https://github.com/JGIBristol/digiqual.git\"\nIf you just want to install it into a virtual environment without modifying a project file (e.g., for a quick script), use pip interface:\nuv pip install digiqual",
     "crumbs": [
       "Getting Started",
       "Installation & Setup"
@@ -131,7 +131,7 @@
     "href": "docs/install.html#option-2-install-via-standard-pip",
     "title": "Installation",
     "section": "",
-    "text": "To install the latest stable release (v0.26.1):\npip install digiqual\nTo install the latest development version:\npip install \"git+https://github.com/JGIBristol/digiqual.git\"",
+    "text": "To install the latest stable release (v0.26.2):\npip install digiqual\nTo install the latest development version:\npip install \"git+https://github.com/JGIBristol/digiqual.git\"",
     "crumbs": [
       "Getting Started",
       "Installation & Setup"
