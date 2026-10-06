@@ -131,35 +131,39 @@ clean:
 
 # --- COMBO ---
 
-# Patch Combo: cleans, tests, bumps a patch version, publishes docs, then commits,
-# pushes and tags -- the tag push triggers build_wheels.yml, which builds
-# per-platform wheels in CI and publishes them to PyPI. Does NOT create a
-# GitHub Release; run `gh release create vX.Y.Z --generate-notes` yourself once
-# the Actions run is green.
+# Patch Combo: cleans, tests, bumps a patch version, then commits, pushes and
+# tags -- the tag push triggers build_wheels.yml, which builds per-platform
+# wheels in CI and publishes them to PyPI. Docs are published last and
+# non-fatally, since `quarto publish`'s post-push deploy check has timed out
+# before without the actual push failing -- that must never block the release.
+# Does NOT create a GitHub Release; run `gh release create vX.Y.Z
+# --generate-notes` yourself once the Actions run is green.
 patch: clean
     #!/usr/bin/env bash
     set -euo pipefail
     just _preflight_release
     just test_matrix
     just bump patch
-    just build_website
     just cls
     just _commit_tag_push
+    just build_website || echo "WARNING: build_website failed (docs may not be published) -- the release above already completed successfully."
 
-# Minor Combo: cleans, tests, bumps a minor version, publishes docs, then commits,
-# pushes and tags -- the tag push triggers build_wheels.yml, which builds
-# per-platform wheels in CI and publishes them to PyPI. Does NOT create a
-# GitHub Release; run `gh release create vX.Y.Z --generate-notes` yourself once
-# the Actions run is green.
+# Minor Combo: cleans, tests, bumps a minor version, then commits, pushes and
+# tags -- the tag push triggers build_wheels.yml, which builds per-platform
+# wheels in CI and publishes them to PyPI. Docs are published last and
+# non-fatally, since `quarto publish`'s post-push deploy check has timed out
+# before without the actual push failing -- that must never block the release.
+# Does NOT create a GitHub Release; run `gh release create vX.Y.Z
+# --generate-notes` yourself once the Actions run is green.
 minor: clean
     #!/usr/bin/env bash
     set -euo pipefail
     just _preflight_release
     just test_matrix
     just bump minor
-    just build_website
     just cls
     just _commit_tag_push
+    just build_website || echo "WARNING: build_website failed (docs may not be published) -- the release above already completed successfully."
 
 # Internal: refuse to start a release combo from a dirty tree or off `main`.
 _preflight_release:
