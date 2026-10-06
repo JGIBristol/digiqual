@@ -197,6 +197,29 @@ def test_pod_fast_caching_and_slicing(study, clean_df):
     res2 = study.update_slice(slice_values={"Angle": 45.0})
     assert res2["slice_values"]["Angle"] == 45.0
 
+def test_compute_pod_spectrum_respects_changed_n_threshold_points(study, clean_df):
+    """Regression test: a later call requesting a different n_threshold_points for the
+    same PoI/nuisance/slice config must not silently return a stale, coarser-resolution
+    spectrum from the Layer 4 cache."""
+    study.add_data(clean_df, outcome_col="Signal")
+    study._validate()
+
+    coarse = study.compute_pod_spectrum(
+        poi_col="Length", n_threshold_points=10, model_override="polynomial", force_degree=1
+    )
+    assert len(coarse["thresholds"]) == 10
+
+    fine = study.compute_pod_spectrum(
+        poi_col="Length", n_threshold_points=50, model_override="polynomial", force_degree=1
+    )
+    assert len(fine["thresholds"]) == 50
+
+    # Re-requesting the original resolution should still hit the (now-updated) cache correctly.
+    coarse_again = study.compute_pod_spectrum(
+        poi_col="Length", n_threshold_points=10, model_override="polynomial", force_degree=1
+    )
+    assert len(coarse_again["thresholds"]) == 10
+
 # --- NEW: Time Heuristic & Linear PoD Tests ---
 
 def test_estimate_compute_time(study, clean_df):

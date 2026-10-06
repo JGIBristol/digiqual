@@ -36,6 +36,17 @@ dependencies = [
 requires = ["setuptools>=61.0", "pybind11>=2.12.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.cibuildwheel]
+# Matches the Python versions exercised by `just test_matrix`.
+build = "cp311-* cp312-* cp313-* cp314-*"
+skip = "*-win32 *-manylinux_i686 *-musllinux*"
+test-command = "python -c \"import digiqual\""
+
+[tool.cibuildwheel.macos]
+# Keeps wheels installable on older macOS, avoiding libc++ deprecation warnings
+# (same deployment target `just test_matrix` sets for local Apple Silicon builds).
+environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
+
 [dependency-groups]
 dev = [
     "ruff>=0.16.1",

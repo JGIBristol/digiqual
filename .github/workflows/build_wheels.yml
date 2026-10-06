@@ -1,0 +1,92 @@
+name: Build & Publish Wheels
+
+# Builds the digiqual._digiqual_cpp extension into real platform/Python-ABI
+# specific wheels on every target OS, instead of relying on a single wheel
+# built by hand on the maintainer's own machine. Without this, `pip`/`uvx`
+# installs on any platform other than the maintainer's fall back to compiling
+# the C++ extension from the sdist, which fails for users without a C++17
+# toolchain (the cause of `uvx digiqual@latest` failing to launch).
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+jobs:
+  build_wheels:
+    name: Wheels (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # macos-13 is Intel, macos-14 is Apple Silicon; building natively on
+        # each avoids cross-compiling the C++ extension.
+        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build Wheels
+        uses: pypa/cibuildwheel@v4.3.0
+
+      - name: Upload Wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: ./wheelhouse/*.whl
+          retention-days: 14
+
+  build_sdist:
+    name: Source Distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python & uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+          enable-cache: true
+
+      - name: Build sdist
+        run: uv build --sdist
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+          retention-days: 14
+
+  publish:
+    name: Publish to PyPI
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    # Only publish on an actual version tag push; workflow_dispatch runs are
+    # for test-building the matrix without releasing anything.
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: pypi
+      url: https://pypi.org/p/digiqual
+    permissions:
+      id-token: write  # Required for PyPI Trusted Publishing
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: wheels-*
+          merge-multiple: true
+
+      - name: Download sdist
+        uses: actions/download-artifact@v4
+        with:
+          name: sdist
+          path: dist
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist

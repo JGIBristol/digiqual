@@ -441,10 +441,16 @@ class SimulationStudy:
         spectrum_key = (selected_key, tuple(poi_cols), tuple(nuisance_cols), frozenset(temp_results['slice_values'].items()), nuisance_dists_key)
         l3_key = (selected_key, median_thresh, tuple(poi_cols), tuple(nuisance_cols), frozenset(temp_results['slice_values'].items()), nuisance_dists_key)
 
-        # 3. Check if this exact spectrum configuration is already cached
-        if spectrum_key in self.threshold_spectrum_cache:
+        # 3. Check if this exact spectrum configuration is already cached.
+        # spectrum_key intentionally omits n_threshold_points (pod()'s own Layer 4
+        # lookup at the matching `spectrum_key` construction has no such parameter
+        # and must keep matching this one to interpolate from any cached spectrum),
+        # so a resolution change is instead detected by comparing the cached
+        # spectrum's actual threshold count.
+        cached_spectrum = self.threshold_spectrum_cache.get(spectrum_key)
+        if cached_spectrum is not None and len(cached_spectrum["thresholds"]) == n_threshold_points:
             print("4. Threshold Spectrum already cached (Layer 4 Hit).")
-            return self.threshold_spectrum_cache[spectrum_key]
+            return cached_spectrum
 
         print(f"4. Computing PoD Spectrum for {n_threshold_points} thresholds (Layer 4 Cache Miss)...")
 

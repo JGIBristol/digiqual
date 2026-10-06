@@ -2628,31 +2628,25 @@ def server(input, output, session):
         model_type = locked_model_type()
         model_degree = locked_model_degree()
 
-        # Build and fit the specific model
         from sklearn.preprocessing import PolynomialFeatures
         from sklearn.linear_model import LinearRegression
         from sklearn.pipeline import make_pipeline
         import matplotlib.pyplot as plt
         from sklearn.metrics import r2_score
 
+        # Reuse the actual fitted production model (trained on all input columns,
+        # same object driving the Signal Model pane) instead of refitting a throwaway
+        # model in-sample, which always looked artificially perfect regardless of
+        # which PoIs were selected.
+        model = res["mean_model"]
         if model_type == 'Polynomial':
-            model = make_pipeline(PolynomialFeatures(degree=model_degree), LinearRegression())
-            model.fit(X, y)
+            y_pred = model.predict(X)
         elif model_type == 'Kriging':
-            from sklearn.gaussian_process import GaussianProcessRegressor
-            from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
-            kernel = C(1.0, (1e-5, 1e6)) * RBF(1.0, (1e-3, 1e5))
-            model = GaussianProcessRegressor(
-                kernel=kernel,
-                n_restarts_optimizer=10,
-                alpha=np.var(y) * 0.01,
-                random_state=42
-            )
-            model.fit(X, y)
+            from digiqual.pod import compute_kriging_loo_residuals
+            loo_means, _loo_stds, _std_residuals, _gamma = compute_kriging_loo_residuals(model, X, y)
+            y_pred = loo_means
         else:
             return None
-
-        y_pred = model.predict(X)
 
         # Get thresholds from UI (Simulation Diagnostics Tab)
         thresh_r2 = input.ui_min_r2()
@@ -2715,7 +2709,7 @@ def server(input, output, session):
             elif model_type == 'Kriging':
                 from sklearn.gaussian_process import GaussianProcessRegressor
                 m = GaussianProcessRegressor(
-                    kernel=model.kernel_, alpha=np.var(y_b)*0.01, optimizer=None
+                    kernel=model.kernel_, alpha=np.var(y_b) * 0.01, optimizer=None
                 )
 
             m.fit(X_b, y_b)
