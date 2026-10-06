@@ -94,7 +94,11 @@ trigger_build:
         echo "Run 'gh run list --workflow=build_app.yml' or check GitHub UI to monitor progress."; \
 
 
-# Uploads the package to PyPI (bump version before)
+# Manual/emergency-only: uploads a SINGLE locally-built wheel (this machine's
+# platform only) straight to PyPI. Normal releases must NOT use this -- push a
+# `vX.Y.Z` tag instead, which triggers build_wheels.yml to build real wheels
+# for every supported platform in CI and publish them. This recipe bypasses
+# that entirely and is only here as a last-resort fallback.
 build_pypi: clean
     # uv publish takes everything in your custom package/ directory
     uv publish package/*
@@ -127,20 +131,34 @@ clean:
 
 # --- COMBO ---
 
-# Patch Combo function that cleans, tests and bumps a patch and then builds all the artefacts.
+# Patch Combo function that cleans, tests, bumps a patch version and publishes docs.
+# Does NOT publish to PyPI -- commit, push, then tag to trigger build_wheels.yml.
 patch: clean
+    #!/usr/bin/env bash
+    set -euo pipefail
     just test_matrix
     just bump patch
-    just build_package
-    just build_pypi
     just build_website
     just cls
+    NEW_VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+    echo ""
+    echo "Version bumped to ${NEW_VERSION}. Now:"
+    echo "  git add -A && git commit -m \"Bump to v${NEW_VERSION}\" && git push"
+    echo "  git tag v${NEW_VERSION} && git push origin v${NEW_VERSION}"
+    echo "The tag push triggers build_wheels.yml, which builds per-platform wheels and publishes to PyPI."
 
-# Minor Combo function that cleans, tests and bumps a patch and then builds all the artefacts.
+# Minor Combo function that cleans, tests, bumps a minor version and publishes docs.
+# Does NOT publish to PyPI -- commit, push, then tag to trigger build_wheels.yml.
 minor: clean
+    #!/usr/bin/env bash
+    set -euo pipefail
     just test_matrix
     just bump minor
-    just build_package
-    just build_pypi
     just build_website
     just cls
+    NEW_VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+    echo ""
+    echo "Version bumped to ${NEW_VERSION}. Now:"
+    echo "  git add -A && git commit -m \"Bump to v${NEW_VERSION}\" && git push"
+    echo "  git tag v${NEW_VERSION} && git push origin v${NEW_VERSION}"
+    echo "The tag push triggers build_wheels.yml, which builds per-platform wheels and publishes to PyPI."
