@@ -167,7 +167,7 @@ if __name__ == "__main__":
             def show_about() -> None:
                 if webview.windows:
                     webview.windows[0].evaluate_js(
-                        'alert("DigiQual\\nVersion 0.25.1\\nStatistical Toolkit for Reliability Assessment in NDT");'
+                        'alert("DigiQual\\nVersion 0.26.0\\nStatistical Toolkit for Reliability Assessment in NDT");'
                     )
 
             def open_documentation() -> None:
