@@ -76,9 +76,12 @@ build_app_local: clean
     #!/usr/bin/env bash
     set -euo pipefail
     uv build --wheel --python 3.12 --out-dir wheelhouse
+    # proxy_tools (a pywebview dependency) has no wheel on PyPI, and Briefcase only installs wheels
+    uvx pip wheel --no-deps --wheel-dir wheelhouse proxy_tools==0.1.0
     cd app
     wheel=$(ls ../wheelhouse/digiqual-*.whl)
-    briefcase create --no-input -C "requires=['$wheel']"
+    proxy_tools=$(ls ../wheelhouse/proxy_tools-*.whl)
+    briefcase create --no-input -C "requires=['$wheel', '$proxy_tools']"
     briefcase build --no-input
     briefcase run -- --self-test
     echo "Desktop build complete under app/build/. Package it with: cd app && briefcase package --adhoc-sign"

@@ -215,6 +215,20 @@ def run_self_test() -> int:
     logger.info("self-test: C++ extension available: %s", HAS_CPP)
     ok &= HAS_CPP
 
+    # Import (without opening a window) the pywebview API launch_webview_window
+    # uses; catches a packager resolving an ancient pywebview (menus need >= 5).
+    try:
+        from importlib.metadata import version
+
+        import webview.menu  # noqa: F401
+
+        logger.info("self-test: pywebview %s importable", version("pywebview"))
+        webview_ok = True
+    except Exception:
+        logger.exception("self-test: pywebview import failed")
+        webview_ok = False
+    ok &= webview_ok
+
     try:
         squares = Parallel(n_jobs=2, backend="multiprocessing")(
             delayed(pow)(i, 2) for i in range(4)

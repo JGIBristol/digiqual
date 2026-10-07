@@ -710,7 +710,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.2" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=7.0.0" },
-    { name = "pywebview" },
+    { name = "pywebview", specifier = ">=5.0" },
     { name = "pywebview", extras = ["qt"], marker = "extra == 'linux-gui'" },
     { name = "quartodoc", marker = "extra == 'dev'" },
     { name = "requests", specifier = ">=2.32.5" },

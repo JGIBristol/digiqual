@@ -47,13 +47,19 @@ jobs:
       # Point `requires` at the exact wheel just built. Using find-links with
       # `digiqual==X.Y.Z` isn't enough: PyPI has an identically named wheel and
       # pip may pick that one, so the app wouldn't contain this branch's code.
+      #
+      # proxy_tools (needed by pywebview>=5) is only published as an sdist, and
+      # Briefcase installs with --only-binary, so a wheel of it is built here;
+      # without it pip silently falls back to pywebview 3.4.
       - name: Build App
         shell: bash
         working-directory: app
         run: |
+          python -m pip wheel --no-deps --wheel-dir ../wheelhouse proxy_tools==0.1.0
           wheel=$(ls ../wheelhouse/digiqual-*.whl)
-          echo "Bundling $wheel"
-          briefcase create --no-input -C "requires=['$wheel']"
+          proxy_tools=$(ls ../wheelhouse/proxy_tools-*.whl)
+          echo "Bundling $wheel and $proxy_tools"
+          briefcase create --no-input -C "requires=['$wheel', '$proxy_tools']"
           briefcase build --no-input
 
       # timeout: a broken multiprocessing setup hangs rather than failing.

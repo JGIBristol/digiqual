@@ -8,7 +8,9 @@
 #
 # Build locally with `just build_app_local`; CI builds it in build_app.yml.
 # Both override `requires` with `-C` to bundle a wheel built from the current
-# checkout; the value below (the PyPI release) is only the default.
+# checkout, plus a locally built proxy_tools wheel (a pywebview dependency
+# that PyPI only has as an sdist, which Briefcase won't install). The value
+# below is only a placeholder default and won't resolve on its own.
 
 [tool.briefcase]
 project_name = "DigiQual"
