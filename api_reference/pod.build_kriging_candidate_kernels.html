@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>pod.bootstrap_pod_ci – digiqual</title>
+<title>pod.build_kriging_candidate_kernels – digiqual</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -291,9 +291,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.pod.bootstrap_pod_ci" id="toc-digiqual.pod.bootstrap_pod_ci" class="nav-link active" data-scroll-target="#digiqual.pod.bootstrap_pod_ci">pod.bootstrap_pod_ci</a></li>
+  <li><a href="#digiqual.pod.build_kriging_candidate_kernels" id="toc-digiqual.pod.build_kriging_candidate_kernels" class="nav-link active" data-scroll-target="#digiqual.pod.build_kriging_candidate_kernels">pod.build_kriging_candidate_kernels</a>
+  <ul class="collapse">
+  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
+  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
+  </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/pod.bootstrap_pod_ci.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/pod.build_kriging_candidate_kernels.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
@@ -301,31 +305,70 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<section id="digiqual.pod.bootstrap_pod_ci" class="level1">
-<h1>pod.bootstrap_pod_ci</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>bootstrap_pod_ci(</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    X,</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    y,</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    X_eval,</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    threshold,</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    model_type,</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    model_params,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    bandwidth,</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    dist_info,</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    n_boot<span class="op">=</span><span class="dv">1000</span>,</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    nuisance_ranges<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    n_jobs<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    feature_names<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    poi_names<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    confidence_levels<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    nuisance_dists<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    progress_callback<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    n_mc_samples<span class="op">=</span><span class="dv">500</span>,</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Estimates Confidence Bounds for the PoD curve via Bootstrapping.</p>
-<p>This function resamples the original data with replacement <code>n_boot</code> times. For each resample, it refits the Mean Model (dynamically rebuilding either a Polynomial or Kriging model), recalculates residuals, and generates a new PoD curve. If Kriging is selected, the optimizer is disabled during bootstrapping to remain computationally tractable: each resample reuses the fitted kernel (including its learned WhiteKernel noise level) via <code>build_fixed_kernel_gpr</code>, so only the posterior mean is recomputed.</p>
+<section id="digiqual.pod.build_kriging_candidate_kernels" class="level1">
+<h1>pod.build_kriging_candidate_kernels</h1>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>build_kriging_candidate_kernels(n_features)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Builds the candidate covariance kernels evaluated for the Kriging surrogate.</p>
+<p>Every candidate has the form <code>C * R(x, x') + WhiteKernel</code>:</p>
+<ul>
+<li><code>C</code> is the process variance (signal amplitude).</li>
+<li><code>R</code> is the correlation function. Matérn 3/2, Matérn 5/2 and RBF use an anisotropic length scale (one per input). Rational Quadratic is isotropic because scikit-learn’s implementation only supports a scalar length scale.</li>
+<li><code>WhiteKernel</code> is the observation noise (nugget) variance, learned by maximum likelihood alongside the length scales.</li>
+</ul>
+<p>Learning the nugget is essential when the chosen inputs do not fully determine the response (e.g.&nbsp;a model trained on Area and Offset when the response also depends on flaw shape). If the noise were fixed too small, the likelihood would be maximised by shrinking a length scale until the surface interpolates the scatter. That produces a spiky surface whose slices revert to the prior mean away from data and whose bootstrap refits are unstable.</p>
+<p>The kernels are intended for use with <code>normalize_y=True</code>, so <code>C</code> and the noise level are expressed relative to the variance of the training response.</p>
+<section id="parameters" class="level2 doc-section doc-section-parameters">
+<h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>n_features</td>
+<td>int</td>
+<td>Number of input dimensions.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns" class="level2 doc-section doc-section-returns">
+<h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 18%">
+<col style="width: 73%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>dict[str, Any]</td>
+<td>dict[str, Kernel]: Mapping of human-readable kernel name to an unfitted</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>dict[str, Any]</td>
+<td>scikit-learn kernel.</td>
+</tr>
+</tbody>
+</table>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
@@ -734,4 +777,4 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/pod.bootstrap_pod_ci.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/pod.build_kriging_candidate_kernels.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

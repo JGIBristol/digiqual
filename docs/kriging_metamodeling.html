@@ -326,7 +326,8 @@ window.Quarto = {
   <li><a href="#covariance-kernel-selection-anisotropic-fitting" id="toc-covariance-kernel-selection-anisotropic-fitting" class="nav-link" data-scroll-target="#covariance-kernel-selection-anisotropic-fitting">1. Covariance Kernel Selection &amp; Anisotropic Fitting</a>
   <ul class="collapse">
   <li><a href="#candidate-kernel-families" id="toc-candidate-kernel-families" class="nav-link" data-scroll-target="#candidate-kernel-families">Candidate Kernel Families</a></li>
-  <li><a href="#selection-metric-mse_textloo" id="toc-selection-metric-mse_textloo" class="nav-link" data-scroll-target="#selection-metric-mse_textloo">Selection Metric (<span class="math inline">\(MSE_{\text{LOO}}\)</span>)</a></li>
+  <li><a href="#full-covariance-model-learned-noise-nugget" id="toc-full-covariance-model-learned-noise-nugget" class="nav-link" data-scroll-target="#full-covariance-model-learned-noise-nugget">Full Covariance Model &amp; Learned Noise (Nugget)</a></li>
+  <li><a href="#selection-metric-mse_textcv" id="toc-selection-metric-mse_textcv" class="nav-link" data-scroll-target="#selection-metric-mse_textcv">Selection Metric (<span class="math inline">\(MSE_{\text{CV}}\)</span>)</a></li>
   </ul></li>
   <li><a href="#loo-residuals-outlier-calibration" id="toc-loo-residuals-outlier-calibration" class="nav-link" data-scroll-target="#loo-residuals-outlier-calibration">2. LOO Residuals &amp; Outlier Calibration</a>
   <ul class="collapse">
@@ -334,7 +335,8 @@ window.Quarto = {
   <li><a href="#standardized-residuals-e_i" id="toc-standardized-residuals-e_i" class="nav-link" data-scroll-target="#standardized-residuals-e_i">Standardized Residuals (<span class="math inline">\(e_i\)</span>)</a></li>
   <li><a href="#variance-inflation-factor-gamma" id="toc-variance-inflation-factor-gamma" class="nav-link" data-scroll-target="#variance-inflation-factor-gamma">Variance Inflation Factor (<span class="math inline">\(\gamma\)</span>)</a></li>
   </ul></li>
-  <li><a href="#python-usage-example" id="toc-python-usage-example" class="nav-link" data-scroll-target="#python-usage-example">3. Python Usage Example</a></li>
+  <li><a href="#bootstrap-refits" id="toc-bootstrap-refits" class="nav-link" data-scroll-target="#bootstrap-refits">3. Bootstrap Refits</a></li>
+  <li><a href="#python-usage-example" id="toc-python-usage-example" class="nav-link" data-scroll-target="#python-usage-example">4. Python Usage Example</a></li>
   <li><a href="#summary-of-api-functions" id="toc-summary-of-api-functions" class="nav-link" data-scroll-target="#summary-of-api-functions">Summary of API Functions</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/kriging_metamodeling.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -366,7 +368,7 @@ window.Quarto = {
 <p>In simulation-based reliability assessment of Non-Destructive Evaluation (NDE) inspections, <strong>Gaussian Process (Kriging) metamodeling</strong> provides a powerful non-parametric surrogate for mapping complex physics across multi-dimensional input domains, as formalized in <strong>Malkiel et al.&nbsp;(2026)</strong>.</p>
 <p><code>digiqual</code> includes a complete Kriging suite featuring:</p>
 <ol type="1">
-<li><p><strong>Anisotropic Covariance Function Selection (Rank 2):</strong> Automated evaluation and selection across Matérn 3/2, Matérn 5/2, Gaussian (RBF), and Rational Quadratic kernels with per-dimension anisotropic length scale vectors <span class="math inline">\(\boldsymbol{\theta} = [\theta_1, \dots, \theta_d]\)</span>.</p></li>
+<li><p><strong>Anisotropic Covariance Function Selection (Rank 2):</strong> Automated evaluation and selection across Matérn 3/2, Matérn 5/2, Gaussian (RBF), and Rational Quadratic kernels with per-dimension anisotropic length scale vectors <span class="math inline">\(\boldsymbol{\theta} = [\theta_1, \dots, \theta_d]\)</span>, plus a learned observation-noise (nugget) term.</p></li>
 <li><p><strong>Matrix-Based Leave-One-Out Cross-Validation (<span class="math inline">\(MSE_{\text{LOO}}\)</span>):</strong> Fast <span class="math inline">\(O(N^3)\)</span> matrix inverse <span class="math inline">\(B = S^{-1}\)</span> for exact LOO predictions <span class="math inline">\(\mu_{\hat{Y}_{-i}}\)</span> and variances <span class="math inline">\(\sigma_{\hat{Y}_{-i}}^2\)</span>.</p></li>
 <li><p><strong>Standardized LOO Residual Outlier Calibration (Rank 4):</strong> Automated detection of extreme observation errors <span class="math inline">\(|e_i| &gt; 3\)</span> and prior variance scaling (<span class="math inline">\(\hat{\sigma}^2 \leftarrow \gamma \cdot \hat{\sigma}^2\)</span>) to guarantee conservative 95% worst-case bounds.</p></li>
 </ol>
@@ -384,11 +386,43 @@ window.Quarto = {
 <li><p><strong>Rational Quadratic:</strong> <span class="math display">\[ R(\mathbf{x}, \mathbf{x}') = \left(1 + \frac{d^2}{2 \alpha \ell^2}\right)^{-\alpha} \]</span></p></li>
 </ul>
 <p>where the anisotropic distance <span class="math inline">\(d\)</span> is given by: <span class="math display">\[ d = \sqrt{\sum_{j=1}^d \left( \frac{x_j - x_j'}{\theta_j} \right)^2 } \]</span></p>
+<p>Matérn and Gaussian kernels use one length scale per input. The Rational Quadratic kernel uses a single shared length scale <span class="math inline">\(\ell\)</span>, because scikit-learn’s implementation does not support anisotropy.</p>
 </section>
-<section id="selection-metric-mse_textloo" class="level3">
-<h3 class="anchored" data-anchor-id="selection-metric-mse_textloo">Selection Metric (<span class="math inline">\(MSE_{\text{LOO}}\)</span>)</h3>
-<p>Each kernel family is evaluated via Leave-One-Out Cross-Validation. The kernel candidate achieving the lowest normalized LOO Mean Squared Error is automatically selected:</p>
-<p><span class="math display">\[ MSE_{\text{LOO}} = \frac{1}{m} \sum_{i=1}^m \frac{\left(y_i - \mu_{\hat{Y}_{-i}}\right)^2}{\text{var}(y)} \]</span></p>
+<section id="full-covariance-model-learned-noise-nugget" class="level3">
+<h3 class="anchored" data-anchor-id="full-covariance-model-learned-noise-nugget">Full Covariance Model &amp; Learned Noise (Nugget)</h3>
+<p>Each candidate is fitted as a process-variance-scaled correlation plus a white-noise term:</p>
+<p><span class="math display">\[ k(\mathbf{x}, \mathbf{x}') = \hat{\sigma}^2 R(\mathbf{x}, \mathbf{x}') + \tau^2 \, \delta_{\mathbf{x}\mathbf{x}'} \]</span></p>
+<p>Both <span class="math inline">\(\hat{\sigma}^2\)</span> and the noise variance <span class="math inline">\(\tau^2\)</span> are estimated by maximum likelihood together with <span class="math inline">\(\boldsymbol{\theta}\)</span>. The response is standardised before fitting (<code>normalize_y=True</code>), so:</p>
+<ul>
+<li><span class="math inline">\(\hat{\sigma}^2\)</span> and <span class="math inline">\(\tau^2\)</span> are relative to <span class="math inline">\(\text{var}(y)\)</span>.</li>
+<li>Away from the training data the surrogate reverts to the sample mean of <span class="math inline">\(y\)</span> rather than to zero.</li>
+</ul>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Why the noise must be learned
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Simulation responses are often <em>not</em> a deterministic function of the inputs the surrogate is trained on. For example, a model trained on flaw Area and Offset when the response also depends on flaw shape sees scatter that no smooth surface in (Area, Offset) can explain.</p>
+<p>If <span class="math inline">\(\tau^2\)</span> is fixed below the true scatter variance, maximum likelihood instead “explains” the scatter by shrinking a length scale until the surface interpolates individual points. Typically this is the length scale of a weakly-influential input. The result is a surrogate that:</p>
+<ul>
+<li>has an excellent in-sample fit but a poor leave-one-out fit;</li>
+<li>reverts towards the prior mean when sliced at a fixed value of that input, especially where data is sparse;</li>
+<li>produces unstable predictions when refitted to bootstrap resamples, failing the bootstrap convergence check.</li>
+</ul>
+<p>Learning <span class="math inline">\(\tau^2\)</span> lets the likelihood attribute that scatter to noise, giving long, physically sensible length scales. Uninfluential inputs get length scales much larger than their range.</p>
+</div>
+</div>
+</section>
+<section id="selection-metric-mse_textcv" class="level3">
+<h3 class="anchored" data-anchor-id="selection-metric-mse_textcv">Selection Metric (<span class="math inline">\(MSE_{\text{CV}}\)</span>)</h3>
+<p>Each kernel family is evaluated via <span class="math inline">\(K\)</span>-fold Cross-Validation (<span class="math inline">\(K = 10\)</span>). The hyperparameters are re-optimised inside every fold. The kernel candidate achieving the lowest CV Mean Squared Error is selected and refitted to the full dataset:</p>
+<p><span class="math display">\[ MSE_{\text{CV}} = \frac{1}{m} \sum_{i=1}^m \left(y_i - \hat{f}^{-k(i)}(\mathbf{x}_i)\right)^2 \]</span></p>
+<p>This is the score shown for Kriging in the model-selection chart. It is directly comparable to the polynomial CV scores.</p>
 </section>
 </section>
 <section id="loo-residuals-outlier-calibration" class="level2">
@@ -396,9 +430,11 @@ window.Quarto = {
 <p>To ensure that Kriging surrogate uncertainty bounds are mathematically valid for safety-critical inspection qualification, <code>digiqual</code> validates prediction errors using standardized LOO residuals.</p>
 <section id="augmented-covariance-inversion" class="level3">
 <h3 class="anchored" data-anchor-id="augmented-covariance-inversion">Augmented Covariance Inversion</h3>
-<p>Construct the augmented covariance matrix <span class="math inline">\(S\)</span>: <span class="math display">\[ S = \begin{bmatrix} \hat{\sigma}^2 R + \alpha I &amp; \mathbf{1} \\ \mathbf{1}^T &amp; 0 \end{bmatrix} \]</span></p>
+<p>Construct the augmented covariance matrix <span class="math inline">\(S\)</span>: <span class="math display">\[ S = \begin{bmatrix} \hat{\sigma}^2 R + \tau^2 I + \alpha I &amp; \mathbf{1} \\ \mathbf{1}^T &amp; 0 \end{bmatrix} \]</span></p>
+<p>where <span class="math inline">\(\tau^2\)</span> is the learned noise variance and <span class="math inline">\(\alpha\)</span> is a negligible numerical jitter (<span class="math inline">\(10^{-10}\)</span>). The calculation is carried out on the standardised response. The resulting LOO means and standard deviations are converted back to the original units.</p>
 <p>Inverting <span class="math inline">\(S\)</span> yields matrix <span class="math inline">\(B = S^{-1}\)</span>. The Leave-One-Out prediction mean <span class="math inline">\(\mu_{\hat{Y}_{-i}}\)</span> and standard deviation <span class="math inline">\(\sigma_{\hat{Y}_{-i}}\)</span> for training observation <span class="math inline">\(i\)</span> are calculated analytically:</p>
 <p><span class="math display">\[ \mu_{\hat{Y}_{-i}} = -\sum_{j \neq i} \frac{B_{ij}}{B_{ii}} y_j, \qquad \sigma_{\hat{Y}_{-i}} = \sqrt{\frac{1}{B_{ii}}} \]</span></p>
+<p>Because <span class="math inline">\(\tau^2\)</span> is on the diagonal of <span class="math inline">\(S\)</span>, <span class="math inline">\(\sigma_{\hat{Y}_{-i}}^2\)</span> is the predictive variance of a new <em>noisy</em> observation. This is the correct scale for standardising observed residuals.</p>
 </section>
 <section id="standardized-residuals-e_i" class="level3">
 <h3 class="anchored" data-anchor-id="standardized-residuals-e_i">Standardized Residuals (<span class="math inline">\(e_i\)</span>)</h3>
@@ -412,8 +448,17 @@ window.Quarto = {
 <p>During noise estimation in <a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>fit_variance_model</code></a>, raw residuals are scaled by <span class="math inline">\(\sqrt{\gamma}\)</span>, inflating local prediction variance <span class="math inline">\(\hat{\sigma}^2(x)\)</span> by factor <span class="math inline">\(\gamma\)</span>. This guarantees mathematically reliable 95% worst-case confidence bounds even in the presence of extreme outliers.</p>
 </section>
 </section>
+<section id="bootstrap-refits" class="level2">
+<h2 class="anchored" data-anchor-id="bootstrap-refits">3. Bootstrap Refits</h2>
+<p>The PoD confidence bounds (<a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>bootstrap_pod_ci</code></a>) and the GUI’s bootstrap convergence diagnostic refit the Kriging surrogate to each resample of the data. To keep this tractable, the hyperparameters (<span class="math inline">\(\hat{\sigma}^2\)</span>, <span class="math inline">\(\boldsymbol{\theta}\)</span>, <span class="math inline">\(\tau^2\)</span>) are held at their full-data values and only the posterior is recomputed. <a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>build_fixed_kernel_gpr</code></a> builds these refits with exactly the production settings:</p>
+<ul>
+<li>the learned noise is already part of the kernel, so it is not added again;</li>
+<li><code>normalize_y=True</code> is used.</li>
+</ul>
+<p>A failing bootstrap convergence check for Kriging therefore reflects genuine instability of the fitted surface, not a mismatch between the production and bootstrap models.</p>
+</section>
 <section id="python-usage-example" class="level2">
-<h2 class="anchored" data-anchor-id="python-usage-example">3. Python Usage Example</h2>
+<h2 class="anchored" data-anchor-id="python-usage-example">4. Python Usage Example</h2>
 <p>Below is a complete Python script demonstrating Kriging surrogate model fitting, kernel optimization, residual computation, diagnostic plotting, and PoD generation:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -443,23 +488,25 @@ window.Quarto = {
 <span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>gpr <span class="op">=</span> models[(<span class="st">"Kriging"</span>, <span class="va">None</span>)]</span>
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Selected Kriging Kernel: </span><span class="sc">{</span>gpr<span class="sc">.</span>best_kernel_name_<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Outlier Calibration Factor (gamma): </span><span class="sc">{</span>gpr<span class="sc">.</span>outlier_scale_factor_<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Compute LOO Residuals</span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>loo_means, loo_stds, std_res, gamma <span class="op">=</span> compute_kriging_loo_residuals(gpr, X, y)</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Generate Diagnostic Plot</span></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> plot_kriging_diagnostics(</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    std_residuals<span class="op">=</span>std_res,</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    outlier_scale_factor<span class="op">=</span>gamma,</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    best_kernel_name<span class="op">=</span>gpr.best_kernel_name_,</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Fitted Covariance (incl. learned noise): </span><span class="sc">{</span>gpr<span class="sc">.</span>kernel_<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Outlier Calibration Factor (gamma): </span><span class="sc">{</span>gpr<span class="sc">.</span>outlier_scale_factor_<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Compute LOO Residuals</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>loo_means, loo_stds, std_res, gamma <span class="op">=</span> compute_kriging_loo_residuals(gpr, X, y)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Generate Diagnostic Plot</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> plot_kriging_diagnostics(</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    std_residuals<span class="op">=</span>std_res,</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    outlier_scale_factor<span class="op">=</span>gamma,</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    best_kernel_name<span class="op">=</span>gpr.best_kernel_name_,</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div id="cell-fig-kriging-results" class="cell quarto-layout-panel" data-layout-ncol="1" data-execution_count="1">
 <div class="quarto-layout-row">
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<pre><code>Selected Kriging Kernel: RBF (Gaussian)
-Outlier Calibration Factor (gamma): 1.912</code></pre>
+<pre><code>Selected Kriging Kernel: Matern 3/2
+Fitted Covariance (incl. learned noise): 1.58**2 * Matern(length_scale=[3.16, 51.3], nu=1.5) + WhiteKernel(noise_level=0.275)
+Outlier Calibration Factor (gamma): 2.445</code></pre>
 </div>
 </div>
 <div class="quarto-layout-row">
@@ -491,7 +538,15 @@ Figure&nbsp;1: Kriging Model Fitting
 <tbody>
 <tr class="odd">
 <td style="text-align: left;"><a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>pod.fit_all_robust_mean_models</code></a></td>
-<td style="text-align: left;">Fits polynomial pool and evaluates anisotropic Kriging kernel candidates via <span class="math inline">\(MSE_{\text{LOO}}\)</span>.</td>
+<td style="text-align: left;">Fits polynomial pool and evaluates Kriging kernel candidates (with learned noise) via <span class="math inline">\(K\)</span>-fold <span class="math inline">\(MSE_{\text{CV}}\)</span>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>pod.build_kriging_candidate_kernels</code></a></td>
+<td style="text-align: left;">Builds the four candidate kernels, each of the form <span class="math inline">\(\hat{\sigma}^2 R + \tau^2 \delta\)</span>.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>pod.build_fixed_kernel_gpr</code></a></td>
+<td style="text-align: left;">Builds a Kriging model with frozen hyperparameters for bootstrap refits, matching the production settings.</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"><a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>pod.compute_kriging_loo_residuals</code></a></td>

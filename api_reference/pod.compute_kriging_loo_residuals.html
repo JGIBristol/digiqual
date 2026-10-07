@@ -311,6 +311,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>compute_kriging_loo_residuals(gpr, X_2d, y)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Computes exact LOO predictions, variances, standardized residuals e_i, and outlier scaling factor gamma according to Malkiel et al.&nbsp;(2026).</p>
 <p>Inverts the augmented covariance matrix S = [[K + alpha*I, F], [F^T, 0]] to obtain B = S^-1, calculating Leave-One-Out means mu_{-i} and variances sigma_{-i}^2. It then derives standardized residuals e_i = (y_i - mu_{-i}) / sigma_{-i} and outlier scale factor gamma = max(1.0, max|e_i| / 3.0).</p>
+<p>K is the fitted kernel evaluated at the training inputs, so for the models built by <code>fit_all_robust_mean_models</code> it already includes the learned noise (WhiteKernel) variance on its diagonal. The LOO variance is therefore the predictive variance of a new noisy observation, which is the correct scale for standardizing observed residuals.</p>
+<p>If the model was fitted with <code>normalize_y=True</code>, the kernel hyperparameters are in normalised units. The calculation is then done on the normalised response and the LOO means and standard deviations are converted back to the original units.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
