@@ -39,11 +39,11 @@ test_matrix:
 
 # Run the app in "Browser Mode" (Best for coding/debugging)
 app_dev:
-    cd app && uv run shiny run app.py
+    uv run shiny run src/digiqual/gui/app.py
 
-# Run the app in "Desktop Mode" (Best for testing the .exe look)
+# Run the app in "Desktop Mode" (Best for testing the desktop window look)
 app:
-    cd app && uv run python run_app.py
+    uv run python -m digiqual.gui
 
 # --- VERSIONING ---
 
@@ -69,25 +69,21 @@ build_package: clean
     # 4. Clean up the now-empty root dist folder
     rm -rf dist
 
-# (Optional) Builds the .app bundle locally on Mac for quick dev testing
+# Builds the desktop app locally with Briefcase (needs briefcase installed:
+# `uv tool install briefcase`). Uses a wheel built from this checkout so the
+# bundle matches the working tree, then runs the packaged self-test.
 build_app_local: clean
-    cd app && uv run pyinstaller --name "Digiqual" \
-        --noconfirm \
-        --windowed \
-        --collect-all digiqual \
-        --collect-all shiny \
-        --collect-all faicons \
-        --collect-all shinyswatch \
-        --collect-all htmltools \
-        --collect-all pywebview \
-        --hidden-import="uvicorn.loops.auto" \
-        --hidden-import="uvicorn.protocols.http.auto" \
-        --hidden-import="uvicorn.lifespan.on" \
-        --hidden-import="engineio.async_drivers.threading" \
-        run_app.py
-    @echo "Local macOS build complete. App located at app/dist/Digiqual.app"
+    #!/usr/bin/env bash
+    set -euo pipefail
+    uv build --wheel --python 3.12 --out-dir wheelhouse
+    cd app
+    export PIP_FIND_LINKS="$(cd .. && pwd)/wheelhouse"
+    briefcase create --no-input
+    briefcase build --no-input
+    briefcase run -- --self-test
+    echo "Desktop build complete under app/build/. Package it with: cd app && briefcase package --adhoc-sign"
 
-# Triggers the cross-platform GitHub Action workflow to build Windows & Mac app executables
+# Triggers the cross-platform GitHub Action workflow to build the Windows & Mac desktop apps
 trigger_build:
         gh workflow run build_app.yml && \
         echo "🚀 Cross-platform app build workflow triggered on GitHub Actions!" && \
@@ -125,7 +121,7 @@ cls: clean
 
 # Removes all generated artifacts to keep the workspace pristine
 clean:
-    rm -rf _site/ api_reference/ .pytest_cache/ .ruff_cache/ .quarto objects.json _sidebar.yml docs/*.csv **/*.spec *.csv *.egg-info build/ dist/ app/build/ app/dist/ *.zip src/*.egg-info src/digiqual/*.so src/digiqual/*.pyd src/digiqual/*.dylib
+    rm -rf _site/ api_reference/ .pytest_cache/ .ruff_cache/ .quarto objects.json _sidebar.yml docs/*.csv *.csv *.egg-info build/ dist/ app/build/ app/dist/ app/logs/ wheelhouse/ *.zip src/*.egg-info src/digiqual/*.so src/digiqual/*.pyd src/digiqual/*.dylib
     find . -type d -name "__pycache__" -exec rm -rf {} +
 
 
@@ -184,7 +180,7 @@ _commit_tag_push:
     #!/usr/bin/env bash
     set -euo pipefail
     NEW_VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
-    git add pyproject.toml uv.lock README.md index.qmd src/digiqual/__init__.py docs/install.qmd app/app.py app/run_app.py setup.py
+    git add pyproject.toml uv.lock README.md index.qmd src/digiqual/__init__.py docs/install.qmd app/pyproject.toml
     git commit -m "Bump to v${NEW_VERSION}"
     git push
     git tag "v${NEW_VERSION}"

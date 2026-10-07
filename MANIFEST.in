@@ -1,7 +1,4 @@
-graft app
-prune app/dist
-prune app/build
-prune app/.venv
+recursive-include src/digiqual/gui/www *
 global-exclude *.py[cod] __pycache__ .DS_Store
 include src/cpp/*.hpp
 include src/cpp/*.cpp

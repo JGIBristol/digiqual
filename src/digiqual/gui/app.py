@@ -8,7 +8,7 @@ import numpy as np
 import asyncio
 import os
 from digiqual.sampling import generate_lhs
-from digiqual import SimulationStudy
+from digiqual import SimulationStudy, __version__
 from pathlib import Path
 import warnings
 
@@ -386,7 +386,7 @@ ui.nav_panel(
                             ui.layout_columns(
                                 ui.div(
                                     ui.h5("About", class_="fw-bold mb-2"),
-                                    ui.tags.strong("Version: "), "0.26.2", ui.br(),
+                                    ui.tags.strong("Version: "), __version__, ui.br(),
                                     ui.tags.strong("License: "), "MIT", ui.br(),
                                     ui.tags.strong("Author: "), "Dr. Josh Tyler", ui.br(),
                                     ui.tags.strong("Institution: "), "University of Bristol",
