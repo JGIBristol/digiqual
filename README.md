@@ -17,7 +17,7 @@ You can install `digiqual` directly from PyPI.
 
 If you are managing a project with `uv`, add `digiqual` as a dependency:
 ```bash
-# To install the latest stable release (v0.27.0):
+# To install the latest stable release (v0.27.1):
 
 uv add digiqual
 
@@ -34,7 +34,7 @@ uv pip install digiqual
 
 ### Option 2: Install via standard pip
 
-To install the latest stable release (v0.27.0):
+To install the latest stable release (v0.27.1):
 
 ```bash
 pip install digiqual
