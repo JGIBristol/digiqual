@@ -84,8 +84,17 @@ dq_ui()
 For more information about the GUI, head over to the **[Launch the App](docs/gui.qmd)** page.
 :::
 
-### Standalone Application
-We are actively developing standalone, double-click executables for both Windows and macOS. In the near future, you or your colleagues will be able to run the complete DigiQual toolkit as a standard desktop application, without needing to install Python, manage virtual environments, or touch a command line.
+### Desktop Application
+A standard desktop application for Windows and macOS, so you or your colleagues can run the complete DigiQual toolkit without installing Python, managing virtual environments, or touching a command line.
+
+Download it from the **[latest GitHub Release](https://github.com/JGIBristol/digiqual/releases/latest)**:
+
+- **Windows 10/11:** the `.msi` installer, which doesn't need administrator rights, or the portable `.zip`
+- **macOS 12+ (Apple Silicon):** the `.dmg` disk image
+
+::: {.callout-tip}
+The installers aren't code-signed yet, so Windows or macOS may warn you on first launch. The **[Launch the App](docs/gui.qmd)** page explains how to get past those warnings.
+:::
 
 :::
 

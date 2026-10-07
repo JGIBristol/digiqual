@@ -135,8 +135,8 @@ clean:
 # wheels in CI and publishes them to PyPI. Docs are published last and
 # non-fatally, since `quarto publish`'s post-push deploy check has timed out
 # before without the actual push failing -- that must never block the release.
-# Does NOT create a GitHub Release; run `gh release create vX.Y.Z
-# --generate-notes` yourself once the Actions run is green.
+# The tag push also triggers build_app.yml, which creates the GitHub Release
+# (with generated notes) and attaches the Windows/macOS desktop installers.
 patch: clean
     #!/usr/bin/env bash
     set -euo pipefail
@@ -152,8 +152,8 @@ patch: clean
 # wheels in CI and publishes them to PyPI. Docs are published last and
 # non-fatally, since `quarto publish`'s post-push deploy check has timed out
 # before without the actual push failing -- that must never block the release.
-# Does NOT create a GitHub Release; run `gh release create vX.Y.Z
-# --generate-notes` yourself once the Actions run is green.
+# The tag push also triggers build_app.yml, which creates the GitHub Release
+# (with generated notes) and attaches the Windows/macOS desktop installers.
 minor: clean
     #!/usr/bin/env bash
     set -euo pipefail
@@ -189,7 +189,6 @@ _commit_tag_push:
     git tag "v${NEW_VERSION}"
     git push origin "v${NEW_VERSION}"
     echo ""
-    echo "Pushed commit + tag v${NEW_VERSION}. build_wheels.yml is now building wheels and will publish to PyPI:"
+    echo "Pushed commit + tag v${NEW_VERSION}. In CI, build_wheels.yml is now publishing wheels to PyPI,"
+    echo "and build_app.yml is building the desktop installers and attaching them to the GitHub Release:"
     echo "  https://github.com/JGIBristol/digiqual/actions"
-    echo "Once that run is green, create the GitHub Release yourself with:"
-    echo "  gh release create v${NEW_VERSION} --generate-notes"

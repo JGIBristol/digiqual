@@ -15,7 +15,15 @@ from . import ahat                 # noqa: E402
 
 def dq_ui():
     """
-    User Interface for DigiQual Shiny Application
+    Launch the DigiQual graphical user interface.
+
+    Starts the app (``python -m digiqual.gui``) in a separate process, using
+    the current Python environment, and returns immediately so the calling
+    script or notebook stays usable. The app opens in its own desktop window,
+    falling back to the default web browser if a native window can't be shown.
+
+    The app's code lives in the ``digiqual.gui`` subpackage; see the Desktop
+    App Architecture page of the documentation for how it is structured.
     """
     import subprocess
     import sys

@@ -1,8 +1,13 @@
 # Installation
 
-[![CI Status](https://github.com/JGIBristol/digiqual/actions/workflows/ci_cd.yml/badge.svg)](https://github.com/JGIBristol/digiqual/actions) [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/) [![License](https://img.shields.io/github/license/JGIBristol/digiqual)](LICENSE)
+[![CI Status](https://github.com/JGIBristol/digiqual/actions/workflows/ci_cd.yml/badge.svg)](https://github.com/JGIBristol/digiqual/actions) [![Python Version](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/) [![License](https://img.shields.io/github/license/JGIBristol/digiqual)](LICENSE)
 
 You can install `digiqual` directly from PyPI (or GitHub).
+
+::: {.callout-tip}
+### Just want the app?
+If you only want to use the graphical tool, and not the Python API, you don't need Python at all. Download the Windows or macOS **desktop app** instead; see [Launch the App](gui.qmd).
+:::
 
 ## Option 1: Install via uv (Recommended)
 

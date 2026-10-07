@@ -76,7 +76,7 @@ The user uploads 500 simulations of an ultrasonic inspection with `Length`, `Ang
 #### Step 2: The Real-Time Slider
 The user navigates to Tab 5 (PoD Explorer) and rapidly drags the **Detection Threshold** slider from `15.0 dB` to `22.5 dB`.
 
-1. The `realtime_threshold_update` function fires in `app.py`.
+1. The `realtime_threshold_update` function fires in `digiqual/gui/app.py`.
 2. It calls `study.pod(threshold=22.5, n_boot=0)`.
 3. **Layer 1 Hit:** Poly 2 loaded instantly.
 4. **Layer 2 Hit:** Bandwidth loaded instantly.

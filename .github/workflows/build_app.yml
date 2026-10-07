@@ -4,8 +4,16 @@ name: Build App Executables
 # PyPI) is built first, then Briefcase installs it into an embedded Python and
 # packages it. Each build is smoke-tested with `--self-test`, launched without
 # redirected stdio so it behaves like a user double-clicking the app.
+#
+# Manual runs (workflow_dispatch) just upload the installers as run artifacts.
+# A version tag push (vX.Y.Z, made by `just patch` / `just minor`) also creates
+# that GitHub Release and attaches the installers, which is where the docs send
+# users to download them.
 
 on:
+  push:
+    tags:
+      - "v*.*.*"
   workflow_dispatch:
 
 jobs:
@@ -117,3 +125,49 @@ jobs:
             app/dist/*.zip
             app/dist/*.dmg
           retention-days: 90
+
+  release:
+    name: Attach to GitHub Release
+    needs: build
+    # Only for version tags; manual runs stop at the artifacts above.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # create the release and upload assets
+    steps:
+      # By exact name: a DigiQual-* pattern would also pull in the -log artifacts.
+      - name: Download Windows Installers
+        uses: actions/download-artifact@v4
+        with:
+          name: DigiQual-Windows
+          path: dist
+
+      - name: Download macOS Installer
+        uses: actions/download-artifact@v4
+        with:
+          name: DigiQual-macOS
+          path: dist
+
+      # Briefcase names everything DigiQual-<version>.<ext>; add the platform so
+      # the release's asset list is self-explanatory.
+      - name: Name Installers by Platform
+        shell: bash
+        working-directory: dist
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mv DigiQual-*.msi "DigiQual-${version}-Windows-x64.msi"
+          mv DigiQual-*.zip "DigiQual-${version}-Windows-x64-portable.zip"
+          mv DigiQual-*.dmg "DigiQual-${version}-macOS-AppleSilicon.dmg"
+          ls -l
+
+      # Creates the release (with auto-generated notes) if it doesn't exist yet,
+      # then uploads; --clobber makes re-running the workflow for a tag safe.
+      - name: Upload to Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 \
+            || gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes --title "$GITHUB_REF_NAME"
+          gh release upload "$GITHUB_REF_NAME" dist/* --clobber

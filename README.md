@@ -9,6 +9,8 @@
 
 ## Installation
 
+> **Just want the app?** Windows and macOS installers are attached to the [latest GitHub Release](https://github.com/JGIBristol/digiqual/releases/latest); no Python needed. See [Launch the App](https://jgibristol.github.io/digiqual/docs/gui.html) for install notes.
+
 You can install `digiqual` directly from PyPI.
 
 ### Option 1: Install via uv (Recommended)
@@ -104,8 +106,12 @@ uv run pytest
 To preview the documentation site locally:
 
 ``` bash
-uv run quarto preview
+just preview
 ```
+
+4.  Work on the App
+
+The GUI is the `digiqual.gui` subpackage (`src/digiqual/gui/`); `app/` only holds the Briefcase configuration for the Windows/macOS installers. Run it with `just app` (desktop window) or `just app_dev` (browser, live reload). See [Desktop App Architecture](https://jgibristol.github.io/digiqual/docs/app_architecture.html) for how it fits together and how the installers are built.
 
 ## References
 
