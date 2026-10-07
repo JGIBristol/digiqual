@@ -51,6 +51,9 @@ environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 [dependency-groups]
 dev = [
     "ruff>=0.16.1",
+    # Not a runtime dependency (wheels ship the compiled extension), but
+    # `setup.py build_ext --inplace` (just test_matrix) runs in the project env.
+    "pybind11>=2.12.0",
 ]
 
 
