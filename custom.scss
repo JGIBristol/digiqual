@@ -22,15 +22,35 @@ h1.title {
 }
 
 // --- NAVBAR CENTERING ---
-// Keeps the title locked to the center of the screen
+// Keeps the title locked to the center of the screen. Quarto renders the logo
+// and the title as two separate .navbar-brand links, so centre their shared
+// container, and take the logo out of flow so it hangs just left of the title
+// (the container is then exactly the title's width, keeping the text centred).
 @media (min-width: 992px) {
-  .navbar-brand {
+  .navbar-brand-container {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
+    z-index: 10;
+    // Quarto pads/margins this asymmetrically, which would nudge the title
+    // off-centre
+    padding-left: 0;
+    padding-right: 0;
+    margin-right: 0;
+  }
+
+  .navbar-brand {
     margin-right: 0 !important;
     font-weight: 800;
-    z-index: 10;
+  }
+
+  .navbar-brand-logo {
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-right: 0.4rem !important;
+    padding-right: 0;
   }
 }
 
@@ -43,5 +63,19 @@ h1.title {
 @media (min-width: 1400px) {
   .sidebar.sidebar-navigation {
     margin-left: -20px;
+  }
+}
+
+// --- LOGO ---
+// Navbar logo (scripts/make_icon.py): the icon has a transparent margin, so it
+// can sit taller than the title text. Larger on desktop, where it's out of
+// flow (see NAVBAR CENTERING) and so doesn't make the navbar taller.
+.navbar-brand .navbar-logo {
+  max-height: 36px;
+}
+
+@media (min-width: 992px) {
+  .navbar-brand .navbar-logo {
+    max-height: 48px;
   }
 }

@@ -26,10 +26,9 @@ dependencies = [
     "shiny",
     "shinyswatch",
     "faicons",
-    "pywebview",
+    "pywebview>=5.0",
     "openpyxl>=3.1.5",
     "salib>=1.5.2",
-    "pybind11>=3.0.4",
 ]
 
 [build-system]
@@ -40,7 +39,9 @@ build-backend = "setuptools.build_meta"
 # Matches the Python versions exercised by `just test_matrix`.
 build = "cp311-* cp312-* cp313-* cp314-*"
 skip = "*-win32 *-manylinux_i686 *-musllinux*"
-test-command = "python -c \"import digiqual\""
+# Import the extension directly: `import digiqual` alone would pass even if
+# it were missing, since cpp_fallback silently falls back to NumPy.
+test-command = "python -c \"import digiqual._digiqual_cpp\""
 
 [tool.cibuildwheel.macos]
 # Keeps wheels installable on older macOS, avoiding libc++ deprecation warnings
@@ -60,8 +61,6 @@ dev = [
     "quartodoc",
     "jupyter",
     "nbformat",
-    "pyinstaller",
-    "pywebview"
 ]
 linux-gui = [
     "pywebview[qt]"
@@ -82,4 +81,4 @@ Documentation = "https://jgibristol.github.io/digiqual/"
 Source = "https://github.com/JGIBristol/digiqual"
 
 [project.gui-scripts]
-digiqual = "digiqual:dq_ui"
+digiqual = "digiqual.gui.launcher:main"

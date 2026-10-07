@@ -39,11 +39,11 @@ test_matrix:
 
 # Run the app in "Browser Mode" (Best for coding/debugging)
 app_dev:
-    cd app && uv run shiny run app.py
+    uv run shiny run src/digiqual/gui/app.py
 
-# Run the app in "Desktop Mode" (Best for testing the .exe look)
+# Run the app in "Desktop Mode" (Best for testing the desktop window look)
 app:
-    cd app && uv run python run_app.py
+    uv run python -m digiqual.gui
 
 # --- VERSIONING ---
 
@@ -69,25 +69,24 @@ build_package: clean
     # 4. Clean up the now-empty root dist folder
     rm -rf dist
 
-# (Optional) Builds the .app bundle locally on Mac for quick dev testing
+# Builds the desktop app locally with Briefcase (needs briefcase installed:
+# `uv tool install briefcase`). Uses a wheel built from this checkout so the
+# bundle matches the working tree, then runs the packaged self-test.
 build_app_local: clean
-    cd app && uv run pyinstaller --name "Digiqual" \
-        --noconfirm \
-        --windowed \
-        --collect-all digiqual \
-        --collect-all shiny \
-        --collect-all faicons \
-        --collect-all shinyswatch \
-        --collect-all htmltools \
-        --collect-all pywebview \
-        --hidden-import="uvicorn.loops.auto" \
-        --hidden-import="uvicorn.protocols.http.auto" \
-        --hidden-import="uvicorn.lifespan.on" \
-        --hidden-import="engineio.async_drivers.threading" \
-        run_app.py
-    @echo "Local macOS build complete. App located at app/dist/Digiqual.app"
+    #!/usr/bin/env bash
+    set -euo pipefail
+    uv build --wheel --python 3.12 --out-dir wheelhouse
+    # proxy_tools (a pywebview dependency) has no wheel on PyPI, and Briefcase only installs wheels
+    uvx pip wheel --no-deps --wheel-dir wheelhouse proxy_tools==0.1.0
+    cd app
+    wheel=$(ls ../wheelhouse/digiqual-*.whl)
+    proxy_tools=$(ls ../wheelhouse/proxy_tools-*.whl)
+    briefcase create --no-input -C "requires=['$wheel', '$proxy_tools']"
+    briefcase build --no-input
+    briefcase run -- --self-test
+    echo "Desktop build complete under app/build/. Package it with: cd app && briefcase package --adhoc-sign"
 
-# Triggers the cross-platform GitHub Action workflow to build Windows & Mac app executables
+# Triggers the cross-platform GitHub Action workflow to build the Windows & Mac desktop apps
 trigger_build:
         gh workflow run build_app.yml && \
         echo "🚀 Cross-platform app build workflow triggered on GitHub Actions!" && \
@@ -125,7 +124,7 @@ cls: clean
 
 # Removes all generated artifacts to keep the workspace pristine
 clean:
-    rm -rf _site/ api_reference/ .pytest_cache/ .ruff_cache/ .quarto objects.json _sidebar.yml docs/*.csv **/*.spec *.csv *.egg-info build/ dist/ app/build/ app/dist/ *.zip src/*.egg-info src/digiqual/*.so src/digiqual/*.pyd src/digiqual/*.dylib
+    rm -rf _site/ api_reference/ .pytest_cache/ .ruff_cache/ .quarto objects.json _sidebar.yml docs/*.csv *.csv *.egg-info build/ dist/ app/build/ app/dist/ app/logs/ wheelhouse/ *.zip src/*.egg-info src/digiqual/*.so src/digiqual/*.pyd src/digiqual/*.dylib
     find . -type d -name "__pycache__" -exec rm -rf {} +
 
 
@@ -136,8 +135,8 @@ clean:
 # wheels in CI and publishes them to PyPI. Docs are published last and
 # non-fatally, since `quarto publish`'s post-push deploy check has timed out
 # before without the actual push failing -- that must never block the release.
-# Does NOT create a GitHub Release; run `gh release create vX.Y.Z
-# --generate-notes` yourself once the Actions run is green.
+# The tag push also triggers build_app.yml, which creates the GitHub Release
+# (with generated notes) and attaches the Windows/macOS desktop installers.
 patch: clean
     #!/usr/bin/env bash
     set -euo pipefail
@@ -153,8 +152,8 @@ patch: clean
 # wheels in CI and publishes them to PyPI. Docs are published last and
 # non-fatally, since `quarto publish`'s post-push deploy check has timed out
 # before without the actual push failing -- that must never block the release.
-# Does NOT create a GitHub Release; run `gh release create vX.Y.Z
-# --generate-notes` yourself once the Actions run is green.
+# The tag push also triggers build_app.yml, which creates the GitHub Release
+# (with generated notes) and attaches the Windows/macOS desktop installers.
 minor: clean
     #!/usr/bin/env bash
     set -euo pipefail
@@ -184,13 +183,12 @@ _commit_tag_push:
     #!/usr/bin/env bash
     set -euo pipefail
     NEW_VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
-    git add pyproject.toml uv.lock README.md index.qmd src/digiqual/__init__.py docs/install.qmd app/app.py app/run_app.py setup.py
+    git add pyproject.toml uv.lock README.md index.qmd src/digiqual/__init__.py docs/install.qmd app/pyproject.toml
     git commit -m "Bump to v${NEW_VERSION}"
     git push
     git tag "v${NEW_VERSION}"
     git push origin "v${NEW_VERSION}"
     echo ""
-    echo "Pushed commit + tag v${NEW_VERSION}. build_wheels.yml is now building wheels and will publish to PyPI:"
+    echo "Pushed commit + tag v${NEW_VERSION}. In CI, build_wheels.yml is now publishing wheels to PyPI,"
+    echo "and build_app.yml is building the desktop installers and attaching them to the GitHub Release:"
     echo "  https://github.com/JGIBristol/digiqual/actions"
-    echo "Once that run is green, create the GitHub Release yourself with:"
-    echo "  gh release create v${NEW_VERSION} --generate-notes"

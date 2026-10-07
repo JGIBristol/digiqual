@@ -29,8 +29,9 @@ objects.json
 _sidebar.yml
 
 app/dist/
-app/*.spec
-!app/digiqual.spec
+app/build/
+app/logs/
+wheelhouse/
 
 package
 
@@ -38,7 +39,6 @@ package
 !app/sufficient_data.csv
 !app/initial_data.csv
 
-app/app_fail.py
 
 # --- Testing & Code Quality ---
 .pytest_cache/

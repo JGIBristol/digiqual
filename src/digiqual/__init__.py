@@ -15,39 +15,22 @@ from . import ahat                 # noqa: E402
 
 def dq_ui():
     """
-    User Interface for DigiQual Shiny Application
+    Launch the DigiQual graphical user interface.
+
+    Starts the app (``python -m digiqual.gui``) in a separate process, using
+    the current Python environment, and returns immediately so the calling
+    script or notebook stays usable. The app opens in its own desktop window,
+    falling back to the default web browser if a native window can't be shown.
+
+    The app's code lives in the ``digiqual.gui`` subpackage; see the Desktop
+    App Architecture page of the documentation for how it is structured.
     """
-    import sys
     import subprocess
-    from pathlib import Path
+    import sys
 
-    # 1. Define possible locations
-    # Location A: Installed Package (e.g. site-packages/digiqual/app)
-    # Location B: Local Dev Repo (e.g. Documents/DigiQual/app)
-
-    current_dir = Path(__file__).parent
-
-    possible_paths = [
-        current_dir / "app" / "run_app.py",         # Installed Location
-        current_dir.parent.parent / "app" / "run_app.py"  # Dev Location
-    ]
-
-    app_script = None
-    for p in possible_paths:
-        if p.exists():
-            app_script = p
-            break
-
-    if app_script is None:
-        print("❌ Critical Error: Could not find 'run_app.py'.")
-        print(f"   Searched in: {[str(p) for p in possible_paths]}")
-        return
-
-    print(f"🚀 Launching DigiQual GUI from: {app_script}")
-
-    # 2. Launch!
-    # Using sys.executable ensures we use the active environment
-    subprocess.Popen([sys.executable, str(app_script)], cwd=str(app_script.parent))
+    print("🚀 Launching DigiQual GUI...")
+    # sys.executable ensures the GUI runs in the active environment
+    subprocess.Popen([sys.executable, "-m", "digiqual.gui"])
 
 __all__ = [
     "SimulationStudy",

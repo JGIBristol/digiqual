@@ -1,85 +1,173 @@
 name: Build App Executables
 
+# Builds the desktop app with Briefcase: the digiqual wheel (same C++ build as
+# PyPI) is built first, then Briefcase installs it into an embedded Python and
+# packages it. Each build is smoke-tested with `--self-test`, launched without
+# redirected stdio so it behaves like a user double-clicking the app.
+#
+# Manual runs (workflow_dispatch) just upload the installers as run artifacts.
+# A version tag push (vX.Y.Z, made by `just patch` / `just minor`) also creates
+# that GitHub Release and attaches the installers, which is where the docs send
+# users to download them.
+
 on:
+  push:
+    tags:
+      - "v*.*.*"
   workflow_dispatch:
 
 jobs:
   build:
-    name: Build (${{ matrix.artifact_name }})
+    name: Build (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: windows-latest
-            artifact_name: Digiqual-Windows-x64
-            archive_path: app/dist/Digiqual-Windows-x64.zip
-          - os: macos-latest
-            artifact_name: Digiqual-macOS
-            archive_path: app/dist/Digiqual-macOS.zip
+            name: Windows
+          - os: macos-15
+            name: macOS
+
+    env:
+      # Python 3.12: pythonnet (pywebview's Windows backend) supports <= 3.13.
+      PYTHON_VERSION: "3.12"
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Python & uv
-        uses: astral-sh/setup-uv@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          enable-cache: true
+          python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install Dependencies
+      - name: Install Build Tools
+        run: python -m pip install --upgrade pip briefcase cibuildwheel
+
+      - name: Build digiqual Wheel
+        shell: bash
+        env:
+          CIBW_BUILD: cp312-*
+          CIBW_ARCHS: native
+        run: python -m cibuildwheel --output-dir wheelhouse
+
+      # Point `requires` at the exact wheel just built. Using find-links with
+      # `digiqual==X.Y.Z` isn't enough: PyPI has an identically named wheel and
+      # pip may pick that one, so the app wouldn't contain this branch's code.
+      #
+      # proxy_tools (needed by pywebview>=5) is only published as an sdist, and
+      # Briefcase installs with --only-binary, so a wheel of it is built here;
+      # without it pip silently falls back to pywebview 3.4.
+      - name: Build App
+        shell: bash
+        working-directory: app
         run: |
-          uv sync --all-extras --dev
-          uv pip install -e .
+          python -m pip wheel --no-deps --wheel-dir ../wheelhouse proxy_tools==0.1.0
+          wheel=$(ls ../wheelhouse/digiqual-*.whl)
+          proxy_tools=$(ls ../wheelhouse/proxy_tools-*.whl)
+          echo "Bundling $wheel and $proxy_tools"
+          briefcase create --no-input -C "requires=['$wheel', '$proxy_tools']"
+          briefcase build --no-input
 
-      # Windows Build Step
-      - name: Build App Executable (Windows)
+      # timeout: a broken multiprocessing setup hangs rather than failing.
+      - name: Self-Test (Windows)
         if: runner.os == 'Windows'
+        timeout-minutes: 5
         shell: pwsh
-        run: pwsh -File .github/scripts/windows/build.ps1
+        run: |
+          $exe = Get-ChildItem -Path app/build -Recurse -Filter "DigiQual.exe" | Select-Object -First 1
+          if (-not $exe) { Write-Error "DigiQual.exe not found under app/build"; exit 1 }
+          Write-Host "Running $($exe.FullName) --self-test"
+          $proc = Start-Process -FilePath $exe.FullName -ArgumentList "--self-test" -PassThru -Wait
+          exit $proc.ExitCode
 
-      # Comprehensive Windows Integrity, File & HTTP Startup Check
-      - name: Validate Windows Build Integrity & Startup
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: pwsh -File .github/scripts/windows/validate.ps1
+      - name: Self-Test (macOS)
+        if: runner.os == 'macOS'
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          exe=$(find app/build -path "*DigiQual.app/Contents/MacOS/DigiQual" -type f | head -n 1)
+          test -n "$exe" || { echo "DigiQual.app binary not found under app/build"; exit 1; }
+          echo "Running $exe --self-test"
+          "$exe" --self-test
 
-      # Upload startup logs regardless of outcome, so failures are debuggable from the run
-      - name: Upload Windows Startup Logs
-        if: always() && runner.os == 'Windows'
+      - name: Upload Self-Test Log
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Digiqual-Windows-startup-logs
+          name: DigiQual-${{ matrix.name }}-log
           path: |
-            app/dist/digiqual-stdout.log
-            app/dist/digiqual-stderr.log
+            ~/AppData/Local/Digiqual/digiqual.log
+            ~/Library/Logs/Digiqual/digiqual.log
           retention-days: 14
           if-no-files-found: ignore
 
-      # Packaging step for Windows
-      - name: Compress Windows Executable
+      - name: Package (Windows MSI + portable zip)
         if: runner.os == 'Windows'
         shell: pwsh
+        working-directory: app
         run: |
-          Compress-Archive -Path "app/dist/Digiqual" -DestinationPath "app/dist/Digiqual-Windows-x64.zip"
+          briefcase package windows --adhoc-sign --no-input
+          briefcase package windows --adhoc-sign --packaging-format zip --no-input
 
-      # macOS Build Step
-      - name: Build App Executable (macOS)
+      - name: Package (macOS DMG)
         if: runner.os == 'macOS'
-        run: |
-          cd app
-          # PyInstaller flags live in digiqual.spec, shared with the Windows
-          # build, so the two platforms' bundling configuration can't
-          # silently drift apart.
-          uv run pyinstaller digiqual.spec --noconfirm
+        working-directory: app
+        run: briefcase package macOS --adhoc-sign --no-input
 
-          ditto -c -k --sequesterRsrc --keepParent "dist/Digiqual.app" "dist/Digiqual-macOS.zip"
-
-      # Upload the final archive for each OS
-      - name: Upload Build Artifact
+      - name: Upload App
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.archive_path }}
+          name: DigiQual-${{ matrix.name }}
+          path: |
+            app/dist/*.msi
+            app/dist/*.zip
+            app/dist/*.dmg
           retention-days: 90
+
+  release:
+    name: Attach to GitHub Release
+    needs: build
+    # Only for version tags; manual runs stop at the artifacts above.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # create the release and upload assets
+    steps:
+      # By exact name: a DigiQual-* pattern would also pull in the -log artifacts.
+      - name: Download Windows Installers
+        uses: actions/download-artifact@v4
+        with:
+          name: DigiQual-Windows
+          path: dist
+
+      - name: Download macOS Installer
+        uses: actions/download-artifact@v4
+        with:
+          name: DigiQual-macOS
+          path: dist
+
+      # Briefcase names everything DigiQual-<version>.<ext>; add the platform so
+      # the release's asset list is self-explanatory.
+      - name: Name Installers by Platform
+        shell: bash
+        working-directory: dist
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mv DigiQual-*.msi "DigiQual-${version}-Windows-x64.msi"
+          mv DigiQual-*.zip "DigiQual-${version}-Windows-x64-portable.zip"
+          mv DigiQual-*.dmg "DigiQual-${version}-macOS-AppleSilicon.dmg"
+          ls -l
+
+      # Creates the release (with auto-generated notes) if it doesn't exist yet,
+      # then uploads; --clobber makes re-running the workflow for a tag safe.
+      - name: Upload to Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 \
+            || gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes --title "$GITHUB_REF_NAME"
+          gh release upload "$GITHUB_REF_NAME" dist/* --clobber
