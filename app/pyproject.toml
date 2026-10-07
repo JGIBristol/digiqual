@@ -7,8 +7,8 @@
 # imports, collect-all lists or .spec files to maintain.
 #
 # Build locally with `just build_app_local`; CI builds it in build_app.yml.
-# `requires` resolves digiqual from a local wheelhouse when PIP_FIND_LINKS
-# points at one (as both of those do), otherwise from PyPI.
+# Both override `requires` with `-C` to bundle a wheel built from the current
+# checkout; the value below (the PyPI release) is only the default.
 
 [tool.briefcase]
 project_name = "DigiQual"
@@ -33,3 +33,6 @@ system_installer = false
 
 [tool.briefcase.app.digiqual-desktop.macOS]
 universal_build = false
+# scipy and scikit-learn only publish Apple Silicon wheels for macOS 12+;
+# Briefcase's default (11.0) leaves pip with no installable scipy.
+min_os_version = "12.0"

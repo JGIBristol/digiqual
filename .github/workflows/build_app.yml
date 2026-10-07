@@ -44,15 +44,16 @@ jobs:
           CIBW_ARCHS: native
         run: python -m cibuildwheel --output-dir wheelhouse
 
-      # PIP_FIND_LINKS makes Briefcase's `requires = ["digiqual==X.Y.Z"]`
-      # resolve to the wheel just built rather than PyPI.
+      # Point `requires` at the exact wheel just built. Using find-links with
+      # `digiqual==X.Y.Z` isn't enough: PyPI has an identically named wheel and
+      # pip may pick that one, so the app wouldn't contain this branch's code.
       - name: Build App
         shell: bash
         working-directory: app
-        env:
-          PIP_FIND_LINKS: ${{ github.workspace }}/wheelhouse
         run: |
-          briefcase create --no-input
+          wheel=$(ls ../wheelhouse/digiqual-*.whl)
+          echo "Bundling $wheel"
+          briefcase create --no-input -C "requires=['$wheel']"
           briefcase build --no-input
 
       # timeout: a broken multiprocessing setup hangs rather than failing.

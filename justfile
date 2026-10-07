@@ -77,8 +77,8 @@ build_app_local: clean
     set -euo pipefail
     uv build --wheel --python 3.12 --out-dir wheelhouse
     cd app
-    export PIP_FIND_LINKS="$(cd .. && pwd)/wheelhouse"
-    briefcase create --no-input
+    wheel=$(ls ../wheelhouse/digiqual-*.whl)
+    briefcase create --no-input -C "requires=['$wheel']"
     briefcase build --no-input
     briefcase run -- --self-test
     echo "Desktop build complete under app/build/. Package it with: cd app && briefcase package --adhoc-sign"
