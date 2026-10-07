@@ -182,7 +182,7 @@ _preflight_release:
 _commit_tag_push:
     #!/usr/bin/env bash
     set -euo pipefail
-    NEW_VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+    NEW_VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' pyproject.toml | head -n1)
     git add pyproject.toml uv.lock README.md index.qmd src/digiqual/__init__.py docs/install.qmd app/pyproject.toml
     git commit -m "Bump to v${NEW_VERSION}"
     git push
