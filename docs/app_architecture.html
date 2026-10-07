@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>ahat.bootstrap_linear_pod_ci – digiqual</title>
+<title>Desktop App Architecture – digiqual</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -26,41 +26,6 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
 </style>
 
 
@@ -71,6 +36,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
+<link href="../api_reference/index.html" rel="next">
+<link href="../docs/caching.html" rel="prev">
 <link href="../docs/www/favicon.png" rel="icon" type="image/png">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -109,6 +76,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
+<script src="../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
 
 
 </head>
@@ -150,7 +120,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/app_architecture.html">Development</a></li><li class="breadcrumb-item"><a href="../docs/app_architecture.html">Desktop App Architecture</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -260,16 +230,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
  <span class="menu-text">Development</span></a>
-          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../docs/app_architecture.html" class="sidebar-item-text sidebar-link">
+  <a href="../docs/app_architecture.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Desktop App Architecture</span></a>
   </div>
 </li>
@@ -291,31 +261,269 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.ahat.bootstrap_linear_pod_ci" id="toc-digiqual.ahat.bootstrap_linear_pod_ci" class="nav-link active" data-scroll-target="#digiqual.ahat.bootstrap_linear_pod_ci">ahat.bootstrap_linear_pod_ci</a></li>
+  <li><a href="#the-short-version" id="toc-the-short-version" class="nav-link active" data-scroll-target="#the-short-version">The Short Version</a></li>
+  <li><a href="#where-everything-lives" id="toc-where-everything-lives" class="nav-link" data-scroll-target="#where-everything-lives">Where Everything Lives</a></li>
+  <li><a href="#ways-the-app-gets-launched" id="toc-ways-the-app-gets-launched" class="nav-link" data-scroll-target="#ways-the-app-gets-launched">Ways the App Gets Launched</a></li>
+  <li><a href="#what-launcher.main-does" id="toc-what-launcher.main-does" class="nav-link" data-scroll-target="#what-launcher.main-does">What <code>launcher.main()</code> Does</a></li>
+  <li><a href="#why-its-built-this-way" id="toc-why-its-built-this-way" class="nav-link" data-scroll-target="#why-its-built-this-way">Why It’s Built This Way</a>
+  <ul class="collapse">
+  <li><a href="#briefcase-rather-than-pyinstaller" id="toc-briefcase-rather-than-pyinstaller" class="nav-link" data-scroll-target="#briefcase-rather-than-pyinstaller">Briefcase rather than PyInstaller</a></li>
+  <li><a href="#worker-processes-and-sys.frozen" id="toc-worker-processes-and-sys.frozen" class="nav-link" data-scroll-target="#worker-processes-and-sys.frozen">Worker processes and <code>sys.frozen</code></a></li>
+  <li><a href="#redirecting-stdout-and-stderr" id="toc-redirecting-stdout-and-stderr" class="nav-link" data-scroll-target="#redirecting-stdout-and-stderr">Redirecting stdout and stderr</a></li>
+  <li><a href="#build-details-in-build_app.yml" id="toc-build-details-in-build_app.yml" class="nav-link" data-scroll-target="#build-details-in-build_app.yml">Build details in <code>build_app.yml</code></a></li>
+  </ul></li>
+  <li><a href="#the-build-pipeline" id="toc-the-build-pipeline" class="nav-link" data-scroll-target="#the-build-pipeline">The Build Pipeline</a></li>
+  <li><a href="#working-on-the-app-locally" id="toc-working-on-the-app-locally" class="nav-link" data-scroll-target="#working-on-the-app-locally">Working on the App Locally</a></li>
+  <li><a href="#common-changes" id="toc-common-changes" class="nav-link" data-scroll-target="#common-changes">Common Changes</a></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/ahat.bootstrap_linear_pod_ci.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/app_architecture.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/app_architecture.html">Development</a></li><li class="breadcrumb-item"><a href="../docs/app_architecture.html">Desktop App Architecture</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Desktop App Architecture</h1>
+</div>
 
 
 
+<div class="quarto-title-meta">
 
-<section id="digiqual.ahat.bootstrap_linear_pod_ci" class="level1">
-<h1>ahat.bootstrap_linear_pod_ci</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>bootstrap_linear_pod_ci(</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    X,</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    y,</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    X_eval,</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    threshold,</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    xlog<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    ylog<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    n_boot<span class="op">=</span><span class="dv">1000</span>,</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    n_jobs<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    confidence_levels<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    progress_callback<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Estimates Confidence Bounds for the classical linear PoD curve via Bootstrapping. Maintains the strict assumptions of constant variance and normally distributed errors.</p>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>This page is for developers. It explains how the DigiQual app is put together, how the Windows and macOS installers are built, and why it’s built this way. To <em>use</em> the app, see <a href="../docs/gui.html">Launch the App</a>.</p>
+<section id="the-short-version" class="level2">
+<h2 class="anchored" data-anchor-id="the-short-version">The Short Version</h2>
+<ul>
+<li><strong>All of the app’s code lives in the <code>digiqual</code> package</strong>, in the <code>digiqual.gui</code> subpackage. It ships inside the normal <code>digiqual</code> wheel on PyPI, so <code>pip install digiqual</code> always includes the app.</li>
+<li><strong>The desktop installers are that same wheel</strong>, installed into a self-contained Python by <a href="https://briefcase.beeware.org/">Briefcase</a>. The top-level <code>app/</code> folder holds only Briefcase’s configuration and a two-line entry point; there’s no app code in it.</li>
+</ul>
+<p>So any change to the app goes into <code>src/digiqual/gui/</code>, and every way of launching the app picks it up.</p>
+</section>
+<section id="where-everything-lives" class="level2">
+<h2 class="anchored" data-anchor-id="where-everything-lives">Where Everything Lives</h2>
+<pre class="text"><code>src/digiqual/
+├── gui/                        ← the app (a normal subpackage of digiqual)
+│   ├── __init__.py
+│   ├── __main__.py             ← makes `python -m digiqual.gui` work
+│   ├── app.py                  ← the Shiny app: UI layout + server logic
+│   ├── launcher.py             ← starts the server and opens the window
+│   └── www/                    ← static files served by Shiny (logos, favicon)
+├── _digiqual_cpp.*.so / .pyd   ← compiled C++ extension (built by setup.py)
+└── ...                         ← the statistical library itself
+
+app/                            ← Briefcase wrapper only (not part of the wheel)
+├── pyproject.toml              ← [tool.briefcase] config: name, version, icon, platform options
+├── .python-version             ← Python used for desktop builds (3.12)
+├── src/digiqual_desktop/
+│   └── __main__.py             ← entry point: sets sys.frozen, calls launcher.main()
+├── icons/                      ← app icons (.icns / .ico / .png), generated
+└── *.csv                       ← example datasets for trying the app
+
+scripts/make_icon.py            ← draws the icon; writes app/icons/, gui/www/favicon.png, docs/www/
+.github/workflows/build_app.yml ← builds, self-tests and packages the installers</code></pre>
+<p>The static files in <code>gui/www/</code> are included in the wheel by <code>package_data</code> in <code>setup.py</code> and <code>MANIFEST.in</code>. <code>app.py</code> finds them relative to its own location, so this works the same installed or from a checkout.</p>
+</section>
+<section id="ways-the-app-gets-launched" class="level2">
+<h2 class="anchored" data-anchor-id="ways-the-app-gets-launched">Ways the App Gets Launched</h2>
+<p>Every route ends up in the same function, <code>digiqual.gui.launcher.main()</code>:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>How it’s started</th>
+<th>Path to <code>launcher.main()</code></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Desktop app (MSI / zip / DMG)</td>
+<td>Briefcase’s executable → <code>digiqual_desktop/__main__.py</code> → <code>main()</code></td>
+</tr>
+<tr class="even">
+<td><code>digiqual</code> command (<code>uv tool install</code>, <code>uvx digiqual</code>)</td>
+<td><code>[project.gui-scripts]</code> in <code>pyproject.toml</code> → <code>main()</code></td>
+</tr>
+<tr class="odd">
+<td><code>dq_ui()</code> in Python / Jupyter</td>
+<td>starts <code>python -m digiqual.gui</code> in a new process → <code>main()</code></td>
+</tr>
+<tr class="even">
+<td><code>python -m digiqual.gui</code></td>
+<td><code>gui/__main__.py</code> → <code>main()</code></td>
+</tr>
+<tr class="odd">
+<td><code>just app</code> (from a checkout)</td>
+<td><code>uv run python -m digiqual.gui</code> → <code>main()</code></td>
+</tr>
+<tr class="even">
+<td><code>just app_dev</code></td>
+<td><code>shiny run src/digiqual/gui/app.py</code>: browser only, skips the launcher (for UI work)</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="what-launcher.main-does" class="level2">
+<h2 class="anchored" data-anchor-id="what-launcher.main-does">What <code>launcher.main()</code> Does</h2>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    A[main] --&gt; B{Started as a multiprocessing&lt;br/&gt;worker or resource tracker?}
+    B -- yes --&gt; C[Run that task, then exit]
+    B -- no --&gt; D[Set up logging to digiqual.log&lt;br/&gt;Point empty stdout/stderr at it]
+    D --&gt; E{--self-test?}
+    E -- yes --&gt; F[Check C++ extension, pywebview,&lt;br/&gt;worker processes and HTTP server&lt;br/&gt;Exit 0 or 1]
+    E -- no --&gt; G[Start the Shiny server on a free&lt;br/&gt;127.0.0.1 port, in a background thread]
+    G --&gt; H[Wait until it answers HTTP]
+    H --&gt; I[Open a pywebview window&lt;br/&gt;WebView2 on Windows, WebKit on macOS]
+    I -- fails --&gt; J[Fall back to an Edge app window on Windows,&lt;br/&gt;otherwise the default browser]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p><code>launcher.py</code> keeps its module-level imports light (shiny and pywebview are only imported inside functions), because worker processes import it before they know they are workers.</p>
+</section>
+<section id="why-its-built-this-way" class="level2">
+<h2 class="anchored" data-anchor-id="why-its-built-this-way">Why It’s Built This Way</h2>
+<p>These are the decisions most likely to puzzle someone reading the code, with the reason for each.</p>
+<section id="briefcase-rather-than-pyinstaller" class="level3">
+<h3 class="anchored" data-anchor-id="briefcase-rather-than-pyinstaller">Briefcase rather than PyInstaller</h3>
+<p>PyInstaller <em>freezes</em> an app: it analyses imports to decide which files to bundle. That missed Shiny’s static files, pythonnet’s DLLs and some hidden imports, which needed a long hand-maintained <code>.spec</code> file. Briefcase instead runs <code>pip install</code> into a bundled, standalone Python. The app therefore gets exactly the files a normal install would, including the prebuilt C++ extension from the <code>digiqual</code> wheel. Nothing has to be listed by hand.</p>
+</section>
+<section id="worker-processes-and-sys.frozen" class="level3">
+<h3 class="anchored" data-anchor-id="worker-processes-and-sys.frozen">Worker processes and <code>sys.frozen</code></h3>
+<p>The PoD bootstrap runs in parallel with <code>joblib</code> (<code>backend="multiprocessing"</code>), which starts worker processes by running <code>sys.executable</code> again. In the desktop app, <code>sys.executable</code> is the DigiQual app itself, not <code>python</code>, and it can’t run <code>python -c "..."</code> commands. Without special handling, every worker would open another DigiQual window.</p>
+<p>To prevent this, <code>digiqual_desktop/__main__.py</code> sets <code>sys.frozen = True</code>. That makes Python’s <code>multiprocessing</code> start workers as <code>DigiQual --multiprocessing-fork ...</code>. The first thing <code>launcher.main()</code> does is spot those arguments, and the <code>-c</code> commands used by Python’s and joblib’s resource trackers, and run the requested task instead of the app. This mirrors what PyInstaller’s runtime hooks do.</p>
+</section>
+<section id="redirecting-stdout-and-stderr" class="level3">
+<h3 class="anchored" data-anchor-id="redirecting-stdout-and-stderr">Redirecting stdout and stderr</h3>
+<p>A desktop app has no console, so <code>sys.stdout</code> and <code>sys.stderr</code> are <code>None</code>. uvicorn, the web server under Shiny, calls <code>.isatty()</code> on them while setting up logging, and crashes the server thread. The window then shows a blank page. The launcher points them at the log file before starting the server.</p>
+</section>
+<section id="build-details-in-build_app.yml" class="level3">
+<h3 class="anchored" data-anchor-id="build-details-in-build_app.yml">Build details in <code>build_app.yml</code></h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Detail</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Python <strong>3.12</strong></td>
+<td>pywebview’s Windows backend needs pythonnet, which supports up to Python 3.13.</td>
+</tr>
+<tr class="even">
+<td>macOS <strong>12.0</strong> minimum (<code>min_os_version</code>)</td>
+<td>scipy and scikit-learn only publish Apple Silicon wheels for macOS 12+.</td>
+</tr>
+<tr class="odd">
+<td>The <code>digiqual</code> wheel is built in the job and passed to Briefcase with <code>-C requires=[...]</code></td>
+<td>PyPI has an identically named wheel, and pip may otherwise choose that one. The installers must contain the code being built.</td>
+</tr>
+<tr class="even">
+<td>A <code>proxy_tools</code> wheel is built in the job</td>
+<td>pywebview needs <code>proxy_tools</code>, which is only published as source code. Briefcase installs wheels only, so without this pip silently falls back to the ancient pywebview 3.4, which has no menu support. <code>pywebview&gt;=5.0</code> in <code>pyproject.toml</code> makes that fail loudly instead.</td>
+</tr>
+<tr class="odd">
+<td>Self-test runs <strong>without</strong> redirected output</td>
+<td>It behaves like a user double-clicking the app, so the stdout/stderr problem above would be caught.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="the-build-pipeline" class="level2">
+<h2 class="anchored" data-anchor-id="the-build-pipeline">The Build Pipeline</h2>
+<p><code>.github/workflows/build_app.yml</code> runs on Windows and macOS:</p>
+<ol type="1">
+<li>Build the <code>digiqual</code> wheel for Python 3.12 with cibuildwheel. This is the same C++ build that goes to PyPI.</li>
+<li>Build a <code>proxy_tools</code> wheel.</li>
+<li><code>briefcase create</code> and <code>briefcase build</code>: the standalone Python, the app executable, and every dependency installed from wheels.</li>
+<li>Run <code>DigiQual --self-test</code>, which must exit 0.</li>
+<li><code>briefcase package</code>: an MSI and a portable zip on Windows, a DMG on macOS. Signing is ad hoc (no certificate) for now.</li>
+<li>Upload them as run artifacts.</li>
+</ol>
+<p>It runs in two situations:</p>
+<ul>
+<li><strong>Manually</strong> (<code>just trigger_build</code>, or <em>Actions → Build App Executables → Run workflow</em>): this stops at the run artifacts, which you need to be logged in to GitHub to download.</li>
+<li><strong>On a version tag</strong> (<code>vX.Y.Z</code>, pushed by <code>just patch</code> / <code>just minor</code>): an extra job creates the GitHub Release, if it doesn’t exist yet, and attaches the installers. The <a href="../docs/gui.html">download instructions</a> link to <code>/releases/latest</code>.</li>
+</ul>
+<p>The version comes from <code>app/pyproject.toml</code>, which <code>just bump</code> keeps in step with the package version.</p>
+</section>
+<section id="working-on-the-app-locally" class="level2">
+<h2 class="anchored" data-anchor-id="working-on-the-app-locally">Working on the App Locally</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Task</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Edit the UI with live reload in a browser</td>
+<td><code>just app_dev</code></td>
+</tr>
+<tr class="even">
+<td>Run the full desktop window from your checkout</td>
+<td><code>just app</code></td>
+</tr>
+<tr class="odd">
+<td>Check the C++ extension, workers and server, without a window</td>
+<td><code>uv run python -m digiqual.gui --self-test</code></td>
+</tr>
+<tr class="even">
+<td>Build the desktop app on your own machine</td>
+<td><code>uv tool install briefcase</code>, then <code>just build_app_local</code></td>
+</tr>
+<tr class="odd">
+<td>Build the installers in CI</td>
+<td><code>gh workflow run build_app.yml --ref &lt;branch&gt;</code></td>
+</tr>
+<tr class="even">
+<td>Change the icon</td>
+<td>Edit <code>scripts/make_icon.py</code>, then run <code>uv run python scripts/make_icon.py</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>--self-test</code> results, and everything the app prints, go to the log file:</p>
+<ul>
+<li><strong>Windows:</strong> <code>%LOCALAPPDATA%\Digiqual\digiqual.log</code></li>
+<li><strong>macOS:</strong> <code>~/Library/Logs/Digiqual/digiqual.log</code></li>
+<li><strong>Linux:</strong> <code>~/.local/share/Digiqual/digiqual.log</code></li>
+</ul>
+</section>
+<section id="common-changes" class="level2">
+<h2 class="anchored" data-anchor-id="common-changes">Common Changes</h2>
+<p><strong>Adding a dependency.</strong> Add it to <code>dependencies</code> in the root <code>pyproject.toml</code>; the desktop app picks it up through the wheel. Check that it publishes wheels for Windows x64, macOS arm64 (macOS 12+) and Python 3.12. If it only publishes source, the desktop build fails or falls back to an older version; build a wheel of it in <code>build_app.yml</code> the way <code>proxy_tools</code> is.</p>
+<p><strong>Adding a static file</strong> (an image, CSS or JavaScript) to the app: put it in <code>src/digiqual/gui/www/</code> and refer to it by file name (e.g.&nbsp;<code>src="my_image.png"</code>). It is packaged automatically.</p>
+<p><strong>Adding a page or feature to the app:</strong> edit <code>src/digiqual/gui/app.py</code>. Nothing in <code>app/</code> or the workflow needs to change.</p>
 
 
 </section>
@@ -721,9 +929,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
   });
   </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../docs/caching.html" class="pagination-link" aria-label="DigiQual Caching Architecture">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">DigiQual Caching Architecture</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../api_reference/index.html" class="pagination-link" aria-label="API Reference">
+        <span class="nav-page-text">API Reference</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
 </div> <!-- /content -->
 
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/ahat.bootstrap_linear_pod_ci.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/app_architecture.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

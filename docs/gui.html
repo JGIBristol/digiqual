@@ -73,6 +73,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <meta name="quarto:offset" content="../">
 <link href="../docs/gui_manual.html" rel="next">
 <link href="../docs/qs_class.html" rel="prev">
+<link href="../docs/www/favicon.png" rel="icon" type="image/png">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
@@ -82,7 +83,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2d657960e500577e6d3bd4c9cdeced8c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-af7269421fbfc448936f832648c33468.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -121,6 +122,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../docs/www/digiqual-logo.png" alt="digiqual logo" class="navbar-logo light-content">
+    <img src="../docs/www/digiqual-logo.png" alt="digiqual logo" class="navbar-logo dark-content">
+    </a>
     <a class="navbar-brand" href="../index.html">
     <span class="navbar-title">digiqual</span>
     </a>
@@ -255,6 +260,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
       </ul>
   </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Development</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/app_architecture.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Desktop App Architecture</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../api_reference/index.html" class="sidebar-item-text sidebar-link">
@@ -273,8 +295,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#how-to-access-the-app" id="toc-how-to-access-the-app" class="nav-link active" data-scroll-target="#how-to-access-the-app">1. How to Access the App</a>
   <ul class="collapse">
-  <li><a href="#option-a-using-uv-via-cli-recommended" id="toc-option-a-using-uv-via-cli-recommended" class="nav-link" data-scroll-target="#option-a-using-uv-via-cli-recommended">Option A: Using <code>uv</code> via CLI (Recommended)</a></li>
-  <li><a href="#option-b-from-a-python-script" id="toc-option-b-from-a-python-script" class="nav-link" data-scroll-target="#option-b-from-a-python-script">Option B: From a Python Script</a></li>
+  <li><a href="#option-a-desktop-app-for-windows-macos" id="toc-option-a-desktop-app-for-windows-macos" class="nav-link" data-scroll-target="#option-a-desktop-app-for-windows-macos">Option A: Desktop App for Windows &amp; macOS</a></li>
+  <li><a href="#option-b-using-uv-via-cli" id="toc-option-b-using-uv-via-cli" class="nav-link" data-scroll-target="#option-b-using-uv-via-cli">Option B: Using <code>uv</code> via CLI</a></li>
+  <li><a href="#option-c-from-a-python-script" id="toc-option-c-from-a-python-script" class="nav-link" data-scroll-target="#option-c-from-a-python-script">Option C: From a Python Script</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/gui.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -301,13 +324,103 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>While the <code>SimulationStudy</code> class offers powerful programmatic control, sometimes you just need a clean visual interface to explore your data without writing scripts. The DigiQual App wraps the core statistical engine into a modern, user-friendly graphical interface, allowing you to run the entire lifecycle—from design to diagnostics to reliability analysis—directly in your browser.</p>
+<p>While the <code>SimulationStudy</code> class offers powerful programmatic control, sometimes you just need a clean visual interface to explore your data without writing scripts. The DigiQual App wraps the core statistical engine into a modern, user-friendly graphical interface, allowing you to run the entire lifecycle—from design to diagnostics to reliability analysis—in a desktop window.</p>
 <section id="how-to-access-the-app" class="level2">
 <h2 class="anchored" data-anchor-id="how-to-access-the-app">1. How to Access the App</h2>
-<p>Currently, the DigiQual app is bundled directly with the Python package. Depending on your workflow, there are a few ways to launch it.</p>
-<section id="option-a-using-uv-via-cli-recommended" class="level3">
-<h3 class="anchored" data-anchor-id="option-a-using-uv-via-cli-recommended">Option A: Using <code>uv</code> via CLI (Recommended)</h3>
-<p>If you use <code>uv</code> for environment management, you can launch the app directly from your terminal as a Command Line Interface (CLI) tool. This is the fastest way to get started.</p>
+<p>There are two ways to get the app:</p>
+<ul>
+<li><strong>The desktop app</strong> (Option A) is a normal Windows or macOS application. It doesn’t need Python or a terminal, so it’s the easiest route if you, or a colleague, just want to use the tool.</li>
+<li><strong>The Python package</strong> (Options B and C) includes the same app. Use it if you already work in Python, or are on Linux.</li>
+</ul>
+<p>Both run the same app, from the same version of <code>digiqual</code>.</p>
+<section id="option-a-desktop-app-for-windows-macos" class="level3">
+<h3 class="anchored" data-anchor-id="option-a-desktop-app-for-windows-macos">Option A: Desktop App for Windows &amp; macOS</h3>
+<p>Download the installer for your computer from the <strong><a href="https://github.com/JGIBristol/digiqual/releases/latest">latest GitHub Release</a></strong>. The files are listed under <em>Assets</em> at the bottom of the release:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Your computer</th>
+<th>Download</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Windows 10/11 (64-bit)</td>
+<td><code>DigiQual-&lt;version&gt;-Windows-x64.msi</code></td>
+<td>Installer (recommended)</td>
+</tr>
+<tr class="even">
+<td>Windows 10/11 (64-bit)</td>
+<td><code>DigiQual-&lt;version&gt;-Windows-x64-portable.zip</code></td>
+<td>Portable version, no installation needed</td>
+</tr>
+<tr class="odd">
+<td>macOS 12 or later on Apple Silicon (M1 or newer)</td>
+<td><code>DigiQual-&lt;version&gt;-macOS-AppleSilicon.dmg</code></td>
+<td>Disk image</td>
+</tr>
+</tbody>
+</table>
+<section id="windows" class="level4">
+<h4 class="anchored" data-anchor-id="windows">Windows</h4>
+<p><strong>Installer (<code>.msi</code>):</strong> double-click it and follow the prompts. It installs for your user account only, so <strong>it doesn’t need administrator rights</strong>. This makes it suitable for university- or company-managed PCs. DigiQual then appears in the Start menu.</p>
+<p><strong>Portable (<code>.zip</code>):</strong> before extracting, right-click the zip → <strong>Properties</strong> → tick <strong>Unblock</strong> → <strong>OK</strong>. Then extract it anywhere and run <code>DigiQual.exe</code>. Windows marks downloaded files as untrusted, and the app’s .NET components won’t load from an untrusted folder, so skipping the Unblock step can stop the app opening.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>“Windows protected your PC”
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The installer isn’t code-signed yet, so Windows SmartScreen may warn you the first time. Click <strong>More info → Run anyway</strong>.</p>
+</div>
+</div>
+<p>The app window uses Microsoft’s <strong>WebView2</strong> runtime. This is already included in Windows 11 and up-to-date Windows 10. If the app opens in an Edge or browser window instead of its own window, install the <a href="https://developer.microsoft.com/microsoft-edge/webview2/">WebView2 Runtime</a> (“Evergreen Bootstrapper”).</p>
+</section>
+<section id="macos" class="level4">
+<h4 class="anchored" data-anchor-id="macos">macOS</h4>
+<p>Open the <code>.dmg</code> and drag <strong>DigiQual</strong> into <strong>Applications</strong>.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>“DigiQual can’t be opened”
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The app isn’t notarised by Apple yet, so macOS blocks the first launch. To open it anyway, either:</p>
+<ul>
+<li>right-click (or Control-click) DigiQual in Applications → <strong>Open</strong> → <strong>Open</strong>, or</li>
+<li>run this once in Terminal: <code>xattr -dr com.apple.quarantine /Applications/DigiQual.app</code></li>
+</ul>
+<p>After that it opens normally.</p>
+</div>
+</div>
+<p>The app isn’t yet built for Intel Macs; use Option B on those.</p>
+</section>
+<section id="if-something-goes-wrong" class="level4">
+<h4 class="anchored" data-anchor-id="if-something-goes-wrong">If something goes wrong</h4>
+<p>The desktop app writes a log file, which is the most useful thing to attach to a <a href="https://github.com/JGIBristol/digiqual/issues">GitHub issue</a>:</p>
+<ul>
+<li><strong>Windows:</strong> <code>%LOCALAPPDATA%\Digiqual\digiqual.log</code> (paste that into the File Explorer address bar)</li>
+<li><strong>macOS:</strong> <code>~/Library/Logs/Digiqual/digiqual.log</code></li>
+</ul>
+</section>
+</section>
+<section id="option-b-using-uv-via-cli" class="level3">
+<h3 class="anchored" data-anchor-id="option-b-using-uv-via-cli">Option B: Using <code>uv</code> via CLI</h3>
+<p>If you use <code>uv</code> for environment management, you can launch the app directly from your terminal as a Command Line Interface (CLI) tool. This is the fastest way to get started if you already have <code>uv</code>.</p>
 <p>To run the app instantly without permanently installing it to your environment:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uvx</span> <span class="at">-v</span> digiqual@latest</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><em>Note: The <code>-v</code> (verbose) flag is highly recommended here! Without it, <code>uvx</code> runs quietly and the app might appear frozen for a few minutes while it downloads the required statistical packages in the background. Also the ‘<span class="citation" data-cites="latest">@latest</span>’ flag will ensure that you have the most recent release</em> <br></p>
@@ -318,17 +431,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><strong>Linux Users:</strong> To ensure the graphical window renders correctly on Linux distributions, you must include the <code>linux-gui</code> extra during installation:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> tool install <span class="st">"digiqual[linux-gui]"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="option-b-from-a-python-script" class="level3">
-<h3 class="anchored" data-anchor-id="option-b-from-a-python-script">Option B: From a Python Script</h3>
+<section id="option-c-from-a-python-script" class="level3">
+<h3 class="anchored" data-anchor-id="option-c-from-a-python-script">Option C: From a Python Script</h3>
 <p>If you are already working inside a Python script or a Jupyter environment, you can launch it locally using the built-in UI function.</p>
-<div id="6e6f92d2" class="cell" data-execution_count="1">
+<div id="519594e3" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Launch the local application</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual <span class="im">import</span> dq_ui</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>dq_ui()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>This will spin up a local server and automatically open the DigiQual dashboard in your default web browser.</p>
-<p><strong>Coming Soon: Standalone Executables</strong> We are actively developing standalone, double-click executables for both Windows and macOS. In the near future, you or your colleagues will be able to run the complete DigiQual toolkit as a standard desktop application, without needing to install Python, manage virtual environments, or touch a command line.</p>
+<p>This starts the app in a separate process and opens it in its own desktop window. If a native window can’t be opened, it falls back to your web browser. <code>dq_ui()</code> returns immediately, so your notebook or script stays usable while the app runs.</p>
+<p>The same launch also works from a terminal as <code>python -m digiqual.gui</code>.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
