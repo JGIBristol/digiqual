@@ -9,7 +9,7 @@ from scipy import stats
 from scipy.optimize import minimize_scalar
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic
+from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic, WhiteKernel
 from sklearn.gaussian_process.kernels import ConstantKernel as C
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import KFold, cross_val_score
@@ -17,6 +17,79 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 logger = logging.getLogger(__name__)
+
+# Numerical jitter added to the Kriging covariance diagonal. Observation noise is
+# NOT represented here: it is learned by the WhiteKernel term in every candidate
+# kernel (see `build_kriging_candidate_kernels`), so this only needs to be large
+# enough to keep the Cholesky factorisation stable.
+KRIGING_JITTER = 1e-10
+
+
+def build_kriging_candidate_kernels(n_features: int) -> dict[str, Any]:
+    """
+    Builds the candidate covariance kernels evaluated for the Kriging surrogate.
+
+    Every candidate has the form ``C * R(x, x') + WhiteKernel``:
+
+    - ``C`` is the process variance (signal amplitude).
+    - ``R`` is the correlation function. Matérn 3/2, Matérn 5/2 and RBF use an
+      anisotropic length scale (one per input). Rational Quadratic is isotropic
+      because scikit-learn's implementation only supports a scalar length scale.
+    - ``WhiteKernel`` is the observation noise (nugget) variance, learned by
+      maximum likelihood alongside the length scales.
+
+    Learning the nugget is essential when the chosen inputs do not fully
+    determine the response (e.g. a model trained on Area and Offset when the
+    response also depends on flaw shape). If the noise were fixed too small, the
+    likelihood would be maximised by shrinking a length scale until the surface
+    interpolates the scatter. That produces a spiky surface whose slices revert
+    to the prior mean away from data and whose bootstrap refits are unstable.
+
+    The kernels are intended for use with ``normalize_y=True``, so ``C`` and the
+    noise level are expressed relative to the variance of the training response.
+
+    Args:
+        n_features (int): Number of input dimensions.
+
+    Returns:
+        dict[str, Kernel]: Mapping of human-readable kernel name to an unfitted
+        scikit-learn kernel.
+    """
+    ls = np.ones(n_features)
+    ls_bounds = (1e-3, 1e5)
+
+    def _noise() -> WhiteKernel:
+        return WhiteKernel(noise_level=0.1, noise_level_bounds=(1e-8, 1e1))
+
+    return {
+        'Matern 3/2': C(1.0, (1e-5, 1e6)) * Matern(length_scale=ls, length_scale_bounds=ls_bounds, nu=1.5) + _noise(),
+        'Matern 5/2': C(1.0, (1e-5, 1e6)) * Matern(length_scale=ls, length_scale_bounds=ls_bounds, nu=2.5) + _noise(),
+        'RBF (Gaussian)': C(1.0, (1e-5, 1e6)) * RBF(length_scale=ls, length_scale_bounds=ls_bounds) + _noise(),
+        'Rational Quadratic': C(1.0, (1e-5, 1e6)) * RationalQuadratic(length_scale=1.0, length_scale_bounds=ls_bounds) + _noise(),
+    }
+
+
+def build_fixed_kernel_gpr(kernel: Any) -> GaussianProcessRegressor:
+    """
+    Builds a Kriging model that reuses already-optimised hyperparameters.
+
+    Used wherever a fitted Kriging surrogate is refitted to resampled data
+    (PoD bootstrap confidence bounds, the GUI bootstrap convergence trace).
+    The optimiser is disabled, so only the posterior is recomputed, and the
+    settings match the production model: ``normalize_y=True`` and only
+    numerical jitter on the diagonal, because the noise variance is already
+    part of ``kernel`` (its WhiteKernel term).
+
+    Args:
+        kernel (Kernel): A fitted kernel, typically ``gpr.kernel_`` from the
+            model returned by `fit_all_robust_mean_models`.
+
+    Returns:
+        GaussianProcessRegressor: An unfitted regressor ready for ``.fit()``.
+    """
+    return GaussianProcessRegressor(
+        kernel=kernel, alpha=KRIGING_JITTER, normalize_y=True, optimizer=None
+    )
 
 
 def compute_kriging_loo_residuals(
@@ -32,6 +105,15 @@ def compute_kriging_loo_residuals(
     calculating Leave-One-Out means mu_{-i} and variances sigma_{-i}^2. It then derives
     standardized residuals e_i = (y_i - mu_{-i}) / sigma_{-i} and outlier scale factor
     gamma = max(1.0, max|e_i| / 3.0).
+
+    K is the fitted kernel evaluated at the training inputs, so for the models built by
+    `fit_all_robust_mean_models` it already includes the learned noise (WhiteKernel)
+    variance on its diagonal. The LOO variance is therefore the predictive variance of a
+    new noisy observation, which is the correct scale for standardizing observed residuals.
+
+    If the model was fitted with ``normalize_y=True``, the kernel hyperparameters are in
+    normalised units. The calculation is then done on the normalised response and the
+    LOO means and standard deviations are converted back to the original units.
 
     Args:
         gpr (GaussianProcessRegressor): A fitted scikit-learn Gaussian Process model.
@@ -65,6 +147,14 @@ def compute_kriging_loo_residuals(
     y_flat = np.asarray(y, dtype=np.float64).flatten()
     X_2d = np.atleast_2d(X_2d)
 
+    # Work in the same (possibly normalised) units the kernel was optimised in.
+    if getattr(gpr, "normalize_y", False):
+        y_mean = float(np.ravel(gpr._y_train_mean)[0])
+        y_scale = float(np.ravel(gpr._y_train_std)[0])
+    else:
+        y_mean, y_scale = 0.0, 1.0
+    y_work = (y_flat - y_mean) / y_scale
+
     K = gpr.kernel_(X_2d)
     alpha = gpr.alpha if isinstance(gpr.alpha, (int, float)) else 1e-6
     K_alpha = K + np.eye(m) * alpha
@@ -86,8 +176,11 @@ def compute_kriging_loo_residuals(
 
         for i in range(m):
             row_B = B_mm[i, :]
-            loo_means[i] = - (np.dot(row_B, y_flat) - row_B[i] * y_flat[i]) / diag_B[i]
+            loo_means[i] = - (np.dot(row_B, y_work) - row_B[i] * y_work[i]) / diag_B[i]
             loo_stds[i] = np.sqrt(np.maximum(1e-10, 1.0 / diag_B[i]))
+
+        loo_means = loo_means * y_scale + y_mean
+        loo_stds = loo_stds * y_scale
 
     except np.linalg.LinAlgError:
         loo_means = y_flat.copy()
@@ -116,6 +209,15 @@ def fit_all_robust_mean_models(
     this function evaluates all candidates via k-fold Cross Validation (CV) and
     then fits *every* model to the full dataset. This allows the application to
     instantly swap between different model structures without recalculating.
+
+    Kriging (only for N <= 1000) is evaluated for each candidate kernel from
+    `build_kriging_candidate_kernels`. Each candidate is ``C * R + WhiteKernel``, fitted with
+    ``normalize_y=True``, so the observation noise is learned rather than fixed. The kernel
+    with the lowest k-fold CV MSE is then refitted to the full dataset. Because the hyperparameters
+    are re-optimised inside every CV fold, the reported CV MSE describes the kernel family. It
+    only describes the cached model if the full-data refit lands in a comparable optimum. A learned
+    noise term ensures this: with a fixed, under-estimated noise level, the refit can instead
+    collapse a length scale onto the scatter and badly overfit while still reporting a good CV MSE.
 
     Args:
         X (np.ndarray): 1D array or 2D matrix of input variable values.
@@ -167,13 +269,7 @@ def fit_all_robust_mean_models(
     # 2. Evaluate & Fit Kriging (Proper Candidate Isolation)
     n_samples = len(y)
     if n_samples <= 1000:
-        n_features = X_2d.shape[1]
-        candidate_kernels = {
-            'Matern 3/2': C(1.0, (1e-5, 1e6)) * Matern(length_scale=np.ones(n_features), length_scale_bounds=(1e-3, 1e5), nu=1.5),
-            'Matern 5/2': C(1.0, (1e-5, 1e6)) * Matern(length_scale=np.ones(n_features), length_scale_bounds=(1e-3, 1e5), nu=2.5),
-            'RBF (Gaussian)': C(1.0, (1e-5, 1e6)) * RBF(length_scale=np.ones(n_features), length_scale_bounds=(1e-3, 1e5)),
-            'Rational Quadratic': C(1.0, (1e-5, 1e6)) * RationalQuadratic(length_scale=np.ones(n_features), length_scale_bounds=(1e-3, 1e5))
-        }
+        candidate_kernels = build_kriging_candidate_kernels(X_2d.shape[1])
 
         best_kernel_name = None
         best_kriging_mse = float('inf')
@@ -185,7 +281,8 @@ def fit_all_robust_mean_models(
                 gpr_cand = GaussianProcessRegressor(
                     kernel=kernel,
                     n_restarts_optimizer=5,
-                    alpha=np.var(y) * 0.01,
+                    alpha=KRIGING_JITTER,
+                    normalize_y=True,
                     random_state=42
                 )
                 try:
@@ -197,7 +294,7 @@ def fit_all_robust_mean_models(
                         best_kriging_mse = mse
                         best_kernel_name = kname
                 except Exception as e:  # noqa: BLE001 - candidate kernel fit can fail in many ways
-                    logger.debug("Kriging candidate kernel '%s' failed to fit/score: %s", kname, e)
+                    logger.warning("Kriging candidate kernel '%s' failed to fit/score: %s", kname, e)
                     continue
 
         if best_kernel_name is not None:
@@ -205,7 +302,8 @@ def fit_all_robust_mean_models(
             best_kriging_gpr = GaussianProcessRegressor(
                 kernel=candidate_kernels[best_kernel_name],
                 n_restarts_optimizer=10,
-                alpha=np.var(y) * 0.01,
+                alpha=KRIGING_JITTER,
+                normalize_y=True,
                 random_state=42
             )
             with warnings.catch_warnings():
@@ -744,10 +842,7 @@ def _single_bootstrap_step(
             Ridge(alpha=0.1, random_state=42)
         )
     elif model_type == 'Kriging':
-        from sklearn.gaussian_process import GaussianProcessRegressor
-        mean_model = GaussianProcessRegressor(
-            kernel=model_params, alpha=np.var(y_res)*0.01, optimizer=None
-        )
+        mean_model = build_fixed_kernel_gpr(model_params)
 
     mean_model.fit(X_res_2d, y_res)
 
@@ -803,7 +898,9 @@ def bootstrap_pod_ci(
     For each resample, it refits the Mean Model (dynamically rebuilding either
     a Polynomial or Kriging model), recalculates residuals, and generates a new PoD curve.
     If Kriging is selected, the optimizer is disabled during bootstrapping to remain
-    computationally tractable.
+    computationally tractable: each resample reuses the fitted kernel (including its
+    learned WhiteKernel noise level) via `build_fixed_kernel_gpr`, so only the
+    posterior mean is recomputed.
     """
     import gc
 

@@ -21,9 +21,9 @@ When Kriging metamodeling is active, `digiqual` optimizes the covariance structu
 - **Matérn 3/2:** Smoothness $\nu=1.5$
 - **Matérn 5/2:** Smoothness $\nu=2.5$
 - **Gaussian (RBF):** Infinite smoothness
-- **Rational Quadratic:** Scale mixture of Gaussian kernels
+- **Rational Quadratic:** Scale mixture of Gaussian kernels (single shared length scale)
 
-It calculates Leave-One-Out predictions $\mu_{\hat{Y}_{-i}}$ and variances $\sigma_{\hat{Y}_{-i}}^2$ via matrix inverse $B = S^{-1}$, selecting the kernel minimizing $MSE_{LOO}$.
+Every candidate includes a white-noise (nugget) variance $\tau^2$ that is learned by maximum likelihood alongside $\boldsymbol{\theta}$, and the response is standardised before fitting. Learning $\tau^2$ stops the surrogate from interpolating scatter caused by variables it was not trained on. With a fixed, too-small noise level it would shrink a length scale onto that scatter and produce a spiky, unstable surface (see [Kriging Metamodeling](kriging_metamodeling.qmd)). The kernel minimising the $K$-fold $MSE_{CV}$ above is selected. Leave-One-Out predictions $\mu_{\hat{Y}_{-i}}$ and variances $\sigma_{\hat{Y}_{-i}}^2$ are then computed via the matrix inverse $B = S^{-1}$ for outlier calibration.
 
 ### Standardized LOO Residual Outlier Calibration (Malkiel 2026)
 `digiqual` validates surrogate uncertainty by computing standardized LOO residual errors:

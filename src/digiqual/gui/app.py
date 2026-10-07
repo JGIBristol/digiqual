@@ -2709,10 +2709,10 @@ def server(input, output, session):
             if model_type == 'Polynomial':
                 m = make_pipeline(PolynomialFeatures(degree=model_degree), LinearRegression())
             elif model_type == 'Kriging':
-                from sklearn.gaussian_process import GaussianProcessRegressor
-                m = GaussianProcessRegressor(
-                    kernel=model.kernel_, alpha=np.var(y_b) * 0.01, optimizer=None
-                )
+                # Same fixed-kernel refit as the PoD bootstrap: reuses the learned
+                # length scales and WhiteKernel noise, with normalize_y=True.
+                from digiqual.pod import build_fixed_kernel_gpr
+                m = build_fixed_kernel_gpr(model.kernel_)
 
             m.fit(X_b, y_b)
             accumulated_preds.append(m.predict(probe_points))

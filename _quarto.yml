@@ -139,6 +139,8 @@ quartodoc:
         - pod.infer_best_distribution
         - pod.plot_model_selection
         - pod.predict_local_std
+        - pod.build_kriging_candidate_kernels
+        - pod.build_fixed_kernel_gpr
         - pod.compute_kriging_loo_residuals
         - pod.compute_pod_curve
         - pod.bootstrap_pod_ci

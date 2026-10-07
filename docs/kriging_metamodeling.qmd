@@ -9,7 +9,7 @@ In simulation-based reliability assessment of Non-Destructive Evaluation (NDE) i
 
 `digiqual` includes a complete Kriging suite featuring:
 
-1. **Anisotropic Covariance Function Selection (Rank 2):** Automated evaluation and selection across Matérn 3/2, Matérn 5/2, Gaussian (RBF), and Rational Quadratic kernels with per-dimension anisotropic length scale vectors $\boldsymbol{\theta} = [\theta_1, \dots, \theta_d]$.
+1. **Anisotropic Covariance Function Selection (Rank 2):** Automated evaluation and selection across Matérn 3/2, Matérn 5/2, Gaussian (RBF), and Rational Quadratic kernels with per-dimension anisotropic length scale vectors $\boldsymbol{\theta} = [\theta_1, \dots, \theta_d]$, plus a learned observation-noise (nugget) term.
 
 2. **Matrix-Based Leave-One-Out Cross-Validation ($MSE_{\text{LOO}}$):** Fast $O(N^3)$ matrix inverse $B = S^{-1}$ for exact LOO predictions $\mu_{\hat{Y}_{-i}}$ and variances $\sigma_{\hat{Y}_{-i}}^2$.
 
@@ -39,10 +39,38 @@ During model training ([`fit_all_robust_mean_models`](file:///Users/jt17630/Docu
 where the anisotropic distance $d$ is given by:
 $$ d = \sqrt{\sum_{j=1}^d \left( \frac{x_j - x_j'}{\theta_j} \right)^2 } $$
 
-### Selection Metric ($MSE_{\text{LOO}}$)
-Each kernel family is evaluated via Leave-One-Out Cross-Validation. The kernel candidate achieving the lowest normalized LOO Mean Squared Error is automatically selected:
+Matérn and Gaussian kernels use one length scale per input. The Rational Quadratic kernel uses a single shared length scale $\ell$, because scikit-learn's implementation does not support anisotropy.
 
-$$ MSE_{\text{LOO}} = \frac{1}{m} \sum_{i=1}^m \frac{\left(y_i - \mu_{\hat{Y}_{-i}}\right)^2}{\text{var}(y)} $$
+### Full Covariance Model & Learned Noise (Nugget)
+Each candidate is fitted as a process-variance-scaled correlation plus a white-noise term:
+
+$$ k(\mathbf{x}, \mathbf{x}') = \hat{\sigma}^2 R(\mathbf{x}, \mathbf{x}') + \tau^2 \, \delta_{\mathbf{x}\mathbf{x}'} $$
+
+Both $\hat{\sigma}^2$ and the noise variance $\tau^2$ are estimated by maximum likelihood together with $\boldsymbol{\theta}$. The response is standardised before fitting (`normalize_y=True`), so:
+
+- $\hat{\sigma}^2$ and $\tau^2$ are relative to $\text{var}(y)$.
+- Away from the training data the surrogate reverts to the sample mean of $y$ rather than to zero.
+
+::: {.callout-important}
+## Why the noise must be learned
+
+Simulation responses are often *not* a deterministic function of the inputs the surrogate is trained on. For example, a model trained on flaw Area and Offset when the response also depends on flaw shape sees scatter that no smooth surface in (Area, Offset) can explain.
+
+If $\tau^2$ is fixed below the true scatter variance, maximum likelihood instead "explains" the scatter by shrinking a length scale until the surface interpolates individual points. Typically this is the length scale of a weakly-influential input. The result is a surrogate that:
+
+- has an excellent in-sample fit but a poor leave-one-out fit;
+- reverts towards the prior mean when sliced at a fixed value of that input, especially where data is sparse;
+- produces unstable predictions when refitted to bootstrap resamples, failing the bootstrap convergence check.
+
+Learning $\tau^2$ lets the likelihood attribute that scatter to noise, giving long, physically sensible length scales. Uninfluential inputs get length scales much larger than their range.
+:::
+
+### Selection Metric ($MSE_{\text{CV}}$)
+Each kernel family is evaluated via $K$-fold Cross-Validation ($K = 10$). The hyperparameters are re-optimised inside every fold. The kernel candidate achieving the lowest CV Mean Squared Error is selected and refitted to the full dataset:
+
+$$ MSE_{\text{CV}} = \frac{1}{m} \sum_{i=1}^m \left(y_i - \hat{f}^{-k(i)}(\mathbf{x}_i)\right)^2 $$
+
+This is the score shown for Kriging in the model-selection chart. It is directly comparable to the polynomial CV scores.
 
 
 ## 2. LOO Residuals & Outlier Calibration
@@ -51,11 +79,15 @@ To ensure that Kriging surrogate uncertainty bounds are mathematically valid for
 
 ### Augmented Covariance Inversion
 Construct the augmented covariance matrix $S$:
-$$ S = \begin{bmatrix} \hat{\sigma}^2 R + \alpha I & \mathbf{1} \\ \mathbf{1}^T & 0 \end{bmatrix} $$
+$$ S = \begin{bmatrix} \hat{\sigma}^2 R + \tau^2 I + \alpha I & \mathbf{1} \\ \mathbf{1}^T & 0 \end{bmatrix} $$
+
+where $\tau^2$ is the learned noise variance and $\alpha$ is a negligible numerical jitter ($10^{-10}$). The calculation is carried out on the standardised response. The resulting LOO means and standard deviations are converted back to the original units.
 
 Inverting $S$ yields matrix $B = S^{-1}$. The Leave-One-Out prediction mean $\mu_{\hat{Y}_{-i}}$ and standard deviation $\sigma_{\hat{Y}_{-i}}$ for training observation $i$ are calculated analytically:
 
 $$ \mu_{\hat{Y}_{-i}} = -\sum_{j \neq i} \frac{B_{ij}}{B_{ii}} y_j, \qquad \sigma_{\hat{Y}_{-i}} = \sqrt{\frac{1}{B_{ii}}} $$
+
+Because $\tau^2$ is on the diagonal of $S$, $\sigma_{\hat{Y}_{-i}}^2$ is the predictive variance of a new *noisy* observation. This is the correct scale for standardising observed residuals.
 
 ### Standardized Residuals ($e_i$)
 The standardized LOO residual vector measures how many standard deviations each prediction deviates from the observed signal:
@@ -71,7 +103,17 @@ $$ \gamma = \max\left(1.0, \frac{\max |e_i|}{3.0}\right) $$
 During noise estimation in [`fit_variance_model`](file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py), raw residuals are scaled by $\sqrt{\gamma}$, inflating local prediction variance $\hat{\sigma}^2(x)$ by factor $\gamma$. This guarantees mathematically reliable 95% worst-case confidence bounds even in the presence of extreme outliers.
 
 
-## 3. Python Usage Example
+## 3. Bootstrap Refits
+
+The PoD confidence bounds ([`bootstrap_pod_ci`](file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py)) and the GUI's bootstrap convergence diagnostic refit the Kriging surrogate to each resample of the data. To keep this tractable, the hyperparameters ($\hat{\sigma}^2$, $\boldsymbol{\theta}$, $\tau^2$) are held at their full-data values and only the posterior is recomputed. [`build_fixed_kernel_gpr`](file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py) builds these refits with exactly the production settings:
+
+- the learned noise is already part of the kernel, so it is not added again;
+- `normalize_y=True` is used.
+
+A failing bootstrap convergence check for Kriging therefore reflects genuine instability of the fitted surface, not a mismatch between the production and bootstrap models.
+
+
+## 4. Python Usage Example
 
 Below is a complete Python script demonstrating Kriging surrogate model fitting, kernel optimization, residual computation, diagnostic plotting, and PoD generation:
 
@@ -107,6 +149,7 @@ models, cv_scores, winner_key = fit_all_robust_mean_models(X, y)
 gpr = models[("Kriging", None)]
 
 print(f"Selected Kriging Kernel: {gpr.best_kernel_name_}")
+print(f"Fitted Covariance (incl. learned noise): {gpr.kernel_}")
 print(f"Outlier Calibration Factor (gamma): {gpr.outlier_scale_factor_:.3f}")
 
 # 3. Compute LOO Residuals
@@ -127,6 +170,8 @@ plt.show()
 
 | Function Name | Description |
 | :--- | :--- |
-| [`pod.fit_all_robust_mean_models`](file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py) | Fits polynomial pool and evaluates anisotropic Kriging kernel candidates via $MSE_{\text{LOO}}$. |
+| [`pod.fit_all_robust_mean_models`](file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py) | Fits polynomial pool and evaluates Kriging kernel candidates (with learned noise) via $K$-fold $MSE_{\text{CV}}$. |
+| [`pod.build_kriging_candidate_kernels`](file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py) | Builds the four candidate kernels, each of the form $\hat{\sigma}^2 R + \tau^2 \delta$. |
+| [`pod.build_fixed_kernel_gpr`](file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py) | Builds a Kriging model with frozen hyperparameters for bootstrap refits, matching the production settings. |
 | [`pod.compute_kriging_loo_residuals`](file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py) | Inverts augmented matrix $S$ to compute exact LOO predictions, standardized residuals $e_i$, and scale factor $\gamma$. |
 | [`plotting.plot_kriging_diagnostics`](file:///Users/jt17630/Documents/DigiQual/src/digiqual/plotting.py) | Generates dual-panel diagnostic plot visualizing standardized residual distribution vs $\mathcal{N}(0, 1)$ and $[-3, 3]$ bounds. |
