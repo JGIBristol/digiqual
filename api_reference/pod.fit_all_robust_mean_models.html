@@ -81,7 +81,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-af7269421fbfc448936f832648c33468.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -208,7 +208,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
- <span class="menu-text">Detailed Manuals &amp; Theory</span></a>
+ <span class="menu-text">User Guides</span></a>
           <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
@@ -226,47 +226,52 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Automated Optimisation</span></a>
   </div>
 </li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
-  </div>
-</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Theory</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Generalised PoD Theory</span></a>
+ <span class="menu-text">Generalised PoD</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/kriging_metamodeling.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Kriging Metamodeling &amp; Calibration</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Classical vs Generalised PoD</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">DigiQual Caching Architecture</span></a>
+ <span class="menu-text">Kriging Metamodeling</span></a>
   </div>
 </li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
  <span class="menu-text">Development</span></a>
-          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Caching Architecture</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
+  </div>
+</li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/app_architecture.html" class="sidebar-item-text sidebar-link">
@@ -308,18 +313,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="digiqual.pod.fit_all_robust_mean_models" class="level1">
 <h1>pod.fit_all_robust_mean_models</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>fit_all_robust_mean_models(X, y, max_degree<span class="op">=</span><span class="dv">10</span>, n_folds<span class="op">=</span><span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>fit_all_robust_mean_models(X, y, max_degree<span class="op">=</span>MAX_POLY_DEGREE, n_folds<span class="op">=</span>N_CV_FOLDS)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Fits all polynomial models (and optionally Kriging) and returns them for caching.</p>
 <p>Instead of fitting models, selecting the best, and throwing the rest away, this function evaluates all candidates via k-fold Cross Validation (CV) and then fits <em>every</em> model to the full dataset. This allows the application to instantly swap between different model structures without recalculating.</p>
-<p>Kriging (only for N &lt;= 1000) is evaluated for each candidate kernel from <code>build_kriging_candidate_kernels</code>. Each candidate is <code>C * R + WhiteKernel</code>, fitted with <code>normalize_y=True</code>, so the observation noise is learned rather than fixed. The kernel with the lowest k-fold CV MSE is then refitted to the full dataset. Because the hyperparameters are re-optimised inside every CV fold, the reported CV MSE describes the kernel family. It only describes the cached model if the full-data refit lands in a comparable optimum. A learned noise term ensures this: with a fixed, under-estimated noise level, the refit can instead collapse a length scale onto the scatter and badly overfit while still reporting a good CV MSE.</p>
+<p>The procedure combines both references:</p>
+<ol type="1">
+<li>Polynomials of degree 1 to <code>max_degree</code> are scored by k-fold CV MSE ([M25] Eq. 2.7-2.8, k = 10).</li>
+<li>Kriging (only for N &lt;= 1000, [digiqual]) is fitted once to the full data for each kernel from <code>build_kriging_candidate_kernels</code>. The kernel with the lowest normalised LOO MSE ([M26] Eq. 10-14, hyperparameters from the full fit) is kept, as in [M26] Sec. 2.2.2.</li>
+<li>The chosen kernel alone is then scored by the same k-fold CV as the polynomials, with its hyperparameters re-optimised in every fold, so that Kriging and the polynomials are compared on equal terms ([M25] Fig. 5).</li>
+<li>The overall winner is picked by the one-standard-error rule in <code>select_cv_winner</code> ([M25] Sec. 4b(i), formalised by [digiqual]).</li>
+</ol>
+<p>The fitted models carry the extra attributes <code>cv_se_</code> (standard error of every CV score) and, for Kriging, <code>kernel_loo_scores_</code>, <code>best_kernel_name_</code>, <code>loo_means_</code>, <code>loo_residuals_</code> and <code>outlier_scale_factor_</code>.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 13%">
-<col style="width: 13%">
-<col style="width: 60%">
-<col style="width: 13%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 56%">
+<col style="width: 19%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -346,13 +358,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>max_degree</td>
 <td>int</td>
 <td>The maximum polynomial degree to test. Defaults to 10.</td>
-<td><code>10</code></td>
+<td><code>MAX_POLY_DEGREE</code></td>
 </tr>
 <tr class="even">
 <td>n_folds</td>
 <td>int</td>
 <td>Number of folds for Cross Validation. Defaults to 10.</td>
-<td><code>10</code></td>
+<td><code>N_CV_FOLDS</code></td>
 </tr>
 </tbody>
 </table>
@@ -361,9 +373,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 2%">
-<col style="width: 23%">
-<col style="width: 74%">
+<col style="width: 1%">
+<col style="width: 22%">
+<col style="width: 75%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -376,7 +388,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td></td>
 <td>tuple[dict[tuple[str, Any], Any], dict[tuple[str, Any], float], tuple[str, Any]]</td>
-<td>tuple[dict, dict, tuple]: - <code>fitted_models</code>: A dictionary mapping a key like <code>('Polynomial', 3)</code> to the fully trained scikit-learn model. - <code>cv_scores</code>: A dictionary mapping the same keys to their Cross-Validation MSE scores. - <code>cv_winner_key</code>: The key of the model that achieved the lowest MSE.</td>
+<td>tuple[dict, dict, tuple]: - <code>fitted_models</code>: A dictionary mapping a key like <code>('Polynomial', 3)</code> to the fully trained scikit-learn model. - <code>cv_scores</code>: A dictionary mapping the same keys to their Cross-Validation MSE scores. - <code>cv_winner_key</code>: The key of the model selected by the one-standard-error rule.</td>
 </tr>
 </tbody>
 </table>
@@ -384,15 +396,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="examples" class="level2 doc-section doc-section-examples">
 <h2 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h2>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="dv">10</span>, <span class="dv">50</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> <span class="dv">3</span> <span class="op">*</span> X <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">50</span>)</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>models, scores, best_key <span class="op">=</span> fit_all_robust_mean_models(X, y)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.pod <span class="im">import</span> fit_all_robust_mean_models</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="dv">10</span>, <span class="dv">50</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> <span class="dv">3</span> <span class="op">*</span> X <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">50</span>)</span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"The best model was: </span><span class="sc">{</span>best_key<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>models, scores, best_key <span class="op">=</span> fit_all_robust_mean_models(X, y)</span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Instantly retrieve the degree-4 polynomial without refitting</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>poly_4 <span class="op">=</span> models[(<span class="st">'Polynomial'</span>, <span class="dv">4</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"The best model was: </span><span class="sc">{</span>best_key<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Instantly retrieve the degree-4 polynomial without refitting</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>poly_4 <span class="op">=</span> models[(<span class="st">'Polynomial'</span>, <span class="dv">4</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 </section>

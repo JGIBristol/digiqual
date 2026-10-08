@@ -8,7 +8,7 @@
 
 <meta name="description" content="A deep dive into the 4-layer caching system that powers real-time Reliability Analysis.">
 
-<title>DigiQual Caching Architecture – digiqual</title>
+<title>Caching Architecture – digiqual</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -37,8 +37,8 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../docs/app_architecture.html" rel="next">
-<link href="../docs/comparison.html" rel="prev">
+<link href="../docs/cpp_acceleration.html" rel="next">
+<link href="../docs/kriging_metamodeling.html" rel="prev">
 <link href="../docs/www/favicon.png" rel="icon" type="image/png">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -49,7 +49,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-af7269421fbfc448936f832648c33468.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -118,7 +118,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">Detailed Manuals &amp; Theory</a></li><li class="breadcrumb-item"><a href="../docs/caching.html">DigiQual Caching Architecture</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/caching.html">Development</a></li><li class="breadcrumb-item"><a href="../docs/caching.html">Caching Architecture</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -175,13 +175,13 @@ ul.task-list li input[type="checkbox"] {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
- <span class="menu-text">Detailed Manuals &amp; Theory</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">User Guides</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/gui_manual.html" class="sidebar-item-text sidebar-link">
@@ -194,47 +194,52 @@ ul.task-list li input[type="checkbox"] {
  <span class="menu-text">Automated Optimisation</span></a>
   </div>
 </li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
-  </div>
-</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Theory</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Generalised PoD Theory</span></a>
+ <span class="menu-text">Generalised PoD</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/kriging_metamodeling.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Kriging Metamodeling &amp; Calibration</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Classical vs Generalised PoD</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">DigiQual Caching Architecture</span></a>
+ <span class="menu-text">Kriging Metamodeling</span></a>
   </div>
 </li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
  <span class="menu-text">Development</span></a>
-          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Caching Architecture</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
+  </div>
+</li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/app_architecture.html" class="sidebar-item-text sidebar-link">
@@ -259,25 +264,31 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
-  <li><a href="#the-4-caching-layers" id="toc-the-4-caching-layers" class="nav-link" data-scroll-target="#the-4-caching-layers">The 4 Caching Layers</a>
+  <li><a href="#sec-introduction" id="toc-sec-introduction" class="nav-link active" data-scroll-target="#sec-introduction"><span class="header-section-number">1</span> Introduction</a></li>
+  <li><a href="#sec-layers" id="toc-sec-layers" class="nav-link" data-scroll-target="#sec-layers"><span class="header-section-number">2</span> The 4 Caching Layers</a>
   <ul class="collapse">
-  <li><a href="#layer-1-the-mean-model-cache-models_cache" id="toc-layer-1-the-mean-model-cache-models_cache" class="nav-link" data-scroll-target="#layer-1-the-mean-model-cache-models_cache">Layer 1: The Mean Model Cache (<code>models_cache</code>)</a></li>
-  <li><a href="#layer-2-the-variance-model-cache-variance_cache" id="toc-layer-2-the-variance-model-cache-variance_cache" class="nav-link" data-scroll-target="#layer-2-the-variance-model-cache-variance_cache">Layer 2: The Variance Model Cache (<code>variance_cache</code>)</a></li>
-  <li><a href="#layer-3-individual-pod-curve-cache-pod_curves_cache" id="toc-layer-3-individual-pod-curve-cache-pod_curves_cache" class="nav-link" data-scroll-target="#layer-3-individual-pod-curve-cache-pod_curves_cache">Layer 3: Individual PoD Curve Cache (<code>pod_curves_cache</code>)</a></li>
-  <li><a href="#layer-4-threshold-spectrum-cache-threshold_spectrum_cache" id="toc-layer-4-threshold-spectrum-cache-threshold_spectrum_cache" class="nav-link" data-scroll-target="#layer-4-threshold-spectrum-cache-threshold_spectrum_cache">Layer 4: Threshold Spectrum Cache (<code>threshold_spectrum_cache</code>)</a></li>
+  <li><a href="#sec-layer-models" id="toc-sec-layer-models" class="nav-link" data-scroll-target="#sec-layer-models"><span class="header-section-number">2.1</span> Layer 1: The Mean Model Cache (<code>models_cache</code>)</a></li>
+  <li><a href="#sec-layer-variance" id="toc-sec-layer-variance" class="nav-link" data-scroll-target="#sec-layer-variance"><span class="header-section-number">2.2</span> Layer 2: The Variance Model Cache (<code>variance_cache</code>)</a></li>
+  <li><a href="#sec-layer-curves" id="toc-sec-layer-curves" class="nav-link" data-scroll-target="#sec-layer-curves"><span class="header-section-number">2.3</span> Layer 3: Individual PoD Curve Cache (<code>pod_curves_cache</code>)</a></li>
+  <li><a href="#sec-layer-spectrum" id="toc-sec-layer-spectrum" class="nav-link" data-scroll-target="#sec-layer-spectrum"><span class="header-section-number">2.4</span> Layer 4: Threshold Spectrum Cache (<code>threshold_spectrum_cache</code>)</a></li>
   </ul></li>
-  <li><a href="#example-a-users-journey-through-the-caches" id="toc-example-a-users-journey-through-the-caches" class="nav-link" data-scroll-target="#example-a-users-journey-through-the-caches">Example: A User’s Journey Through the Caches</a></li>
-  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
+  <li><a href="#sec-journey" id="toc-sec-journey" class="nav-link" data-scroll-target="#sec-journey"><span class="header-section-number">3</span> Example: A User’s Journey Through the Caches</a>
+  <ul class="collapse">
+  <li><a href="#sec-journey-fit" id="toc-sec-journey-fit" class="nav-link" data-scroll-target="#sec-journey-fit"><span class="header-section-number">3.1</span> Step 1: The Initial Fit</a></li>
+  <li><a href="#sec-journey-slider" id="toc-sec-journey-slider" class="nav-link" data-scroll-target="#sec-journey-slider"><span class="header-section-number">3.2</span> Step 2: The Real-Time Slider</a></li>
+  <li><a href="#sec-journey-slice" id="toc-sec-journey-slice" class="nav-link" data-scroll-target="#sec-journey-slice"><span class="header-section-number">3.3</span> Step 3: Changing a Slice</a></li>
+  <li><a href="#sec-journey-uq" id="toc-sec-journey-uq" class="nav-link" data-scroll-target="#sec-journey-uq"><span class="header-section-number">3.4</span> Step 4: Uncertainty Quantification (Bypassing the Cache)</a></li>
+  </ul></li>
+  <li><a href="#sec-conclusion" id="toc-sec-conclusion" class="nav-link" data-scroll-target="#sec-conclusion"><span class="header-section-number">4</span> Conclusion</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/caching.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">Detailed Manuals &amp; Theory</a></li><li class="breadcrumb-item"><a href="../docs/caching.html">DigiQual Caching Architecture</a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/caching.html">Development</a></li><li class="breadcrumb-item"><a href="../docs/caching.html">Caching Architecture</a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title">DigiQual Caching Architecture</h1>
+<h1 class="title">Caching Architecture</h1>
 </div>
 
 <div>
@@ -299,38 +310,38 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="introduction" class="level2">
-<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<section id="sec-introduction" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="sec-introduction"><span class="header-section-number">1</span> Introduction</h2>
 <p>In simulation-based NDT reliability assessment, generating a single Probability of Detection (PoD) curve requires computationally expensive operations: Cross-Validation (CV), Gaussian Kernel Smoothing (bandwidth optimization), and Monte Carlo Integration.</p>
 <p>To provide a modern, real-time user interface (UI) where users can instantly drag sliders to update threshold limits and slice multidimensional surfaces, <code>digiqual</code> implements a <strong>4-Layer Caching Architecture</strong> within the <code>SimulationStudy</code> core class.</p>
 <p>This architecture ensures that heavy math is only executed once. Subsequent UI interactions pull pre-calculated matrices directly from memory in microseconds.</p>
 <hr>
 </section>
-<section id="the-4-caching-layers" class="level2">
-<h2 class="anchored" data-anchor-id="the-4-caching-layers">The 4 Caching Layers</h2>
+<section id="sec-layers" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="sec-layers"><span class="header-section-number">2</span> The 4 Caching Layers</h2>
 <p>The state of the caches is managed inside <code>core.py</code>. Whenever the physical dataset changes (e.g., a user uploads a new CSV), all caches are instantly wiped to prevent state mismatch.</p>
-<section id="layer-1-the-mean-model-cache-models_cache" class="level3">
-<h3 class="anchored" data-anchor-id="layer-1-the-mean-model-cache-models_cache">Layer 1: The Mean Model Cache (<code>models_cache</code>)</h3>
-<p><strong>What it does:</strong> Caches the fundamental physics regressions. <strong>Trigger:</strong> Hitting “Fit Physics Model” on Tab 4.</p>
-<p>Instead of only fitting the single “best” model, the engine evaluates <em>all</em> polynomial degrees (1-10) and the Kriging (Gaussian Process) model via Cross-Validation, and then fits every single one of them to the full dataset.</p>
+<section id="sec-layer-models" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="sec-layer-models"><span class="header-section-number">2.1</span> Layer 1: The Mean Model Cache (<code>models_cache</code>)</h3>
+<p><strong>What it does:</strong> Caches the fundamental physics regressions. <strong>Trigger:</strong> Clicking <strong>Step 1: Fit Physics Model</strong> on the <em>Model Fit</em> tab (or the first <code>study.pod()</code> call).</p>
+<p>Instead of only fitting the single “best” model, the engine evaluates <em>all</em> polynomial degrees (1-10) and the Kriging (Gaussian Process) model via cross-validation, and then fits every one of them to the full dataset. The CV scores, their standard errors (<code>cv_se_</code>) and the automatic choice made by the one-standard-error rule are cached with them (<a href="../docs/generalised_pod.html#sec-model-selection">how the choice is made</a>).</p>
 <ul>
 <li><strong>Cache Key:</strong> <code>('Polynomial', 3)</code> or <code>('Kriging', None)</code></li>
 <li><strong>Stored Data:</strong> The fitted <code>scikit-learn</code> pipeline.</li>
 <li><strong>Benefit:</strong> If a user looks at the CV bar chart and decides to manually override the “Auto (Best Fit)” selection from Polynomial Degree 3 to Degree 4, the app retrieves the pre-trained Degree 4 model instantly without running regression again.</li>
 </ul>
 </section>
-<section id="layer-2-the-variance-model-cache-variance_cache" class="level3">
-<h3 class="anchored" data-anchor-id="layer-2-the-variance-model-cache-variance_cache">Layer 2: The Variance Model Cache (<code>variance_cache</code>)</h3>
+<section id="sec-layer-variance" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="sec-layer-variance"><span class="header-section-number">2.2</span> Layer 2: The Variance Model Cache (<code>variance_cache</code>)</h3>
 <p><strong>What it does:</strong> Caches the heteroscedastic noise profile and parameter sensitivity results. <strong>Trigger:</strong> Resolving a specific mean model.</p>
 <p>Once a mean model is selected, the engine must estimate how the noise (variance) changes across the surface. It uses Leave-One-Out Cross-Validation (LOO-CV) to find the optimal smoothing bandwidth for the residuals, and tests candidate statistical distributions to find the best fit. In addition, the engine computes the Total-Order Sobol Sensitivity Indices to quantify parameter importance.</p>
 <ul>
-<li><strong>Cache Key:</strong> Inherits the Mean Model key (e.g., <code>('Polynomial', 3)</code>).</li>
+<li><strong>Cache Key:</strong> The Mean Model key plus the bandwidth setting (e.g., <code>(('Polynomial', 3), None)</code>, where <code>None</code> means the bandwidth was chosen automatically). Layers 3 and 4 build on this key, so changing <code>bandwidth_ratio</code> never reuses a stale variance model.</li>
 <li><strong>Stored Data:</strong> <code>residuals</code>, <code>bandwidth</code>, <code>dist_info</code> (name and parameters), and <code>sobol_indices</code>.</li>
 <li><strong>Benefit:</strong> Bandwidth optimization and Sobol sensitivity computations are slow. By caching them, the system never has to recalculate the noise profile or parameter sensitivities for a model it has already analyzed.</li>
 </ul>
 </section>
-<section id="layer-3-individual-pod-curve-cache-pod_curves_cache" class="level3">
-<h3 class="anchored" data-anchor-id="layer-3-individual-pod-curve-cache-pod_curves_cache">Layer 3: Individual PoD Curve Cache (<code>pod_curves_cache</code>)</h3>
+<section id="sec-layer-curves" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="sec-layer-curves"><span class="header-section-number">2.3</span> Layer 3: Individual PoD Curve Cache (<code>pod_curves_cache</code>)</h3>
 <p><strong>What it does:</strong> Caches a specific, integrated S-Curve. <strong>Trigger:</strong> Evaluating a specific slice of the parameter space.</p>
 <p>This layer stores the output of the <code>integration.py</code> engine. It locks in the specific grid coordinates (<code>X_eval</code>) and either performs heavy Monte Carlo integration (if there are active nuisance parameters) or fast vectorization (if all other variables are locked as constant slices).</p>
 <ul>
@@ -339,24 +350,24 @@ ul.task-list li input[type="checkbox"] {
 <li><strong>Benefit:</strong> If a user navigates away from a specific slice and then comes back to it, the fully integrated curve is loaded instantly.</li>
 </ul>
 </section>
-<section id="layer-4-threshold-spectrum-cache-threshold_spectrum_cache" class="level3">
-<h3 class="anchored" data-anchor-id="layer-4-threshold-spectrum-cache-threshold_spectrum_cache">Layer 4: Threshold Spectrum Cache (<code>threshold_spectrum_cache</code>)</h3>
+<section id="sec-layer-spectrum" class="level3" data-number="2.4">
+<h3 data-number="2.4" class="anchored" data-anchor-id="sec-layer-spectrum"><span class="header-section-number">2.4</span> Layer 4: Threshold Spectrum Cache (<code>threshold_spectrum_cache</code>)</h3>
 <p><strong>What it does:</strong> The “Crown Jewel” that enables real-time threshold scrubbing. <strong>Trigger:</strong> Runs silently in the background immediately after Layer 1 &amp; 2 are complete.</p>
 <p>The <code>integration.py</code> engine is fully vectorized to handle multiple thresholds simultaneously. Instead of calculating one PoD curve, Layer 4 calculates <strong>100 PoD curves</strong> across the entire minimum-to-maximum range of the signal data in a single array operation.</p>
 <ul>
 <li><strong>Cache Key:</strong> strictly <em>excludes</em> the threshold: <code>(selected_key, poi_cols, nuisance_cols, slice_values)</code></li>
 <li><strong>Stored Data:</strong> A massive 2D matrix (<code>pod_matrix</code>) where rows are X-axis grid points and columns are the 100 different thresholds.</li>
-<li><strong>Benefit:</strong> When the user drags the “Detection Threshold” slider on Tab 5, the app intercepts the slider value, performs a 1D linear interpolation across the pre-calculated <code>pod_matrix</code>, and returns the shifted S-Curve in less than a millisecond.</li>
+<li><strong>Benefit:</strong> When the user drags the “Detection Threshold” slider on the <em>PoD Explorer</em> tab, the app intercepts the slider value, performs a 1D linear interpolation across the pre-calculated <code>pod_matrix</code>, and returns the shifted S-Curve in less than a millisecond.</li>
 </ul>
 <hr>
 </section>
 </section>
-<section id="example-a-users-journey-through-the-caches" class="level2">
-<h2 class="anchored" data-anchor-id="example-a-users-journey-through-the-caches">Example: A User’s Journey Through the Caches</h2>
+<section id="sec-journey" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="sec-journey"><span class="header-section-number">3</span> Example: A User’s Journey Through the Caches</h2>
 <p>Let’s trace exactly what happens in the engine when a user interacts with the application.</p>
-<section id="step-1-the-initial-fit" class="level4">
-<h4 class="anchored" data-anchor-id="step-1-the-initial-fit">Step 1: The Initial Fit</h4>
-<p>The user uploads 500 simulations of an ultrasonic inspection with <code>Length</code>, <code>Angle</code>, and <code>Roughness</code>. They select <code>Length</code> as the Parameter of Interest, and click <strong>“Fit Physics Model”</strong>.</p>
+<section id="sec-journey-fit" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="sec-journey-fit"><span class="header-section-number">3.1</span> Step 1: The Initial Fit</h3>
+<p>The user uploads 500 simulations of an ultrasonic inspection with <code>Length</code>, <code>Angle</code>, and <code>Roughness</code>. They select <code>Length</code> as the Parameter of Interest, and click <strong>Step 1: Fit Physics Model</strong>.</p>
 <ol type="1">
 <li><strong>Layer 1 Miss:</strong> The engine trains 10 polynomials and 1 Kriging model. It caches all 11 models. It selects “Polynomial (Degree 2)” as the winner.</li>
 <li><strong>Layer 2 Miss:</strong> It optimizes the bandwidth and fits a Normal distribution for Poly 2. It caches the variance parameters.</li>
@@ -365,9 +376,9 @@ ul.task-list li input[type="checkbox"] {
 </ol>
 <p><em>Total Compute Time: ~2.5 seconds.</em></p>
 </section>
-<section id="step-2-the-real-time-slider" class="level4">
-<h4 class="anchored" data-anchor-id="step-2-the-real-time-slider">Step 2: The Real-Time Slider</h4>
-<p>The user navigates to Tab 5 (PoD Explorer) and rapidly drags the <strong>Detection Threshold</strong> slider from <code>15.0 dB</code> to <code>22.5 dB</code>.</p>
+<section id="sec-journey-slider" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="sec-journey-slider"><span class="header-section-number">3.2</span> Step 2: The Real-Time Slider</h3>
+<p>The user moves to the <em>PoD Explorer</em> tab and rapidly drags the <strong>Detection Threshold</strong> slider from <code>15.0 dB</code> to <code>22.5 dB</code>.</p>
 <ol type="1">
 <li>The <code>realtime_threshold_update</code> function fires in <code>digiqual/gui/app.py</code>.</li>
 <li>It calls <code>study.pod(threshold=22.5, n_boot=0)</code>.</li>
@@ -378,8 +389,8 @@ ul.task-list li input[type="checkbox"] {
 </ol>
 <p><em>Total Compute Time: ~0.001 seconds.</em></p>
 </section>
-<section id="step-3-changing-a-slice" class="level4">
-<h4 class="anchored" data-anchor-id="step-3-changing-a-slice">Step 3: Changing a Slice</h4>
+<section id="sec-journey-slice" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="sec-journey-slice"><span class="header-section-number">3.3</span> Step 3: Changing a Slice</h3>
 <p>The user moves the <strong>Angle Slice Slider</strong> from 0 degrees to 45 degrees.</p>
 <ol type="1">
 <li>The <code>realtime_slice_update</code> function fires.</li>
@@ -390,9 +401,9 @@ ul.task-list li input[type="checkbox"] {
 </ol>
 <p><em>Total Compute Time: ~0.05 seconds.</em></p>
 </section>
-<section id="step-4-uncertainty-quantification-bypassing-the-cache" class="level4">
-<h4 class="anchored" data-anchor-id="step-4-uncertainty-quantification-bypassing-the-cache">Step 4: Uncertainty Quantification (Bypassing the Cache)</h4>
-<p>The user is happy with a threshold of <code>22.5 dB</code> and clicks <strong>“Run Uncertainty Quantification”</strong> on Tab 6.</p>
+<section id="sec-journey-uq" class="level3" data-number="3.4">
+<h3 data-number="3.4" class="anchored" data-anchor-id="sec-journey-uq"><span class="header-section-number">3.4</span> Step 4: Uncertainty Quantification (Bypassing the Cache)</h3>
+<p>The user is happy with a threshold of <code>22.5 dB</code> and clicks <strong>Run Uncertainty Quantification</strong> on the <em>UQ Analysis</em> tab.</p>
 <ol type="1">
 <li>The function calls <code>study.pod(threshold=22.5, n_boot=1000)</code>.</li>
 <li>The engine recognizes <code>n_boot &gt; 0</code>.</li>
@@ -403,8 +414,8 @@ ul.task-list li input[type="checkbox"] {
 <hr>
 </section>
 </section>
-<section id="conclusion" class="level2">
-<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<section id="sec-conclusion" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="sec-conclusion"><span class="header-section-number">4</span> Conclusion</h2>
 <p>By cleanly separating the <strong>Physics (Layer 1 &amp; 2)</strong>, the <strong>Exploration (Layer 3 &amp; 4)</strong>, and the <strong>Rigorous Confidence Bounds (Bootstrap Bypass)</strong>, <code>digiqual</code> achieves the interactivity of a dashboard while preserving the mathematical integrity required for safety-critical statistical analysis.</p>
 
 
@@ -813,13 +824,13 @@ ul.task-list li input[type="checkbox"] {
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../docs/comparison.html" class="pagination-link" aria-label="Classical vs Generalised PoD">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Classical vs Generalised PoD</span>
+      <a href="../docs/kriging_metamodeling.html" class="pagination-link" aria-label="Kriging Metamodeling">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Kriging Metamodeling</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../docs/app_architecture.html" class="pagination-link" aria-label="Desktop App Architecture">
-        <span class="nav-page-text">Desktop App Architecture</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../docs/cpp_acceleration.html" class="pagination-link" aria-label="C++ Acceleration &amp; Fallback">
+        <span class="nav-page-text">C++ Acceleration &amp; Fallback</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

@@ -81,7 +81,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-af7269421fbfc448936f832648c33468.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -208,7 +208,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
- <span class="menu-text">Detailed Manuals &amp; Theory</span></a>
+ <span class="menu-text">User Guides</span></a>
           <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
@@ -226,47 +226,52 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Automated Optimisation</span></a>
   </div>
 </li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
-  </div>
-</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Theory</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Generalised PoD Theory</span></a>
+ <span class="menu-text">Generalised PoD</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/kriging_metamodeling.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Kriging Metamodeling &amp; Calibration</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Classical vs Generalised PoD</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">DigiQual Caching Architecture</span></a>
+ <span class="menu-text">Kriging Metamodeling</span></a>
   </div>
 </li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
  <span class="menu-text">Development</span></a>
-          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Caching Architecture</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
+  </div>
+</li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/app_architecture.html" class="sidebar-item-text sidebar-link">
@@ -314,16 +319,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    best_kernel_name<span class="op">=</span><span class="st">'Matérn 5/2'</span>,</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Diagnostic Plot: Visualizes Standardized LOO Residuals and Outlier Calibration.</p>
+<p>Diagnostic Plot: Visualizes Standardized LOO Residuals and the outlier factor gamma.</p>
 <p>Plots a histogram of standardized LOO residuals e_i against the Standard Normal distribution N(0, 1) alongside a scatter plot against the [-3, 3] outlier threshold bounds. Equivalent to Figure 10 in Malkiel et al.&nbsp;(2026).</p>
+<p>When gamma &gt; 1 the residuals rescaled by 1/gamma are also shown, which puts the largest one exactly on the threshold. This is the right-hand axis of Malkiel et al.&nbsp;(2026) Fig. 10b: it shows how much the Kriging uncertainty would need to be inflated to remove every outlier. digiqual reports gamma as a diagnostic and does not apply it to the PoD.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 17%">
-<col style="width: 17%">
-<col style="width: 51%">
-<col style="width: 12%">
+<col style="width: 7%">
+<col style="width: 4%">
+<col style="width: 83%">
+<col style="width: 5%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -343,7 +349,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="even">
 <td>outlier_scale_factor</td>
 <td>float</td>
-<td>Outlier scaling factor gamma. Defaults to 1.0.</td>
+<td>Outlier factor gamma = max(1, max|e_i| / 3). Defaults to 1.0.</td>
 <td><code>1.0</code></td>
 </tr>
 <tr class="odd">
@@ -354,8 +360,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td>ax</td>
-<td>Optional[plt.Axes]</td>
-<td>Matplotlib axes to plot on. Defaults to None.</td>
+<td>optional</td>
+<td>Where to draw. <code>None</code> (default) creates a figure with the histogram and the outlier scatter side by side. A single Axes draws the histogram only. A pair <code>(ax_hist, ax_scatter)</code> draws both panels on the given axes, e.g.&nbsp;on two separate figures.</td>
 <td><code>None</code></td>
 </tr>
 </tbody>

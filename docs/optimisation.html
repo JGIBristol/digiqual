@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>optimisation – digiqual</title>
+<title>Automated Optimisation – digiqual</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -71,7 +71,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../docs/cpp_acceleration.html" rel="next">
+<link href="../docs/generalised_pod.html" rel="next">
 <link href="../docs/gui_manual.html" rel="prev">
 <link href="../docs/www/favicon.png" rel="icon" type="image/png">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
@@ -83,7 +83,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-af7269421fbfc448936f832648c33468.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -115,6 +115,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-diagram/mermaid-init.js"></script>
 <link href="../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -155,7 +184,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">Detailed Manuals &amp; Theory</a></li><li class="breadcrumb-item"><a href="../docs/optimisation.html">Automated Optimisation</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">User Guides</a></li><li class="breadcrumb-item"><a href="../docs/optimisation.html">Automated Optimisation</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -213,7 +242,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
- <span class="menu-text">Detailed Manuals &amp; Theory</span></a>
+ <span class="menu-text">User Guides</span></a>
           <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
@@ -231,47 +260,52 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Automated Optimisation</span></a>
   </div>
 </li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
-  </div>
-</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Theory</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Generalised PoD Theory</span></a>
+ <span class="menu-text">Generalised PoD</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/kriging_metamodeling.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Kriging Metamodeling &amp; Calibration</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Classical vs Generalised PoD</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">DigiQual Caching Architecture</span></a>
+ <span class="menu-text">Kriging Metamodeling</span></a>
   </div>
 </li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
  <span class="menu-text">Development</span></a>
-          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Caching Architecture</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
+  </div>
+</li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/app_architecture.html" class="sidebar-item-text sidebar-link">
@@ -296,25 +330,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#the-active-learning-lifecycle" id="toc-the-active-learning-lifecycle" class="nav-link active" data-scroll-target="#the-active-learning-lifecycle">The Active Learning Lifecycle</a>
+  <li><a href="#sec-lifecycle" id="toc-sec-lifecycle" class="nav-link active" data-scroll-target="#sec-lifecycle"><span class="header-section-number">1</span> The Active Learning Lifecycle</a>
   <ul class="collapse">
-  <li><a href="#breakdowns-of-the-steps" id="toc-breakdowns-of-the-steps" class="nav-link" data-scroll-target="#breakdowns-of-the-steps">Breakdowns of the Steps</a></li>
+  <li><a href="#sec-lifecycle-steps" id="toc-sec-lifecycle-steps" class="nav-link" data-scroll-target="#sec-lifecycle-steps"><span class="header-section-number">1.1</span> Breakdowns of the Steps</a></li>
   </ul></li>
-  <li><a href="#connecting-your-external-solver" id="toc-connecting-your-external-solver" class="nav-link" data-scroll-target="#connecting-your-external-solver">Connecting Your External Solver</a>
+  <li><a href="#sec-diagnostics" id="toc-sec-diagnostics" class="nav-link" data-scroll-target="#sec-diagnostics"><span class="header-section-number">2</span> Sampling &amp; Diagnostics</a>
   <ul class="collapse">
-  <li><a href="#handling-failures-graveyard" id="toc-handling-failures-graveyard" class="nav-link" data-scroll-target="#handling-failures-graveyard">Handling Failures (Graveyard)</a></li>
+  <li><a href="#sec-lhs" id="toc-sec-lhs" class="nav-link" data-scroll-target="#sec-lhs"><span class="header-section-number">2.1</span> Space-filling designs</a></li>
+  <li><a href="#sec-diagnostic-tests" id="toc-sec-diagnostic-tests" class="nav-link" data-scroll-target="#sec-diagnostic-tests"><span class="header-section-number">2.2</span> Diagnostic tests</a></li>
   </ul></li>
-  <li><a href="#the-auto-pilot-workflow" id="toc-the-auto-pilot-workflow" class="nav-link" data-scroll-target="#the-auto-pilot-workflow">The Auto-Pilot Workflow</a>
+  <li><a href="#sec-executors" id="toc-sec-executors" class="nav-link" data-scroll-target="#sec-executors"><span class="header-section-number">3</span> Connecting Your External Solver</a>
   <ul class="collapse">
-  <li><a href="#define-a-solver-and-executor" id="toc-define-a-solver-and-executor" class="nav-link" data-scroll-target="#define-a-solver-and-executor">1. Define a Solver and Executor</a></li>
-  <li><a href="#configure-the-study" id="toc-configure-the-study" class="nav-link" data-scroll-target="#configure-the-study">2. Configure the Study</a></li>
-  <li><a href="#run-optimisation" id="toc-run-optimisation" class="nav-link" data-scroll-target="#run-optimisation">3. Run Optimisation</a></li>
-  <li><a href="#view-results" id="toc-view-results" class="nav-link" data-scroll-target="#view-results">4. View Results</a></li>
+  <li><a href="#sec-graveyard" id="toc-sec-graveyard" class="nav-link" data-scroll-target="#sec-graveyard"><span class="header-section-number">3.1</span> Handling Failures (Graveyard)</a></li>
   </ul></li>
-  <li><a href="#sec-appendix" id="toc-sec-appendix" class="nav-link" data-scroll-target="#sec-appendix">Appendix: Real-World Wrapper Examples</a>
+  <li><a href="#sec-workflow" id="toc-sec-workflow" class="nav-link" data-scroll-target="#sec-workflow"><span class="header-section-number">4</span> The Auto-Pilot Workflow</a>
   <ul class="collapse">
-  <li><a href="#example-a-connecting-to-matlab" id="toc-example-a-connecting-to-matlab" class="nav-link" data-scroll-target="#example-a-connecting-to-matlab">Example A: Connecting to MATLAB</a></li>
-  <li><a href="#example-b-command-line-software-ansysabaqus" id="toc-example-b-command-line-software-ansysabaqus" class="nav-link" data-scroll-target="#example-b-command-line-software-ansysabaqus">Example B: Command Line Software (Ansys/Abaqus)</a></li>
+  <li><a href="#sec-workflow-solver" id="toc-sec-workflow-solver" class="nav-link" data-scroll-target="#sec-workflow-solver"><span class="header-section-number">4.1</span> Define a Solver and Executor</a></li>
+  <li><a href="#sec-workflow-configure" id="toc-sec-workflow-configure" class="nav-link" data-scroll-target="#sec-workflow-configure"><span class="header-section-number">4.2</span> Configure the Study</a></li>
+  <li><a href="#sec-workflow-run" id="toc-sec-workflow-run" class="nav-link" data-scroll-target="#sec-workflow-run"><span class="header-section-number">4.3</span> Run Optimisation</a></li>
+  <li><a href="#sec-workflow-results" id="toc-sec-workflow-results" class="nav-link" data-scroll-target="#sec-workflow-results"><span class="header-section-number">4.4</span> View Results</a></li>
+  </ul></li>
+  <li><a href="#sec-appendix" id="toc-sec-appendix" class="nav-link" data-scroll-target="#sec-appendix"><span class="header-section-number">5</span> Appendix: Real-World Wrapper Examples</a>
+  <ul class="collapse">
+  <li><a href="#sec-example-matlab" id="toc-sec-example-matlab" class="nav-link" data-scroll-target="#sec-example-matlab"><span class="header-section-number">5.1</span> Example A: Connecting to MATLAB</a></li>
+  <li><a href="#sec-example-cli" id="toc-sec-example-cli" class="nav-link" data-scroll-target="#sec-example-cli"><span class="header-section-number">5.2</span> Example B: Command Line Software (Ansys/Abaqus)</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/optimisation.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -322,7 +361,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">Detailed Manuals &amp; Theory</a></li><li class="breadcrumb-item"><a href="../docs/optimisation.html">Automated Optimisation</a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">User Guides</a></li><li class="breadcrumb-item"><a href="../docs/optimisation.html">Automated Optimisation</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Automated Optimisation</h1>
 </div>
@@ -342,8 +381,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p>The <code>optimise</code> method allows you to run a complete “Active Learning” loop. DigiQual will generate an initial design, run your external solver, check the results, and automatically add new points where the model is weak.</p>
-<section id="the-active-learning-lifecycle" class="level2">
-<h2 class="anchored" data-anchor-id="the-active-learning-lifecycle">The Active Learning Lifecycle</h2>
+<section id="sec-lifecycle" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="sec-lifecycle"><span class="header-section-number">1</span> The Active Learning Lifecycle</h2>
 <p>When you trigger the <code>optimise</code> method, DigiQual acts as an orchestrator, completing the following active learning loop until statistical requirements are satisfied.</p>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
@@ -362,18 +401,73 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<section id="breakdowns-of-the-steps" class="level3">
-<h3 class="anchored" data-anchor-id="breakdowns-of-the-steps">Breakdowns of the Steps</h3>
+<section id="sec-lifecycle-steps" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="sec-lifecycle-steps"><span class="header-section-number">1.1</span> Breakdowns of the Steps</h3>
 <ol type="1">
-<li><strong>Initialisation</strong>: If you have no existing data, DigiQual generates an initial batch of input coordinates using Latin Hypercube Sampling (LHS) to ensure a good spread across your variable ranges.</li>
+<li><strong>Initialisation</strong>: If you have no existing data, DigiQual generates an initial batch of input coordinates using a space-filling Latin Hypercube Sample (see <a href="#sec-lhs" class="quarto-xref">Section&nbsp;2.1</a>).</li>
 <li><strong>Execution</strong>: It passes these coordinates to your solver and waits for the results.</li>
-<li><strong>Diagnostics (Sense)</strong>: Once the results are back, DigiQual runs statistical checks. It looks for “gaps” in your input coverage, measures “model uncertainty” using a technique called Bootstrap Query-by-Committee, and checks for <strong>multicollinearity (VIF)</strong> to ensure your input variables are not highly correlated (which could cause model fit instability).</li>
+<li><strong>Diagnostics (Sense)</strong>: Once the results are back, DigiQual runs the diagnostic tests in <a href="#sec-diagnostic-tests" class="quarto-xref">Section&nbsp;2.2</a>: input coverage gaps, model fit, bootstrap stability and multicollinearity.</li>
 <li><strong>Refinement (Decide &amp; Act)</strong>: If the diagnostics fail, DigiQual generates <em>targeted</em> new samples exactly where the model needs them most (e.g., in the middle of an empty gap, or in highly uncertain regions) and repeats the loop.</li>
 </ol>
 </section>
 </section>
-<section id="connecting-your-external-solver" class="level2">
-<h2 class="anchored" data-anchor-id="connecting-your-external-solver">Connecting Your External Solver</h2>
+<section id="sec-diagnostics" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="sec-diagnostics"><span class="header-section-number">2</span> Sampling &amp; Diagnostics</h2>
+<p>The same sampling and diagnostic tools are used by <code>optimise</code>, by <code>study.diagnose()</code> / <code>study.refine()</code> in the <a href="../docs/qs_class.html">Quick Start</a>, and by the <em>Experimental Design</em> and <em>Simulation Diagnostics</em> tabs of the <a href="../docs/gui_manual.html">app</a>.</p>
+<section id="sec-lhs" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="sec-lhs"><span class="header-section-number">2.1</span> Space-filling designs</h3>
+<p><code>digiqual.sampling.generate_lhs(n, ranges)</code> (the app’s <em>Experimental Design</em> tab) draws a Latin Hypercube Sample over the input ranges. It then reorders the points with a <strong>greedy max-min distance algorithm</strong>: each next point is the one furthest from all points chosen so far. As a result, any first <span class="math inline">\(k\)</span> rows of the design are themselves as space-filling as possible, so you can run the simulations in order and stop early, or run them in batches, and still have good coverage.</p>
+</section>
+<section id="sec-diagnostic-tests" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="sec-diagnostic-tests"><span class="header-section-number">2.2</span> Diagnostic tests</h3>
+<p>The diagnostics check whether the data is good enough to fit a reliable model. Each test has a threshold you can change, as an argument to <code>diagnose()</code> / <code>optimise()</code> or in the app:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Test</th>
+<th style="text-align: left;">What it measures</th>
+<th style="text-align: left;">Passes when (default)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Input Coverage</td>
+<td style="text-align: left;">For each input, the largest gap between neighbouring sorted values, as a fraction of its range</td>
+<td style="text-align: left;">gap ratio &lt; 0.20 (<code>max_gap_ratio</code>)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Model Fit (CV)</td>
+<td style="text-align: left;">Cross-validated <span class="math inline">\(R^2\)</span> of a cubic polynomial: is there a learnable signal?</td>
+<td style="text-align: left;"><span class="math inline">\(R^2\)</span> &gt; 0.50 (<code>min_r2_score</code>)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Bootstrap Convergence (average)</td>
+<td style="text-align: left;">Spread (std) of bootstrap predictions of a quadratic model at the 10th, 50th and 90th percentiles of the inputs, divided by the std of the response, averaged</td>
+<td style="text-align: left;">&lt; 0.15 (<code>max_avg_cv</code>)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Bootstrap Convergence (worst)</td>
+<td style="text-align: left;">The largest of those relative spreads</td>
+<td style="text-align: left;">&lt; 0.30 (<code>max_max_cv</code>)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Collinearity Check</td>
+<td style="text-align: left;">Variance Inflation Factor of each input against the others</td>
+<td style="text-align: left;">VIF ≤ 5.0 (<code>max_allowed_vif</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>The bootstrap spread is measured relative to the scatter of the response, so a signal recorded near zero (e.g.&nbsp;in dB) or with a large constant offset is judged fairly. Versions up to 0.27 divided by the mean prediction instead, which made near-zero signals fail regardless of stability.</p>
+<p>If a test fails, <strong>refinement</strong> (<code>study.refine()</code>, or the app’s Remediation tool) generates targeted new points: in the largest coverage gaps, and where a bootstrap committee of models disagrees most (Query-by-Committee). Failed solver runs are excluded from future sampling (see the graveyard, below).</p>
+</section>
+</section>
+<section id="sec-executors" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="sec-executors"><span class="header-section-number">3</span> Connecting Your External Solver</h2>
 <p>To automate this process, DigiQual needs to communicate with your simulation model (whether that is a Python function, MATLAB script, or heavy FEA software like Ansys). It does this using the <strong>Executor</strong> pattern.</p>
 <p>DigiQual provides three built-in Executors to bridge the gap:</p>
 <ol type="1">
@@ -381,19 +475,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><strong><code>CLIExecutor</code> (Process Isolation)</strong>: Best for heavy physics engines (FEA/CFD) or heavy Python FEA scripts. It writes the inputs to a temporary CSV and spawns a completely isolated Operating System process to solve it. This guarantees that 100% of the solver’s memory is cleared after every run, preventing memory leaks.</li>
 <li><strong><code>MatlabExecutor</code></strong>: A specialized wrapper that automatically handles the complex terminal syntax required to run MATLAB in a headless “batch” mode.</li>
 </ol>
-<p><em>(See the <a href="#sec-appendix">Appendix</a> for examples on connecting MATLAB and external software).</em></p>
-<section id="handling-failures-graveyard" class="level3">
-<h3 class="anchored" data-anchor-id="handling-failures-graveyard">Handling Failures (Graveyard)</h3>
+<p><em>(See <a href="#sec-appendix" class="quarto-xref">Section&nbsp;5</a> for examples on connecting MATLAB and external software.)</em></p>
+<section id="sec-graveyard" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="sec-graveyard"><span class="header-section-number">3.1</span> Handling Failures (Graveyard)</h3>
 <p>If your external solver crashes or fails to converge for a specific input row (e.g., a meshing error), your solver should return <code>NaN</code> or leave the outcome blank. DigiQual will automatically detect this and add those coordinates to a “graveyard”, ensuring the active learning loop navigates around that “dead zone” and never samples that exact region again!</p>
 </section>
 </section>
-<section id="the-auto-pilot-workflow" class="level2">
-<h2 class="anchored" data-anchor-id="the-auto-pilot-workflow">The Auto-Pilot Workflow</h2>
+<section id="sec-workflow" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="sec-workflow"><span class="header-section-number">4</span> The Auto-Pilot Workflow</h2>
 <p>Let’s walk through setting up a complete optimisation loop using a pure Python model.</p>
-<section id="define-a-solver-and-executor" class="level3">
-<h3 class="anchored" data-anchor-id="define-a-solver-and-executor">1. Define a Solver and Executor</h3>
+<section id="sec-workflow-solver" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="sec-workflow-solver"><span class="header-section-number">4.1</span> Define a Solver and Executor</h3>
 <p>For this tutorial, we will write a standard Python function to simulate our physics. We will then wrap it in the <code>PythonExecutor</code>.</p>
-<div id="1dc39458" class="cell" data-execution_count="1">
+<div id="0c64a2e3" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> PythonExecutor</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -436,10 +530,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>executor <span class="op">=</span> PythonExecutor(solver_func<span class="op">=</span>mock_sensor_model, outcome_col<span class="op">=</span><span class="st">"Signal"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="configure-the-study" class="level3">
-<h3 class="anchored" data-anchor-id="configure-the-study">2. Configure the Study</h3>
+<section id="sec-workflow-configure" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="sec-workflow-configure"><span class="header-section-number">4.2</span> Configure the Study</h3>
 <p>We define our input variables and the ranges we want to explore.</p>
-<div id="c43b4f4f" class="cell" data-execution_count="2">
+<div id="99099944" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.core <span class="im">import</span> SimulationStudy</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define inputs ranges</span></span>
@@ -449,10 +543,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>study <span class="op">=</span> SimulationStudy()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="run-optimisation" class="level3">
-<h3 class="anchored" data-anchor-id="run-optimisation">3. Run Optimisation</h3>
+<section id="sec-workflow-run" class="level3" data-number="4.3">
+<h3 data-number="4.3" class="anchored" data-anchor-id="sec-workflow-run"><span class="header-section-number">4.3</span> Run Optimisation</h3>
 <p>This single command handles the entire Active Learning loop:</p>
-<div id="6f2fb761" class="cell" data-execution_count="3">
+<div id="ace815a0" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.optimise(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    executor<span class="op">=</span>executor,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    ranges<span class="op">=</span>ranges,</span>
@@ -473,16 +567,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 --- Iteration 1: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Active Graveyard Tracker: Protecting against 3 known bad regions.
- -&gt; Strategy: Exploration (Filling gaps in Length)
+ -&gt; Active Graveyard Tracker: Protecting against 2 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
---- Running Batch 1 (20 points) ---
-   -&gt; Executing Python model for 20 points...
+--- Running Batch 1 (10 points) ---
+   -&gt; Executing Python model for 10 points...
 
 --- Iteration 2: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Active Graveyard Tracker: Protecting against 4 known bad regions.
+ -&gt; Active Graveyard Tracker: Protecting against 2 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 2 (10 points) ---
    -&gt; Executing Python model for 10 points...
@@ -490,7 +583,7 @@ Diagnostics flagged issues. Initiating Active Learning...
 --- Iteration 3: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Active Graveyard Tracker: Protecting against 4 known bad regions.
+ -&gt; Active Graveyard Tracker: Protecting against 3 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 3 (10 points) ---
    -&gt; Executing Python model for 10 points...
@@ -498,7 +591,7 @@ Diagnostics flagged issues. Initiating Active Learning...
 --- Iteration 4: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Active Graveyard Tracker: Protecting against 4 known bad regions.
+ -&gt; Active Graveyard Tracker: Protecting against 6 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 4 (10 points) ---
    -&gt; Executing Python model for 10 points...
@@ -506,7 +599,7 @@ Diagnostics flagged issues. Initiating Active Learning...
 --- Iteration 5: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Active Graveyard Tracker: Protecting against 4 known bad regions.
+ -&gt; Active Graveyard Tracker: Protecting against 6 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 5 (10 points) ---
    -&gt; Executing Python model for 10 points...
@@ -514,17 +607,17 @@ Diagnostics flagged issues. Initiating Active Learning...
 ----------------------------------------
 &gt;&gt;&gt; SEARCH COMPLETE &lt;&lt;&lt;
 Total Time:      0.01 minutes
-Successful Runs: 76
-Failed Runs:     4 (in graveyard)
-Total Attempted: 80
+Successful Runs: 64
+Failed Runs:     6 (in graveyard)
+Total Attempted: 70
 ----------------------------------------
 
-Data initialized/overwritten. Total rows: 76</code></pre>
+Data initialized/overwritten. Total rows: 64</code></pre>
 </div>
 </div>
 </section>
-<section id="view-results" class="level3">
-<h3 class="anchored" data-anchor-id="view-results">4. View Results</h3>
+<section id="sec-workflow-results" class="level3" data-number="4.4">
+<h3 data-number="4.4" class="anchored" data-anchor-id="sec-workflow-results"><span class="header-section-number">4.4</span> View Results</h3>
 <p>Once the loop finishes, <code>study.data</code> contains all the valid simulation results accumulated across all refinement iterations.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total Simulations Run: </span><span class="sc">{</span><span class="bu">len</span>(study.data)<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -538,24 +631,41 @@ Data initialized/overwritten. Total rows: 76</code></pre>
 <div aria-describedby="fig-results-optim-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="quarto-layout-row">
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<pre><code>Total Simulations Run: 76
+<pre><code>Total Simulations Run: 64
 Running validation...
-Validation passed. 76 valid rows ready.
+Validation passed. 64 valid rows ready.
 --- Starting Reliability Analysis (PoIs: ['Length', 'Angle'] - Nuisance: ['Roughness']) ---
 1. Training all surrogate models (Cache Miss)...
--&gt; Selected Model: Polynomial (Degree 3)
+-&gt; Selected Model: Polynomial (Degree 2)
 2. Fitting Variance Model &amp; Inferring Distribution (Cache Miss)...
    -&gt; Optimizing bandwidth via LOO-CV...
 -&gt; Calculating Total-Order Sobol Indices...
-   -&gt; Smoothing Bandwidth: 3.9979
-   -&gt; Selected Distribution: norm
+   -&gt; Smoothing Bandwidth: 1.1311 (input std devs)
+   -&gt; Selected Distribution: laplace
 3. Integrating PoD Curve from Scratch (Cache Miss)...
-4. Running Bootstrap (1000 iterations on 11 cores)...</code></pre>
-</div>
-</div>
-<div class="quarto-layout-row">
-<div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<pre><code>--- Analysis Complete ---</code></pre>
+4. Running Bootstrap (1000 iterations on 10 cores)...
+   -&gt; [Bootstrap] Running 1000 iterations on 10 worker core(s)...
+   -&gt; [Bootstrap Progress] Completed 50/1000 iterations (5%)...
+   -&gt; [Bootstrap Progress] Completed 100/1000 iterations (10%)...
+   -&gt; [Bootstrap Progress] Completed 150/1000 iterations (15%)...
+   -&gt; [Bootstrap Progress] Completed 200/1000 iterations (20%)...
+   -&gt; [Bootstrap Progress] Completed 250/1000 iterations (25%)...
+   -&gt; [Bootstrap Progress] Completed 300/1000 iterations (30%)...
+   -&gt; [Bootstrap Progress] Completed 350/1000 iterations (35%)...
+   -&gt; [Bootstrap Progress] Completed 400/1000 iterations (40%)...
+   -&gt; [Bootstrap Progress] Completed 450/1000 iterations (45%)...
+   -&gt; [Bootstrap Progress] Completed 500/1000 iterations (50%)...
+   -&gt; [Bootstrap Progress] Completed 550/1000 iterations (55%)...
+   -&gt; [Bootstrap Progress] Completed 600/1000 iterations (60%)...
+   -&gt; [Bootstrap Progress] Completed 650/1000 iterations (65%)...
+   -&gt; [Bootstrap Progress] Completed 700/1000 iterations (70%)...
+   -&gt; [Bootstrap Progress] Completed 750/1000 iterations (75%)...
+   -&gt; [Bootstrap Progress] Completed 800/1000 iterations (80%)...
+   -&gt; [Bootstrap Progress] Completed 850/1000 iterations (85%)...
+   -&gt; [Bootstrap Progress] Completed 900/1000 iterations (90%)...
+   -&gt; [Bootstrap Progress] Completed 950/1000 iterations (95%)...
+   -&gt; [Bootstrap Progress] Completed 1000/1000 iterations (100%)...
+--- Analysis Complete ---</code></pre>
 </div>
 </div>
 <div class="quarto-layout-row">
@@ -563,7 +673,7 @@ Validation passed. 76 valid rows ready.
 <div id="fig-results-optim-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-results-optim-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="optimisation_files/figure-html/fig-results-optim-output-3.png" data-ref-parent="fig-results-optim" width="950" height="465" class="figure-img">
+<img src="optimisation_files/figure-html/fig-results-optim-output-2.png" data-ref-parent="fig-results-optim" width="942" height="519" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-results-optim-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (a) Best Fitting Model (Statistics)
@@ -577,7 +687,7 @@ Validation passed. 76 valid rows ready.
 <div id="fig-results-optim-2" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-results-optim-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="optimisation_files/figure-html/fig-results-optim-output-4.png" data-ref-parent="fig-results-optim" width="476" height="486" class="figure-img">
+<img src="optimisation_files/figure-html/fig-results-optim-output-3.png" data-ref-parent="fig-results-optim" width="475" height="488" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-results-optim-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (b) Signal Response Model (Physics)
@@ -591,7 +701,7 @@ Validation passed. 76 valid rows ready.
 <div id="fig-results-optim-3" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-results-optim-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="optimisation_files/figure-html/fig-results-optim-output-5.png" data-ref-parent="fig-results-optim" width="652" height="523" class="figure-img">
+<img src="optimisation_files/figure-html/fig-results-optim-output-4.png" data-ref-parent="fig-results-optim" width="652" height="523" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-results-optim-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (c) Probability of Detection Curve (Reliability)
@@ -608,15 +718,15 @@ Figure&nbsp;1: Reliability Analysis Results
 </div>
 </section>
 </section>
-<section id="sec-appendix" class="level2">
-<h2 class="anchored" data-anchor-id="sec-appendix">Appendix: Real-World Wrapper Examples</h2>
+<section id="sec-appendix" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="sec-appendix"><span class="header-section-number">5</span> Appendix: Real-World Wrapper Examples</h2>
 <p>When connecting DigiQual to external engines like MATLAB or Ansys, you will use the heavy-duty Executors.</p>
-<section id="example-a-connecting-to-matlab" class="level3">
-<h3 class="anchored" data-anchor-id="example-a-connecting-to-matlab">Example A: Connecting to MATLAB</h3>
+<section id="sec-example-matlab" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="sec-example-matlab"><span class="header-section-number">5.1</span> Example A: Connecting to MATLAB</h3>
 <p><strong>📥 <a href="../optimise_examples/demo_matlab.py" download="demo_matlab.py">Download MATLAB Executor Demo</a></strong> <strong>📥 <a href="../optimise_examples/dummy_matlab_solver.m" download="dummy_matlab_solver.m">Download Dummy MATLAB Solver</a></strong></p>
 <p>The <code>MatlabExecutor</code> makes connecting to MATLAB effortless. You simply write a top-level MATLAB function that reads an input CSV, does the math, writes an output CSV, and exits.</p>
-<section id="a1.-the-matlab-solver-matlab_wrapper.m" class="level4">
-<h4 class="anchored" data-anchor-id="a1.-the-matlab-solver-matlab_wrapper.m">A1. The MATLAB Solver (<code>matlab_wrapper.m</code>)</h4>
+<section id="sec-matlab-solver" class="level4" data-number="5.1.1">
+<h4 data-number="5.1.1" class="anchored" data-anchor-id="sec-matlab-solver"><span class="header-section-number">5.1.1</span> The MATLAB Solver (<code>matlab_wrapper.m</code>)</h4>
 <pre class="{MATLAB}"><code>function matlab_wrapper(input_csv, output_csv)
     df = readtable(input_csv);
     num_rows = height(df);
@@ -648,65 +758,65 @@ Figure&nbsp;1: Reliability Analysis Results
     exit; % CRITICAL: Exit MATLAB to hand control back to DigiQual
 end</code></pre>
 </section>
-<section id="a2.-the-digiqual-execution" class="level4">
-<h4 class="anchored" data-anchor-id="a2.-the-digiqual-execution">A2. The Digiqual Execution</h4>
+<section id="sec-matlab-run" class="level4" data-number="5.1.2">
+<h4 data-number="5.1.2" class="anchored" data-anchor-id="sec-matlab-run"><span class="header-section-number">5.1.2</span> The DigiQual Execution</h4>
 <p>You just provide the name of the MATLAB file. The Executor builds the headless terminal command automatically.</p>
-<div id="ec6cf8a3" class="cell" data-execution_count="5">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> MatlabExecutor</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>executor <span class="op">=</span> MatlabExecutor(wrapper_name<span class="op">=</span><span class="st">"matlab_wrapper"</span>)</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>study.optimise(executor<span class="op">=</span>executor, ranges<span class="op">=</span>ranges, outcome_col<span class="op">=</span><span class="st">"Signal"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="2ce99b9a" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> MatlabExecutor</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>executor <span class="op">=</span> MatlabExecutor(wrapper_name<span class="op">=</span><span class="st">"matlab_wrapper"</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>study.optimise(executor<span class="op">=</span>executor, ranges<span class="op">=</span>ranges, outcome_col<span class="op">=</span><span class="st">"Signal"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <hr>
 </section>
 </section>
-<section id="example-b-command-line-software-ansysabaqus" class="level3">
-<h3 class="anchored" data-anchor-id="example-b-command-line-software-ansysabaqus">Example B: Command Line Software (Ansys/Abaqus)</h3>
+<section id="sec-example-cli" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="sec-example-cli"><span class="header-section-number">5.2</span> Example B: Command Line Software (Ansys/Abaqus)</h3>
 <p><strong>📥 <a href="../optimise_examples/demo_cli.py" download="demo_cli.py">Download CLI Executor Demo</a></strong> <strong>📥 <a href="../optimise_examples/dummy_fea.py" download="dummy_fea.py">Download Dummy FEA Script</a></strong></p>
 <p>For software triggered via the command line, use the <code>CLIExecutor</code>. You must provide a command template containing <code>{input}</code> and <code>{output}</code> placeholders. DigiQual will write the design space to a temporary input CSV, spawn the terminal command, and read the resulting output CSV.</p>
-<section id="b1.-the-external-solver-script-run_ansys_simulation.py" class="level4">
-<h4 class="anchored" data-anchor-id="b1.-the-external-solver-script-run_ansys_simulation.py">B1. The External Solver Script (<code>run_ansys_simulation.py</code>)</h4>
+<section id="sec-cli-solver" class="level4" data-number="5.2.1">
+<h4 data-number="5.2.1" class="anchored" data-anchor-id="sec-cli-solver"><span class="header-section-number">5.2.1</span> The External Solver Script (<code>run_ansys_simulation.py</code>)</h4>
 <p>This script represents your standalone software. It must accept the input and output file paths as command-line arguments, read the input CSV, perform its calculations, and save the output CSV.</p>
-<div id="df850cac" class="cell" data-execution_count="6">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_simulation(input_csv, output_csv):</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. Read the input coordinates generated by DigiQual</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> pd.read_csv(input_csv)</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    signals <span class="op">=</span> []</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. Run the solver for each row</span></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _, row <span class="kw">in</span> df.iterrows():</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>        length <span class="op">=</span> row[<span class="st">"Length"</span>]</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>        angle <span class="op">=</span> row[<span class="st">"Angle"</span>]</span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Insert your complex FEA/external physics here</span></span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>        signal <span class="op">=</span> (length<span class="op">**</span><span class="dv">3</span>) <span class="op">*</span> <span class="fl">0.5</span> <span class="op">+</span> angle</span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>        signals.append(signal)</span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. Append the results and save</span></span>
-<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">"Signal"</span>] <span class="op">=</span> signals</span>
-<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    df.to_csv(output_csv, index<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">"__main__"</span>:</span>
-<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># sys.argv[1] is the {input} path, sys.argv[2] is the {output} path</span></span>
-<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>    run_simulation(sys.argv[<span class="dv">1</span>], sys.argv[<span class="dv">2</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="ebef9af7" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_simulation(input_csv, output_csv):</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. Read the input coordinates generated by DigiQual</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> pd.read_csv(input_csv)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    signals <span class="op">=</span> []</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. Run the solver for each row</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _, row <span class="kw">in</span> df.iterrows():</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>        length <span class="op">=</span> row[<span class="st">"Length"</span>]</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        angle <span class="op">=</span> row[<span class="st">"Angle"</span>]</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Insert your complex FEA/external physics here</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>        signal <span class="op">=</span> (length<span class="op">**</span><span class="dv">3</span>) <span class="op">*</span> <span class="fl">0.5</span> <span class="op">+</span> angle</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>        signals.append(signal)</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. Append the results and save</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">"Signal"</span>] <span class="op">=</span> signals</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    df.to_csv(output_csv, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">"__main__"</span>:</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># sys.argv[1] is the {input} path, sys.argv[2] is the {output} path</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    run_simulation(sys.argv[<span class="dv">1</span>], sys.argv[<span class="dv">2</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="b2.-the-digiqual-execution" class="level4">
-<h4 class="anchored" data-anchor-id="b2.-the-digiqual-execution">B2. The DigiQual Execution</h4>
+<section id="sec-cli-run" class="level4" data-number="5.2.2">
+<h4 data-number="5.2.2" class="anchored" data-anchor-id="sec-cli-run"><span class="header-section-number">5.2.2</span> The DigiQual Execution</h4>
 <p>You define the exact terminal command needed to run the script above, and pass it to the <code>CLIExecutor</code>.</p>
-<div id="2192fa26" class="cell" data-execution_count="7">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> CLIExecutor</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co"># The exact command you would type into your terminal</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>cmd_template <span class="op">=</span> <span class="st">"python run_ansys_simulation.py </span><span class="sc">{input}</span><span class="st"> </span><span class="sc">{output}</span><span class="st">"</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>executor <span class="op">=</span> CLIExecutor(command_template<span class="op">=</span>cmd_template)</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>study.optimise(executor<span class="op">=</span>executor, ranges<span class="op">=</span>ranges, outcome_col<span class="op">=</span><span class="st">"Signal"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="ff92be2c" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> CLIExecutor</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># The exact command you would type into your terminal</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>cmd_template <span class="op">=</span> <span class="st">"python run_ansys_simulation.py </span><span class="sc">{input}</span><span class="st"> </span><span class="sc">{output}</span><span class="st">"</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>executor <span class="op">=</span> CLIExecutor(command_template<span class="op">=</span>cmd_template)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>study.optimise(executor<span class="op">=</span>executor, ranges<span class="op">=</span>ranges, outcome_col<span class="op">=</span><span class="st">"Signal"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 
 
@@ -1122,8 +1232,8 @@ end</code></pre>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../docs/cpp_acceleration.html" class="pagination-link" aria-label="C++ Acceleration &amp; Fallback">
-        <span class="nav-page-text">C++ Acceleration &amp; Fallback</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../docs/generalised_pod.html" class="pagination-link" aria-label="Generalised PoD">
+        <span class="nav-page-text">Generalised PoD</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

@@ -47,7 +47,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-af7269421fbfc448936f832648c33468.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -174,7 +174,7 @@ ul.task-list li input[type="checkbox"] {
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
- <span class="menu-text">Detailed Manuals &amp; Theory</span></a>
+ <span class="menu-text">User Guides</span></a>
           <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
@@ -192,47 +192,52 @@ ul.task-list li input[type="checkbox"] {
  <span class="menu-text">Automated Optimisation</span></a>
   </div>
 </li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
-  </div>
-</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Theory</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Generalised PoD Theory</span></a>
+ <span class="menu-text">Generalised PoD</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/kriging_metamodeling.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Kriging Metamodeling &amp; Calibration</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Classical vs Generalised PoD</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">DigiQual Caching Architecture</span></a>
+ <span class="menu-text">Kriging Metamodeling</span></a>
   </div>
 </li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
  <span class="menu-text">Development</span></a>
-          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Caching Architecture</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
+  </div>
+</li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/app_architecture.html" class="sidebar-item-text sidebar-link">
@@ -332,40 +337,56 @@ ul.task-list li input[type="checkbox"] {
 <td>Fits all polynomial models (and optionally Kriging) and returns them for caching.</td>
 </tr>
 <tr class="even">
+<td><a href="../api_reference/pod.select_cv_winner.html#digiqual.pod.select_cv_winner">pod.select_cv_winner</a></td>
+<td>Picks the expectation model using the one-standard-error rule.</td>
+</tr>
+<tr class="odd">
 <td><a href="../api_reference/pod.generate_latex_equation.html#digiqual.pod.generate_latex_equation">pod.generate_latex_equation</a></td>
 <td>Extracts a LaTeX formatted equation from a fitted Polynomial Pipeline.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/pod.optimise_bandwidth.html#digiqual.pod.optimise_bandwidth">pod.optimise_bandwidth</a></td>
 <td>Finds the optimal kernel smoothing bandwidth using Leave-One-Out Cross-Validation (LOO-CV).</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/pod.fit_variance_model.html#digiqual.pod.fit_variance_model">pod.fit_variance_model</a></td>
 <td>Calculates residuals and defines the smoothing bandwidth for variance estimation.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/pod.infer_best_distribution.html#digiqual.pod.infer_best_distribution">pod.infer_best_distribution</a></td>
 <td>Selects the best statistical distribution for the standardized residuals using AIC.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/pod.plot_model_selection.html#digiqual.pod.plot_model_selection">pod.plot_model_selection</a></td>
 <td>Generates a normalized bar chart of the Bias-Variance Tradeoff from CV scores,</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/pod.predict_local_std.html#digiqual.pod.predict_local_std">pod.predict_local_std</a></td>
 <td>Estimates the local standard deviation using Gaussian Kernel Smoothing.</td>
+</tr>
+<tr class="odd">
+<td><a href="../api_reference/pod.ScaledGaussianProcessRegressor.html#digiqual.pod.ScaledGaussianProcessRegressor">pod.ScaledGaussianProcessRegressor</a></td>
+<td>Gaussian Process regressor that standardises its inputs before fitting.</td>
 </tr>
 <tr class="even">
 <td><a href="../api_reference/pod.build_kriging_candidate_kernels.html#digiqual.pod.build_kriging_candidate_kernels">pod.build_kriging_candidate_kernels</a></td>
 <td>Builds the candidate covariance kernels evaluated for the Kriging surrogate.</td>
 </tr>
 <tr class="odd">
+<td><a href="../api_reference/pod.build_kriging_gpr.html#digiqual.pod.build_kriging_gpr">pod.build_kriging_gpr</a></td>
+<td>Builds an unfitted Kriging model with the production settings.</td>
+</tr>
+<tr class="even">
 <td><a href="../api_reference/pod.build_fixed_kernel_gpr.html#digiqual.pod.build_fixed_kernel_gpr">pod.build_fixed_kernel_gpr</a></td>
 <td>Builds a Kriging model that reuses already-optimised hyperparameters.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/pod.compute_kriging_loo_residuals.html#digiqual.pod.compute_kriging_loo_residuals">pod.compute_kriging_loo_residuals</a></td>
 <td>Computes exact LOO predictions, variances, standardized residuals e_i,</td>
+</tr>
+<tr class="even">
+<td><a href="../api_reference/pod.compute_kriging_group_loo_means.html#digiqual.pod.compute_kriging_group_loo_means">pod.compute_kriging_group_loo_means</a></td>
+<td>Leave-one-group-out Kriging means, for data that contains repeated points.</td>
 </tr>
 <tr class="odd">
 <td><a href="../api_reference/pod.compute_pod_curve.html#digiqual.pod.compute_pod_curve">pod.compute_pod_curve</a></td>
@@ -425,7 +446,7 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 <tr class="odd">
 <td><a href="../api_reference/plotting.plot_kriging_diagnostics.html#digiqual.plotting.plot_kriging_diagnostics">plotting.plot_kriging_diagnostics</a></td>
-<td>Diagnostic Plot: Visualizes Standardized LOO Residuals and Outlier Calibration.</td>
+<td>Diagnostic Plot: Visualizes Standardized LOO Residuals and the outlier factor gamma.</td>
 </tr>
 <tr class="even">
 <td><a href="../api_reference/executors.Executor.html#digiqual.executors.Executor">executors.Executor</a></td>

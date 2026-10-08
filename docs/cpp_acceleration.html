@@ -71,8 +71,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../docs/generalised_pod.html" rel="next">
-<link href="../docs/optimisation.html" rel="prev">
+<link href="../docs/app_architecture.html" rel="next">
+<link href="../docs/caching.html" rel="prev">
 <link href="../docs/www/favicon.png" rel="icon" type="image/png">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -83,7 +83,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-af7269421fbfc448936f832648c33468.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -181,7 +181,7 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">Detailed Manuals &amp; Theory</a></li><li class="breadcrumb-item"><a href="../docs/cpp_acceleration.html">C++ Acceleration &amp; Fallback</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/caching.html">Development</a></li><li class="breadcrumb-item"><a href="../docs/cpp_acceleration.html">C++ Acceleration &amp; Fallback</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -238,13 +238,13 @@ window.Quarto = {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
- <span class="menu-text">Detailed Manuals &amp; Theory</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">User Guides</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/gui_manual.html" class="sidebar-item-text sidebar-link">
@@ -257,47 +257,52 @@ window.Quarto = {
  <span class="menu-text">Automated Optimisation</span></a>
   </div>
 </li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
-  </div>
-</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Theory</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Generalised PoD Theory</span></a>
+ <span class="menu-text">Generalised PoD</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/kriging_metamodeling.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Kriging Metamodeling &amp; Calibration</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Classical vs Generalised PoD</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">DigiQual Caching Architecture</span></a>
+ <span class="menu-text">Kriging Metamodeling</span></a>
   </div>
 </li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
  <span class="menu-text">Development</span></a>
-          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Caching Architecture</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
+  </div>
+</li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/app_architecture.html" class="sidebar-item-text sidebar-link">
@@ -322,17 +327,17 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
-  <li><a href="#executable-benchmark-workflow-script" id="toc-executable-benchmark-workflow-script" class="nav-link" data-scroll-target="#executable-benchmark-workflow-script">Executable Benchmark Workflow Script</a></li>
-  <li><a href="#automatic-fallback-system" id="toc-automatic-fallback-system" class="nav-link" data-scroll-target="#automatic-fallback-system">Automatic Fallback System</a></li>
-  <li><a href="#building-and-installation" id="toc-building-and-installation" class="nav-link" data-scroll-target="#building-and-installation">Building and Installation</a></li>
+  <li><a href="#sec-overview" id="toc-sec-overview" class="nav-link active" data-scroll-target="#sec-overview"><span class="header-section-number">1</span> Overview</a></li>
+  <li><a href="#sec-benchmark" id="toc-sec-benchmark" class="nav-link" data-scroll-target="#sec-benchmark"><span class="header-section-number">2</span> Executable Benchmark Workflow Script</a></li>
+  <li><a href="#sec-fallback" id="toc-sec-fallback" class="nav-link" data-scroll-target="#sec-fallback"><span class="header-section-number">3</span> Automatic Fallback System</a></li>
+  <li><a href="#sec-building" id="toc-sec-building" class="nav-link" data-scroll-target="#sec-building"><span class="header-section-number">4</span> Building and Installation</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/cpp_acceleration.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">Detailed Manuals &amp; Theory</a></li><li class="breadcrumb-item"><a href="../docs/cpp_acceleration.html">C++ Acceleration &amp; Fallback</a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/caching.html">Development</a></li><li class="breadcrumb-item"><a href="../docs/cpp_acceleration.html">C++ Acceleration &amp; Fallback</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">C++ Acceleration &amp; Fallback System</h1>
 </div>
@@ -351,8 +356,8 @@ window.Quarto = {
 </header>
 
 
-<section id="overview" class="level2">
-<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<section id="sec-overview" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="sec-overview"><span class="header-section-number">1</span> Overview</h2>
 <p><code>digiqual</code> includes a native C++ high-performance backend powered by <strong>Pybind11</strong> and <strong>multi-threaded C++17 worker pools</strong> to accelerate intensive statistical computations.</p>
 <p>Heavy computational routines—specifically Nadaraya-Watson local variance kernel smoothing, Monte Carlo marginalisation across nuisance parameters, and bootstrap confidence bound calculations—are compiled natively to eliminate Python interpreter overhead, release the Global Interpreter Lock (GIL), and execute across all available CPU cores in parallel.</p>
 <pre><code>                  ┌─────────────────────────────────────────┐
@@ -368,10 +373,10 @@ window.Quarto = {
      • C++17 Multi-threaded Pool          • Zero C++ Compilation Required
      • 10x - 50x Execution Speedup        • Pure Python Compatibility</code></pre>
 </section>
-<section id="executable-benchmark-workflow-script" class="level2">
-<h2 class="anchored" data-anchor-id="executable-benchmark-workflow-script">Executable Benchmark Workflow Script</h2>
+<section id="sec-benchmark" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="sec-benchmark"><span class="header-section-number">2</span> Executable Benchmark Workflow Script</h2>
 <p>Below is a self-contained executable Python script that benchmarks a large realistic dataset (<span class="math inline">\(N=300\)</span> samples, 3D input domain: Length, Angle, Roughness) across <strong>Workflow A (C++ Accelerated)</strong> and <strong>Workflow B (Python-Only Fallback)</strong> step-by-step, recording precise execution times for each phase.</p>
-<div id="d1320f7e" class="cell" data-execution_count="1">
+<div id="ab048b8d" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -485,45 +490,47 @@ window.Quarto = {
    -&gt; Optimizing bandwidth via LOO-CV...
 
 --- Running Workflow A (C++ Accelerated) ---
-[C++] Monte Carlo Marginalisation (100 pts x 1,000 MC): 0.0192 s</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[C++] Bootstrap Resampling (100 resamples x 100 pts):    1.8713 s
+[C++] Monte Carlo Marginalisation (100 pts x 1,000 MC): 0.0217 s
+   -&gt; [Bootstrap] Running 100 iterations on 1 worker core(s)...
+   -&gt; [Bootstrap Progress] Completed 50/100 iterations (50%)...
+   -&gt; [Bootstrap Progress] Completed 100/100 iterations (100%)...
+[C++] Bootstrap Resampling (100 resamples x 100 pts):    1.1765 s
 
 --- Running Workflow B (Python-Only Fallback) ---
-[Python] Monte Carlo Marginalisation (100 pts x 1,000 MC): 0.3732 s</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[Python] Bootstrap Resampling (100 resamples x 100 pts):    21.5060 s
+[Python] Monte Carlo Marginalisation (100 pts x 1,000 MC): 0.2307 s
+   -&gt; [Bootstrap] Running 100 iterations on 1 worker core(s)...
+   -&gt; [Bootstrap Progress] Completed 50/100 iterations (50%)...
+   -&gt; [Bootstrap Progress] Completed 100/100 iterations (100%)...
+[Python] Bootstrap Resampling (100 resamples x 100 pts):    10.9396 s
 
 ======================================================
 SPEEDUP RESULTS
 ======================================================
-MC Marginalisation Speedup: 19.43x Faster
-Bootstrap Resampling Speedup: 11.49x Faster
+MC Marginalisation Speedup: 10.61x Faster
+Bootstrap Resampling Speedup: 9.30x Faster
 ======================================================</code></pre>
 </div>
 </div>
 </section>
-<section id="automatic-fallback-system" class="level2">
-<h2 class="anchored" data-anchor-id="automatic-fallback-system">Automatic Fallback System</h2>
+<section id="sec-fallback" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="sec-fallback"><span class="header-section-number">3</span> Automatic Fallback System</h2>
 <p><code>digiqual</code> guarantees full cross-platform compatibility. If the C++ binaries are not compiled (for example, in lightweight embedded environments or minimal Python installations), the toolkit <strong>automatically and seamlessly defaults back to Python</strong>.</p>
 <p>The fallback manager (<code>src/digiqual/cpp_fallback.py</code>) checks extension availability at import time:</p>
-<div id="d679c1df" class="cell" data-execution_count="2">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.cpp_fallback <span class="im">import</span> HAS_CPP, predict_local_std_fast</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> HAS_CPP:</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"C++ Acceleration is active! 🚀"</span>)</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"Running on vectorized Python fallback."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="434653fa" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.cpp_fallback <span class="im">import</span> HAS_CPP, predict_local_std_fast</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> HAS_CPP:</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"C++ Acceleration is active! 🚀"</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"Running on vectorized Python fallback."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>C++ Acceleration is active! 🚀</code></pre>
 </div>
 </div>
 <p>Both C++ and Python fallback implementations produce <strong>identical numerical results</strong> down to double-precision floating-point machine epsilon (<span class="math inline">\(\le 10^{-16}\)</span>).</p>
 </section>
-<section id="building-and-installation" class="level2">
-<h2 class="anchored" data-anchor-id="building-and-installation">Building and Installation</h2>
+<section id="sec-building" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="sec-building"><span class="header-section-number">4</span> Building and Installation</h2>
 <p>When installing <code>digiqual</code> from source, <code>setup.py</code> automatically detects available compilers (GCC, Clang, or MSVC) and compiles the native C++ extension module <code>_digiqual_cpp</code>:</p>
 <pre class="{bash}"><code># Install in editable mode with C++ extension compilation
 uv pip install -e .
@@ -938,13 +945,13 @@ pip install .</code></pre>
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../docs/optimisation.html" class="pagination-link" aria-label="Automated Optimisation">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Automated Optimisation</span>
+      <a href="../docs/caching.html" class="pagination-link" aria-label="Caching Architecture">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Caching Architecture</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../docs/generalised_pod.html" class="pagination-link" aria-label="Generalised PoD Theory">
-        <span class="nav-page-text">Generalised PoD Theory</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../docs/app_architecture.html" class="pagination-link" aria-label="Desktop App Architecture">
+        <span class="nav-page-text">Desktop App Architecture</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

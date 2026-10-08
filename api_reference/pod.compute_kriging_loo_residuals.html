@@ -81,7 +81,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-af7269421fbfc448936f832648c33468.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -208,7 +208,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
- <span class="menu-text">Detailed Manuals &amp; Theory</span></a>
+ <span class="menu-text">User Guides</span></a>
           <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
@@ -226,47 +226,52 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Automated Optimisation</span></a>
   </div>
 </li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
-  </div>
-</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Theory</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Generalised PoD Theory</span></a>
+ <span class="menu-text">Generalised PoD</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/kriging_metamodeling.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Kriging Metamodeling &amp; Calibration</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Classical vs Generalised PoD</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">DigiQual Caching Architecture</span></a>
+ <span class="menu-text">Kriging Metamodeling</span></a>
   </div>
 </li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
  <span class="menu-text">Development</span></a>
-          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Caching Architecture</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
+  </div>
+</li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/app_architecture.html" class="sidebar-item-text sidebar-link">
@@ -309,10 +314,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="digiqual.pod.compute_kriging_loo_residuals" class="level1">
 <h1>pod.compute_kriging_loo_residuals</h1>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>compute_kriging_loo_residuals(gpr, X_2d, y)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Computes exact LOO predictions, variances, standardized residuals e_i, and outlier scaling factor gamma according to Malkiel et al.&nbsp;(2026).</p>
-<p>Inverts the augmented covariance matrix S = [[K + alpha*I, F], [F^T, 0]] to obtain B = S^-1, calculating Leave-One-Out means mu_{-i} and variances sigma_{-i}^2. It then derives standardized residuals e_i = (y_i - mu_{-i}) / sigma_{-i} and outlier scale factor gamma = max(1.0, max|e_i| / 3.0).</p>
+<p>Computes exact LOO predictions, variances, standardized residuals e_i, and the outlier factor gamma, following Malkiel et al.&nbsp;(2026).</p>
+<p>With B the top-left block of S^-1, S = [[K + alpha*I, F], [F^T, 0]]:</p>
+<ul>
+<li>LOO mean ([M26] Eq. 10): mu_{-i} = -sum_{j != i} (B_ij / B_ii) y_j</li>
+<li>LOO variance ([M26] Eq. 11): sigma_{-i}^2 = 1 / B_ii</li>
+<li>Standardised residual ([M26] Eq. 19): e_i = (y_i - mu_{-i}) / sigma_{-i}</li>
+<li>Outlier factor ([M26] Sec. 2.2.5.2): gamma = max(1, max|e_i| / 3)</li>
+</ul>
+<p>As in [M26], the hyperparameters are those fitted to the full data set; they are not re-optimised with point i removed.</p>
 <p>K is the fitted kernel evaluated at the training inputs, so for the models built by <code>fit_all_robust_mean_models</code> it already includes the learned noise (WhiteKernel) variance on its diagonal. The LOO variance is therefore the predictive variance of a new noisy observation, which is the correct scale for standardizing observed residuals.</p>
-<p>If the model was fitted with <code>normalize_y=True</code>, the kernel hyperparameters are in normalised units. The calculation is then done on the normalised response and the LOO means and standard deviations are converted back to the original units.</p>
+<p>In [M26], gamma scales the Kriging interpolation standard deviation used to draw the GP sample paths for the PoD uncertainty bound (Fig. 10b shows the residuals divided by gamma, so the worst one lands on 3). digiqual computes its PoD bounds by bootstrap ([M25]) instead, so gamma is reported as a diagnostic and is not applied to the PoD [digiqual].</p>
+<p>If the model was fitted with <code>normalize_y=True</code>, the kernel hyperparameters are in normalised units. The calculation is then done on the normalised response and the LOO means and standard deviations are converted back to the original units. Inputs are standardised first if the model does so (<code>ScaledGaussianProcessRegressor</code>).</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
@@ -371,7 +384,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td></td>
 <td>tuple[np.ndarray, np.ndarray, np.ndarray, float]</td>
-<td>tuple[np.ndarray, np.ndarray, np.ndarray, float]: - loo_means: Array of Leave-One-Out predicted mean responses. - loo_stds: Array of Leave-One-Out predicted standard deviations. - std_residuals: Array of standardized LOO residuals e_i = (y_i - mu_{-i}) / sigma_{-i}. - gamma: Outlier scaling factor gamma = max(1.0, max|e_i| / 3.0).</td>
+<td>tuple[np.ndarray, np.ndarray, np.ndarray, float]: - loo_means: Array of Leave-One-Out predicted mean responses. - loo_stds: Array of Leave-One-Out predicted standard deviations. - std_residuals: Array of standardized LOO residuals e_i = (y_i - mu_{-i}) / sigma_{-i}. - gamma: Outlier factor gamma = max(1.0, max|e_i| / 3.0).</td>
 </tr>
 </tbody>
 </table>
@@ -389,7 +402,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>gpr.fit(X, y)</span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>loo_means, loo_stds, std_res, gamma <span class="op">=</span> compute_kriging_loo_residuals(gpr, X, y)</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Outlier scaling factor gamma: </span><span class="sc">{</span>gamma<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Outlier factor gamma: </span><span class="sc">{</span>gamma<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 </section>

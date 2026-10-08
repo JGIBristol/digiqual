@@ -37,7 +37,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
 <link href="../api_reference/index.html" rel="next">
-<link href="../docs/caching.html" rel="prev">
+<link href="../docs/cpp_acceleration.html" rel="prev">
 <link href="../docs/www/favicon.png" rel="icon" type="image/png">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -48,7 +48,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-af7269421fbfc448936f832648c33468.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -120,7 +120,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/app_architecture.html">Development</a></li><li class="breadcrumb-item"><a href="../docs/app_architecture.html">Desktop App Architecture</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/caching.html">Development</a></li><li class="breadcrumb-item"><a href="../docs/app_architecture.html">Desktop App Architecture</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -178,7 +178,7 @@ ul.task-list li input[type="checkbox"] {
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
- <span class="menu-text">Detailed Manuals &amp; Theory</span></a>
+ <span class="menu-text">User Guides</span></a>
           <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
@@ -196,47 +196,52 @@ ul.task-list li input[type="checkbox"] {
  <span class="menu-text">Automated Optimisation</span></a>
   </div>
 </li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
-  </div>
-</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Theory</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Generalised PoD Theory</span></a>
+ <span class="menu-text">Generalised PoD</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/kriging_metamodeling.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Kriging Metamodeling &amp; Calibration</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Classical vs Generalised PoD</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">DigiQual Caching Architecture</span></a>
+ <span class="menu-text">Kriging Metamodeling</span></a>
   </div>
 </li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
  <span class="menu-text">Development</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Caching Architecture</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
+  </div>
+</li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/app_architecture.html" class="sidebar-item-text sidebar-link active">
@@ -261,27 +266,27 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#the-short-version" id="toc-the-short-version" class="nav-link active" data-scroll-target="#the-short-version">The Short Version</a></li>
-  <li><a href="#where-everything-lives" id="toc-where-everything-lives" class="nav-link" data-scroll-target="#where-everything-lives">Where Everything Lives</a></li>
-  <li><a href="#ways-the-app-gets-launched" id="toc-ways-the-app-gets-launched" class="nav-link" data-scroll-target="#ways-the-app-gets-launched">Ways the App Gets Launched</a></li>
-  <li><a href="#what-launcher.main-does" id="toc-what-launcher.main-does" class="nav-link" data-scroll-target="#what-launcher.main-does">What <code>launcher.main()</code> Does</a></li>
-  <li><a href="#why-its-built-this-way" id="toc-why-its-built-this-way" class="nav-link" data-scroll-target="#why-its-built-this-way">Why It’s Built This Way</a>
+  <li><a href="#sec-short-version" id="toc-sec-short-version" class="nav-link active" data-scroll-target="#sec-short-version"><span class="header-section-number">1</span> The Short Version</a></li>
+  <li><a href="#sec-layout" id="toc-sec-layout" class="nav-link" data-scroll-target="#sec-layout"><span class="header-section-number">2</span> Where Everything Lives</a></li>
+  <li><a href="#sec-launch-modes" id="toc-sec-launch-modes" class="nav-link" data-scroll-target="#sec-launch-modes"><span class="header-section-number">3</span> Ways the App Gets Launched</a></li>
+  <li><a href="#sec-launcher" id="toc-sec-launcher" class="nav-link" data-scroll-target="#sec-launcher"><span class="header-section-number">4</span> What <code>launcher.main()</code> Does</a></li>
+  <li><a href="#sec-design-decisions" id="toc-sec-design-decisions" class="nav-link" data-scroll-target="#sec-design-decisions"><span class="header-section-number">5</span> Why It’s Built This Way</a>
   <ul class="collapse">
-  <li><a href="#briefcase-rather-than-pyinstaller" id="toc-briefcase-rather-than-pyinstaller" class="nav-link" data-scroll-target="#briefcase-rather-than-pyinstaller">Briefcase rather than PyInstaller</a></li>
-  <li><a href="#worker-processes-and-sys.frozen" id="toc-worker-processes-and-sys.frozen" class="nav-link" data-scroll-target="#worker-processes-and-sys.frozen">Worker processes and <code>sys.frozen</code></a></li>
-  <li><a href="#redirecting-stdout-and-stderr" id="toc-redirecting-stdout-and-stderr" class="nav-link" data-scroll-target="#redirecting-stdout-and-stderr">Redirecting stdout and stderr</a></li>
-  <li><a href="#build-details-in-build_app.yml" id="toc-build-details-in-build_app.yml" class="nav-link" data-scroll-target="#build-details-in-build_app.yml">Build details in <code>build_app.yml</code></a></li>
+  <li><a href="#sec-briefcase" id="toc-sec-briefcase" class="nav-link" data-scroll-target="#sec-briefcase"><span class="header-section-number">5.1</span> Briefcase rather than PyInstaller</a></li>
+  <li><a href="#sec-worker-processes" id="toc-sec-worker-processes" class="nav-link" data-scroll-target="#sec-worker-processes"><span class="header-section-number">5.2</span> Worker processes and <code>sys.frozen</code></a></li>
+  <li><a href="#sec-stdio" id="toc-sec-stdio" class="nav-link" data-scroll-target="#sec-stdio"><span class="header-section-number">5.3</span> Redirecting stdout and stderr</a></li>
+  <li><a href="#sec-build-details" id="toc-sec-build-details" class="nav-link" data-scroll-target="#sec-build-details"><span class="header-section-number">5.4</span> Build details in <code>build_app.yml</code></a></li>
   </ul></li>
-  <li><a href="#the-build-pipeline" id="toc-the-build-pipeline" class="nav-link" data-scroll-target="#the-build-pipeline">The Build Pipeline</a></li>
-  <li><a href="#working-on-the-app-locally" id="toc-working-on-the-app-locally" class="nav-link" data-scroll-target="#working-on-the-app-locally">Working on the App Locally</a></li>
-  <li><a href="#common-changes" id="toc-common-changes" class="nav-link" data-scroll-target="#common-changes">Common Changes</a></li>
+  <li><a href="#sec-build-pipeline" id="toc-sec-build-pipeline" class="nav-link" data-scroll-target="#sec-build-pipeline"><span class="header-section-number">6</span> The Build Pipeline</a></li>
+  <li><a href="#sec-local-dev" id="toc-sec-local-dev" class="nav-link" data-scroll-target="#sec-local-dev"><span class="header-section-number">7</span> Working on the App Locally</a></li>
+  <li><a href="#sec-common-changes" id="toc-sec-common-changes" class="nav-link" data-scroll-target="#sec-common-changes"><span class="header-section-number">8</span> Common Changes</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/app_architecture.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/app_architecture.html">Development</a></li><li class="breadcrumb-item"><a href="../docs/app_architecture.html">Desktop App Architecture</a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/caching.html">Development</a></li><li class="breadcrumb-item"><a href="../docs/app_architecture.html">Desktop App Architecture</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Desktop App Architecture</h1>
 </div>
@@ -301,23 +306,30 @@ ul.task-list li input[type="checkbox"] {
 
 
 <p>This page is for developers. It explains how the DigiQual app is put together, how the Windows and macOS installers are built, and why it’s built this way. To <em>use</em> the app, see <a href="../docs/gui.html">Launch the App</a>.</p>
-<section id="the-short-version" class="level2">
-<h2 class="anchored" data-anchor-id="the-short-version">The Short Version</h2>
+<section id="sec-short-version" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="sec-short-version"><span class="header-section-number">1</span> The Short Version</h2>
 <ul>
 <li><strong>All of the app’s code lives in the <code>digiqual</code> package</strong>, in the <code>digiqual.gui</code> subpackage. It ships inside the normal <code>digiqual</code> wheel on PyPI, so <code>pip install digiqual</code> always includes the app.</li>
 <li><strong>The desktop installers are that same wheel</strong>, installed into a self-contained Python by <a href="https://briefcase.beeware.org/">Briefcase</a>. The top-level <code>app/</code> folder holds only Briefcase’s configuration and a two-line entry point; there’s no app code in it.</li>
 </ul>
 <p>So any change to the app goes into <code>src/digiqual/gui/</code>, and every way of launching the app picks it up.</p>
 </section>
-<section id="where-everything-lives" class="level2">
-<h2 class="anchored" data-anchor-id="where-everything-lives">Where Everything Lives</h2>
+<section id="sec-layout" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="sec-layout"><span class="header-section-number">2</span> Where Everything Lives</h2>
 <pre class="text"><code>src/digiqual/
 ├── gui/                        ← the app (a normal subpackage of digiqual)
 │   ├── __init__.py
 │   ├── __main__.py             ← makes `python -m digiqual.gui` work
-│   ├── app.py                  ← the Shiny app: UI layout + server logic
+│   ├── app.py                  ← assembles the Shiny app: page layout + server()
+│   ├── state.py                ← per-session shared state and helpers used by every tab
+│   ├── ui_home.py              ← the Home page
+│   ├── tab_design.py           ← Experimental Design tab (UI + server logic)
+│   ├── tab_diagnostics.py      ← Simulation Diagnostics tab
+│   ├── tab_model_fit.py        ← Model Fit tab
+│   ├── tab_explorer.py         ← PoD Explorer tab
+│   ├── tab_uq.py               ← UQ Analysis tab
 │   ├── launcher.py             ← starts the server and opens the window
-│   └── www/                    ← static files served by Shiny (logos, favicon)
+│   └── www/                    ← static files served by Shiny (app.css, logos, favicon, MathJax)
 ├── _digiqual_cpp.*.so / .pyd   ← compiled C++ extension (built by setup.py)
 └── ...                         ← the statistical library itself
 
@@ -333,8 +345,8 @@ scripts/make_icon.py            ← draws the icon; writes app/icons/, gui/www/f
 .github/workflows/build_app.yml ← builds, self-tests and packages the installers</code></pre>
 <p>The static files in <code>gui/www/</code> are included in the wheel by <code>package_data</code> in <code>setup.py</code> and <code>MANIFEST.in</code>. <code>app.py</code> finds them relative to its own location, so this works the same installed or from a checkout.</p>
 </section>
-<section id="ways-the-app-gets-launched" class="level2">
-<h2 class="anchored" data-anchor-id="ways-the-app-gets-launched">Ways the App Gets Launched</h2>
+<section id="sec-launch-modes" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="sec-launch-modes"><span class="header-section-number">3</span> Ways the App Gets Launched</h2>
 <p>Every route ends up in the same function, <code>digiqual.gui.launcher.main()</code>:</p>
 <table class="caption-top table">
 <colgroup>
@@ -375,8 +387,8 @@ scripts/make_icon.py            ← draws the icon; writes app/icons/, gui/www/f
 </tbody>
 </table>
 </section>
-<section id="what-launcher.main-does" class="level2">
-<h2 class="anchored" data-anchor-id="what-launcher.main-does">What <code>launcher.main()</code> Does</h2>
+<section id="sec-launcher" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="sec-launcher"><span class="header-section-number">4</span> What <code>launcher.main()</code> Does</h2>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div>
@@ -400,24 +412,24 @@ scripts/make_icon.py            ← draws the icon; writes app/icons/, gui/www/f
 </div>
 <p><code>launcher.py</code> keeps its module-level imports light (shiny and pywebview are only imported inside functions), because worker processes import it before they know they are workers.</p>
 </section>
-<section id="why-its-built-this-way" class="level2">
-<h2 class="anchored" data-anchor-id="why-its-built-this-way">Why It’s Built This Way</h2>
+<section id="sec-design-decisions" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="sec-design-decisions"><span class="header-section-number">5</span> Why It’s Built This Way</h2>
 <p>These are the decisions most likely to puzzle someone reading the code, with the reason for each.</p>
-<section id="briefcase-rather-than-pyinstaller" class="level3">
-<h3 class="anchored" data-anchor-id="briefcase-rather-than-pyinstaller">Briefcase rather than PyInstaller</h3>
+<section id="sec-briefcase" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="sec-briefcase"><span class="header-section-number">5.1</span> Briefcase rather than PyInstaller</h3>
 <p>PyInstaller <em>freezes</em> an app: it analyses imports to decide which files to bundle. That missed Shiny’s static files, pythonnet’s DLLs and some hidden imports, which needed a long hand-maintained <code>.spec</code> file. Briefcase instead runs <code>pip install</code> into a bundled, standalone Python. The app therefore gets exactly the files a normal install would, including the prebuilt C++ extension from the <code>digiqual</code> wheel. Nothing has to be listed by hand.</p>
 </section>
-<section id="worker-processes-and-sys.frozen" class="level3">
-<h3 class="anchored" data-anchor-id="worker-processes-and-sys.frozen">Worker processes and <code>sys.frozen</code></h3>
+<section id="sec-worker-processes" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="sec-worker-processes"><span class="header-section-number">5.2</span> Worker processes and <code>sys.frozen</code></h3>
 <p>The PoD bootstrap runs in parallel with <code>joblib</code> (<code>backend="multiprocessing"</code>), which starts worker processes by running <code>sys.executable</code> again. In the desktop app, <code>sys.executable</code> is the DigiQual app itself, not <code>python</code>, and it can’t run <code>python -c "..."</code> commands. Without special handling, every worker would open another DigiQual window.</p>
 <p>To prevent this, <code>digiqual_desktop/__main__.py</code> sets <code>sys.frozen = True</code>. That makes Python’s <code>multiprocessing</code> start workers as <code>DigiQual --multiprocessing-fork ...</code>. The first thing <code>launcher.main()</code> does is spot those arguments, and the <code>-c</code> commands used by Python’s and joblib’s resource trackers, and run the requested task instead of the app. This mirrors what PyInstaller’s runtime hooks do.</p>
 </section>
-<section id="redirecting-stdout-and-stderr" class="level3">
-<h3 class="anchored" data-anchor-id="redirecting-stdout-and-stderr">Redirecting stdout and stderr</h3>
+<section id="sec-stdio" class="level3" data-number="5.3">
+<h3 data-number="5.3" class="anchored" data-anchor-id="sec-stdio"><span class="header-section-number">5.3</span> Redirecting stdout and stderr</h3>
 <p>A desktop app has no console, so <code>sys.stdout</code> and <code>sys.stderr</code> are <code>None</code>. uvicorn, the web server under Shiny, calls <code>.isatty()</code> on them while setting up logging, and crashes the server thread. The window then shows a blank page. The launcher points them at the log file before starting the server.</p>
 </section>
-<section id="build-details-in-build_app.yml" class="level3">
-<h3 class="anchored" data-anchor-id="build-details-in-build_app.yml">Build details in <code>build_app.yml</code></h3>
+<section id="sec-build-details" class="level3" data-number="5.4">
+<h3 data-number="5.4" class="anchored" data-anchor-id="sec-build-details"><span class="header-section-number">5.4</span> Build details in <code>build_app.yml</code></h3>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 50%">
@@ -454,8 +466,8 @@ scripts/make_icon.py            ← draws the icon; writes app/icons/, gui/www/f
 </table>
 </section>
 </section>
-<section id="the-build-pipeline" class="level2">
-<h2 class="anchored" data-anchor-id="the-build-pipeline">The Build Pipeline</h2>
+<section id="sec-build-pipeline" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="sec-build-pipeline"><span class="header-section-number">6</span> The Build Pipeline</h2>
 <p><code>.github/workflows/build_app.yml</code> runs on Windows and macOS:</p>
 <ol type="1">
 <li>Build the <code>digiqual</code> wheel for Python 3.12 with cibuildwheel. This is the same C++ build that goes to PyPI.</li>
@@ -472,8 +484,8 @@ scripts/make_icon.py            ← draws the icon; writes app/icons/, gui/www/f
 </ul>
 <p>The version comes from <code>app/pyproject.toml</code>, which <code>just bump</code> keeps in step with the package version.</p>
 </section>
-<section id="working-on-the-app-locally" class="level2">
-<h2 class="anchored" data-anchor-id="working-on-the-app-locally">Working on the App Locally</h2>
+<section id="sec-local-dev" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="sec-local-dev"><span class="header-section-number">7</span> Working on the App Locally</h2>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 50%">
@@ -519,11 +531,11 @@ scripts/make_icon.py            ← draws the icon; writes app/icons/, gui/www/f
 <li><strong>Linux:</strong> <code>~/.local/share/Digiqual/digiqual.log</code></li>
 </ul>
 </section>
-<section id="common-changes" class="level2">
-<h2 class="anchored" data-anchor-id="common-changes">Common Changes</h2>
+<section id="sec-common-changes" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="sec-common-changes"><span class="header-section-number">8</span> Common Changes</h2>
 <p><strong>Adding a dependency.</strong> Add it to <code>dependencies</code> in the root <code>pyproject.toml</code>; the desktop app picks it up through the wheel. Check that it publishes wheels for Windows x64, macOS arm64 (macOS 12+) and Python 3.12. If it only publishes source, the desktop build fails or falls back to an older version; build a wheel of it in <code>build_app.yml</code> the way <code>proxy_tools</code> is.</p>
 <p><strong>Adding a static file</strong> (an image, CSS or JavaScript) to the app: put it in <code>src/digiqual/gui/www/</code> and refer to it by file name (e.g.&nbsp;<code>src="my_image.png"</code>). It is packaged automatically.</p>
-<p><strong>Adding a page or feature to the app:</strong> edit <code>src/digiqual/gui/app.py</code>. Nothing in <code>app/</code> or the workflow needs to change.</p>
+<p><strong>Adding a page or feature to the app:</strong> edit the relevant <code>tab_*.py</code> module (each holds that tab’s UI and a <code>register(...)</code> function with its server logic; shared reactive state lives in <code>state.py</code>). A new tab is a new module, added to <code>app.py</code>. Prefer calling library functions (and <code>digiqual.defaults</code> for default values) over re-implementing statistics in the GUI. Nothing in <code>app/</code> or the workflow needs to change.</p>
 
 
 </section>
@@ -931,8 +943,8 @@ scripts/make_icon.py            ← draws the icon; writes app/icons/, gui/www/f
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../docs/caching.html" class="pagination-link" aria-label="DigiQual Caching Architecture">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">DigiQual Caching Architecture</span>
+      <a href="../docs/cpp_acceleration.html" class="pagination-link" aria-label="C++ Acceleration &amp; Fallback">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">C++ Acceleration &amp; Fallback</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">

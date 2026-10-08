@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Kriging Metamodeling &amp; Uncertainty Calibration – digiqual</title>
+<title>Kriging Metamodeling – digiqual</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -71,7 +71,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../docs/comparison.html" rel="next">
+<link href="../docs/caching.html" rel="next">
 <link href="../docs/generalised_pod.html" rel="prev">
 <link href="../docs/www/favicon.png" rel="icon" type="image/png">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
@@ -83,7 +83,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-af7269421fbfc448936f832648c33468.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -181,7 +181,7 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">Detailed Manuals &amp; Theory</a></li><li class="breadcrumb-item"><a href="../docs/kriging_metamodeling.html">Kriging Metamodeling &amp; Calibration</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/generalised_pod.html">Theory</a></li><li class="breadcrumb-item"><a href="../docs/kriging_metamodeling.html">Kriging Metamodeling</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -238,13 +238,13 @@ window.Quarto = {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
- <span class="menu-text">Detailed Manuals &amp; Theory</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">User Guides</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/gui_manual.html" class="sidebar-item-text sidebar-link">
@@ -257,47 +257,52 @@ window.Quarto = {
  <span class="menu-text">Automated Optimisation</span></a>
   </div>
 </li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
-  </div>
-</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Theory</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Generalised PoD Theory</span></a>
+ <span class="menu-text">Generalised PoD</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/kriging_metamodeling.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">Kriging Metamodeling &amp; Calibration</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Classical vs Generalised PoD</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">DigiQual Caching Architecture</span></a>
+ <span class="menu-text">Kriging Metamodeling</span></a>
   </div>
 </li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
  <span class="menu-text">Development</span></a>
-          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Caching Architecture</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
+  </div>
+</li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/app_architecture.html" class="sidebar-item-text sidebar-link">
@@ -322,31 +327,43 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
-  <li><a href="#covariance-kernel-selection-anisotropic-fitting" id="toc-covariance-kernel-selection-anisotropic-fitting" class="nav-link" data-scroll-target="#covariance-kernel-selection-anisotropic-fitting">1. Covariance Kernel Selection &amp; Anisotropic Fitting</a>
+  <li><a href="#sec-provenance" id="toc-sec-provenance" class="nav-link active" data-scroll-target="#sec-provenance">Where each piece comes from</a></li>
+  <li><a href="#sec-model" id="toc-sec-model" class="nav-link" data-scroll-target="#sec-model"><span class="header-section-number">1</span> The Kriging model</a>
   <ul class="collapse">
-  <li><a href="#candidate-kernel-families" id="toc-candidate-kernel-families" class="nav-link" data-scroll-target="#candidate-kernel-families">Candidate Kernel Families</a></li>
-  <li><a href="#full-covariance-model-learned-noise-nugget" id="toc-full-covariance-model-learned-noise-nugget" class="nav-link" data-scroll-target="#full-covariance-model-learned-noise-nugget">Full Covariance Model &amp; Learned Noise (Nugget)</a></li>
-  <li><a href="#selection-metric-mse_textcv" id="toc-selection-metric-mse_textcv" class="nav-link" data-scroll-target="#selection-metric-mse_textcv">Selection Metric (<span class="math inline">\(MSE_{\text{CV}}\)</span>)</a></li>
+  <li><a href="#sec-prior" id="toc-sec-prior" class="nav-link" data-scroll-target="#sec-prior"><span class="header-section-number">1.1</span> Prior</a></li>
+  <li><a href="#sec-correlation" id="toc-sec-correlation" class="nav-link" data-scroll-target="#sec-correlation"><span class="header-section-number">1.2</span> Distance and correlation functions</a></li>
+  <li><a href="#sec-nugget" id="toc-sec-nugget" class="nav-link" data-scroll-target="#sec-nugget"><span class="header-section-number">1.3</span> Noise (nugget)</a></li>
+  <li><a href="#sec-hyperparameters" id="toc-sec-hyperparameters" class="nav-link" data-scroll-target="#sec-hyperparameters"><span class="header-section-number">1.4</span> Estimating the hyperparameters</a></li>
+  <li><a href="#sec-predicting" id="toc-sec-predicting" class="nav-link" data-scroll-target="#sec-predicting"><span class="header-section-number">1.5</span> Predicting</a></li>
   </ul></li>
-  <li><a href="#loo-residuals-outlier-calibration" id="toc-loo-residuals-outlier-calibration" class="nav-link" data-scroll-target="#loo-residuals-outlier-calibration">2. LOO Residuals &amp; Outlier Calibration</a>
+  <li><a href="#sec-selection" id="toc-sec-selection" class="nav-link" data-scroll-target="#sec-selection"><span class="header-section-number">2</span> Choosing the kernel and the model</a>
   <ul class="collapse">
-  <li><a href="#augmented-covariance-inversion" id="toc-augmented-covariance-inversion" class="nav-link" data-scroll-target="#augmented-covariance-inversion">Augmented Covariance Inversion</a></li>
-  <li><a href="#standardized-residuals-e_i" id="toc-standardized-residuals-e_i" class="nav-link" data-scroll-target="#standardized-residuals-e_i">Standardized Residuals (<span class="math inline">\(e_i\)</span>)</a></li>
-  <li><a href="#variance-inflation-factor-gamma" id="toc-variance-inflation-factor-gamma" class="nav-link" data-scroll-target="#variance-inflation-factor-gamma">Variance Inflation Factor (<span class="math inline">\(\gamma\)</span>)</a></li>
+  <li><a href="#sec-loo" id="toc-sec-loo" class="nav-link" data-scroll-target="#sec-loo"><span class="header-section-number">2.1</span> Choosing the correlation function: LOO error</a></li>
+  <li><a href="#sec-kriging-vs-poly" id="toc-sec-kriging-vs-poly" class="nav-link" data-scroll-target="#sec-kriging-vs-poly"><span class="header-section-number">2.2</span> Kriging against the polynomials</a></li>
+  <li><a href="#sec-cost" id="toc-sec-cost" class="nav-link" data-scroll-target="#sec-cost"><span class="header-section-number">2.3</span> Cost</a></li>
   </ul></li>
-  <li><a href="#bootstrap-refits" id="toc-bootstrap-refits" class="nav-link" data-scroll-target="#bootstrap-refits">3. Bootstrap Refits</a></li>
-  <li><a href="#python-usage-example" id="toc-python-usage-example" class="nav-link" data-scroll-target="#python-usage-example">4. Python Usage Example</a></li>
-  <li><a href="#summary-of-api-functions" id="toc-summary-of-api-functions" class="nav-link" data-scroll-target="#summary-of-api-functions">Summary of API Functions</a></li>
+  <li><a href="#sec-loo-diagnostics" id="toc-sec-loo-diagnostics" class="nav-link" data-scroll-target="#sec-loo-diagnostics"><span class="header-section-number">3</span> LOO residual diagnostics and γ</a></li>
+  <li><a href="#sec-variance-bootstrap" id="toc-sec-variance-bootstrap" class="nav-link" data-scroll-target="#sec-variance-bootstrap"><span class="header-section-number">4</span> Variance model and bootstrap with Kriging</a></li>
+  <li><a href="#sec-pitfalls" id="toc-sec-pitfalls" class="nav-link" data-scroll-target="#sec-pitfalls"><span class="header-section-number">5</span> Correlation length and other pitfalls (Kriging vs polynomials)</a>
+  <ul class="collapse">
+  <li><a href="#sec-length-scale" id="toc-sec-length-scale" class="nav-link" data-scroll-target="#sec-length-scale"><span class="header-section-number">5.1</span> The length scale must be longer than the gap between samples</a></li>
+  <li><a href="#sec-scattered" id="toc-sec-scattered" class="nav-link" data-scroll-target="#sec-scattered"><span class="header-section-number">5.2</span> Sparse, uncorrelated (scattered) data</a></li>
+  <li><a href="#sec-extrapolation" id="toc-sec-extrapolation" class="nav-link" data-scroll-target="#sec-extrapolation"><span class="header-section-number">5.3</span> Extrapolation</a></li>
+  <li><a href="#sec-other-pitfalls" id="toc-sec-other-pitfalls" class="nav-link" data-scroll-target="#sec-other-pitfalls"><span class="header-section-number">5.4</span> Other things to be wary of</a></li>
+  <li><a href="#sec-summary-table" id="toc-sec-summary-table" class="nav-link" data-scroll-target="#sec-summary-table"><span class="header-section-number">5.5</span> Summary: Kriging vs polynomials</a></li>
+  </ul></li>
+  <li><a href="#sec-deviations" id="toc-sec-deviations" class="nav-link" data-scroll-target="#sec-deviations">Deviations from the references</a></li>
+  <li><a href="#sec-example" id="toc-sec-example" class="nav-link" data-scroll-target="#sec-example"><span class="header-section-number">6</span> Python example</a></li>
+  <li><a href="#api-summary" id="toc-api-summary" class="nav-link" data-scroll-target="#api-summary">API summary</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/kriging_metamodeling.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">Detailed Manuals &amp; Theory</a></li><li class="breadcrumb-item"><a href="../docs/kriging_metamodeling.html">Kriging Metamodeling &amp; Calibration</a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/generalised_pod.html">Theory</a></li><li class="breadcrumb-item"><a href="../docs/kriging_metamodeling.html">Kriging Metamodeling</a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title">Kriging Metamodeling &amp; Uncertainty Calibration</h1>
+<h1 class="title">Kriging Metamodeling</h1>
 </div>
 
 
@@ -363,40 +380,203 @@ window.Quarto = {
 </header>
 
 
-<section id="overview" class="level2">
-<h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>In simulation-based reliability assessment of Non-Destructive Evaluation (NDE) inspections, <strong>Gaussian Process (Kriging) metamodeling</strong> provides a powerful non-parametric surrogate for mapping complex physics across multi-dimensional input domains, as formalized in <strong>Malkiel et al.&nbsp;(2026)</strong>.</p>
-<p><code>digiqual</code> includes a complete Kriging suite featuring:</p>
-<ol type="1">
-<li><p><strong>Anisotropic Covariance Function Selection (Rank 2):</strong> Automated evaluation and selection across Matérn 3/2, Matérn 5/2, Gaussian (RBF), and Rational Quadratic kernels with per-dimension anisotropic length scale vectors <span class="math inline">\(\boldsymbol{\theta} = [\theta_1, \dots, \theta_d]\)</span>, plus a learned observation-noise (nugget) term.</p></li>
-<li><p><strong>Matrix-Based Leave-One-Out Cross-Validation (<span class="math inline">\(MSE_{\text{LOO}}\)</span>):</strong> Fast <span class="math inline">\(O(N^3)\)</span> matrix inverse <span class="math inline">\(B = S^{-1}\)</span> for exact LOO predictions <span class="math inline">\(\mu_{\hat{Y}_{-i}}\)</span> and variances <span class="math inline">\(\sigma_{\hat{Y}_{-i}}^2\)</span>.</p></li>
-<li><p><strong>Standardized LOO Residual Outlier Calibration (Rank 4):</strong> Automated detection of extreme observation errors <span class="math inline">\(|e_i| &gt; 3\)</span> and prior variance scaling (<span class="math inline">\(\hat{\sigma}^2 \leftarrow \gamma \cdot \hat{\sigma}^2\)</span>) to guarantee conservative 95% worst-case bounds.</p></li>
-</ol>
-</section>
-<section id="covariance-kernel-selection-anisotropic-fitting" class="level2">
-<h2 class="anchored" data-anchor-id="covariance-kernel-selection-anisotropic-fitting">1. Covariance Kernel Selection &amp; Anisotropic Fitting</h2>
-<p>Unlike classical isotropic models that assume equal sensitivity across all directions, <code>digiqual</code> optimizes anisotropic length scale parameters <span class="math inline">\(\boldsymbol{\theta} = [\theta_1, \theta_2, \dots, \theta_d]\)</span> for each input dimension.</p>
-<section id="candidate-kernel-families" class="level3">
-<h3 class="anchored" data-anchor-id="candidate-kernel-families">Candidate Kernel Families</h3>
-<p>During model training (<a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>fit_all_robust_mean_models</code></a>), <code>digiqual</code> evaluates four physical covariance functions:</p>
+<p>Kriging (Gaussian Process regression) is one of the candidate <strong>expectation models</strong> in <code>digiqual</code>. It competes with polynomials of degree 1–10 to describe how the mean signal response changes with the inputs. This page explains exactly how the Kriging candidate is built, how it is chosen (or not), how it feeds the PoD calculation, and where it can mislead you.</p>
+<section id="sec-provenance" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="sec-provenance">Where each piece comes from</h2>
+<p><code>digiqual</code> follows two papers and the toolbox they used. Each design choice on this page carries a tag showing its source:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Tag</th>
+<th style="text-align: left;">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span class="src src-m25">M25</span></td>
+<td style="text-align: left;">Malkiel, Croxford &amp; Wilcox (2025). <em>A generalized method for the reliability assessment of safety–critical inspection.</em> Proc. R. Soc. A 481: 20240654. <a href="https://doi.org/10.1098/rspa.2024.0654">doi:10.1098/rspa.2024.0654</a>. Includes its MATLAB reference code.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="src src-m26">M26</span></td>
+<td style="text-align: left;">Malkiel, Croxford &amp; Wilcox (2026). <em>A comprehensive investigation of flexible and multi-dimensional simulation-based PoD analysis.</em> NDT&amp;E Int. 159: 103596. <a href="https://doi.org/10.1016/j.ndteint.2025.103596">doi:10.1016/j.ndteint.2025.103596</a>.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="src src-uqlab">UQLab</span></td>
+<td style="text-align: left;">A default of the UQLab Kriging module (v2.1). Both papers built their Kriging models with UQLab and its default settings, so these choices are inherited rather than stated in the papers.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="src src-digiqual">digiqual</span></td>
+<td style="text-align: left;">A deliberate deviation from the references. Each one is justified in <a href="#sec-deviations">Deviations from the references</a>.</td>
+</tr>
+</tbody>
+</table>
+<p>The roles of the two papers differ:</p>
 <ul>
-<li><p><strong>Matérn 3/2:</strong> <span class="math display">\[ R(\mathbf{x}, \mathbf{x}') = \left(1 + \sqrt{3} d\right) \exp\left(-\sqrt{3} d\right) \]</span></p></li>
-<li><p><strong>Matérn 5/2:</strong> <span class="math display">\[R(\mathbf{x}, \mathbf{x}') = \left(1 + \sqrt{5} d + \frac{5}{3} d^2\right) \exp\left(-\sqrt{5} d\right)\]</span></p></li>
-<li><p><strong>Gaussian (RBF):</strong> <span class="math display">\[ R(\mathbf{x}, \mathbf{x}') = \exp\left(-\frac{1}{2} d^2\right) \]</span></p></li>
-<li><p><strong>Rational Quadratic:</strong> <span class="math display">\[ R(\mathbf{x}, \mathbf{x}') = \left(1 + \frac{d^2}{2 \alpha \ell^2}\right)^{-\alpha} \]</span></p></li>
+<li><strong><span class="src src-m25">M25</span> supplies the overall framework.</strong> It covers the candidate pool, 10-fold cross-validation, the kernel-smoothed variance model, distribution inference and bootstrap confidence bounds. In that paper Kriging is one candidate in the pool (its Fig. 5).</li>
+<li><strong><span class="src src-m26">M26</span> supplies the Kriging-specific machinery.</strong> It covers the GP formulation, choosing the correlation function by leave-one-out (LOO) error, and checking the Kriging uncertainty with standardised LOO residuals.</li>
 </ul>
-<p>where the anisotropic distance <span class="math inline">\(d\)</span> is given by: <span class="math display">\[ d = \sqrt{\sum_{j=1}^d \left( \frac{x_j - x_j'}{\theta_j} \right)^2 } \]</span></p>
-<p>Matérn and Gaussian kernels use one length scale per input. The Rational Quadratic kernel uses a single shared length scale <span class="math inline">\(\ell\)</span>, because scikit-learn’s implementation does not support anisotropy.</p>
+<p>The full map of what comes from where:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Element</th>
+<th style="text-align: left;">Source</th>
+<th style="text-align: left;">In <code>digiqual</code></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">GP prior, anisotropic correlation</td>
+<td style="text-align: left;"><span class="src src-m26">M26</span> Eq. 2–5</td>
+<td style="text-align: left;">One length scale per input</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Correlation families</td>
+<td style="text-align: left;"><span class="src src-m26">M26</span> §4.3.1</td>
+<td style="text-align: left;">Exponential, Matérn 3/2, Matérn 5/2, Gaussian. UQLab’s “linear” is omitted <span class="src src-digiqual">digiqual</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Input standardisation</td>
+<td style="text-align: left;"><span class="src src-uqlab">UQLab</span> <code>Scaling = true</code></td>
+<td style="text-align: left;"><span class="math inline">\(u = (x - \bar{x})/s_x\)</span> per input</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Length-scale start / lower bound</td>
+<td style="text-align: left;"><span class="src src-uqlab">UQLab</span></td>
+<td style="text-align: left;">1 and <span class="math inline">\(10^{-3}\)</span>, in standardised units</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Length-scale upper bound</td>
+<td style="text-align: left;"><span class="src src-digiqual">digiqual</span></td>
+<td style="text-align: left;"><span class="math inline">\(10^{3}\)</span> (UQLab uses 10)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Learned nugget (noise) <span class="math inline">\(\tau^2\)</span></td>
+<td style="text-align: left;"><span class="src src-m25">M25</span> reference code (<code>SigmaNSQ = 'auto'</code>)</td>
+<td style="text-align: left;"><code>WhiteKernel</code>, estimated with the other hyperparameters</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hyperparameters by maximum likelihood</td>
+<td style="text-align: left;"><span class="src src-m26">M26</span> §2.1.2</td>
+<td style="text-align: left;">Yes. Note that UQLab’s own default is LOO-CV estimation</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Optimiser</td>
+<td style="text-align: left;"><span class="src src-digiqual">digiqual</span> (UQLab uses a hybrid genetic algorithm)</td>
+<td style="text-align: left;">L-BFGS-B with 10 random restarts</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Trend</td>
+<td style="text-align: left;"><span class="src src-m26">M26</span>: ordinary Kriging (constant estimated by GLS)</td>
+<td style="text-align: left;">Sample mean of <span class="math inline">\(y\)</span> (<code>normalize_y</code>) <span class="src src-digiqual">digiqual</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Kernel choice by LOO error</td>
+<td style="text-align: left;"><span class="src src-m26">M26</span> Eq. 10–14</td>
+<td style="text-align: left;">Yes</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">10-fold CV against polynomials</td>
+<td style="text-align: left;"><span class="src src-m25">M25</span> Eq. 2.7–2.8</td>
+<td style="text-align: left;">Yes, for the chosen kernel</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Choosing the simplest near-best model</td>
+<td style="text-align: left;"><span class="src src-m25">M25</span> §4b(i)</td>
+<td style="text-align: left;">One-standard-error rule <span class="src src-digiqual">digiqual</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Standardised LOO residuals, <span class="math inline">\(\gamma\)</span></td>
+<td style="text-align: left;"><span class="src src-m26">M26</span> Eq. 19, §2.2.5.2</td>
+<td style="text-align: left;">Reported as a diagnostic. Not applied to the PoD <span class="src src-digiqual">digiqual</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Variance model residuals</td>
+<td style="text-align: left;"><span class="src src-m25">M25</span> Eq. 2.9 (in-sample)</td>
+<td style="text-align: left;">LOO residuals for Kriging <span class="src src-digiqual">digiqual</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Bootstrap bounds</td>
+<td style="text-align: left;"><span class="src src-m25">M25</span> §2i</td>
+<td style="text-align: left;">Yes, with frozen Kriging hyperparameters <span class="src src-digiqual">digiqual</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Kriging only when <span class="math inline">\(N \le 1000\)</span></td>
+<td style="text-align: left;"><span class="src src-digiqual">digiqual</span></td>
+<td style="text-align: left;">Above that, only polynomials are fitted</td>
+</tr>
+</tbody>
+</table>
 </section>
-<section id="full-covariance-model-learned-noise-nugget" class="level3">
-<h3 class="anchored" data-anchor-id="full-covariance-model-learned-noise-nugget">Full Covariance Model &amp; Learned Noise (Nugget)</h3>
-<p>Each candidate is fitted as a process-variance-scaled correlation plus a white-noise term:</p>
-<p><span class="math display">\[ k(\mathbf{x}, \mathbf{x}') = \hat{\sigma}^2 R(\mathbf{x}, \mathbf{x}') + \tau^2 \, \delta_{\mathbf{x}\mathbf{x}'} \]</span></p>
-<p>Both <span class="math inline">\(\hat{\sigma}^2\)</span> and the noise variance <span class="math inline">\(\tau^2\)</span> are estimated by maximum likelihood together with <span class="math inline">\(\boldsymbol{\theta}\)</span>. The response is standardised before fitting (<code>normalize_y=True</code>), so:</p>
-<ul>
-<li><span class="math inline">\(\hat{\sigma}^2\)</span> and <span class="math inline">\(\tau^2\)</span> are relative to <span class="math inline">\(\text{var}(y)\)</span>.</li>
-<li>Away from the training data the surrogate reverts to the sample mean of <span class="math inline">\(y\)</span> rather than to zero.</li>
-</ul>
+<section id="sec-model" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="sec-model"><span class="header-section-number">1</span> The Kriging model</h2>
+<section id="sec-prior" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="sec-prior"><span class="header-section-number">1.1</span> Prior</h3>
+<p>Kriging treats the response <span class="math inline">\(y = \mathcal{M}(\mathbf{x})\)</span> as one realisation of a Gaussian Process <span class="src src-m26">M26</span> (Eq. 2–3):</p>
+<p><span class="math display">\[
+\mathcal{M}^K(\mathbf{x}) = \sum_{j=1}^{P} \beta_j f_j(\mathbf{x}) + Z(\mathbf{x}),
+\qquad
+\operatorname{Cov}\!\left[Z(\mathbf{x}), Z(\mathbf{x}')\right] = \sigma^2 R(\mathbf{x}, \mathbf{x}'; \boldsymbol{\theta})
+\]</span></p>
+<p>The first term is the trend, <span class="math inline">\(\sigma^2\)</span> is the process variance and <span class="math inline">\(R\)</span> is a correlation function controlled by the length scales <span class="math inline">\(\boldsymbol{\theta}\)</span>. <span class="src src-m26">M26</span> uses <em>ordinary</em> Kriging, where the trend is one unknown constant <span class="math inline">\(\beta_0\)</span>.</p>
+<p><strong>In digiqual.</strong> The response is standardised, <span class="math inline">\(\tilde{y} = (y - \bar{y})/s_y\)</span>, and a zero-mean GP is fitted to <span class="math inline">\(\tilde{y}\)</span>. This is <em>simple</em> Kriging with the trend fixed at the sample mean <span class="math inline">\(\bar{y}\)</span> <span class="src src-digiqual">digiqual</span>, because scikit-learn’s Gaussian Process has no estimated trend. Near the data the two are practically identical. Far from the data the prediction returns to <span class="math inline">\(\bar{y}\)</span> rather than to the GLS estimate <span class="math inline">\(\hat\beta_0\)</span> (Eq. 6 of <span class="src src-m26">M26</span>). For a constant trend these are usually close.</p>
+</section>
+<section id="sec-correlation" class="level3" data-number="1.2">
+<h3 data-number="1.2" class="anchored" data-anchor-id="sec-correlation"><span class="header-section-number">1.2</span> Distance and correlation functions</h3>
+<p>Each input is first standardised with the mean and standard deviation of the training data <span class="src src-uqlab">UQLab</span>:</p>
+<p><span class="math display">\[ u_j = \frac{x_j - \bar{x}_j}{s_{x_j}} \]</span></p>
+<p>The correlation then depends on an anisotropic distance with one length scale per input <span class="src src-m26">M26</span> (Eq. 5; UQLab <code>Corr.Type = 'Ellipsoidal'</code>):</p>
+<p><span class="math display">\[ d(\mathbf{u}, \mathbf{u}') = \sqrt{\sum_{j=1}^{n} \left( \frac{u_j - u_j'}{\theta_j} \right)^2 } \]</span></p>
+<p>Because <span class="math inline">\(\mathbf{u}\)</span> is dimensionless, every <span class="math inline">\(\theta_j\)</span> is measured <strong>in standard deviations of input <span class="math inline">\(j\)</span></strong>. A length scale of 1 means the correlation decays over about one standard deviation of that input. That holds whether the input was recorded in metres, millimetres or degrees.</p>
+<p>The four candidate correlation functions <span class="src src-m26">M26</span> (§4.3.1) are:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Name in digiqual</th>
+<th style="text-align: left;"><span class="math inline">\(R(d)\)</span></th>
+<th style="text-align: left;">Smoothness of the fitted surface</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>Exponential (Matern 1/2)</code></td>
+<td style="text-align: left;"><span class="math inline">\(\exp(-d)\)</span></td>
+<td style="text-align: left;">Continuous, not differentiable</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>Matern 3/2</code></td>
+<td style="text-align: left;"><span class="math inline">\(\left(1 + \sqrt{3}\,d\right)\exp\!\left(-\sqrt{3}\,d\right)\)</span></td>
+<td style="text-align: left;">Once differentiable</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>Matern 5/2</code></td>
+<td style="text-align: left;"><span class="math inline">\(\left(1 + \sqrt{5}\,d + \tfrac{5}{3}d^2\right)\exp\!\left(-\sqrt{5}\,d\right)\)</span></td>
+<td style="text-align: left;">Twice differentiable</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>Gaussian (RBF)</code></td>
+<td style="text-align: left;"><span class="math inline">\(\exp\!\left(-\tfrac{1}{2}d^2\right)\)</span></td>
+<td style="text-align: left;">Infinitely differentiable</td>
+</tr>
+</tbody>
+</table>
+<p><span class="src src-m26">M26</span> also tried UQLab’s “linear” correlation. <code>digiqual</code> omits it <span class="src src-digiqual">digiqual</span> because scikit-learn does not provide it, and in <span class="src src-m26">M26</span> the Matérn functions consistently beat it.</p>
+</section>
+<section id="sec-nugget" class="level3" data-number="1.3">
+<h3 data-number="1.3" class="anchored" data-anchor-id="sec-nugget"><span class="header-section-number">1.3</span> Noise (nugget)</h3>
+<p><span class="src src-m26">M26</span> studies <em>deterministic</em> simulations, where the same inputs always give the same output, so its Kriging model interpolates every training point exactly. <code>digiqual</code> is used on data where that is often false. Any influential input you did not include (crack roughness, shape, a random noise realisation) shows up as scatter. Following the <span class="src src-m25">M25</span> reference code (UQLab option <code>Regression.SigmaNSQ = 'auto'</code>), every candidate therefore includes a learned white-noise variance <span class="math inline">\(\tau^2\)</span>:</p>
+<p><span class="math display">\[ \mathbf{K}_{ij} = \sigma^2 R(\mathbf{u}_i, \mathbf{u}_j; \boldsymbol{\theta}) + \tau^2 \delta_{ij} \]</span></p>
+<p>When the data really are deterministic, maximum likelihood drives <span class="math inline">\(\tau^2\)</span> towards its lower bound and the model reverts to the interpolating Kriging of <span class="src src-m26">M26</span>.</p>
 <div class="callout callout-style-default callout-important callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -407,154 +587,607 @@ window.Quarto = {
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Simulation responses are often <em>not</em> a deterministic function of the inputs the surrogate is trained on. For example, a model trained on flaw Area and Offset when the response also depends on flaw shape sees scatter that no smooth surface in (Area, Offset) can explain.</p>
-<p>If <span class="math inline">\(\tau^2\)</span> is fixed below the true scatter variance, maximum likelihood instead “explains” the scatter by shrinking a length scale until the surface interpolates individual points. Typically this is the length scale of a weakly-influential input. The result is a surrogate that:</p>
+<p>If <span class="math inline">\(\tau^2\)</span> is fixed below the true scatter variance, the likelihood “explains” the scatter by shrinking a length scale until the surface threads through individual points. This usually happens to a weakly influential input. The result:</p>
 <ul>
-<li>has an excellent in-sample fit but a poor leave-one-out fit;</li>
-<li>reverts towards the prior mean when sliced at a fixed value of that input, especially where data is sparse;</li>
-<li>produces unstable predictions when refitted to bootstrap resamples, failing the bootstrap convergence check.</li>
+<li>an excellent in-sample fit but a poor leave-one-out fit;</li>
+<li>slices at a fixed value of that input that sag back towards <span class="math inline">\(\bar{y}\)</span> between data points;</li>
+<li>unstable bootstrap refits, which fail the convergence check.</li>
 </ul>
-<p>Learning <span class="math inline">\(\tau^2\)</span> lets the likelihood attribute that scatter to noise, giving long, physically sensible length scales. Uninfluential inputs get length scales much larger than their range.</p>
+<p>With <span class="math inline">\(\tau^2\)</span> learned, the scatter is attributed to noise and the length scales stay physically sensible. Inputs with no influence get length scales far longer than their range.</p>
 </div>
 </div>
 </section>
-<section id="selection-metric-mse_textcv" class="level3">
-<h3 class="anchored" data-anchor-id="selection-metric-mse_textcv">Selection Metric (<span class="math inline">\(MSE_{\text{CV}}\)</span>)</h3>
-<p>Each kernel family is evaluated via <span class="math inline">\(K\)</span>-fold Cross-Validation (<span class="math inline">\(K = 10\)</span>). The hyperparameters are re-optimised inside every fold. The kernel candidate achieving the lowest CV Mean Squared Error is selected and refitted to the full dataset:</p>
-<p><span class="math display">\[ MSE_{\text{CV}} = \frac{1}{m} \sum_{i=1}^m \left(y_i - \hat{f}^{-k(i)}(\mathbf{x}_i)\right)^2 \]</span></p>
-<p>This is the score shown for Kriging in the model-selection chart. It is directly comparable to the polynomial CV scores.</p>
+<section id="sec-hyperparameters" class="level3" data-number="1.4">
+<h3 data-number="1.4" class="anchored" data-anchor-id="sec-hyperparameters"><span class="header-section-number">1.4</span> Estimating the hyperparameters</h3>
+<p>For a given correlation function, the hyperparameters <span class="math inline">\((\sigma^2, \boldsymbol{\theta}, \tau^2)\)</span> are chosen by maximising the log-likelihood of the standardised training responses <span class="src src-m26">M26</span> (§2.1.2):</p>
+<p><span class="math display">\[
+\log L = -\tfrac{1}{2}\,\tilde{\mathbf{y}}^\mathsf{T} \mathbf{K}^{-1} \tilde{\mathbf{y}} - \tfrac{1}{2}\log\lvert\mathbf{K}\rvert - \tfrac{m}{2}\log 2\pi
+\]</span></p>
+<p>In the noise-free ordinary-Kriging case of <span class="src src-m26">M26</span>, <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\sigma^2\)</span> have closed forms (Eq. 6–7), leaving only <span class="math inline">\(\boldsymbol{\theta}\)</span> to optimise numerically:</p>
+<p><span class="math display">\[
+\hat{\beta} = \left(\mathbf{F}^\mathsf{T}\mathbf{R}^{-1}\mathbf{F}\right)^{-1}\mathbf{F}^\mathsf{T}\mathbf{R}^{-1}\mathbf{y},
+\qquad
+\hat{\sigma}^2 = \frac{1}{m}\left(\mathbf{y} - \mathbf{F}\hat{\beta}\right)^\mathsf{T}\mathbf{R}^{-1}\left(\mathbf{y} - \mathbf{F}\hat{\beta}\right)
+\]</span></p>
+<p>With a nugget, <code>digiqual</code> optimises <span class="math inline">\(\sigma^2\)</span>, <span class="math inline">\(\boldsymbol{\theta}\)</span> and <span class="math inline">\(\tau^2\)</span> together, in log space, with L-BFGS-B started from the default values and then from 10 random points inside the bounds <span class="src src-digiqual">digiqual</span>. UQLab uses a hybrid genetic algorithm instead.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Paper vs toolbox
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><span class="src src-m26">M26</span> states that the hyperparameters come from the log-likelihood. UQLab’s <em>default</em> estimation method is in fact leave-one-out cross-validation (<code>EstimMethod = 'CV'</code>), and the <span class="src src-m25">M25</span> reference code does not override it. <code>digiqual</code> follows the paper’s description (maximum likelihood).</p>
+</div>
+</div>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Hyperparameter</th>
+<th style="text-align: left;">Initial value</th>
+<th style="text-align: left;">Bounds</th>
+<th style="text-align: left;">Units</th>
+<th style="text-align: left;">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Length scale <span class="math inline">\(\theta_j\)</span></td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;"><span class="math inline">\([10^{-3},\,10^{3}]\)</span></td>
+<td style="text-align: left;">std. devs of input <span class="math inline">\(j\)</span></td>
+<td style="text-align: left;">start and lower bound <span class="src src-uqlab">UQLab</span>; upper bound <span class="src src-digiqual">digiqual</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Process variance <span class="math inline">\(\sigma^2\)</span></td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;"><span class="math inline">\([10^{-5},\,10^{6}]\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(\text{var}(y)\)</span></td>
+<td style="text-align: left;"><span class="src src-digiqual">digiqual</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Noise variance <span class="math inline">\(\tau^2\)</span></td>
+<td style="text-align: left;">0.1</td>
+<td style="text-align: left;"><span class="math inline">\([10^{-8},\,10]\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(\text{var}(y)\)</span></td>
+<td style="text-align: left;"><span class="src src-digiqual">digiqual</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Numerical jitter</td>
+<td style="text-align: left;"><span class="math inline">\(10^{-10}\)</span></td>
+<td style="text-align: left;">fixed</td>
+<td style="text-align: left;"><span class="math inline">\(\text{var}(y)\)</span></td>
+<td style="text-align: left;"><span class="src src-uqlab">UQLab</span> (<code>Corr.Nugget</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>UQLab caps the length scale at 10. <code>digiqual</code> allows up to <span class="math inline">\(10^{3}\)</span> so that an input with no influence can become effectively flat instead of sitting on the bound.</p>
+</section>
+<section id="sec-predicting" class="level3" data-number="1.5">
+<h3 data-number="1.5" class="anchored" data-anchor-id="sec-predicting"><span class="header-section-number">1.5</span> Predicting</h3>
+<p>Conditioning the prior on the data gives the posterior mean and variance at a new point <span class="math inline">\(\mathbf{x}_0\)</span>. In the standardised units used by <code>digiqual</code> (simple Kriging):</p>
+<p><span class="math display">\[
+\mu(\mathbf{x}_0) = \bar{y} + s_y\, \mathbf{k}_0^\mathsf{T}\mathbf{K}^{-1}\tilde{\mathbf{y}},
+\qquad
+s^2(\mathbf{x}_0) = s_y^2\left(\sigma^2 - \mathbf{k}_0^\mathsf{T}\mathbf{K}^{-1}\mathbf{k}_0\right)
+\]</span></p>
+<p>where <span class="math inline">\(\mathbf{k}_0\)</span> holds the covariances <span class="math inline">\(\sigma^2 R(\mathbf{u}_0, \mathbf{u}_i)\)</span> between the new point and the training points. Eq. 8–9 of <span class="src src-m26">M26</span> are the ordinary-Kriging versions. They contain one extra variance term for the uncertainty in <span class="math inline">\(\hat\beta\)</span>, which only matters far from the data.</p>
+<p>Only <span class="math inline">\(\mu(\mathbf{x})\)</span> is used for the PoD in <code>digiqual</code>. The spread of the response around it comes from the separate variance model (<a href="#sec-variance-bootstrap" class="quarto-xref">Section&nbsp;4</a>).</p>
 </section>
 </section>
-<section id="loo-residuals-outlier-calibration" class="level2">
-<h2 class="anchored" data-anchor-id="loo-residuals-outlier-calibration">2. LOO Residuals &amp; Outlier Calibration</h2>
-<p>To ensure that Kriging surrogate uncertainty bounds are mathematically valid for safety-critical inspection qualification, <code>digiqual</code> validates prediction errors using standardized LOO residuals.</p>
-<section id="augmented-covariance-inversion" class="level3">
-<h3 class="anchored" data-anchor-id="augmented-covariance-inversion">Augmented Covariance Inversion</h3>
-<p>Construct the augmented covariance matrix <span class="math inline">\(S\)</span>: <span class="math display">\[ S = \begin{bmatrix} \hat{\sigma}^2 R + \tau^2 I + \alpha I &amp; \mathbf{1} \\ \mathbf{1}^T &amp; 0 \end{bmatrix} \]</span></p>
-<p>where <span class="math inline">\(\tau^2\)</span> is the learned noise variance and <span class="math inline">\(\alpha\)</span> is a negligible numerical jitter (<span class="math inline">\(10^{-10}\)</span>). The calculation is carried out on the standardised response. The resulting LOO means and standard deviations are converted back to the original units.</p>
-<p>Inverting <span class="math inline">\(S\)</span> yields matrix <span class="math inline">\(B = S^{-1}\)</span>. The Leave-One-Out prediction mean <span class="math inline">\(\mu_{\hat{Y}_{-i}}\)</span> and standard deviation <span class="math inline">\(\sigma_{\hat{Y}_{-i}}\)</span> for training observation <span class="math inline">\(i\)</span> are calculated analytically:</p>
-<p><span class="math display">\[ \mu_{\hat{Y}_{-i}} = -\sum_{j \neq i} \frac{B_{ij}}{B_{ii}} y_j, \qquad \sigma_{\hat{Y}_{-i}} = \sqrt{\frac{1}{B_{ii}}} \]</span></p>
-<p>Because <span class="math inline">\(\tau^2\)</span> is on the diagonal of <span class="math inline">\(S\)</span>, <span class="math inline">\(\sigma_{\hat{Y}_{-i}}^2\)</span> is the predictive variance of a new <em>noisy</em> observation. This is the correct scale for standardising observed residuals.</p>
+<section id="sec-selection" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="sec-selection"><span class="header-section-number">2</span> Choosing the kernel and the model</h2>
+<section id="sec-loo" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="sec-loo"><span class="header-section-number">2.1</span> Choosing the correlation function: LOO error</h3>
+<p>Each of the four candidates is fitted once to all the data. Its leave-one-out predictions then come from a single matrix inverse, without refitting <span class="src src-m26">M26</span> (Eq. 10–13, after Dubrule 1983). Build the augmented matrix</p>
+<p><span class="math display">\[
+\mathbf{S} = \begin{bmatrix} \mathbf{K} &amp; \mathbf{F} \\ \mathbf{F}^\mathsf{T} &amp; 0 \end{bmatrix},
+\qquad \mathbf{F} = \mathbf{1},
+\qquad \mathbf{B} = \left(\mathbf{S}^{-1}\right)_{1:m,\,1:m}
+\]</span></p>
+<p>Then the prediction for point <span class="math inline">\(i\)</span> made from all the <em>other</em> points, and its variance, are</p>
+<p><span class="math display">\[
+\mu_{\hat{Y}_{-i}} = -\sum_{j \ne i} \frac{B_{ij}}{B_{ii}}\, y_j,
+\qquad
+\sigma^2_{\hat{Y}_{-i}} = \frac{1}{B_{ii}}
+\]</span></p>
+<p>As in <span class="src src-m26">M26</span>, the hyperparameters are those fitted to the full data and are not re-optimised for each left-out point. Because <span class="math inline">\(\mathbf{K}\)</span> includes <span class="math inline">\(\tau^2\)</span>, <span class="math inline">\(\sigma^2_{\hat{Y}_{-i}}\)</span> is the variance of a new <em>noisy</em> observation, which is the right scale for comparing with observed residuals. UQLab computes the same quantities in <code>uq_Kriging_calc_KFold</code> <span class="src src-uqlab">UQLab</span>.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>These LOO formulas are the <em>ordinary</em>-Kriging ones (the <span class="math inline">\(\mathbf{F}\)</span> row and column re-estimate the constant trend without point <span class="math inline">\(i\)</span>), whereas <code>digiqual</code>’s predictions use the sample mean (<a href="#sec-prior" class="quarto-xref">Section&nbsp;1.1</a>). The test suite checks that the matrix formula reproduces an explicit ordinary-Kriging refit to machine precision. The gap between the two trend treatments is negligible for LOO purposes.</p>
+</div>
+</div>
+<p>The kernel with the smallest normalised LOO error is kept <span class="src src-m26">M26</span> (Eq. 14):</p>
+<p><span class="math display">\[ MSE_{LOO} = \frac{1}{m}\sum_{i=1}^{m} \frac{\left(y_i - \mu_{\hat{Y}_{-i}}\right)^2}{\operatorname{var}(\mathbf{y})} \]</span></p>
+<p><span class="math inline">\(MSE_{LOO} = 1\)</span> means the model predicts left-out points no better than the sample mean. The scores of all four kernels are stored on the model as <code>kernel_loo_scores_</code>.</p>
 </section>
-<section id="standardized-residuals-e_i" class="level3">
-<h3 class="anchored" data-anchor-id="standardized-residuals-e_i">Standardized Residuals (<span class="math inline">\(e_i\)</span>)</h3>
-<p>The standardized LOO residual vector measures how many standard deviations each prediction deviates from the observed signal:</p>
+<section id="sec-kriging-vs-poly" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="sec-kriging-vs-poly"><span class="header-section-number">2.2</span> Kriging against the polynomials</h3>
+<p>LOO error with fixed hyperparameters is ideal for comparing kernels, but it is not on the same footing as the polynomials’ scores. The chosen kernel is therefore also scored by the same <strong>10-fold cross-validation</strong> as every polynomial, with its hyperparameters re-optimised inside each fold <span class="src src-m25">M25</span>. This is the Kriging bar in the model-selection chart.</p>
+<p>The overall winner is then picked by the one-standard-error rule <span class="src src-digiqual">digiqual</span>: the simplest model whose CV error is within one standard error of the best, with Kriging counted as the most complex candidate. Kriging is therefore chosen only when it is clearly better than every polynomial. The rule, its link to <span class="src src-m25">M25</span> Fig. 5, and a worked example are on the <a href="../docs/generalised_pod.html#sec-model-selection">Generalised PoD</a> page.</p>
+</section>
+<section id="sec-cost" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="sec-cost"><span class="header-section-number">2.3</span> Cost</h3>
+<p>Kriging needs an <span class="math inline">\(O(N^3)\)</span> factorisation for every likelihood evaluation. One full model build costs 4 kernels × 11 optimiser starts, plus 10 CV folds × 6 starts. Above <span class="math inline">\(N = 1000\)</span> samples Kriging is skipped and only the polynomials are fitted <span class="src src-digiqual">digiqual</span>.</p>
+</section>
+</section>
+<section id="sec-loo-diagnostics" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="sec-loo-diagnostics"><span class="header-section-number">3</span> LOO residual diagnostics and γ</h2>
+<p>To judge whether the Kriging uncertainty estimate can be trusted, <span class="src src-m26">M26</span> (Eq. 19) standardises each LOO error by its predicted standard deviation:</p>
 <p><span class="math display">\[ e_i = \frac{y_i - \mu_{\hat{Y}_{-i}}}{\sigma_{\hat{Y}_{-i}}} \]</span></p>
+<p>If the model’s uncertainty is right, the <span class="math inline">\(e_i\)</span> behave roughly like draws from <span class="math inline">\(\mathcal{N}(0,1)\)</span>. Values outside <span class="math inline">\([-3, 3]\)</span> flag regions where the model is over-confident. <span class="src src-m26">M26</span> (§2.2.5.2) defines the factor</p>
+<p><span class="math display">\[ \gamma = \max\left(1,\; \frac{\max_i |e_i|}{3}\right) \]</span></p>
+<p>and <strong>multiplies the Kriging interpolation standard deviation by <span class="math inline">\(\gamma\)</span></strong>, which puts the worst residual exactly on the <span class="math inline">\(\pm 3\)</span> line (Fig. 10b of that paper). It then draws posterior GP sample paths with this inflated uncertainty to build a conservative 95 % <em>bound</em> on the PoD. The PoD curve itself does not change.</p>
+<p><strong>In digiqual, <span class="math inline">\(\gamma\)</span> is a diagnostic only</strong> <span class="src src-digiqual">digiqual</span>. It is stored as <code>outlier_scale_factor_</code> and shown in the Kriging diagnostics plot, where the green crosses are <span class="math inline">\(e_i/\gamma\)</span>, as on Fig. 10b’s right-hand axis. It is not applied to the PoD, for three reasons:</p>
+<ol type="1">
+<li><code>digiqual</code> builds its PoD bounds by the <span class="src src-m25">M25</span> bootstrap, not by GP sample paths, so there is no interpolation-uncertainty term for <span class="math inline">\(\gamma\)</span> to scale.</li>
+<li>Applying <span class="math inline">\(\gamma\)</span> to the <em>response scatter</em> instead would change the PoD curve itself, which <span class="src src-m26">M26</span> never does. Wider scatter also <em>raises</em> the PoD wherever the mean response is below the threshold, so that change is not conservative for small flaws.</li>
+<li>The nugget <span class="math inline">\(\tau^2\)</span> is one value for the whole input space. When the real scatter varies with flaw size, LOO residuals in high-scatter regions exceed 3 simply because of that. The variance model (<a href="#sec-variance-bootstrap" class="quarto-xref">Section&nbsp;4</a>) already handles this heteroscedasticity, so inflating by <span class="math inline">\(\gamma\)</span> as well would count it twice.</li>
+</ol>
+<p>A large <span class="math inline">\(\gamma\)</span> is still worth acting on: look for a missing input, a transformation (e.g.&nbsp;<span class="math inline">\(\log a\)</span>), more samples, or a polynomial instead. GP-sample-path bounds in the style of <span class="src src-m26">M26</span> are a possible future addition.</p>
 </section>
-<section id="variance-inflation-factor-gamma" class="level3">
-<h3 class="anchored" data-anchor-id="variance-inflation-factor-gamma">Variance Inflation Factor (<span class="math inline">\(\gamma\)</span>)</h3>
-<p>Standardized residuals are expected to follow a Standard Normal distribution <span class="math inline">\(\mathcal{N}(0, 1)\)</span>. Residuals outside <span class="math inline">\([-3, 3]\)</span> indicate localized surrogate mismatch or extreme scatter.</p>
-<p>If <span class="math inline">\(\max |e_i| &gt; 3\)</span>, <code>digiqual</code> calculates a conservative variance scaling factor: <span class="math display">\[ \gamma = \max\left(1.0, \frac{\max |e_i|}{3.0}\right) \]</span></p>
-<p>During noise estimation in <a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>fit_variance_model</code></a>, raw residuals are scaled by <span class="math inline">\(\sqrt{\gamma}\)</span>, inflating local prediction variance <span class="math inline">\(\hat{\sigma}^2(x)\)</span> by factor <span class="math inline">\(\gamma\)</span>. This guarantees mathematically reliable 95% worst-case confidence bounds even in the presence of extreme outliers.</p>
+<section id="sec-variance-bootstrap" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="sec-variance-bootstrap"><span class="header-section-number">4</span> Variance model and bootstrap with Kriging</h2>
+<p><strong>Variance model.</strong> The scatter around the mean is modelled by the Gaussian kernel smoother of <span class="src src-m25">M25</span> (Eq. 2.9–2.11), applied to squared residuals. For polynomials those residuals are the usual in-sample ones. For Kriging they are the <strong>LOO residuals</strong> <span class="math inline">\(y_i - \mu_{\hat{Y}_{-i}}\)</span> <span class="src src-digiqual">digiqual</span>. A Kriging model with a learned nugget still bends towards each training point, so its in-sample residuals understate the scatter. That would give too narrow a response distribution and a PoD curve that is too steep. LOO residuals measure how far an observation falls from a prediction that did not use it. The same residuals are used to infer the error distribution (<span class="src src-m25">M25</span> §2f).</p>
+<p><strong>Bootstrap.</strong> <span class="src src-m25">M25</span> (§2i) refits the chosen model to each resample of the data, keeping the model type and distribution family fixed. For Kriging, <code>digiqual</code> also keeps the hyperparameters (<span class="math inline">\(\sigma^2\)</span>, <span class="math inline">\(\boldsymbol{\theta}\)</span>, <span class="math inline">\(\tau^2\)</span>) and the input scaling at their full-data values. Only the posterior is recomputed, which keeps 1000 refits fast <span class="src src-digiqual">digiqual</span>. The resulting interval reflects the sampling variability of the data, but <strong>not</strong> uncertainty in the hyperparameters, so it may be somewhat narrow when the length scales are poorly determined (see the pitfalls below). In each resample the variance-model residuals are again leave-out residuals. All copies of a duplicated point are left out together, using the block form of the LOO formula <span class="src src-uqlab">UQLab</span>.</p>
 </section>
-</section>
-<section id="bootstrap-refits" class="level2">
-<h2 class="anchored" data-anchor-id="bootstrap-refits">3. Bootstrap Refits</h2>
-<p>The PoD confidence bounds (<a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>bootstrap_pod_ci</code></a>) and the GUI’s bootstrap convergence diagnostic refit the Kriging surrogate to each resample of the data. To keep this tractable, the hyperparameters (<span class="math inline">\(\hat{\sigma}^2\)</span>, <span class="math inline">\(\boldsymbol{\theta}\)</span>, <span class="math inline">\(\tau^2\)</span>) are held at their full-data values and only the posterior is recomputed. <a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>build_fixed_kernel_gpr</code></a> builds these refits with exactly the production settings:</p>
-<ul>
-<li>the learned noise is already part of the kernel, so it is not added again;</li>
-<li><code>normalize_y=True</code> is used.</li>
-</ul>
-<p>A failing bootstrap convergence check for Kriging therefore reflects genuine instability of the fitted surface, not a mismatch between the production and bootstrap models.</p>
-</section>
-<section id="python-usage-example" class="level2">
-<h2 class="anchored" data-anchor-id="python-usage-example">4. Python Usage Example</h2>
-<p>Below is a complete Python script demonstrating Kriging surrogate model fitting, kernel optimization, residual computation, diagnostic plotting, and PoD generation:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.pod <span class="im">import</span> (</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    fit_all_robust_mean_models,</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    compute_kriging_loo_residuals,</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    fit_variance_model,</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    infer_best_distribution,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    compute_pod_curve,</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.plotting <span class="im">import</span> plot_kriging_diagnostics</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Generate Synthetic 2D NDE Data (Flaw Length &amp; Probe Angle)</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>N <span class="op">=</span> <span class="dv">100</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>length <span class="op">=</span> np.random.uniform(<span class="fl">0.5</span>, <span class="fl">5.0</span>, N)</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>angle <span class="op">=</span> np.random.uniform(<span class="op">-</span><span class="fl">15.0</span>, <span class="fl">15.0</span>, N)</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> np.column_stack([length, angle])</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Signal response with non-smooth physical behavior</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> <span class="fl">2.0</span> <span class="op">*</span> length <span class="op">-</span> <span class="fl">0.3</span> <span class="op">*</span> (length<span class="op">**</span><span class="dv">2</span>) <span class="op">+</span> <span class="fl">0.05</span> <span class="op">*</span> angle <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="fl">0.3</span>, N)</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Inject an outlier to test calibration</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>y[<span class="dv">10</span>] <span class="op">+=</span> <span class="fl">3.5</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Fit Surrogate Pool &amp; Evaluate Anisotropic Kernels</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>models, cv_scores, winner_key <span class="op">=</span> fit_all_robust_mean_models(X, y)</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>gpr <span class="op">=</span> models[(<span class="st">"Kriging"</span>, <span class="va">None</span>)]</span>
+<section id="sec-pitfalls" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="sec-pitfalls"><span class="header-section-number">5</span> Correlation length and other pitfalls (Kriging vs polynomials)</h2>
+<p>Polynomials are <em>global</em>: every data point influences the whole curve, and the shape is fixed by the degree. Kriging is <em>local</em>: a prediction is a weighted blend of nearby observations, and the length scale <span class="math inline">\(\theta\)</span> decides what “nearby” means. That locality is why Kriging can follow features a low-order polynomial smooths over (<span class="src src-m25">M25</span> Fig. 6). It is also the source of most Kriging failures.</p>
+<section id="sec-length-scale" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="sec-length-scale"><span class="header-section-number">5.1</span> The length scale must be longer than the gap between samples</h3>
+<p>Away from the data, the correlation with every observation decays to zero and the Kriging mean falls back to the prior mean <span class="math inline">\(\bar{y}\)</span>. If <span class="math inline">\(\theta\)</span> is <em>shorter</em> than the typical spacing between samples, this happens <strong>between</strong> data points. The surface becomes a row of bumps on a flat sheet at <span class="math inline">\(\bar{y}\)</span>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy <span class="im">import</span> stats</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.gaussian_process.kernels <span class="im">import</span> Matern, WhiteKernel, ConstantKernel</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.pod <span class="im">import</span> fit_all_robust_mean_models, build_fixed_kernel_gpr</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> truth(a):</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">1</span> <span class="op">-</span> np.exp(<span class="op">-</span>a <span class="op">/</span> <span class="fl">1.2</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">3</span>)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> np.sort(rng.uniform(<span class="fl">0.2</span>, <span class="fl">4.0</span>, <span class="dv">10</span>))</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> truth(a) <span class="op">+</span> rng.normal(<span class="dv">0</span>, <span class="fl">0.02</span>, a.size)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>models, _, _ <span class="op">=</span> fit_all_robust_mean_models(a, y, max_degree<span class="op">=</span><span class="dv">4</span>, n_folds<span class="op">=</span><span class="dv">5</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>krig <span class="op">=</span> models[(<span class="st">"Kriging"</span>, <span class="va">None</span>)]</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>poly3 <span class="op">=</span> models[(<span class="st">"Polynomial"</span>, <span class="dv">3</span>)]</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Same model, but with a length scale of 0.08 standard deviations (~0.08 mm here)</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>short_kernel <span class="op">=</span> ConstantKernel(<span class="fl">1.0</span>) <span class="op">*</span> Matern(length_scale<span class="op">=</span><span class="fl">0.08</span>, nu<span class="op">=</span><span class="fl">2.5</span>) <span class="op">+</span> WhiteKernel(<span class="fl">1e-4</span>)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>krig_short <span class="op">=</span> build_fixed_kernel_gpr(short_kernel, krig.x_mean_, krig.x_std_).fit(a.reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>), y)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="dv">6</span>, <span class="dv">400</span>).reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>ls <span class="op">=</span> <span class="bu">float</span>(np.atleast_1d(krig.kernel_.k1.k2.length_scale)[<span class="dv">0</span>]) <span class="op">*</span> krig.x_std_[<span class="dv">0</span>]</span>
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Selected Kriging Kernel: </span><span class="sc">{</span>gpr<span class="sc">.</span>best_kernel_name_<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Fitted Covariance (incl. learned noise): </span><span class="sc">{</span>gpr<span class="sc">.</span>kernel_<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Outlier Calibration Factor (gamma): </span><span class="sc">{</span>gpr<span class="sc">.</span>outlier_scale_factor_<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Compute LOO Residuals</span></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>loo_means, loo_stds, std_res, gamma <span class="op">=</span> compute_kriging_loo_residuals(gpr, X, y)</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Generate Diagnostic Plot</span></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> plot_kriging_diagnostics(</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    std_residuals<span class="op">=</span>std_res,</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    outlier_scale_factor<span class="op">=</span>gamma,</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    best_kernel_name<span class="op">=</span>gpr.best_kernel_name_,</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div id="cell-fig-kriging-results" class="cell quarto-layout-panel" data-layout-ncol="1" data-execution_count="1">
-<div class="quarto-layout-row">
-<div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<pre><code>Selected Kriging Kernel: Matern 3/2
-Fitted Covariance (incl. learned noise): 1.58**2 * Matern(length_scale=[3.16, 51.3], nu=1.5) + WhiteKernel(noise_level=0.275)
-Outlier Calibration Factor (gamma): 2.445</code></pre>
-</div>
-</div>
-<div class="quarto-layout-row">
-<div class="cell-output cell-output-display quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<div id="fig-kriging-results" class="quarto-float quarto-figure quarto-figure-center anchored">
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>fig, ax1 <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">4.5</span>))</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>ax1.axvspan(a.<span class="bu">max</span>(), <span class="dv">6</span>, color<span class="op">=</span><span class="st">"grey"</span>, alpha<span class="op">=</span><span class="fl">0.15</span>, label<span class="op">=</span><span class="st">"Outside the data"</span>)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>ax1.plot(grid, truth(grid), <span class="st">"k:"</span>, label<span class="op">=</span><span class="st">"True mean"</span>)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>ax1.plot(grid, krig.predict(grid), lw<span class="op">=</span><span class="dv">2</span>, label<span class="op">=</span><span class="ss">f"Kriging, ML length scale (</span><span class="sc">{</span>ls<span class="sc">:.1f}</span><span class="ss">)"</span>)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>ax1.plot(grid, krig_short.predict(grid), lw<span class="op">=</span><span class="fl">1.5</span>, label<span class="op">=</span><span class="st">"Kriging, length scale 0.08"</span>)</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>ax1.plot(grid, poly3.predict(grid), <span class="st">"--"</span>, label<span class="op">=</span><span class="st">"Polynomial, degree 3"</span>)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>ax1.axhline(y.mean(), color<span class="op">=</span><span class="st">"grey"</span>, lw<span class="op">=</span><span class="fl">0.8</span>)</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>ax1.text(<span class="fl">5.9</span>, y.mean() <span class="op">+</span> <span class="fl">0.03</span>, <span class="vs">r"</span><span class="dv">$\b</span><span class="vs">ar{y}</span><span class="dv">$</span><span class="vs">"</span>, ha<span class="op">=</span><span class="st">"right"</span>, color<span class="op">=</span><span class="st">"grey"</span>)</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>ax1.plot(a, y, <span class="st">"ko"</span>, ms<span class="op">=</span><span class="dv">5</span>, label<span class="op">=</span><span class="st">"Samples"</span>)</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>ax1.set_ylim(<span class="op">-</span><span class="fl">0.3</span>, <span class="fl">1.4</span>)<span class="op">;</span> ax1.set_xlabel(<span class="st">"Flaw size a"</span>)<span class="op">;</span> ax1.set_ylabel(<span class="st">"Response"</span>)</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>ax1.legend(fontsize<span class="op">=</span><span class="dv">8</span>, loc<span class="op">=</span><span class="st">"lower right"</span>)</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>fig, ax2 <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">4</span>))</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>threshold, sd <span class="op">=</span> <span class="fl">0.8</span>, <span class="fl">0.05</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> model, label <span class="kw">in</span> [(krig, <span class="st">"ML length scale"</span>), (krig_short, <span class="st">"Length scale 0.08"</span>)]:</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    ax2.plot(grid, <span class="dv">1</span> <span class="op">-</span> stats.norm.cdf((threshold <span class="op">-</span> model.predict(grid)) <span class="op">/</span> sd), label<span class="op">=</span>label)</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>ax2.plot(grid, <span class="dv">1</span> <span class="op">-</span> stats.norm.cdf((threshold <span class="op">-</span> truth(grid)) <span class="op">/</span> sd), <span class="st">"k:"</span>, label<span class="op">=</span><span class="st">"True PoD"</span>)</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>ax2.set_xlim(<span class="dv">0</span>, a.<span class="bu">max</span>())<span class="op">;</span> ax2.set_xlabel(<span class="st">"Flaw size a"</span>)<span class="op">;</span> ax2.set_ylabel(<span class="st">"PoD"</span>)</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>ax2.legend(fontsize<span class="op">=</span><span class="dv">8</span>, loc<span class="op">=</span><span class="st">"lower right"</span>)</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="fig-length-scale" class="quarto-layout-panel">
 <figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-kriging-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="kriging_metamodeling_files/figure-html/fig-kriging-results-output-2.png" width="950" height="422" class="figure-img">
+<div aria-describedby="fig-length-scale-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-length-scale" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-length-scale-1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-length-scale-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="kriging_metamodeling_files/figure-html/fig-length-scale-output-1.png" data-ref-parent="fig-length-scale" width="758" height="422" class="figure-img">
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-kriging-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1: Kriging Model Fitting
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-length-scale-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Mean response. The ML length scale gives a smooth fit; the short length scale collapses to the mean between points. Grey: outside the data, Kriging decays slowly towards the mean while the cubic polynomial runs away.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-length-scale" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-length-scale-2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-length-scale-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="kriging_metamodeling_files/figure-html/fig-length-scale-output-2.png" data-ref-parent="fig-length-scale" width="758" height="374" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-length-scale-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) The same failure seen in a PoD calculation: with the short length scale the PoD dips between samples.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
 </div>
-<hr>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-length-scale-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Sparse data (10 points) from a saturating response, fitted with the length scale chosen by maximum likelihood and with a length scale shorter than the sample spacing.
+</figcaption>
+</figure>
+</div>
+<p>Maximum likelihood normally avoids this, as in <a href="#fig-length-scale-1" class="quarto-xref">Figure&nbsp;1 (a)</a>, where the fitted length scale is roughly ten times the mean spacing. It goes wrong in three situations:</p>
+<ul>
+<li><strong>Fixed or under-estimated noise.</strong> This is the callout in <a href="#sec-nugget" class="quarto-xref">Section&nbsp;1.3</a>. A length scale collapses onto the scatter.</li>
+<li><strong>Sparse sampling in one direction.</strong> With <span class="math inline">\(n\)</span> inputs, <span class="math inline">\(N\)</span> samples are only about <span class="math inline">\(N^{1/n}\)</span> per axis. <span class="src src-m26">M26</span> needed 700 points in 4-D, about 5 per axis. The data cannot tell a short length scale apart from a long one along a sparsely sampled direction, so the likelihood is flat there and the estimate is unreliable.</li>
+<li><strong>Slices through empty regions.</strong> A PoD slice holds unused inputs at their median. If few samples lie near that median for a short-length-scale input, the slice is mostly prior mean.</li>
+</ul>
+<p><strong>What to check.</strong> Compare each fitted length scale (<code>model.kernel_</code>, in standard deviations of that input) with the sample spacing along that input. A length scale near its lower bound (<span class="math inline">\(10^{-3}\)</span>) is a red flag. A length scale near the upper bound means that input has essentially no effect.</p>
 </section>
-<section id="summary-of-api-functions" class="level2">
-<h2 class="anchored" data-anchor-id="summary-of-api-functions">Summary of API Functions</h2>
+<section id="sec-scattered" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="sec-scattered"><span class="header-section-number">5.2</span> Sparse, uncorrelated (scattered) data</h3>
+<p>When the signal is weak compared with the scatter, or there are few points, the GP may find no correlation structure at all. The likelihood then puts all the variance in the nugget, pushes <span class="math inline">\(\theta\)</span> to its lower bound and leaves a flat line at <span class="math inline">\(\bar{y}\)</span>, so <strong>the trend disappears</strong>.</p>
+<div id="cell-fig-scattered" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> rng.uniform(<span class="dv">0</span>, <span class="dv">4</span>, <span class="dv">15</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> <span class="fl">0.05</span> <span class="op">*</span> b <span class="op">+</span> rng.normal(<span class="dv">0</span>, <span class="fl">0.3</span>, <span class="dv">15</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>m2, s2, w2 <span class="op">=</span> fit_all_robust_mean_models(b, z, max_degree<span class="op">=</span><span class="dv">3</span>, n_folds<span class="op">=</span><span class="dv">5</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>k2 <span class="op">=</span> m2[(<span class="st">"Kriging"</span>, <span class="va">None</span>)]</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>grid2 <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="dv">4</span>, <span class="dv">200</span>).reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="fl">3.5</span>))</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>ax.plot(b, z, <span class="st">"ko"</span>, ms<span class="op">=</span><span class="dv">5</span>, label<span class="op">=</span><span class="st">"Samples"</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>ax.plot(grid2, k2.predict(grid2), lw<span class="op">=</span><span class="dv">2</span>, label<span class="op">=</span><span class="st">"Kriging"</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>ax.plot(grid2, m2[(<span class="st">"Polynomial"</span>, <span class="dv">1</span>)].predict(grid2), <span class="st">"--"</span>, label<span class="op">=</span><span class="st">"Polynomial, degree 1"</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"Flaw size a"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"Response"</span>)<span class="op">;</span> ax.legend(fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Fitted kernel: </span><span class="sc">{</span>k2<span class="sc">.</span>kernel_<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Best kernel LOO error (MSE_LOO): </span><span class="sc">{</span><span class="bu">min</span>(k2.kernel_loo_scores_.values())<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Selected model: </span><span class="sc">{</span>w2<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="fig-scattered" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-scattered-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="kriging_metamodeling_files/figure-html/fig-scattered-output-1.png" width="566" height="326" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-scattered-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: 15 points with a weak trend buried in scatter. Kriging attributes everything to noise and predicts a constant; its LOO error is above 1 (worse than the mean). A straight line keeps the trend.
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Fitted kernel: 0.0754**2 * Matern(length_scale=0.001, nu=0.5) + WhiteKernel(noise_level=0.994)
+Best kernel LOO error (MSE_LOO): 1.15
+Selected model: ('Polynomial', 1)</code></pre>
+</div>
+</div>
+<p>Polynomials degrade more gracefully here, because a straight line through scattered points still estimates the slope. The model selection usually catches this case: the Kriging CV error is no better than a low-order polynomial’s, so the one-SE rule picks the polynomial. Signs to look for are <span class="math inline">\(MSE_{LOO} \gtrsim 1\)</span>, a nugget close to 1 (in units of <span class="math inline">\(\text{var}(y)\)</span>), and length scales at their lower bound.</p>
+</section>
+<section id="sec-extrapolation" class="level3" data-number="5.3">
+<h3 data-number="5.3" class="anchored" data-anchor-id="sec-extrapolation"><span class="header-section-number">5.3</span> Extrapolation</h3>
+<p>Outside the sampled region a Kriging mean decays back to <span class="math inline">\(\bar{y}\)</span>, at a rate set by the length scale (grey region in <a href="#fig-length-scale" class="quarto-xref">Figure&nbsp;1</a>). For a PoD curve that means the mean response at flaw sizes <em>beyond</em> the largest simulated flaw drifts towards the average response, so <strong>the PoD can start to fall</strong>. Polynomials fail differently: a cubic or higher-order term can make the mean run away to <span class="math inline">\(\pm\infty\)</span>. Neither model should be used outside the sampled range. Keep the PoD evaluation grid inside the range of your simulations.</p>
+</section>
+<section id="sec-other-pitfalls" class="level3" data-number="5.4">
+<h3 data-number="5.4" class="anchored" data-anchor-id="sec-other-pitfalls"><span class="header-section-number">5.4</span> Other things to be wary of</h3>
+<ul>
+<li><strong>In-sample fit says nothing.</strong> Kriging can pass (almost) through every training point, so in-sample <span class="math inline">\(R^2\)</span> is near 1 for any data. Always judge it by CV or LOO error. The GUI’s model-fit diagnostic uses LOO predictions for Kriging for exactly this reason.</li>
+<li><strong>One length scale for the whole space (stationarity).</strong> A response that rises steeply for small flaws and then saturates has two very different “natural” length scales, and a stationary GP must compromise. Transforming the input (e.g.&nbsp;working in <span class="math inline">\(\log a\)</span>, as <span class="src src-m25">M25</span> §2g recommends) often makes the response closer to stationary.</li>
+<li><strong>One noise level for the whole space.</strong> The nugget <span class="math inline">\(\tau^2\)</span> is constant. If the real scatter varies strongly, the Kriging surface may be over-smoothed where the scatter is small and under-smoothed where it is large, and the LOO residuals will flag outliers (<span class="math inline">\(\gamma &gt; 1\)</span>). The variance model accounts for the varying scatter in the PoD itself.</li>
+<li><strong>No equation.</strong> A polynomial can be written down and checked by hand. A Kriging model is defined by its training data and hyperparameters, which makes it harder to audit.</li>
+<li><strong>Cost and size limit.</strong> Fitting is <span class="math inline">\(O(N^3)\)</span>, and Kriging is skipped above 1000 samples.</li>
+</ul>
+</section>
+<section id="sec-summary-table" class="level3" data-number="5.5">
+<h3 data-number="5.5" class="anchored" data-anchor-id="sec-summary-table"><span class="header-section-number">5.5</span> Summary: Kriging vs polynomials</h3>
 <table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: left;">Function Name</th>
-<th style="text-align: left;">Description</th>
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Polynomial</th>
+<th style="text-align: left;">Kriging</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;"><a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>pod.fit_all_robust_mean_models</code></a></td>
-<td style="text-align: left;">Fits polynomial pool and evaluates Kriging kernel candidates (with learned noise) via <span class="math inline">\(K\)</span>-fold <span class="math inline">\(MSE_{\text{CV}}\)</span>.</td>
+<td style="text-align: left;">Shape</td>
+<td style="text-align: left;">Global, fixed by degree</td>
+<td style="text-align: left;">Local, set by length scales</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>pod.build_kriging_candidate_kernels</code></a></td>
-<td style="text-align: left;">Builds the four candidate kernels, each of the form <span class="math inline">\(\hat{\sigma}^2 R + \tau^2 \delta\)</span>.</td>
+<td style="text-align: left;">Between samples</td>
+<td style="text-align: left;">Smooth by construction</td>
+<td style="text-align: left;">Smooth only if <span class="math inline">\(\theta \gtrsim\)</span> sample spacing</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;"><a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>pod.build_fixed_kernel_gpr</code></a></td>
-<td style="text-align: left;">Builds a Kriging model with frozen hyperparameters for bootstrap refits, matching the production settings.</td>
+<td style="text-align: left;">Outside the data</td>
+<td style="text-align: left;">Can diverge (high degree)</td>
+<td style="text-align: left;">Decays to <span class="math inline">\(\bar{y}\)</span></td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/pod.py"><code>pod.compute_kriging_loo_residuals</code></a></td>
-<td style="text-align: left;">Inverts augmented matrix <span class="math inline">\(S\)</span> to compute exact LOO predictions, standardized residuals <span class="math inline">\(e_i\)</span>, and scale factor <span class="math inline">\(\gamma\)</span>.</td>
+<td style="text-align: left;">Sparse or noisy data</td>
+<td style="text-align: left;">Robust, keeps the trend</td>
+<td style="text-align: left;">May collapse to a constant</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;"><a href="file:///Users/jt17630/Documents/DigiQual/src/digiqual/plotting.py"><code>plotting.plot_kriging_diagnostics</code></a></td>
-<td style="text-align: left;">Generates dual-panel diagnostic plot visualizing standardized residual distribution vs <span class="math inline">\(\mathcal{N}(0, 1)\)</span> and <span class="math inline">\([-3, 3]\)</span> bounds.</td>
+<td style="text-align: left;">Sharp local features</td>
+<td style="text-align: left;">Smoothed out (low degree)</td>
+<td style="text-align: left;">Captured if well sampled</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Many inputs</td>
+<td style="text-align: left;">Number of terms explodes with degree</td>
+<td style="text-align: left;">One length scale per input</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Scatter in the response</td>
+<td style="text-align: left;">Least-squares fit (Ridge)</td>
+<td style="text-align: left;">Learned nugget <span class="math inline">\(\tau^2\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Interpretability</td>
+<td style="text-align: left;">Explicit equation</td>
+<td style="text-align: left;">No equation</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Cost</td>
+<td style="text-align: left;">Negligible</td>
+<td style="text-align: left;"><span class="math inline">\(O(N^3)\)</span>; <span class="math inline">\(N \le 1000\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="sec-deviations" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="sec-deviations">Deviations from the references</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Deviation</th>
+<th style="text-align: left;">Reference</th>
+<th style="text-align: left;">Why <code>digiqual</code> differs</th>
+<th style="text-align: left;">Expected effect</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Trend fixed at <span class="math inline">\(\bar{y}\)</span> (simple Kriging)</td>
+<td style="text-align: left;"><span class="src src-m26">M26</span>: GLS-estimated constant</td>
+<td style="text-align: left;">scikit-learn has no estimated trend</td>
+<td style="text-align: left;">Negligible near data; far from data reverts to <span class="math inline">\(\bar{y}\)</span> instead of <span class="math inline">\(\hat\beta_0\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">No “linear” correlation family</td>
+<td style="text-align: left;"><span class="src src-m26">M26</span> §4.3.1</td>
+<td style="text-align: left;">Not in scikit-learn; Matérn beat it in <span class="src src-m26">M26</span></td>
+<td style="text-align: left;">None expected</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Length-scale upper bound <span class="math inline">\(10^{3}\)</span></td>
+<td style="text-align: left;"><span class="src src-uqlab">UQLab</span>: 10</td>
+<td style="text-align: left;">Lets irrelevant inputs become flat</td>
+<td style="text-align: left;">Fewer length scales stuck on a bound</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Multi-start L-BFGS-B</td>
+<td style="text-align: left;"><span class="src src-uqlab">UQLab</span>: hybrid GA</td>
+<td style="text-align: left;">scikit-learn optimiser</td>
+<td style="text-align: left;">Same optimum in well-posed problems</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ML estimation</td>
+<td style="text-align: left;"><span class="src src-uqlab">UQLab</span> default: LOO-CV</td>
+<td style="text-align: left;">Follows the <span class="src src-m26">M26</span> text</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">One-SE winner rule</td>
+<td style="text-align: left;"><span class="src src-m25">M25</span>: qualitative “simplest of the near-best”</td>
+<td style="text-align: left;">A reproducible version of the same idea</td>
+<td style="text-align: left;">Prefers simpler models in near-ties</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(\gamma\)</span> not applied</td>
+<td style="text-align: left;"><span class="src src-m26">M26</span>: inflates interpolation std for GP-path bounds</td>
+<td style="text-align: left;">No GP-path bounds in <code>digiqual</code>; applying it to scatter would change the PoD curve and double-count heteroscedasticity (<a href="#sec-loo-diagnostics" class="quarto-xref">Section&nbsp;3</a>)</td>
+<td style="text-align: left;">PoD curve and bounds unaffected by <span class="math inline">\(\gamma\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LOO residuals for the variance model</td>
+<td style="text-align: left;"><span class="src src-m25">M25</span>: in-sample residuals</td>
+<td style="text-align: left;">A nugget GP’s in-sample residuals understate the scatter</td>
+<td style="text-align: left;">Wider, more honest scatter for Kriging</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Frozen hyperparameters in the bootstrap</td>
+<td style="text-align: left;"><span class="src src-m25">M25</span>: refit each resample</td>
+<td style="text-align: left;">1000 re-optimisations are too slow</td>
+<td style="text-align: left;">Bounds omit hyperparameter uncertainty</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ridge polynomials</td>
+<td style="text-align: left;"><span class="src src-m25">M25</span>: ordinary least squares</td>
+<td style="text-align: left;">Stabilises high degrees</td>
+<td style="text-align: left;">Slight shrinkage of high-degree terms</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(N \le 1000\)</span> for Kriging</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;"><span class="math inline">\(O(N^3)\)</span> cost</td>
+<td style="text-align: left;">Polynomials only for large data</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="sec-example" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="sec-example"><span class="header-section-number">6</span> Python example</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.pod <span class="im">import</span> fit_all_robust_mean_models, compute_kriging_loo_residuals</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.plotting <span class="im">import</span> plot_kriging_diagnostics</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Synthetic 2D data: flaw length and probe angle</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>N <span class="op">=</span> <span class="dv">100</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>length <span class="op">=</span> rng.uniform(<span class="fl">0.5</span>, <span class="fl">5.0</span>, N)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>angle <span class="op">=</span> rng.uniform(<span class="op">-</span><span class="fl">15.0</span>, <span class="fl">15.0</span>, N)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> np.column_stack([length, angle])</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> <span class="fl">2.0</span> <span class="op">*</span> length <span class="op">-</span> <span class="fl">0.3</span> <span class="op">*</span> length<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> <span class="fl">0.05</span> <span class="op">*</span> angle <span class="op">+</span> rng.normal(<span class="dv">0</span>, <span class="fl">0.3</span>, N)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>y[<span class="dv">10</span>] <span class="op">+=</span> <span class="fl">3.5</span>  <span class="co"># one outlier</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Fit the candidate pool</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>models, cv_scores, winner <span class="op">=</span> fit_all_robust_mean_models(X, y)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>gpr <span class="op">=</span> models[(<span class="st">"Kriging"</span>, <span class="va">None</span>)]</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Selected model (one-SE rule): </span><span class="sc">{</span>winner<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Kernel LOO errors: </span><span class="sc">{</span> {k: <span class="bu">round</span>(v, <span class="dv">3</span>) <span class="cf">for</span> k, v <span class="kw">in</span> gpr.kernel_loo_scores_.items()} <span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Chosen kernel: </span><span class="sc">{</span>gpr<span class="sc">.</span>best_kernel_name_<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Fitted kernel (standardised inputs): </span><span class="sc">{</span>gpr<span class="sc">.</span>kernel_<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Length scales in input units: </span><span class="sc">{</span>np<span class="sc">.</span>atleast_1d(gpr.kernel_.k1.k2.length_scale) <span class="op">*</span> gpr<span class="sc">.</span>x_std_<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"gamma (diagnostic): </span><span class="sc">{</span>gpr<span class="sc">.</span>outlier_scale_factor_<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. LOO residual diagnostics</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>loo_means, loo_stds, std_res, gamma <span class="op">=</span> compute_kriging_loo_residuals(gpr, X, y)</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>fig_hist, ax_hist <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">4</span>))</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>fig_scatter, ax_scatter <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">4</span>))</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>plot_kriging_diagnostics(std_res, outlier_scale_factor<span class="op">=</span>gamma, best_kernel_name<span class="op">=</span>gpr.best_kernel_name_,</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>                         ax<span class="op">=</span>(ax_hist, ax_scatter))</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="fig-kriging-results" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-kriging-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
+<pre><code>Selected model (one-SE rule): ('Polynomial', 2)
+Kernel LOO errors: {'Exponential (Matern 1/2)': 0.263, 'Matern 3/2': 0.248, 'Matern 5/2': 0.248, 'Gaussian (RBF)': 0.249}
+Chosen kernel: Matern 5/2
+Fitted kernel (standardised inputs): 3.82**2 * Matern(length_scale=[4.3, 13.5], nu=2.5) + WhiteKernel(noise_level=0.238)
+Length scales in input units: [  5.2686112  117.30147784]
+gamma (diagnostic): 2.42</code></pre>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-kriging-results" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-kriging-results-1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-kriging-results-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="kriging_metamodeling_files/figure-html/fig-kriging-results-output-2.png" data-ref-parent="fig-kriging-results" width="758" height="374" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-kriging-results-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Distribution of the standardised LOO residuals against N(0, 1).
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-kriging-results" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-kriging-results-2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-kriging-results-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="kriging_metamodeling_files/figure-html/fig-kriging-results-output-3.png" data-ref-parent="fig-kriging-results" width="758" height="374" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-kriging-results-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) Residuals against the ±3 outlier threshold. Green crosses are the residuals divided by γ (diagnostic only).
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-kriging-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Standardised LOO residuals for the selected Kriging model.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="api-summary" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="api-summary">API summary</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Function</th>
+<th style="text-align: left;">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="../api_reference/pod.fit_all_robust_mean_models.html"><code>pod.fit_all_robust_mean_models</code></a></td>
+<td style="text-align: left;">Fits the polynomial pool and the Kriging candidate, scores them, and picks the winner.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../api_reference/pod.select_cv_winner.html"><code>pod.select_cv_winner</code></a></td>
+<td style="text-align: left;">One-standard-error rule.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../api_reference/pod.build_kriging_candidate_kernels.html"><code>pod.build_kriging_candidate_kernels</code></a></td>
+<td style="text-align: left;">The four candidate kernels, <span class="math inline">\(\sigma^2 R + \tau^2\delta\)</span>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../api_reference/pod.ScaledGaussianProcessRegressor.html"><code>pod.ScaledGaussianProcessRegressor</code></a></td>
+<td style="text-align: left;">GP with UQLab-style input standardisation.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../api_reference/pod.build_kriging_gpr.html"><code>pod.build_kriging_gpr</code></a></td>
+<td style="text-align: left;">An unfitted Kriging model with the production settings.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../api_reference/pod.build_fixed_kernel_gpr.html"><code>pod.build_fixed_kernel_gpr</code></a></td>
+<td style="text-align: left;">A Kriging model with frozen hyperparameters and scaling, for bootstrap refits.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../api_reference/pod.compute_kriging_loo_residuals.html"><code>pod.compute_kriging_loo_residuals</code></a></td>
+<td style="text-align: left;">LOO means, variances, standardised residuals and <span class="math inline">\(\gamma\)</span> (<span class="src src-m26">M26</span> Eq. 10–19).</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../api_reference/pod.compute_kriging_group_loo_means.html"><code>pod.compute_kriging_group_loo_means</code></a></td>
+<td style="text-align: left;">Leave-one-group-out means, for resamples with duplicates.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../api_reference/pod.fit_variance_model.html"><code>pod.fit_variance_model</code></a></td>
+<td style="text-align: left;">Residuals (LOO for Kriging) and bandwidth for the variance model.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../api_reference/plotting.plot_kriging_diagnostics.html"><code>plotting.plot_kriging_diagnostics</code></a></td>
+<td style="text-align: left;">LOO residual histogram and outlier scatter (<span class="src src-m26">M26</span> Fig. 10).</td>
 </tr>
 </tbody>
 </table>
@@ -965,13 +1598,13 @@ Figure&nbsp;1: Kriging Model Fitting
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../docs/generalised_pod.html" class="pagination-link" aria-label="Generalised PoD Theory">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Generalised PoD Theory</span>
+      <a href="../docs/generalised_pod.html" class="pagination-link" aria-label="Generalised PoD">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Generalised PoD</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../docs/comparison.html" class="pagination-link" aria-label="Classical vs Generalised PoD">
-        <span class="nav-page-text">Classical vs Generalised PoD</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../docs/caching.html" class="pagination-link" aria-label="Caching Architecture">
+        <span class="nav-page-text">Caching Architecture</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

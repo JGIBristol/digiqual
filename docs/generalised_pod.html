@@ -6,6 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="description" content="How digiqual relaxes the assumptions of the classical â-versus-a method, with a worked classical-vs-generalised comparison.">
 
 <title>Generalised Probability of Detection – digiqual</title>
 <style>
@@ -26,6 +27,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -37,7 +73,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
 <link href="../docs/kriging_metamodeling.html" rel="next">
-<link href="../docs/cpp_acceleration.html" rel="prev">
+<link href="../docs/optimisation.html" rel="prev">
 <link href="../docs/www/favicon.png" rel="icon" type="image/png">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -48,7 +84,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-af7269421fbfc448936f832648c33468.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -146,7 +182,7 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">Detailed Manuals &amp; Theory</a></li><li class="breadcrumb-item"><a href="../docs/generalised_pod.html">Generalised PoD Theory</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/generalised_pod.html">Theory</a></li><li class="breadcrumb-item"><a href="../docs/generalised_pod.html">Generalised PoD</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -203,13 +239,13 @@ window.Quarto = {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
- <span class="menu-text">Detailed Manuals &amp; Theory</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">User Guides</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/gui_manual.html" class="sidebar-item-text sidebar-link">
@@ -222,47 +258,52 @@ window.Quarto = {
  <span class="menu-text">Automated Optimisation</span></a>
   </div>
 </li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
-  </div>
-</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Theory</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/generalised_pod.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">Generalised PoD Theory</span></a>
+ <span class="menu-text">Generalised PoD</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/kriging_metamodeling.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Kriging Metamodeling &amp; Calibration</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/comparison.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Classical vs Generalised PoD</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">DigiQual Caching Architecture</span></a>
+ <span class="menu-text">Kriging Metamodeling</span></a>
   </div>
 </li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
  <span class="menu-text">Development</span></a>
-          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/caching.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Caching Architecture</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/cpp_acceleration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">C++ Acceleration &amp; Fallback</span></a>
+  </div>
+</li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../docs/app_architecture.html" class="sidebar-item-text sidebar-link">
@@ -287,44 +328,40 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#automated-model-selection-relaxing-linearity" id="toc-automated-model-selection-relaxing-linearity" class="nav-link active" data-scroll-target="#automated-model-selection-relaxing-linearity">1. Automated Model Selection (Relaxing Linearity)</a>
+  <li><a href="#sec-model-selection" id="toc-sec-model-selection" class="nav-link active" data-scroll-target="#sec-model-selection"><span class="header-section-number">1</span> Choosing the expectation model (relaxing linearity)</a></li>
+  <li><a href="#sec-variance" id="toc-sec-variance" class="nav-link" data-scroll-target="#sec-variance"><span class="header-section-number">2</span> Modelling heteroscedasticity (relaxing constant variance)</a></li>
+  <li><a href="#sec-distribution" id="toc-sec-distribution" class="nav-link" data-scroll-target="#sec-distribution"><span class="header-section-number">3</span> Inferring the error distribution (relaxing normality)</a></li>
+  <li><a href="#sec-multidim" id="toc-sec-multidim" class="nav-link" data-scroll-target="#sec-multidim"><span class="header-section-number">4</span> Multi-dimensional evaluation (marginalisation and slicing)</a>
   <ul class="collapse">
-  <li><a href="#kriging-covariance-optimization-anisotropic-fitting-malkiel-2026" id="toc-kriging-covariance-optimization-anisotropic-fitting-malkiel-2026" class="nav-link" data-scroll-target="#kriging-covariance-optimization-anisotropic-fitting-malkiel-2026">Kriging Covariance Optimization &amp; Anisotropic Fitting (Malkiel 2026)</a></li>
-  <li><a href="#standardized-loo-residual-outlier-calibration-malkiel-2026" id="toc-standardized-loo-residual-outlier-calibration-malkiel-2026" class="nav-link" data-scroll-target="#standardized-loo-residual-outlier-calibration-malkiel-2026">Standardized LOO Residual Outlier Calibration (Malkiel 2026)</a></li>
+  <li><a href="#sec-marginalisation" id="toc-sec-marginalisation" class="nav-link" data-scroll-target="#sec-marginalisation"><span class="header-section-number">4.1</span> Active marginalisation (nuisance parameters)</a></li>
+  <li><a href="#sec-slicing" id="toc-sec-slicing" class="nav-link" data-scroll-target="#sec-slicing"><span class="header-section-number">4.2</span> Parameter slicing (constant parameters)</a></li>
   </ul></li>
-  <li><a href="#modeling-heteroscedasticity-relaxing-constant-variance" id="toc-modeling-heteroscedasticity-relaxing-constant-variance" class="nav-link" data-scroll-target="#modeling-heteroscedasticity-relaxing-constant-variance">2. Modeling Heteroscedasticity (Relaxing Constant Variance)</a>
+  <li><a href="#sec-bootstrap" id="toc-sec-bootstrap" class="nav-link" data-scroll-target="#sec-bootstrap"><span class="header-section-number">5</span> Bootstrapping for confidence bounds</a></li>
+  <li><a href="#sec-sobol" id="toc-sec-sobol" class="nav-link" data-scroll-target="#sec-sobol"><span class="header-section-number">6</span> Global sensitivity analysis (Sobol indices)</a></li>
+  <li><a href="#summary-how-each-type-of-parameter-is-treated" id="toc-summary-how-each-type-of-parameter-is-treated" class="nav-link" data-scroll-target="#summary-how-each-type-of-parameter-is-treated">Summary: how each type of parameter is treated</a></li>
+  <li><a href="#sec-worked-example" id="toc-sec-worked-example" class="nav-link" data-scroll-target="#sec-worked-example"><span class="header-section-number">7</span> Worked example: classical vs generalised</a>
   <ul class="collapse">
-  <li><a href="#the-mathematics" id="toc-the-mathematics" class="nav-link" data-scroll-target="#the-mathematics">The Mathematics</a></li>
+  <li><a href="#sec-example-setup" id="toc-sec-example-setup" class="nav-link" data-scroll-target="#sec-example-setup"><span class="header-section-number">7.1</span> Setup and data</a></li>
+  <li><a href="#sec-example-classical" id="toc-sec-example-classical" class="nav-link" data-scroll-target="#sec-example-classical"><span class="header-section-number">7.2</span> The classical approach</a></li>
+  <li><a href="#sec-example-generalised" id="toc-sec-example-generalised" class="nav-link" data-scroll-target="#sec-example-generalised"><span class="header-section-number">7.3</span> The generalised approach</a></li>
+  <li><a href="#sec-example-comparison" id="toc-sec-example-comparison" class="nav-link" data-scroll-target="#sec-example-comparison"><span class="header-section-number">7.4</span> Head-to-head</a></li>
   </ul></li>
-  <li><a href="#inferring-error-distributions-relaxing-normality" id="toc-inferring-error-distributions-relaxing-normality" class="nav-link" data-scroll-target="#inferring-error-distributions-relaxing-normality">3. Inferring Error Distributions (Relaxing Normality)</a>
-  <ul class="collapse">
-  <li><a href="#the-mathematics-1" id="toc-the-mathematics-1" class="nav-link" data-scroll-target="#the-mathematics-1">The Mathematics</a></li>
-  </ul></li>
-  <li><a href="#multi-dimensional-evaluation-marginalisation-slicing" id="toc-multi-dimensional-evaluation-marginalisation-slicing" class="nav-link" data-scroll-target="#multi-dimensional-evaluation-marginalisation-slicing">4. Multi-Dimensional Evaluation (Marginalisation &amp; Slicing)</a>
-  <ul class="collapse">
-  <li><a href="#active-marginalisation-nuisance-parameters" id="toc-active-marginalisation-nuisance-parameters" class="nav-link" data-scroll-target="#active-marginalisation-nuisance-parameters">Active Marginalisation (Nuisance Parameters)</a></li>
-  <li><a href="#parameter-slicing-constant-parameters" id="toc-parameter-slicing-constant-parameters" class="nav-link" data-scroll-target="#parameter-slicing-constant-parameters">Parameter Slicing (Constant Parameters)</a></li>
-  </ul></li>
-  <li><a href="#bootstrapping-for-confidence-bounds" id="toc-bootstrapping-for-confidence-bounds" class="nav-link" data-scroll-target="#bootstrapping-for-confidence-bounds">5. Bootstrapping for Confidence Bounds</a>
-  <ul class="collapse">
-  <li><a href="#the-process" id="toc-the-process" class="nav-link" data-scroll-target="#the-process">The Process</a></li>
-  </ul></li>
-  <li><a href="#global-sensitivity-analysis-sobol-indices" id="toc-global-sensitivity-analysis-sobol-indices" class="nav-link" data-scroll-target="#global-sensitivity-analysis-sobol-indices">6. Global Sensitivity Analysis (Sobol Indices)</a>
-  <ul class="collapse">
-  <li><a href="#the-mathematics-2" id="toc-the-mathematics-2" class="nav-link" data-scroll-target="#the-mathematics-2">The Mathematics</a></li>
-  </ul></li>
-  <li><a href="#summary-the-3-tier-parameter-taxonomy" id="toc-summary-the-3-tier-parameter-taxonomy" class="nav-link" data-scroll-target="#summary-the-3-tier-parameter-taxonomy">Summary: The 3-Tier Parameter Taxonomy</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/generalised_pod.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/gui_manual.html">Detailed Manuals &amp; Theory</a></li><li class="breadcrumb-item"><a href="../docs/generalised_pod.html">Generalised PoD Theory</a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/generalised_pod.html">Theory</a></li><li class="breadcrumb-item"><a href="../docs/generalised_pod.html">Generalised PoD</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Generalised Probability of Detection</h1>
 </div>
 
+<div>
+  <div class="description">
+    How digiqual relaxes the assumptions of the classical â-versus-a method, with a worked classical-vs-generalised comparison.
+  </div>
+</div>
 
 
 <div class="quarto-title-meta">
@@ -339,79 +376,116 @@ window.Quarto = {
 </header>
 
 
-<p>In traditional non-destructive evaluation (NDE), the standard <span class="math inline">\(\hat{a}\)</span>-versus-<span class="math inline">\(a\)</span> approach relies on several restrictive assumptions: 1. <strong>Linearity</strong> of the signal response to defect size. 2. <strong>Homoscedasticity</strong> (constant variance) of noise across all defect sizes. 3. <strong>Normality</strong> (Gaussian shape) of the residuals.</p>
-<p>Interaction with complex physics—such as crack roughness or angle variations—often breaks these assumptions. <code>digiqual</code> implements a generalized framework based on Malkiel et al.&nbsp;(2025) to relax these constraints.</p>
-<section id="automated-model-selection-relaxing-linearity" class="level2">
-<h2 class="anchored" data-anchor-id="automated-model-selection-relaxing-linearity">1. Automated Model Selection (Relaxing Linearity)</h2>
-<p>Instead of forcing a linear relationship <span class="math inline">\(\hat{a} = \beta_0 + \beta_1 a\)</span>, <code>digiqual</code> treats the expectation model as a selection problem.</p>
-<p>It evaluates a pool of candidate models <span class="math inline">\(f(x)\)</span> including polynomials up to degree <span class="math inline">\(10\)</span> and Gaussian Process (Kriging) models. For each model, it performs <strong><span class="math inline">\(K\)</span>-fold Cross-Validation (CV)</strong> to estimate the Mean Squared Error (MSE): <span class="math display">\[ MSE_{CV} = \frac{1}{n} \sum_{i=1}^n (y_i - \hat{f}^{-k(i)}(x_i))^2 \]</span> Where <span class="math inline">\(\hat{f}^{-k(i)}\)</span> is the model trained without the <span class="math inline">\(k\)</span>-th fold containing observation <span class="math inline">\(i\)</span>. The model minimizing this error is automatically selected, balancing bias and variance.</p>
-<section id="kriging-covariance-optimization-anisotropic-fitting-malkiel-2026" class="level3">
-<h3 class="anchored" data-anchor-id="kriging-covariance-optimization-anisotropic-fitting-malkiel-2026">Kriging Covariance Optimization &amp; Anisotropic Fitting (Malkiel 2026)</h3>
-<p>When Kriging metamodeling is active, <code>digiqual</code> optimizes the covariance structure across 4 candidate kernel families with anisotropic per-dimension length scale vectors <span class="math inline">\(\boldsymbol{\theta} = [\theta_1, \dots, \theta_d]\)</span>: - <strong>Matérn 3/2:</strong> Smoothness <span class="math inline">\(\nu=1.5\)</span> - <strong>Matérn 5/2:</strong> Smoothness <span class="math inline">\(\nu=2.5\)</span> - <strong>Gaussian (RBF):</strong> Infinite smoothness - <strong>Rational Quadratic:</strong> Scale mixture of Gaussian kernels (single shared length scale)</p>
-<p>Every candidate includes a white-noise (nugget) variance <span class="math inline">\(\tau^2\)</span> that is learned by maximum likelihood alongside <span class="math inline">\(\boldsymbol{\theta}\)</span>, and the response is standardised before fitting. Learning <span class="math inline">\(\tau^2\)</span> stops the surrogate from interpolating scatter caused by variables it was not trained on. With a fixed, too-small noise level it would shrink a length scale onto that scatter and produce a spiky, unstable surface (see <a href="../docs/kriging_metamodeling.html">Kriging Metamodeling</a>). The kernel minimising the <span class="math inline">\(K\)</span>-fold <span class="math inline">\(MSE_{CV}\)</span> above is selected. Leave-One-Out predictions <span class="math inline">\(\mu_{\hat{Y}_{-i}}\)</span> and variances <span class="math inline">\(\sigma_{\hat{Y}_{-i}}^2\)</span> are then computed via the matrix inverse <span class="math inline">\(B = S^{-1}\)</span> for outlier calibration.</p>
-</section>
-<section id="standardized-loo-residual-outlier-calibration-malkiel-2026" class="level3">
-<h3 class="anchored" data-anchor-id="standardized-loo-residual-outlier-calibration-malkiel-2026">Standardized LOO Residual Outlier Calibration (Malkiel 2026)</h3>
-<p><code>digiqual</code> validates surrogate uncertainty by computing standardized LOO residual errors: <span class="math display">\[ e_i = \frac{y_i - \mu_{\hat{Y}_{-i}}}{\sigma_{\hat{Y}_{-i}}} \]</span> If extreme outliers occur where <span class="math inline">\(\max |e_i| &gt; 3\)</span>, the engine automatically computes a conservative variance scaling factor: <span class="math display">\[ \gamma = \max\left(1.0, \frac{\max |e_i|}{3}\right) \]</span> and inflates prediction variance <span class="math inline">\(\hat{\sigma}^2 \leftarrow \gamma \cdot \hat{\sigma}^2\)</span> to guarantee mathematically reliable 95% worst-case bounds.</p>
-</section>
-</section>
-<section id="modeling-heteroscedasticity-relaxing-constant-variance" class="level2">
-<h2 class="anchored" data-anchor-id="modeling-heteroscedasticity-relaxing-constant-variance">2. Modeling Heteroscedasticity (Relaxing Constant Variance)</h2>
-<p>Signal scatter often increases with flaw size. <code>digiqual</code> abandons the constant variance assumption <span class="math inline">\(\sigma^2 = c\)</span>, replacing it with a localized estimation <span class="math inline">\(\sigma^2(x)\)</span>.</p>
-<section id="the-mathematics" class="level3">
-<h3 class="anchored" data-anchor-id="the-mathematics">The Mathematics</h3>
-<p>It implements a <strong>Nadaraya-Watson Gaussian kernel average smoother</strong>. The variance at any point <span class="math inline">\(x\)</span> is calculated as a weighted average of the surrounding squared residuals <span class="math inline">\(e_i^2 = (y_i - \hat{y}_i)^2\)</span>: <span class="math display">\[ \hat{\sigma}^2(x) = \frac{\sum_{i=1}^n K_h(x - x_i) e_i^2}{\sum_{i=1}^n K_h(x - x_i)} \]</span> Where <span class="math inline">\(K_h\)</span> is the Gaussian kernel with bandwidth <span class="math inline">\(h\)</span>: <span class="math display">\[ K_h(u) = \frac{1}{\sqrt{2\pi h^2}} \exp\left(-\frac{u^2}{2h^2}\right) \]</span> The optimal bandwidth <span class="math inline">\(h\)</span> is determined automatically via <strong>Leave-One-Out Cross-Validation (LOO-CV)</strong>.</p>
-</section>
-</section>
-<section id="inferring-error-distributions-relaxing-normality" class="level2">
-<h2 class="anchored" data-anchor-id="inferring-error-distributions-relaxing-normality">3. Inferring Error Distributions (Relaxing Normality)</h2>
-<p>Noise is rarely perfectly Gaussian. <code>digiqual</code> infers the true shape of the error.</p>
-<section id="the-mathematics-1" class="level3">
-<h3 class="anchored" data-anchor-id="the-mathematics-1">The Mathematics</h3>
-<p>Residuals are first standardized into <span class="math inline">\(Z\)</span>-scores using the local standard deviation: <span class="math display">\[ Z_i = \frac{y_i - \hat{f}(x_i)}{\hat{\sigma}(x_i)} \]</span> These <span class="math inline">\(Z\)</span>-scores are then fitted against an expanded suite of candidate distributions: Normal (<code>norm</code>), Gumbel Right (<code>gumbel_r</code>), Gumbel Left (<code>gumbel_l</code> - highly relevant for skewed ultrasonic crack reflection data), Weibull Minimum (<code>weibull_min</code>), Weibull Maximum (<code>weibull_max</code>), Gamma (<code>gamma</code>), Exponential (<code>expon</code>), Logistic (<code>logistic</code>), Laplace (<code>laplace</code>), Student’s t (<code>t</code>), Beta (<code>beta</code>), and Uniform (<code>uniform</code>). The best-fitting distribution is selected using the <strong>Akaike Information Criterion (AIC)</strong>: <span class="math display">\[ AIC = 2k - 2\ln(\hat{L}) \]</span> Where <span class="math inline">\(k\)</span> is the number of parameters and <span class="math inline">\(\hat{L}\)</span> is the Maximum Likelihood.</p>
-</section>
-</section>
-<section id="multi-dimensional-evaluation-marginalisation-slicing" class="level2">
-<h2 class="anchored" data-anchor-id="multi-dimensional-evaluation-marginalisation-slicing">4. Multi-Dimensional Evaluation (Marginalisation &amp; Slicing)</h2>
-<p>When evaluating multidimensional datasets with additional variables (e.g., angle <span class="math inline">\(\theta\)</span>, roughness <span class="math inline">\(R\)</span>), <code>digiqual</code> fits the surrogate model to the <em>entire</em> <span class="math inline">\(n\)</span>-dimensional parameter space. To project this down to a 1D or 2D Probability of Detection curve, it uses two distinct techniques:</p>
-<section id="active-marginalisation-nuisance-parameters" class="level3">
-<h3 class="anchored" data-anchor-id="active-marginalisation-nuisance-parameters">Active Marginalisation (Nuisance Parameters)</h3>
-<p>For parameters treated as random noise, the expected PoD for a Parameter of Interest (PoI) vector <span class="math inline">\(\mathbf{x}\)</span> is calculated by integrating the conditional PoD over the probability density function <span class="math inline">\(p(\mathbf{z})\)</span> of the nuisance variables <span class="math inline">\(\mathbf{z}\)</span>: <span class="math display">\[PoD(\mathbf{x}) = \int_{\Omega_z} PoD(\mathbf{x}, \mathbf{z}) p(\mathbf{z}) d\mathbf{z}\]</span></p>
-<p><code>digiqual</code> approximates this integral computationally via Monte Carlo integration (Latin Hypercube Sampling) to average the signal response across the noise spectrum.</p>
-<p>If custom nuisance distributions are configured (such as Normal, Lognormal, or Weibull), <code>digiqual</code> scales the initial standard LHS samples (lying in <span class="math inline">\([0, 1]^d\)</span>) using <strong>Inverse Transform Sampling</strong>. For each nuisance dimension <span class="math inline">\(j\)</span>, the physical values are obtained by applying the target distribution’s Cumulative Distribution Function (CDF) inverse, or Percent Point Function (PPF), denoted <span class="math inline">\(F_j^{-1}\)</span>: <span class="math display">\[ z_{i, j} = F_j^{-1}(u_{i, j}) \]</span> where <span class="math inline">\(u_{i, j}\)</span> is the <span class="math inline">\([0,1]\)</span> space-filling LHS coordinate.</p>
-</section>
-<section id="parameter-slicing-constant-parameters" class="level3">
-<h3 class="anchored" data-anchor-id="parameter-slicing-constant-parameters">Parameter Slicing (Constant Parameters)</h3>
-<p>For parameters that are neither plotted nor integrated out, <code>digiqual</code> treats them as strict mathematical constants. The evaluation grid takes a “slice” through the <span class="math inline">\(n\)</span>-dimensional response surface at these specific values (defaulting to the parameter’s median), allowing you to explore specific physical scenarios without retraining the underlying model.</p>
-</section>
-</section>
-<section id="bootstrapping-for-confidence-bounds" class="level2">
-<h2 class="anchored" data-anchor-id="bootstrapping-for-confidence-bounds">5. Bootstrapping for Confidence Bounds</h2>
-<p>Because the model is non-linear and non-normal, traditional analytical confidence bounds are invalid.</p>
-<section id="the-process" class="level3">
-<h3 class="anchored" data-anchor-id="the-process">The Process</h3>
-<p><code>digiqual</code> uses <strong>Bootstrap resampling</strong>:</p>
+<p>The classical <span class="math inline">\(\hat{a}\)</span>-versus-<span class="math inline">\(a\)</span> method fits a straight line to the signal response and assumes:</p>
 <ol type="1">
-<li><p>Draw <span class="math inline">\(N\)</span> samples with replacement from the original dataset.</p></li>
-<li><p>Completely physically re-fit the mean model, variance model, and error distribution.</p></li>
-<li><p>Calculate the PoD curve.</p></li>
-<li><p>Repeat this <span class="math inline">\(B\)</span> times (typically <span class="math inline">\(B=1000\)</span>).</p></li>
-<li><p>Extract the percentiles at every point <span class="math inline">\(a\)</span> to form the robust confidence interval curves across multiple standard confidence levels (50%, 90%, 95%, 99%) simultaneously (e.g., <span class="math inline">\(PoD_{50}\)</span>, <span class="math inline">\(PoD_{90}\)</span>, <span class="math inline">\(PoD_{95}\)</span>, <span class="math inline">\(PoD_{99}\)</span>). This builds the complete reliability matrix mapping target PoDs and confidence bounds.</p></li>
+<li><strong>Linearity</strong> of the signal response with defect size, possibly after a log transform;</li>
+<li><strong>Homoscedasticity</strong>: the scatter around that line has constant variance;</li>
+<li><strong>Normality</strong>: the scatter is Gaussian.</li>
+</ol>
+<p>Real inspections often break all three. Signals saturate, and roughness, angle or other nuisance effects make the scatter grow and become skewed. When that happens the classical PoD curve and its confidence bounds can be badly wrong. <code>digiqual</code> implements the generalised framework of Malkiel et al.&nbsp;(2025) <span class="src src-m25">M25</span>, which relaxes each assumption in turn. The sections below follow the steps of that framework; <a href="#sec-worked-example" class="quarto-xref">Section&nbsp;7</a> runs both methods on the same data so you can see the difference.</p>
+<p>The Kriging candidate model has its own page, <a href="../docs/kriging_metamodeling.html">Kriging Metamodeling</a>. It covers the GP maths, kernel choice, LOO diagnostics and pitfalls, and tags where each element comes from (<span class="src src-m25">M25</span>, <span class="src src-m26">M26</span>, <span class="src src-uqlab">UQLab</span> or <span class="src src-digiqual">digiqual</span>).</p>
+<section id="sec-model-selection" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="sec-model-selection"><span class="header-section-number">1</span> Choosing the expectation model (relaxing linearity)</h2>
+<p>Instead of forcing <span class="math inline">\(\hat{a} = \beta_0 + \beta_1 a\)</span>, <code>digiqual</code> treats the mean response as a model-selection problem. The candidates are polynomials of degree 1 to 10 and one Kriging model. Each is scored by <strong>10-fold cross-validation</strong> <span class="src src-m25">M25</span> (Eq. 2.7–2.8):</p>
+<p><span class="math display">\[
+MSE_j = \frac{1}{N_j}\sum_{i \in \text{fold } j}\left(y_i - \hat{f}^{\setminus j}(x_i)\right)^2,
+\qquad
+CV_{(10)} = \frac{1}{10}\sum_{j=1}^{10} MSE_j
+\]</span></p>
+<p>where <span class="math inline">\(\hat{f}^{\setminus j}\)</span> is the model trained without fold <span class="math inline">\(j\)</span>.</p>
+<p><strong>Picking the winner: the one-standard-error rule.</strong> In <span class="src src-m25">M25</span> (Fig. 5) the 3rd-, 4th- and 5th-order polynomials and Kriging all had almost the same CV error, and the authors chose the cubic “since it is the simplest one among those with smaller errors”. <code>digiqual</code> turns that judgement into a fixed rule <span class="src src-digiqual">digiqual</span>:</p>
+<ol type="1">
+<li>Find the model with the lowest <span class="math inline">\(CV_{(10)}\)</span>.</li>
+<li>Compute its standard error, <span class="math inline">\(SE = \operatorname{std}(MSE_1, \dots, MSE_{10}) / \sqrt{10}\)</span>. The <span class="src src-m25">M25</span> reference code records this quantity.</li>
+<li>Choose the <strong>simplest</strong> model with <span class="math inline">\(CV_{(10)} \le \min CV + SE\)</span>. The complexity order is Polynomial 1, 2, …, 10, then Kriging.</li>
+</ol>
+<p>A more flexible model, and Kriging in particular, is therefore chosen only when it is <em>clearly</em> better, not when it wins by less than the noise in the CV estimate. You can always override the choice with <code>model_override="kriging"</code> or <code>"polynomial"</code> (and <code>force_degree</code>), or with the model selector in the app.</p>
+<p><strong>Example.</strong> The true mean response below is quadratic in flaw length, plus a weak linear effect of probe angle. The cubic polynomial has the lowest CV error, but the fold-to-fold spread is large (the outlier lands in one fold), so every model except Poly 1 is within one standard error of it. Poly 2 is the simplest of those, so it is the automatic choice (red bar). In this case that is also the true model.</p>
+<div id="cell-fig-one-se" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.pod <span class="im">import</span> fit_all_robust_mean_models, plot_model_selection</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>N <span class="op">=</span> <span class="dv">100</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>length <span class="op">=</span> rng.uniform(<span class="fl">0.5</span>, <span class="fl">5.0</span>, N)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>angle <span class="op">=</span> rng.uniform(<span class="op">-</span><span class="fl">15.0</span>, <span class="fl">15.0</span>, N)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> <span class="fl">2.0</span> <span class="op">*</span> length <span class="op">-</span> <span class="fl">0.3</span> <span class="op">*</span> length<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> <span class="fl">0.05</span> <span class="op">*</span> angle <span class="op">+</span> rng.normal(<span class="dv">0</span>, <span class="fl">0.3</span>, N)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>y[<span class="dv">10</span>] <span class="op">+=</span> <span class="fl">3.5</span>  <span class="co"># one outlier</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>models, cv_scores, winner <span class="op">=</span> fit_all_robust_mean_models(np.column_stack([length, angle]), y)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>lowest <span class="op">=</span> <span class="bu">min</span>(cv_scores, key<span class="op">=</span>cv_scores.get)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Lowest CV MSE: </span><span class="sc">{</span>lowest<span class="sc">}</span><span class="ss">   Selected (one-SE rule): </span><span class="sc">{</span>winner<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>plot_model_selection(cv_scores, cv_winner_key<span class="op">=</span>winner, cv_se<span class="op">=</span>models[winner].cv_se_)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Lowest CV MSE: ('Polynomial', 3)   Selected (one-SE rule): ('Polynomial', 2)</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div id="fig-one-se" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-one-se-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generalised_pod_files/figure-html/fig-one-se-output-2.png" width="942" height="519" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-one-se-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Model selection with the one-standard-error rule. The lowest CV error (bold row, red dash-dot line) belongs to Poly 3, but every bar below the dashed min + 1 SE line is statistically indistinguishable from it, so the simplest of those, Poly 2, is selected.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>The Kriging candidate.</strong> Kriging enters this comparison in two stages. First its correlation function is chosen by leave-one-out error <span class="src src-m26">M26</span>. Then that one kernel is scored by the same 10-fold CV as the polynomials. Details, including the LOO residual diagnostics and the factor <span class="math inline">\(\gamma\)</span>, are on the <a href="../docs/kriging_metamodeling.html#sec-loo">Kriging Metamodeling</a> page. Kriging is skipped for datasets above 1000 samples.</p>
+</section>
+<section id="sec-variance" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="sec-variance"><span class="header-section-number">2</span> Modelling heteroscedasticity (relaxing constant variance)</h2>
+<p>Signal scatter often changes across the input space. <code>digiqual</code> replaces the constant variance <span class="math inline">\(\sigma^2 = c\)</span> with a local estimate <span class="math inline">\(\sigma^2(x)\)</span>, using a <strong>Nadaraya-Watson Gaussian kernel smoother</strong> of the squared residuals <span class="math inline">\(e_i^2 = (y_i - \hat{y}_i)^2\)</span> <span class="src src-m25">M25</span> (Eq. 2.9–2.11):</p>
+<p><span class="math display">\[ \hat{\sigma}^2(x) = \frac{\sum_{i=1}^n K_h(x - x_i)\, e_i^2}{\sum_{i=1}^n K_h(x - x_i)},
+\qquad
+K_h(u) = \frac{1}{\sqrt{2\pi h^2}} \exp\left(-\frac{u^2}{2h^2}\right) \]</span></p>
+<p>With several inputs, <span class="math inline">\(x - x_i\)</span> is measured on <strong>standardised</strong> inputs (each divided by its standard deviation) <span class="src src-digiqual">digiqual</span>, so one bandwidth treats all inputs alike whatever their units; <span class="src src-m25">M25</span> had a single input, where this only rescales <span class="math inline">\(h\)</span>. The bandwidth <span class="math inline">\(h\)</span>, in standard deviations, is chosen automatically by leave-one-out cross-validation, or fixed with <code>bandwidth_ratio</code>. For polynomial models the residuals are the usual in-sample ones. For Kriging they are leave-one-out residuals (<a href="../docs/kriging_metamodeling.html#sec-variance-bootstrap">why</a>).</p>
+</section>
+<section id="sec-distribution" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="sec-distribution"><span class="header-section-number">3</span> Inferring the error distribution (relaxing normality)</h2>
+<p>The residuals are standardised by the local standard deviation,</p>
+<p><span class="math display">\[ Z_i = \frac{y_i - \hat{f}(x_i)}{\hat{\sigma}(x_i)}, \]</span></p>
+<p>and the <span class="math inline">\(Z_i\)</span> are fitted by maximum likelihood to a suite of candidate distributions <span class="src src-m25">M25</span> (§2f): Normal (<code>norm</code>), Gumbel Right (<code>gumbel_r</code>), Gumbel Left (<code>gumbel_l</code>, often a good fit to skewed ultrasonic crack reflections), Weibull Minimum (<code>weibull_min</code>), Weibull Maximum (<code>weibull_max</code>), Gamma (<code>gamma</code>), Exponential (<code>expon</code>), Logistic (<code>logistic</code>), Laplace (<code>laplace</code>), Student’s t (<code>t</code>), Beta (<code>beta</code>) and Uniform (<code>uniform</code>). The best fit is selected by the <strong>Akaike Information Criterion</strong>:</p>
+<p><span class="math display">\[ AIC = 2k - 2\ln(\hat{L}) \]</span></p>
+<p>where <span class="math inline">\(k\)</span> is the number of parameters and <span class="math inline">\(\hat{L}\)</span> is the maximised likelihood. A fit is only accepted if its support contains every <span class="math inline">\(Z_i\)</span> with a margin <span class="src src-digiqual">digiqual</span>: bounded families (Weibull, Gamma, Exponential, Beta, Uniform) can otherwise place a support endpoint on the most extreme residual, win on AIC, and make the PoD jump to exactly 0 or 1 just outside the data. UQLab, used in <span class="src src-m25">M25</span>, likewise excludes unsuitable distributions. The PoD at each point is then <span class="math inline">\(1 - F\big((t - \hat{f}(x))/\hat{\sigma}(x)\big)\)</span> for threshold <span class="math inline">\(t\)</span> and the inferred CDF <span class="math inline">\(F\)</span>.</p>
+</section>
+<section id="sec-multidim" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="sec-multidim"><span class="header-section-number">4</span> Multi-dimensional evaluation (marginalisation and slicing)</h2>
+<p><code>digiqual</code> fits the mean and variance models to the <em>entire</em> <span class="math inline">\(n\)</span>-dimensional input space. To project this onto a 1D or 2D PoD, every input not being plotted is either integrated out or held fixed.</p>
+<section id="sec-marginalisation" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="sec-marginalisation"><span class="header-section-number">4.1</span> Active marginalisation (nuisance parameters)</h3>
+<p>For a nuisance vector <span class="math inline">\(\mathbf{z}\)</span> with density <span class="math inline">\(p(\mathbf{z})\)</span>, the PoD for parameters of interest <span class="math inline">\(\mathbf{x}\)</span> is</p>
+<p><span class="math display">\[PoD(\mathbf{x}) = \int_{\Omega_z} PoD(\mathbf{x}, \mathbf{z})\, p(\mathbf{z})\, d\mathbf{z}\]</span></p>
+<p><code>digiqual</code> approximates this integral by Monte Carlo integration with Latin Hypercube Sampling. Nuisance inputs are uniform over their observed range by default. For a custom distribution (Normal, Lognormal or Weibull), the <span class="math inline">\([0, 1]\)</span> LHS coordinates <span class="math inline">\(u_{i,j}\)</span> are mapped through the inverse CDF, <span class="math inline">\(z_{i,j} = F_j^{-1}(u_{i,j})\)</span>. The <a href="../docs/qs_class.html">Quick Start</a> explains why a realistic nuisance distribution matters.</p>
+</section>
+<section id="sec-slicing" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="sec-slicing"><span class="header-section-number">4.2</span> Parameter slicing (constant parameters)</h3>
+<p>Inputs that are neither plotted nor integrated out are held constant, at their median by default or at a value you choose. The PoD is then a “slice” through the response surface, which lets you explore a specific scenario without refitting the models.</p>
+</section>
+</section>
+<section id="sec-bootstrap" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="sec-bootstrap"><span class="header-section-number">5</span> Bootstrapping for confidence bounds</h2>
+<p>With a non-linear, non-normal model, the classical analytical confidence bounds no longer apply. <code>digiqual</code> uses <strong>bootstrap resampling</strong> <span class="src src-m25">M25</span> (§2i):</p>
+<ol type="1">
+<li>Draw <span class="math inline">\(N\)</span> samples with replacement from the data.</li>
+<li>Refit the mean model, variance model and error distribution. The model <em>type</em> (polynomial degree or Kriging kernel) and the distribution family stay fixed; for Kriging the hyperparameters are frozen too (<a href="../docs/kriging_metamodeling.html#sec-variance-bootstrap">details</a>).</li>
+<li>Calculate the PoD curve.</li>
+<li>Repeat <span class="math inline">\(B\)</span> times (typically <span class="math inline">\(B = 1000\)</span>).</li>
+<li>Take percentiles at every point to form confidence bounds at several levels at once (50 %, 90 %, 95 %, 99 %). From these, <code>digiqual</code> builds the reliability matrix of <span class="math inline">\(a_{X/Y}\)</span> values (e.g.&nbsp;<span class="math inline">\(a_{90/95}\)</span>).</li>
 </ol>
 </section>
+<section id="sec-sobol" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="sec-sobol"><span class="header-section-number">6</span> Global sensitivity analysis (Sobol indices)</h2>
+<p>To show which inputs drive the signal, <code>digiqual</code> computes <strong>total-order Sobol indices</strong> of the fitted mean response. For <span class="math inline">\(Y = f(X_1, \dots, X_d)\)</span>,</p>
+<p><span class="math display">\[ S_{T_i} = \frac{E_{\sim i}\left(V_{i}(Y \mid X_{\sim i})\right)}{V(Y)} = 1 - \frac{V_{\sim i}\left(E_i(Y \mid X_{\sim i})\right)}{V(Y)} \]</span></p>
+<p>where <span class="math inline">\(X_{\sim i}\)</span> denotes all inputs except <span class="math inline">\(X_i\)</span>. <span class="math inline">\(S_{T_i}\)</span> includes <span class="math inline">\(X_i\)</span>’s direct effect and all its interactions. The indices are estimated with <code>SALib</code> by sampling the input space and evaluating the mean model. They are cached with the variance model and shown as percentages in the app.</p>
 </section>
-<section id="global-sensitivity-analysis-sobol-indices" class="level2">
-<h2 class="anchored" data-anchor-id="global-sensitivity-analysis-sobol-indices">6. Global Sensitivity Analysis (Sobol Indices)</h2>
-<p>To help engineers identify which inputs contribute most to signal variance, <code>digiqual</code> calculates <strong>Total-Order Sobol Sensitivity Indices</strong> (<span class="math inline">\(S_T\)</span>) using Variance-Based Sensitivity Analysis.</p>
-<section id="the-mathematics-2" class="level3">
-<h3 class="anchored" data-anchor-id="the-mathematics-2">The Mathematics</h3>
-<p>For a model output <span class="math inline">\(Y = f(X_1, X_2, \dots, X_d)\)</span>, the total-order sensitivity index <span class="math inline">\(S_{T_i}\)</span> measures the total contribution of input <span class="math inline">\(X_i\)</span> to the variance of <span class="math inline">\(Y\)</span>, including its direct effect and all interaction terms of any order: <span class="math display">\[ S_{T_i} = \frac{E_{\sim i}(V_{i}(Y \mid X_{\sim i}))}{V(Y)} = 1 - \frac{V_{\sim i}(E_i(Y \mid X_{\sim i}))}{V(Y)} \]</span> where <span class="math inline">\(X_{\sim i}\)</span> denotes all variables except <span class="math inline">\(X_i\)</span>.</p>
-<p><code>digiqual</code> uses the <code>SALib</code> package to compute these indices: 1. It defines the parameter space bounds. 2. It samples the space-filling coordinates. 3. It evaluates the surrogate expectation model (mean response) at these coordinates. 4. It estimates the total-order indices <span class="math inline">\(S_T\)</span> for each variable, which are cached and displayed as percentages in the GUI.</p>
-</section>
-</section>
-<section id="summary-the-3-tier-parameter-taxonomy" class="level2">
-<h2 class="anchored" data-anchor-id="summary-the-3-tier-parameter-taxonomy">Summary: The 3-Tier Parameter Taxonomy</h2>
-<p>To understand how <code>digiqual</code> handles high-dimensional data, it is helpful to see exactly how each parameter type is treated during the three phases of reliability assessment:</p>
+<section id="summary-how-each-type-of-parameter-is-treated" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="summary-how-each-type-of-parameter-is-treated">Summary: how each type of parameter is treated</h2>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 25%">
@@ -421,35 +495,418 @@ window.Quarto = {
 </colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: left;">Parameter Type</th>
-<th style="text-align: left;">1. Model Fit (Training Phase)</th>
-<th style="text-align: left;">2. Evaluation Phase (Mean Curve)</th>
-<th style="text-align: left;">3. PoD Generation (Bootstrapping)</th>
+<th style="text-align: left;">Parameter type</th>
+<th style="text-align: left;">Model fit</th>
+<th style="text-align: left;">Mean curve / PoD</th>
+<th style="text-align: left;">Bootstrap</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;"><strong>Parameter(s) of Interest (PoI)</strong></td>
-<td style="text-align: left;">Treated as a standard geometric dimension to train the n-dimensional surrogate model.</td>
-<td style="text-align: left;">Defines the evaluation grid. Steps evenly from its minimum to maximum value to form the plot axes.</td>
-<td style="text-align: left;">Forms the primary axes for the final Probability of Detection confidence bounds.</td>
+<td style="text-align: left;"><strong>Parameter(s) of interest</strong></td>
+<td style="text-align: left;">Input dimension of the surrogate.</td>
+<td style="text-align: left;">Defines the evaluation grid (the plot axes).</td>
+<td style="text-align: left;">Same grid in every resample.</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><strong>Sliced Parameter (Constant)</strong></td>
-<td style="text-align: left;">Treated as a standard geometric dimension. The model learns its physical impact globally.</td>
-<td style="text-align: left;">Held <strong>strictly constant</strong> at a user-defined value. Acts as a targeted, multi-dimensional “laser beam” slice.</td>
-<td style="text-align: left;">Remains rigidly locked at the exact same constant value across all bootstrap resamples.</td>
+<td style="text-align: left;"><strong>Sliced (constant)</strong></td>
+<td style="text-align: left;">Input dimension of the surrogate.</td>
+<td style="text-align: left;">Held at a fixed value.</td>
+<td style="text-align: left;">Held at the same value in every resample.</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;"><strong>Nuisance Parameter (Marginalised)</strong></td>
-<td style="text-align: left;">Treated as a standard geometric dimension. The model learns its physical impact globally.</td>
-<td style="text-align: left;"><strong>Randomly sampled</strong> via Monte Carlo integration across its physical bounds (Uniform or custom Normal/Lognormal/Weibull). Results are averaged out.</td>
-<td style="text-align: left;">Re-sampled and averaged inside <em>every single</em> bootstrap iteration to capture real-world uncertainty.</td>
+<td style="text-align: left;"><strong>Nuisance (marginalised)</strong></td>
+<td style="text-align: left;">Input dimension of the surrogate.</td>
+<td style="text-align: left;">Monte Carlo sampled from its distribution and averaged out.</td>
+<td style="text-align: left;">Re-sampled and averaged in every resample.</td>
 </tr>
 </tbody>
 </table>
+</section>
+<section id="sec-worked-example" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="sec-worked-example"><span class="header-section-number">7</span> Worked example: classical vs generalised</h2>
+<p>This example generates data that deliberately breaks the classical assumptions and runs both methods on it. The signal grows quadratically with flaw length, falls with misalignment angle, and has scatter that grows with surface roughness, a nuisance parameter.</p>
+<section id="sec-example-setup" class="level3" data-number="7.1">
+<h3 data-number="7.1" class="anchored" data-anchor-id="sec-example-setup"><span class="header-section-number">7.1</span> Setup and data</h3>
+<div id="58124476" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.core <span class="im">import</span> SimulationStudy</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.sampling <span class="im">import</span> generate_lhs</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Define the Non-Linear Physics ---</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> apply_physics(df):</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Simulates a multidimensional signal with nuisance parameters."""</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Base Signal: Quadratic trend (2*L + 0.5*L^2)</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Angle Penalty: Misalignment (-0.1*Angle) reduces signal</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    signal <span class="op">=</span> (</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        <span class="fl">10.0</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        <span class="op">+</span> (<span class="fl">2.0</span> <span class="op">*</span> df[<span class="st">"Length"</span>])</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        <span class="op">+</span> (<span class="fl">0.5</span> <span class="op">*</span> df[<span class="st">"Length"</span>] <span class="op">**</span> <span class="dv">2</span>)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>        <span class="op">-</span> (<span class="fl">0.1</span> <span class="op">*</span> np.<span class="bu">abs</span>(df[<span class="st">"Angle"</span>]))</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Heteroscedastic Noise: Higher roughness = More scatter</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    noise_scale <span class="op">=</span> <span class="fl">0.5</span> <span class="op">+</span> (<span class="fl">1.5</span> <span class="op">*</span> df[<span class="st">"Roughness"</span>])</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    noise <span class="op">=</span> np.random.normal(loc<span class="op">=</span><span class="dv">0</span>, scale<span class="op">=</span>noise_scale, size<span class="op">=</span><span class="bu">len</span>(df))</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> signal <span class="op">+</span> noise</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Create the Dataset ---</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Latin Hypercube Sampling covers the 3D space efficiently</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>vars_df <span class="op">=</span> pd.DataFrame(</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    [</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"Name"</span>: <span class="st">"Length"</span>, <span class="st">"Min"</span>: <span class="fl">0.1</span>, <span class="st">"Max"</span>: <span class="fl">10.0</span>},</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"Name"</span>: <span class="st">"Angle"</span>, <span class="st">"Min"</span>: <span class="op">-</span><span class="fl">45.0</span>, <span class="st">"Max"</span>: <span class="fl">45.0</span>},</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"Name"</span>: <span class="st">"Roughness"</span>, <span class="st">"Min"</span>: <span class="fl">0.0</span>, <span class="st">"Max"</span>: <span class="fl">1.0</span>},</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> generate_lhs(ranges<span class="op">=</span>vars_df, n<span class="op">=</span><span class="dv">150</span>, seed<span class="op">=</span><span class="dv">42</span>)  <span class="co"># 150 points for 3D space (seeded: reproducible)</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Signal"</span>] <span class="op">=</span> apply_physics(df)</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>study <span class="op">=</span> SimulationStudy()</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>study.add_data(df, outcome_col<span class="op">=</span><span class="st">"Signal"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Data initialized/overwritten. Total rows: 150</code></pre>
+</div>
+</div>
+</section>
+<section id="sec-example-classical" class="level3" data-number="7.2">
+<h3 data-number="7.2" class="anchored" data-anchor-id="sec-example-classical"><span class="header-section-number">7.2</span> The classical approach</h3>
+<p>The classical method is applied with log transforms of both axes (<code>xlog=True</code>, <code>ylog=True</code>) to give the straight line its best chance. Its confidence bounds are computed by bootstrap rather than the MIL-HDBK-1823A formulas, which keeps the classical assumptions (a straight line, constant variance, normal errors) while making the worst-case curve easy to obtain. Like the generalised path, <code>linear_pod</code> stores bounds for 50 %, 90 %, 95 % and 99 % confidence in <code>ci_bounds</code> and <code>reliability_table</code>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run the classical linear PoD analysis</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>linear_results <span class="op">=</span> study.linear_pod(</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    poi_col<span class="op">=</span><span class="st">"Length"</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    threshold<span class="op">=</span><span class="dv">30</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    xlog<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    ylog<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    n_jobs<span class="op">=-</span><span class="dv">1</span>,  <span class="co"># Use all CPU cores for fast bootstrapping</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualise the standard signal fit and PoD curve</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>study.visualise_linear(show<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="fig-classical" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-classical-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
+<pre><code>Running validation...
+Validation passed. 150 valid rows ready.
+--- Starting Linear a-hat vs a Analysis (PoI: Length) ---
+Running Bootstrap (1000 iterations) to establish classical confidence bounds...
+   -&gt; [Linear Bootstrap] Running 1000 iterations on 10 worker core(s)...
+   -&gt; [Linear Bootstrap Progress] Completed 100/1000 iterations (10%)...
+   -&gt; [Linear Bootstrap Progress] Completed 200/1000 iterations (20%)...
+   -&gt; [Linear Bootstrap Progress] Completed 300/1000 iterations (30%)...
+   -&gt; [Linear Bootstrap Progress] Completed 400/1000 iterations (40%)...
+   -&gt; [Linear Bootstrap Progress] Completed 500/1000 iterations (50%)...
+   -&gt; [Linear Bootstrap Progress] Completed 600/1000 iterations (60%)...
+   -&gt; [Linear Bootstrap Progress] Completed 700/1000 iterations (70%)...
+   -&gt; [Linear Bootstrap Progress] Completed 800/1000 iterations (80%)...
+   -&gt; [Linear Bootstrap Progress] Completed 900/1000 iterations (90%)...
+   -&gt; [Linear Bootstrap Progress] Completed 1000/1000 iterations (100%)...
+   -&gt; Classical a90/95 Reliability Index: 7.252 mm
+--- Linear Analysis Complete ---</code></pre>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-classical" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-classical-1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-classical-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generalised_pod_files/figure-html/fig-classical-output-2.png" data-ref-parent="fig-classical" width="665" height="529" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-classical-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Linear Signal Response Model (Assuming Constant Variance)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-classical" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-classical-2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-classical-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generalised_pod_files/figure-html/fig-classical-output-3.png" data-ref-parent="fig-classical" width="589" height="449" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-classical-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) Classical PoD Curve (With Bootstrapped Confidence Bounds)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-classical-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Classical Linear Analysis Results
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Look at the 95 % prediction interval. The classical method assumes one constant scatter for every flaw, so the interval has the same width everywhere. In this data the scatter depends on roughness, which the classical fit ignores, and on top of that the straight line cannot follow the curved trend.</p>
+</div>
+</div>
+</section>
+<section id="sec-example-generalised" class="level3" data-number="7.3">
+<h3 data-number="7.3" class="anchored" data-anchor-id="sec-example-generalised"><span class="header-section-number">7.3</span> The generalised approach</h3>
+<p>The generalised method selects the mean model by cross-validation (<a href="#sec-model-selection" class="quarto-xref">Section&nbsp;1</a>), models the changing scatter (<a href="#sec-variance" class="quarto-xref">Section&nbsp;2</a>), infers the error distribution (<a href="#sec-distribution" class="quarto-xref">Section&nbsp;3</a>) and integrates out Angle and Roughness (<a href="#sec-marginalisation" class="quarto-xref">Section&nbsp;4.1</a>). Its bootstrap (<a href="#sec-bootstrap" class="quarto-xref">Section&nbsp;5</a>) gives the same set of confidence levels.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run the generalised PoD analysis</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># n_jobs=-1 runs the bootstrap process on all available CPU cores</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>study.pod(</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    poi_col<span class="op">=</span><span class="st">"Length"</span>, nuisance_col<span class="op">=</span>[<span class="st">"Angle"</span>, <span class="st">"Roughness"</span>], threshold<span class="op">=</span><span class="fl">30.0</span>, n_jobs<span class="op">=-</span><span class="dv">1</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualise the relaxed signal fit and PoD curve</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>study.visualise(show<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="fig-generalised" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-generalised-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
+<pre><code>--- Starting Reliability Analysis (PoIs: ['Length'] - Nuisance: ['Angle', 'Roughness']) ---
+1. Training all surrogate models (Cache Miss)...
+-&gt; Selected Model: Polynomial (Degree 2)
+2. Fitting Variance Model &amp; Inferring Distribution (Cache Miss)...
+   -&gt; Optimizing bandwidth via LOO-CV...
+-&gt; Calculating Total-Order Sobol Indices...
+   -&gt; Smoothing Bandwidth: 0.7636 (input std devs)
+   -&gt; Selected Distribution: beta
+3. Integrating PoD Curve from Scratch (Cache Miss)...
+4. Running Bootstrap (1000 iterations on 10 cores)...
+   -&gt; [Bootstrap] Running 1000 iterations on 10 worker core(s)...
+   -&gt; [Bootstrap Progress] Completed 50/1000 iterations (5%)...</code></pre>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
+<pre><code>   -&gt; [Bootstrap Progress] Completed 100/1000 iterations (10%)...
+   -&gt; [Bootstrap Progress] Completed 150/1000 iterations (15%)...</code></pre>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
+<pre><code>   -&gt; [Bootstrap Progress] Completed 200/1000 iterations (20%)...</code></pre>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
+<pre><code>   -&gt; [Bootstrap Progress] Completed 250/1000 iterations (25%)...
+   -&gt; [Bootstrap Progress] Completed 300/1000 iterations (30%)...</code></pre>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
+<pre><code>   -&gt; [Bootstrap Progress] Completed 350/1000 iterations (35%)...
+   -&gt; [Bootstrap Progress] Completed 400/1000 iterations (40%)...</code></pre>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
+<pre><code>   -&gt; [Bootstrap Progress] Completed 450/1000 iterations (45%)...
+   -&gt; [Bootstrap Progress] Completed 500/1000 iterations (50%)...
+   -&gt; [Bootstrap Progress] Completed 550/1000 iterations (55%)...</code></pre>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
+<pre><code>   -&gt; [Bootstrap Progress] Completed 600/1000 iterations (60%)...
+   -&gt; [Bootstrap Progress] Completed 650/1000 iterations (65%)...
+   -&gt; [Bootstrap Progress] Completed 700/1000 iterations (70%)...
+   -&gt; [Bootstrap Progress] Completed 750/1000 iterations (75%)...</code></pre>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
+<pre><code>   -&gt; [Bootstrap Progress] Completed 800/1000 iterations (80%)...</code></pre>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
+<pre><code>   -&gt; [Bootstrap Progress] Completed 850/1000 iterations (85%)...
+   -&gt; [Bootstrap Progress] Completed 900/1000 iterations (90%)...</code></pre>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
+<pre><code>   -&gt; [Bootstrap Progress] Completed 950/1000 iterations (95%)...
+   -&gt; [Bootstrap Progress] Completed 1000/1000 iterations (100%)...
+   -&gt; a90/95 Reliability Index: 5.370
+--- Analysis Complete ---</code></pre>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-generalised" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-generalised-1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-generalised-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generalised_pod_files/figure-html/fig-generalised-output-11.png" data-ref-parent="fig-generalised" width="942" height="519" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-generalised-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Model Selection (Bias-Variance Tradeoff)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-generalised" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-generalised-2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-generalised-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generalised_pod_files/figure-html/fig-generalised-output-12.png" data-ref-parent="fig-generalised" width="585" height="449" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-generalised-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) Signal Response Model (Capturing Heteroscedastic Noise)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-display quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-generalised" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-generalised-3" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-generalised-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generalised_pod_files/figure-html/fig-generalised-output-13.png" data-ref-parent="fig-generalised" width="589" height="449" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-generalised-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(c) Generalised PoD Curve (With Bootstrapped Confidence Bounds)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-generalised-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Generalised Relaxed Analysis Results
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="sec-example-comparison" class="level3" data-number="7.4">
+<h3 data-number="7.4" class="anchored" data-anchor-id="sec-example-comparison"><span class="header-section-number">7.4</span> Head-to-head</h3>
+<p>Extracting both PoD curves from the <code>SimulationStudy</code> and plotting them together shows how much the assumptions matter.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Extract the evaluation grids (X) and PoD curves (Y) from the internal class state</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>X_linear <span class="op">=</span> study.linear_pod_results[<span class="st">"X_eval"</span>]</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>pod_linear <span class="op">=</span> study.linear_pod_results[<span class="st">"curves"</span>][<span class="st">"pod"</span>]</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>ci_lower_linear <span class="op">=</span> study.linear_pod_results[<span class="st">"curves"</span>][<span class="st">"ci_lower"</span>]</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>ci_upper_linear <span class="op">=</span> study.linear_pod_results[<span class="st">"curves"</span>][<span class="st">"ci_upper"</span>]</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>X_relaxed <span class="op">=</span> study.pod_results[<span class="st">"X_eval"</span>].flatten()</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>pod_relaxed <span class="op">=</span> study.pod_results[<span class="st">"curves"</span>][<span class="st">"pod"</span>]</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>ci_lower_relaxed <span class="op">=</span> study.pod_results[<span class="st">"curves"</span>][<span class="st">"ci_lower"</span>]</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>ci_upper_relaxed <span class="op">=</span> study.pod_results[<span class="st">"curves"</span>][<span class="st">"ci_upper"</span>]</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Set up the comparison plot</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">6</span>))</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Plot Classical Linear Method</span></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>ax.plot(</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>    X_linear,</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>    pod_linear,</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">"red"</span>,</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>    linestyle<span class="op">=</span><span class="st">"--"</span>,</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>    linewidth<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"Classical Linear PoD"</span>,</span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Shade Classical Bounds instead of plotting a single line</span></span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>ax.fill_between(</span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>    X_linear,</span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>    ci_lower_linear,</span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>    ci_upper_linear,</span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">"red"</span>,</span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>    alpha<span class="op">=</span><span class="fl">0.1</span>,  <span class="co"># Keep alpha low so we can see overlaps</span></span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"Classical 95% Confidence Bounds"</span>,</span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Plot Generalised Relaxed Method</span></span>
+<span id="cb18-35"><a href="#cb18-35" aria-hidden="true" tabindex="-1"></a>ax.plot(</span>
+<span id="cb18-36"><a href="#cb18-36" aria-hidden="true" tabindex="-1"></a>    X_relaxed, pod_relaxed, color<span class="op">=</span><span class="st">"black"</span>, linewidth<span class="op">=</span><span class="dv">2</span>, label<span class="op">=</span><span class="st">"Generalised Relaxed PoD"</span></span>
+<span id="cb18-37"><a href="#cb18-37" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-38"><a href="#cb18-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Shade Generalised Bounds between lower and upper</span></span>
+<span id="cb18-39"><a href="#cb18-39" aria-hidden="true" tabindex="-1"></a>ax.fill_between(</span>
+<span id="cb18-40"><a href="#cb18-40" aria-hidden="true" tabindex="-1"></a>    X_relaxed,</span>
+<span id="cb18-41"><a href="#cb18-41" aria-hidden="true" tabindex="-1"></a>    ci_lower_relaxed,</span>
+<span id="cb18-42"><a href="#cb18-42" aria-hidden="true" tabindex="-1"></a>    ci_upper_relaxed,</span>
+<span id="cb18-43"><a href="#cb18-43" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">"gray"</span>,</span>
+<span id="cb18-44"><a href="#cb18-44" aria-hidden="true" tabindex="-1"></a>    alpha<span class="op">=</span><span class="fl">0.2</span>,</span>
+<span id="cb18-45"><a href="#cb18-45" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"Generalised 95% Confidence Bounds"</span>,</span>
+<span id="cb18-46"><a href="#cb18-46" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-47"><a href="#cb18-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-48"><a href="#cb18-48" aria-hidden="true" tabindex="-1"></a><span class="co"># Formatting</span></span>
+<span id="cb18-49"><a href="#cb18-49" aria-hidden="true" tabindex="-1"></a>ax.axhline(</span>
+<span id="cb18-50"><a href="#cb18-50" aria-hidden="true" tabindex="-1"></a>    <span class="fl">0.90</span>, color<span class="op">=</span><span class="st">"green"</span>, linestyle<span class="op">=</span><span class="st">":"</span>, alpha<span class="op">=</span><span class="fl">0.6</span>, label<span class="op">=</span><span class="st">"90% Target Reliability"</span></span>
+<span id="cb18-51"><a href="#cb18-51" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-52"><a href="#cb18-52" aria-hidden="true" tabindex="-1"></a>ax.set_ylim(<span class="op">-</span><span class="fl">0.05</span>, <span class="fl">1.05</span>)</span>
+<span id="cb18-53"><a href="#cb18-53" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"Flaw Length (mm)"</span>)</span>
+<span id="cb18-54"><a href="#cb18-54" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"Probability of Detection"</span>)</span>
+<span id="cb18-55"><a href="#cb18-55" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"PoD Comparison: Classical vs. Generalised"</span>)</span>
+<span id="cb18-56"><a href="#cb18-56" aria-hidden="true" tabindex="-1"></a>ax.legend(loc<span class="op">=</span><span class="st">"lower right"</span>)</span>
+<span id="cb18-57"><a href="#cb18-57" aria-hidden="true" tabindex="-1"></a>ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb18-58"><a href="#cb18-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-59"><a href="#cb18-59" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb18-60"><a href="#cb18-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-61"><a href="#cb18-61" aria-hidden="true" tabindex="-1"></a><span class="co"># Print a comparative summary</span></span>
+<span id="cb18-62"><a href="#cb18-62" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"--- Reliability Summary ---"</span>)</span>
+<span id="cb18-63"><a href="#cb18-63" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Target Threshold: 30"</span>)</span>
+<span id="cb18-64"><a href="#cb18-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-65"><a href="#cb18-65" aria-hidden="true" tabindex="-1"></a><span class="co"># Find the a90 points (where the LOWER bounds cross 0.90)</span></span>
+<span id="cb18-66"><a href="#cb18-66" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
+<span id="cb18-67"><a href="#cb18-67" aria-hidden="true" tabindex="-1"></a>    a90_linear <span class="op">=</span> X_linear[np.argmax(ci_lower_linear <span class="op">&gt;=</span> <span class="fl">0.90</span>)]</span>
+<span id="cb18-68"><a href="#cb18-68" aria-hidden="true" tabindex="-1"></a>    a90_relaxed <span class="op">=</span> X_relaxed[np.argmax(ci_lower_relaxed <span class="op">&gt;=</span> <span class="fl">0.90</span>)]</span>
+<span id="cb18-69"><a href="#cb18-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-70"><a href="#cb18-70" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Classical a90/95 (Estimated):  </span><span class="sc">{</span>a90_linear<span class="sc">:.2f}</span><span class="ss"> mm"</span>)</span>
+<span id="cb18-71"><a href="#cb18-71" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Generalised a90/95 (Estimated): </span><span class="sc">{</span>a90_relaxed<span class="sc">:.2f}</span><span class="ss"> mm"</span>)</span>
+<span id="cb18-72"><a href="#cb18-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-73"><a href="#cb18-73" aria-hidden="true" tabindex="-1"></a>    diff <span class="op">=</span> <span class="bu">abs</span>(a90_relaxed <span class="op">-</span> a90_linear)</span>
+<span id="cb18-74"><a href="#cb18-74" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Difference in critical sizing: </span><span class="sc">{</span>diff<span class="sc">:.2f}</span><span class="ss"> mm"</span>)</span>
+<span id="cb18-75"><a href="#cb18-75" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">IndexError</span>:</span>
+<span id="cb18-76"><a href="#cb18-76" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"Curves did not reach 90</span><span class="sc">% r</span><span class="st">eliability."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="cell-fig-comparison" class="cell quarto-layout-panel" data-execution_count="5" data-layout-ncol="1">
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-display quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
+<div id="fig-comparison" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generalised_pod_files/figure-html/fig-comparison-output-1.png" width="812" height="523" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Head-to-Head Reliability Comparison
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
+<pre><code>--- Reliability Summary ---
+Target Threshold: 30
+Classical a90/95 (Estimated):  7.30 mm
+Generalised a90/95 (Estimated): 5.40 mm
+
+Difference in critical sizing: 1.90 mm</code></pre>
+</div>
+</div>
+</div>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
@@ -855,13 +1312,13 @@ window.Quarto = {
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../docs/cpp_acceleration.html" class="pagination-link" aria-label="C++ Acceleration &amp; Fallback">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">C++ Acceleration &amp; Fallback</span>
+      <a href="../docs/optimisation.html" class="pagination-link" aria-label="Automated Optimisation">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Automated Optimisation</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../docs/kriging_metamodeling.html" class="pagination-link" aria-label="Kriging Metamodeling &amp; Calibration">
-        <span class="nav-page-text">Kriging Metamodeling &amp; Calibration</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../docs/kriging_metamodeling.html" class="pagination-link" aria-label="Kriging Metamodeling">
+        <span class="nav-page-text">Kriging Metamodeling</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
