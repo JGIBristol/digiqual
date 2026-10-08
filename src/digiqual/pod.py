@@ -9,7 +9,7 @@ from scipy import stats
 from scipy.optimize import minimize_scalar
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic, WhiteKernel
+from sklearn.gaussian_process.kernels import RBF, Matern, WhiteKernel
 from sklearn.gaussian_process.kernels import ConstantKernel as C
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import KFold, cross_val_score
@@ -18,25 +18,104 @@ from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Kriging provenance tags
+#
+# The Kriging surrogate follows two papers and the UQLab toolbox they used.
+# Comments and docstrings below cite where each choice comes from:
+#
+#   [M25]       Malkiel, Croxford & Wilcox (2025), "A generalized method for the
+#               reliability assessment of safety-critical inspection",
+#               Proc. R. Soc. A 481: 20240654.
+#   [M25-code]  The MATLAB reference code for [M25]
+#               (materials/malkiel25/Code_Generalized_a_hat_vs_a_method.m).
+#   [M26]       Malkiel, Croxford & Wilcox (2026), "A comprehensive investigation
+#               of flexible and multi-dimensional simulation-based PoD analysis",
+#               NDT&E Int. 159: 103596.
+#   [UQLab]     A UQLab Kriging default (UQLab_Rel2.1.0, Kriging module). Both
+#               papers used UQLab with its defaults, so these are inherited.
+#   [digiqual]  A deliberate deviation from the references. The rationale is
+#               given inline and in docs/kriging_metamodeling.qmd.
+# ---------------------------------------------------------------------------
+
 # Numerical jitter added to the Kriging covariance diagonal. Observation noise is
 # NOT represented here: it is learned by the WhiteKernel term in every candidate
 # kernel (see `build_kriging_candidate_kernels`), so this only needs to be large
-# enough to keep the Cholesky factorisation stable.
+# enough to keep the Cholesky factorisation stable. [UQLab] uses the same idea
+# (Corr.Nugget = 1e-10).
 KRIGING_JITTER = 1e-10
+
+# Optimiser restarts for the Kriging likelihood. [UQLab] uses a hybrid genetic
+# algorithm; [digiqual] uses scikit-learn's multi-start L-BFGS-B instead.
+KRIGING_RESTARTS_FULL = 10
+KRIGING_RESTARTS_CV = 5
+
+
+class ScaledGaussianProcessRegressor(GaussianProcessRegressor):
+    """
+    Gaussian Process regressor that standardises its inputs before fitting.
+
+    [UQLab] (``Scaling = true``, the default used by [M25-code] and [M26])
+    standardises every input with the experimental-design mean and standard
+    deviation, ``u = (x - mean(x)) / std(x)``, and fits the GP in ``u``. This
+    makes the length scales dimensionless (in units of each input's standard
+    deviation), so the length-scale bounds and initial values mean the same
+    thing whatever the physical units of the inputs.
+
+    The scaling is computed in ``fit`` unless it has been frozen with
+    `freeze_scaling` (used for bootstrap refits, so every resample shares the
+    full-data scaling, and therefore the full-data length scales keep their
+    meaning). ``predict`` and ``sample_y`` accept inputs in physical units.
+    Every other behaviour, including all constructor arguments, is inherited
+    from scikit-learn's `GaussianProcessRegressor`.
+    """
+
+    def freeze_scaling(self, x_mean: np.ndarray, x_std: np.ndarray) -> "ScaledGaussianProcessRegressor":
+        """Fixes the input scaling so that ``fit`` reuses it instead of recomputing it."""
+        self._frozen_scaling = (np.asarray(x_mean, dtype=float), np.asarray(x_std, dtype=float))
+        return self
+
+    def transform_X(self, X: np.ndarray) -> np.ndarray:
+        """Maps physical inputs to the standardised inputs the kernel operates on."""
+        return (np.atleast_2d(X) - self.x_mean_) / self.x_std_
+
+    def fit(self, X, y):
+        X = np.atleast_2d(np.asarray(X, dtype=float))
+        frozen = getattr(self, "_frozen_scaling", None)
+        if frozen is not None:
+            self.x_mean_, self.x_std_ = frozen
+        else:
+            self.x_mean_ = X.mean(axis=0)
+            std = X.std(axis=0)
+            # A constant input carries no information; keep it finite rather than divide by zero.
+            self.x_std_ = np.where(std > 0, std, 1.0)
+        return super().fit(self.transform_X(X), y)
+
+    def predict(self, X, return_std=False, return_cov=False):
+        return super().predict(self.transform_X(X), return_std=return_std, return_cov=return_cov)
+
+    def sample_y(self, X, n_samples=1, random_state=0):
+        return super().sample_y(self.transform_X(X), n_samples=n_samples, random_state=random_state)
 
 
 def build_kriging_candidate_kernels(n_features: int) -> dict[str, Any]:
     """
     Builds the candidate covariance kernels evaluated for the Kriging surrogate.
 
-    Every candidate has the form ``C * R(x, x') + WhiteKernel``:
+    Every candidate has the form ``C * R(u, u') + WhiteKernel``, evaluated on
+    standardised inputs ``u`` (see `ScaledGaussianProcessRegressor`):
 
-    - ``C`` is the process variance (signal amplitude).
-    - ``R`` is the correlation function. Matérn 3/2, Matérn 5/2 and RBF use an
-      anisotropic length scale (one per input). Rational Quadratic is isotropic
-      because scikit-learn's implementation only supports a scalar length scale.
-    - ``WhiteKernel`` is the observation noise (nugget) variance, learned by
-      maximum likelihood alongside the length scales.
+    - ``C`` is the process variance sigma^2 ([M26] Eq. 3).
+    - ``R`` is the correlation function, with one length scale per input
+      (anisotropic, [M26] Eq. 5; [UQLab] ``Corr.Type = 'Ellipsoidal'``).
+      The families are those compared in [M26] Sec. 4.3.1: exponential
+      (Matérn 1/2), Matérn 3/2, Matérn 5/2 and Gaussian. [digiqual] omits
+      UQLab's "linear" correlation because scikit-learn does not provide it.
+    - ``WhiteKernel`` is the observation-noise (nugget) variance tau^2, learned
+      by maximum likelihood alongside the length scales. This follows
+      [M25-code] (``Regression.SigmaNSQ = 'auto'``). [M26] instead treats the
+      response as deterministic and interpolates it exactly; a learned nugget
+      reduces to that case when the data has no scatter.
 
     Learning the nugget is essential when the chosen inputs do not fully
     determine the response (e.g. a model trained on Area and Offset when the
@@ -44,6 +123,11 @@ def build_kriging_candidate_kernels(n_features: int) -> dict[str, Any]:
     likelihood would be maximised by shrinking a length scale until the surface
     interpolates the scatter. That produces a spiky surface whose slices revert
     to the prior mean away from data and whose bootstrap refits are unstable.
+
+    Length-scale initial value (1) and lower bound (1e-3) follow [UQLab]. The
+    upper bound is 1e3 rather than UQLab's 10 [digiqual], so that an input with
+    no influence can take a length scale far longer than its range (an
+    effectively flat direction) instead of sitting on the bound.
 
     The kernels are intended for use with ``normalize_y=True``, so ``C`` and the
     noise level are expressed relative to the variance of the training response.
@@ -56,20 +140,46 @@ def build_kriging_candidate_kernels(n_features: int) -> dict[str, Any]:
         scikit-learn kernel.
     """
     ls = np.ones(n_features)
-    ls_bounds = (1e-3, 1e5)
+    ls_bounds = (1e-3, 1e3)
+
+    def _amplitude() -> C:
+        return C(1.0, (1e-5, 1e6))
 
     def _noise() -> WhiteKernel:
         return WhiteKernel(noise_level=0.1, noise_level_bounds=(1e-8, 1e1))
 
     return {
-        'Matern 3/2': C(1.0, (1e-5, 1e6)) * Matern(length_scale=ls, length_scale_bounds=ls_bounds, nu=1.5) + _noise(),
-        'Matern 5/2': C(1.0, (1e-5, 1e6)) * Matern(length_scale=ls, length_scale_bounds=ls_bounds, nu=2.5) + _noise(),
-        'RBF (Gaussian)': C(1.0, (1e-5, 1e6)) * RBF(length_scale=ls, length_scale_bounds=ls_bounds) + _noise(),
-        'Rational Quadratic': C(1.0, (1e-5, 1e6)) * RationalQuadratic(length_scale=1.0, length_scale_bounds=ls_bounds) + _noise(),
+        'Exponential (Matern 1/2)': _amplitude() * Matern(length_scale=ls, length_scale_bounds=ls_bounds, nu=0.5) + _noise(),
+        'Matern 3/2': _amplitude() * Matern(length_scale=ls, length_scale_bounds=ls_bounds, nu=1.5) + _noise(),
+        'Matern 5/2': _amplitude() * Matern(length_scale=ls, length_scale_bounds=ls_bounds, nu=2.5) + _noise(),
+        'Gaussian (RBF)': _amplitude() * RBF(length_scale=ls, length_scale_bounds=ls_bounds) + _noise(),
     }
 
 
-def build_fixed_kernel_gpr(kernel: Any) -> GaussianProcessRegressor:
+def build_kriging_gpr(kernel: Any, n_restarts: int = KRIGING_RESTARTS_FULL) -> ScaledGaussianProcessRegressor:
+    """
+    Builds an unfitted Kriging model with the production settings.
+
+    Standardised inputs [UQLab], standardised response (``normalize_y=True``)
+    [digiqual: scikit-learn has no ordinary-Kriging trend, so the prior mean is
+    the sample mean rather than a GLS-estimated constant as in [M26] Eq. 6],
+    hyperparameters by maximum likelihood [M26] Sec. 2.1.2, and multi-start
+    L-BFGS-B [digiqual].
+    """
+    return ScaledGaussianProcessRegressor(
+        kernel=kernel,
+        n_restarts_optimizer=n_restarts,
+        alpha=KRIGING_JITTER,
+        normalize_y=True,
+        random_state=42,
+    )
+
+
+def build_fixed_kernel_gpr(
+    kernel: Any,
+    x_mean: np.ndarray | None = None,
+    x_std: np.ndarray | None = None,
+) -> ScaledGaussianProcessRegressor:
     """
     Builds a Kriging model that reuses already-optimised hyperparameters.
 
@@ -80,16 +190,67 @@ def build_fixed_kernel_gpr(kernel: Any) -> GaussianProcessRegressor:
     numerical jitter on the diagonal, because the noise variance is already
     part of ``kernel`` (its WhiteKernel term).
 
+    [M25] Sec. 2i re-estimates the selected model's parameters on every
+    bootstrap resample. [digiqual] freezes the Kriging hyperparameters instead,
+    because re-optimising them 1000 times is too slow. The bootstrap interval
+    therefore omits hyperparameter uncertainty.
+
+    The input scaling should be frozen too, so that the length scales keep the
+    meaning they had in the full-data fit. Pass the full-data ``x_mean`` and
+    ``x_std``, or pass the model's ``model_params_`` dictionary as ``kernel``.
+
     Args:
-        kernel (Kernel): A fitted kernel, typically ``gpr.kernel_`` from the
-            model returned by `fit_all_robust_mean_models`.
+        kernel (Kernel | dict): A fitted kernel (``gpr.kernel_``), or the
+            ``model_params_`` dict of a Kriging model from
+            `fit_all_robust_mean_models` (keys ``kernel``, ``x_mean``, ``x_std``).
+        x_mean (np.ndarray, optional): Full-data input means.
+        x_std (np.ndarray, optional): Full-data input standard deviations.
 
     Returns:
-        GaussianProcessRegressor: An unfitted regressor ready for ``.fit()``.
+        ScaledGaussianProcessRegressor: An unfitted regressor ready for ``.fit()``.
     """
-    return GaussianProcessRegressor(
+    if isinstance(kernel, dict):
+        x_mean = kernel.get('x_mean', x_mean)
+        x_std = kernel.get('x_std', x_std)
+        kernel = kernel['kernel']
+    gpr = ScaledGaussianProcessRegressor(
         kernel=kernel, alpha=KRIGING_JITTER, normalize_y=True, optimizer=None
     )
+    if x_mean is not None and x_std is not None:
+        gpr.freeze_scaling(x_mean, x_std)
+    return gpr
+
+
+def _kriging_loo_matrix(gpr: GaussianProcessRegressor, X_2d: np.ndarray, y: np.ndarray):
+    """
+    Returns the LOO matrix B and the response in the kernel's working units.
+
+    B is the top-left m x m block of the inverse of the augmented matrix
+    S = [[K + alpha*I, F], [F^T, 0]] with F = 1 (ordinary Kriging), as in
+    [M26] Eq. 12-13 (after Dubrule 1983). [UQLab] computes the same matrix in
+    ``uq_Kriging_calc_KFold`` as R^-1 (I - F (F^T R^-1 F)^-1 F^T R^-1).
+    """
+    y_flat = np.asarray(y, dtype=np.float64).flatten()
+    m = len(y_flat)
+
+    # Work in the same (possibly normalised) units the kernel was optimised in.
+    if getattr(gpr, "normalize_y", False):
+        y_mean = float(np.ravel(gpr._y_train_mean)[0])
+        y_scale = float(np.ravel(gpr._y_train_std)[0])
+    else:
+        y_mean, y_scale = 0.0, 1.0
+    y_work = (y_flat - y_mean) / y_scale
+
+    X_work = gpr.transform_X(X_2d) if hasattr(gpr, "transform_X") else np.atleast_2d(X_2d)
+    K = gpr.kernel_(X_work)
+    alpha = gpr.alpha if isinstance(gpr.alpha, (int, float)) else 1e-6
+
+    S = np.zeros((m + 1, m + 1))
+    S[:m, :m] = K + np.eye(m) * alpha
+    S[:m, m] = 1.0
+    S[m, :m] = 1.0
+    B_mm = np.linalg.inv(S)[:m, :m]
+    return B_mm, y_work, y_mean, y_scale
 
 
 def compute_kriging_loo_residuals(
@@ -99,21 +260,33 @@ def compute_kriging_loo_residuals(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
     """
     Computes exact LOO predictions, variances, standardized residuals e_i,
-    and outlier scaling factor gamma according to Malkiel et al. (2026).
+    and the outlier factor gamma, following Malkiel et al. (2026).
 
-    Inverts the augmented covariance matrix S = [[K + alpha*I, F], [F^T, 0]] to obtain B = S^-1,
-    calculating Leave-One-Out means mu_{-i} and variances sigma_{-i}^2. It then derives
-    standardized residuals e_i = (y_i - mu_{-i}) / sigma_{-i} and outlier scale factor
-    gamma = max(1.0, max|e_i| / 3.0).
+    With B the top-left block of S^-1, S = [[K + alpha*I, F], [F^T, 0]]:
+
+    - LOO mean ([M26] Eq. 10): mu_{-i} = -sum_{j != i} (B_ij / B_ii) y_j
+    - LOO variance ([M26] Eq. 11): sigma_{-i}^2 = 1 / B_ii
+    - Standardised residual ([M26] Eq. 19): e_i = (y_i - mu_{-i}) / sigma_{-i}
+    - Outlier factor ([M26] Sec. 2.2.5.2): gamma = max(1, max|e_i| / 3)
+
+    As in [M26], the hyperparameters are those fitted to the full data set; they
+    are not re-optimised with point i removed.
 
     K is the fitted kernel evaluated at the training inputs, so for the models built by
     `fit_all_robust_mean_models` it already includes the learned noise (WhiteKernel)
     variance on its diagonal. The LOO variance is therefore the predictive variance of a
     new noisy observation, which is the correct scale for standardizing observed residuals.
 
+    In [M26], gamma scales the Kriging interpolation standard deviation used to draw
+    the GP sample paths for the PoD uncertainty bound (Fig. 10b shows the residuals
+    divided by gamma, so the worst one lands on 3). digiqual computes its PoD bounds
+    by bootstrap ([M25]) instead, so gamma is reported as a diagnostic and is not
+    applied to the PoD [digiqual].
+
     If the model was fitted with ``normalize_y=True``, the kernel hyperparameters are in
     normalised units. The calculation is then done on the normalised response and the
-    LOO means and standard deviations are converted back to the original units.
+    LOO means and standard deviations are converted back to the original units. Inputs
+    are standardised first if the model does so (`ScaledGaussianProcessRegressor`).
 
     Args:
         gpr (GaussianProcessRegressor): A fitted scikit-learn Gaussian Process model.
@@ -125,7 +298,7 @@ def compute_kriging_loo_residuals(
             - loo_means: Array of Leave-One-Out predicted mean responses.
             - loo_stds: Array of Leave-One-Out predicted standard deviations.
             - std_residuals: Array of standardized LOO residuals e_i = (y_i - mu_{-i}) / sigma_{-i}.
-            - gamma: Outlier scaling factor gamma = max(1.0, max|e_i| / 3.0).
+            - gamma: Outlier factor gamma = max(1.0, max|e_i| / 3.0).
 
     Examples:
         ```python
@@ -140,44 +313,22 @@ def compute_kriging_loo_residuals(
         gpr.fit(X, y)
 
         loo_means, loo_stds, std_res, gamma = compute_kriging_loo_residuals(gpr, X, y)
-        print(f"Outlier scaling factor gamma: {gamma:.3f}")
+        print(f"Outlier factor gamma: {gamma:.3f}")
         ```
     """
-    m = len(y)
     y_flat = np.asarray(y, dtype=np.float64).flatten()
+    m = len(y_flat)
     X_2d = np.atleast_2d(X_2d)
 
-    # Work in the same (possibly normalised) units the kernel was optimised in.
-    if getattr(gpr, "normalize_y", False):
-        y_mean = float(np.ravel(gpr._y_train_mean)[0])
-        y_scale = float(np.ravel(gpr._y_train_std)[0])
-    else:
-        y_mean, y_scale = 0.0, 1.0
-    y_work = (y_flat - y_mean) / y_scale
-
-    K = gpr.kernel_(X_2d)
-    alpha = gpr.alpha if isinstance(gpr.alpha, (int, float)) else 1e-6
-    K_alpha = K + np.eye(m) * alpha
-
-    F = np.ones((m, 1))
-    S = np.zeros((m + 1, m + 1))
-    S[:m, :m] = K_alpha
-    S[:m, m:] = F
-    S[m:, :m] = F.T
-
     try:
-        B = np.linalg.inv(S)
-        B_mm = B[:m, :m]
+        B_mm, y_work, y_mean, y_scale = _kriging_loo_matrix(gpr, X_2d, y_flat)
         diag_B = np.diag(B_mm)
         diag_B = np.where(np.abs(diag_B) < 1e-12, 1e-12, diag_B)
 
-        loo_means = np.zeros(m)
-        loo_stds = np.zeros(m)
-
-        for i in range(m):
-            row_B = B_mm[i, :]
-            loo_means[i] = - (np.dot(row_B, y_work) - row_B[i] * y_work[i]) / diag_B[i]
-            loo_stds[i] = np.sqrt(np.maximum(1e-10, 1.0 / diag_B[i]))
+        # [M26] Eq. 10, written as y_i - (B y)_i / B_ii to vectorise the sum over j != i.
+        loo_means = y_work - (B_mm @ y_work) / diag_B
+        # [M26] Eq. 11
+        loo_stds = np.sqrt(np.maximum(1e-10, 1.0 / diag_B))
 
         loo_means = loo_means * y_scale + y_mean
         loo_stds = loo_stds * y_scale
@@ -194,7 +345,88 @@ def compute_kriging_loo_residuals(
 
     return loo_means, loo_stds, std_residuals, gamma
 
+
+def compute_kriging_group_loo_means(
+    gpr: GaussianProcessRegressor,
+    X_2d: np.ndarray,
+    y: np.ndarray,
+    groups: np.ndarray,
+) -> np.ndarray:
+    """
+    Leave-one-group-out Kriging means, for data that contains repeated points.
+
+    Each group (e.g. all copies of one original observation in a bootstrap
+    resample) is removed together, so a point is never predicted from its own
+    duplicate. With I the indices of a group and B as in
+    `compute_kriging_loo_residuals`, the prediction is
+    mu_{-I} = -(B_II)^-1 B_{I,rest} y_rest, the block form used by [UQLab]
+    ``uq_Kriging_calc_KFold``. It reduces to [M26] Eq. 10 when every group has
+    one member.
+
+    Args:
+        gpr (GaussianProcessRegressor): A fitted Kriging model.
+        X_2d (np.ndarray): Training inputs (N_samples, N_features).
+        y (np.ndarray): Training responses (N_samples,).
+        groups (np.ndarray): Integer group label per sample.
+
+    Returns:
+        np.ndarray: The leave-one-group-out mean for every sample, in response units.
+    """
+    y_flat = np.asarray(y, dtype=np.float64).flatten()
+    groups = np.asarray(groups)
+    try:
+        B_mm, y_work, y_mean, y_scale = _kriging_loo_matrix(gpr, np.atleast_2d(X_2d), y_flat)
+    except np.linalg.LinAlgError:
+        return y_flat.copy()
+
+    By = B_mm @ y_work
+    loo = np.empty_like(y_work)
+    for g in np.unique(groups):
+        idx = np.flatnonzero(groups == g)
+        # -(B_II)^-1 B_{I,rest} y_rest  ==  y_I - (B_II)^-1 (B y)_I
+        loo[idx] = y_work[idx] - np.linalg.solve(B_mm[np.ix_(idx, idx)], By[idx])
+    return loo * y_scale + y_mean
+
 #### Mean Model - Robust Regression (Polynomial + Kriging) ####
+
+def select_cv_winner(
+    cv_scores: dict[tuple[str, Any], float],
+    cv_se: dict[tuple[str, Any], float] | None = None,
+) -> tuple[str, Any]:
+    """
+    Picks the expectation model using the one-standard-error rule.
+
+    [M25] Sec. 4b(i) (Fig. 5) chose the 3rd-order polynomial over the 4th- and
+    5th-order polynomials and Kriging, whose 10-fold CV errors were almost
+    identical, "since it is the simplest one among those with smaller errors";
+    [M25-code] records the standard error of each CV estimate
+    (``std(fold MSEs) / sqrt(k)``). [digiqual] turns that judgement into a fixed
+    rule: find the model with the lowest mean CV MSE, then choose the *simplest*
+    model whose CV MSE is no more than one standard error above it. Complexity
+    order is Polynomial 1, 2, ..., then Kriging (the most flexible).
+
+    Args:
+        cv_scores (dict): ``(model_type, params)`` -> mean CV MSE.
+        cv_se (dict, optional): ``(model_type, params)`` -> standard error of that
+            CV MSE. Without it, the strict minimum is returned.
+
+    Returns:
+        tuple: The key of the selected model.
+    """
+    best_key = min(cv_scores, key=cv_scores.get)
+    if not cv_se or not np.isfinite(cv_se.get(best_key, np.nan)):
+        return best_key
+    threshold = cv_scores[best_key] + cv_se[best_key]
+
+    def complexity(key):
+        model_type, params = key
+        return (0, params) if model_type == 'Polynomial' else (1, 0)
+
+    for key in sorted(cv_scores, key=complexity):
+        if cv_scores[key] <= threshold:
+            return key
+    return best_key
+
 
 def fit_all_robust_mean_models(
     X: np.ndarray,
@@ -210,14 +442,23 @@ def fit_all_robust_mean_models(
     then fits *every* model to the full dataset. This allows the application to
     instantly swap between different model structures without recalculating.
 
-    Kriging (only for N <= 1000) is evaluated for each candidate kernel from
-    `build_kriging_candidate_kernels`. Each candidate is ``C * R + WhiteKernel``, fitted with
-    ``normalize_y=True``, so the observation noise is learned rather than fixed. The kernel
-    with the lowest k-fold CV MSE is then refitted to the full dataset. Because the hyperparameters
-    are re-optimised inside every CV fold, the reported CV MSE describes the kernel family. It
-    only describes the cached model if the full-data refit lands in a comparable optimum. A learned
-    noise term ensures this: with a fixed, under-estimated noise level, the refit can instead
-    collapse a length scale onto the scatter and badly overfit while still reporting a good CV MSE.
+    The procedure combines both references:
+
+    1. Polynomials of degree 1 to ``max_degree`` are scored by k-fold CV MSE
+       ([M25] Eq. 2.7-2.8, k = 10).
+    2. Kriging (only for N <= 1000, [digiqual]) is fitted once to the full data
+       for each kernel from `build_kriging_candidate_kernels`. The kernel with the
+       lowest normalised LOO MSE ([M26] Eq. 10-14, hyperparameters from the full
+       fit) is kept, as in [M26] Sec. 2.2.2.
+    3. The chosen kernel alone is then scored by the same k-fold CV as the
+       polynomials, with its hyperparameters re-optimised in every fold, so that
+       Kriging and the polynomials are compared on equal terms ([M25] Fig. 5).
+    4. The overall winner is picked by the one-standard-error rule in
+       `select_cv_winner` ([M25] Sec. 4b(i), formalised by [digiqual]).
+
+    The fitted models carry the extra attributes ``cv_se_`` (standard error of
+    every CV score) and, for Kriging, ``kernel_loo_scores_``, ``best_kernel_name_``,
+    ``loo_means_``, ``loo_residuals_`` and ``outlier_scale_factor_``.
 
     Args:
         X (np.ndarray): 1D array or 2D matrix of input variable values.
@@ -229,7 +470,7 @@ def fit_all_robust_mean_models(
         tuple[dict, dict, tuple]:
             - `fitted_models`: A dictionary mapping a key like `('Polynomial', 3)` to the fully trained scikit-learn model.
             - `cv_scores`: A dictionary mapping the same keys to their Cross-Validation MSE scores.
-            - `cv_winner_key`: The key of the model that achieved the lowest MSE.
+            - `cv_winner_key`: The key of the model selected by the one-standard-error rule.
 
     Examples:
         ```python
@@ -247,84 +488,92 @@ def fit_all_robust_mean_models(
     """
     X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
 
+    y = np.asarray(y, dtype=np.float64).flatten()
+
     fitted_models = {}
     cv_scores = {}
+    cv_se = {}
     cv = KFold(n_splits=n_folds, shuffle=True, random_state=42)
 
-    # 1. Evaluate & Fit Polynomials
+    def _record_cv(key, neg_fold_scores):
+        fold_mse = -np.asarray(neg_fold_scores)
+        cv_scores[key] = float(np.mean(fold_mse))  # [M25] Eq. 2.8
+        # Standard error of the CV estimate, as computed in [M25-code]
+        cv_se[key] = float(np.std(fold_mse, ddof=1) / np.sqrt(len(fold_mse))) if len(fold_mse) > 1 else float('nan')
+
+    # 1. Evaluate & Fit Polynomials ([M25] Sec. 2c; [digiqual] Ridge on standardised features instead of OLS)
     for d in range(1, max_degree + 1):
         model = make_pipeline(
             PolynomialFeatures(degree=d),
             StandardScaler(),
             Ridge(alpha=0.1, random_state=42)
         )
-        scores = cross_val_score(model, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
-        cv_scores[('Polynomial', d)] = -np.mean(scores)
+        _record_cv(('Polynomial', d), cross_val_score(model, X_2d, y, cv=cv, scoring='neg_mean_squared_error'))
 
         model.fit(X_2d, y)
         model.model_type_ = 'Polynomial'
         model.model_params_ = d
         fitted_models[('Polynomial', d)] = model
 
-    # 2. Evaluate & Fit Kriging (Proper Candidate Isolation)
+    # 2. Kriging. [digiqual] skipped above 1000 samples: every fit is O(N^3).
     n_samples = len(y)
     if n_samples <= 1000:
         candidate_kernels = build_kriging_candidate_kernels(X_2d.shape[1])
+        var_y = float(np.var(y)) if np.var(y) > 0 else 1.0
 
-        best_kernel_name = None
-        best_kriging_mse = float('inf')
-        kriging_scores_dict = {}
+        fitted_candidates = {}
+        kernel_loo_scores = {}
 
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=ConvergenceWarning)
-            for kname, kernel in candidate_kernels.items():
-                gpr_cand = GaussianProcessRegressor(
-                    kernel=kernel,
-                    n_restarts_optimizer=5,
-                    alpha=KRIGING_JITTER,
-                    normalize_y=True,
-                    random_state=42
-                )
-                try:
-                    scores = cross_val_score(gpr_cand, X_2d, y, cv=cv, scoring='neg_mean_squared_error')
-                    mse = -np.mean(scores)
-                    kriging_scores_dict[kname] = mse
 
-                    if mse < best_kriging_mse:
-                        best_kriging_mse = mse
-                        best_kernel_name = kname
+            # 2a. Pick the correlation family by LOO MSE ([M26] Sec. 2.2.2, Eq. 10-14)
+            for kname, kernel in candidate_kernels.items():
+                try:
+                    gpr_cand = build_kriging_gpr(kernel).fit(X_2d, y)
+                    loo_means, _, _, _ = compute_kriging_loo_residuals(gpr_cand, X_2d, y)
+                    kernel_loo_scores[kname] = float(np.mean((y - loo_means) ** 2) / var_y)  # [M26] Eq. 14
+                    fitted_candidates[kname] = gpr_cand
                 except Exception as e:  # noqa: BLE001 - candidate kernel fit can fail in many ways
                     logger.warning("Kriging candidate kernel '%s' failed to fit/score: %s", kname, e)
-                    continue
+
+            best_kernel_name = min(kernel_loo_scores, key=kernel_loo_scores.get) if kernel_loo_scores else None
+
+            # 2b. k-fold CV of the chosen kernel, on equal terms with the polynomials ([M25] Fig. 5)
+            if best_kernel_name is not None:
+                try:
+                    _record_cv(('Kriging', None), cross_val_score(
+                        build_kriging_gpr(candidate_kernels[best_kernel_name], n_restarts=KRIGING_RESTARTS_CV),
+                        X_2d, y, cv=cv, scoring='neg_mean_squared_error'
+                    ))
+                except Exception as e:  # noqa: BLE001 - leave Kriging out rather than abort the whole fit
+                    logger.warning("Kriging k-fold CV failed for kernel '%s': %s", best_kernel_name, e)
+                    best_kernel_name = None
 
         if best_kernel_name is not None:
-            # Instantiate and fit a fresh instance of the winning kernel
-            best_kriging_gpr = GaussianProcessRegressor(
-                kernel=candidate_kernels[best_kernel_name],
-                n_restarts_optimizer=10,
-                alpha=KRIGING_JITTER,
-                normalize_y=True,
-                random_state=42
-            )
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=ConvergenceWarning)
-                best_kriging_gpr.fit(X_2d, y)
+            best_kriging_gpr = fitted_candidates[best_kernel_name]
 
-            _loo_means, _loo_stds, std_residuals, gamma = compute_kriging_loo_residuals(best_kriging_gpr, X_2d, y)
-            best_kriging_gpr.loo_residuals_ = std_residuals
-            best_kriging_gpr.outlier_scale_factor_ = gamma
+            loo_means, _loo_stds, std_residuals, gamma = compute_kriging_loo_residuals(best_kriging_gpr, X_2d, y)
+            best_kriging_gpr.loo_means_ = loo_means
+            best_kriging_gpr.loo_residuals_ = std_residuals          # [M26] Eq. 19
+            best_kriging_gpr.outlier_scale_factor_ = gamma           # [M26] Sec. 2.2.5.2 (diagnostic only)
             best_kriging_gpr.best_kernel_name_ = best_kernel_name
-            best_kriging_gpr.kernel_cv_scores_ = kriging_scores_dict
+            best_kriging_gpr.kernel_loo_scores_ = kernel_loo_scores
+            best_kriging_gpr.kernel_cv_scores_ = kernel_loo_scores   # backwards-compatible alias
             best_kriging_gpr.model_type_ = 'Kriging'
-            best_kriging_gpr.model_params_ = best_kriging_gpr.kernel_
-
-            cv_scores[('Kriging', None)] = best_kriging_mse
+            best_kriging_gpr.model_params_ = {
+                'kernel': best_kriging_gpr.kernel_,
+                'x_mean': best_kriging_gpr.x_mean_,
+                'x_std': best_kriging_gpr.x_std_,
+            }
             fitted_models[('Kriging', None)] = best_kriging_gpr
     else:
         print(f"Skipping Kriging evaluation to prevent timeout (Dataset N={n_samples} > 1000).")
 
-    # 3. Overall Winner Selection
-    cv_winner_key = min(cv_scores, key=cv_scores.get)
+    # 3. Overall winner by the one-standard-error rule ([M25] Sec. 4b(i))
+    cv_winner_key = select_cv_winner(cv_scores, cv_se)
+    for model in fitted_models.values():
+        model.cv_se_ = cv_se
 
     return fitted_models, cv_scores, cv_winner_key
 
@@ -365,14 +614,18 @@ def generate_latex_equation(model: Any, feature_names: list, outcome_name: str =
 def plot_model_selection(
     cv_scores: dict,
     used_key: tuple | None = None,
-    cv_winner_key: tuple | None = None
+    cv_winner_key: tuple | None = None,
+    cv_se: dict | None = None
 ) -> Any:
     """
     Generates a normalized bar chart of the Bias-Variance Tradeoff from CV scores,
     alongside a sorted table of the exact MSE values in best-fit order.
 
     Bars are colour-coded to distinguish the CV winner, the user-forced model
-    (when different from the CV winner), and all other candidates.
+    (when different from the CV winner), and all other candidates. When the
+    standard errors are given, the one-standard-error threshold used by
+    `select_cv_winner` is drawn as a dashed line: the winner is the simplest
+    model whose bar is below it.
 
     Args:
         cv_scores (dict): Dictionary mapping ``(model_type, params)`` tuples to
@@ -382,6 +635,8 @@ def plot_model_selection(
             lowest MSE is treated as the used model.
         cv_winner_key (tuple | None): The ``(type, params)`` key of the CV winner.
             If ``None``, falls back to the bar with the lowest MSE.
+        cv_se (dict | None): Standard error of each CV score (the models'
+            ``cv_se_`` attribute). Optional.
     """
     import matplotlib.patches as mpatches
     import matplotlib.pyplot as plt
@@ -428,11 +683,18 @@ def plot_model_selection(
             colours.append('#1f77b4')
 
     # --- 3. Build the sorted MSE table ---
+    def _name(key):
+        return f"Poly {key[1]}" if key[0] == 'Polynomial' else "Kriging"
+
+    show_se = bool(cv_se) and any(np.isfinite(cv_se.get(k, np.nan)) for k in cv_scores)
     sorted_scores = sorted(cv_scores.items(), key=lambda item: item[1])
     table_data = []
-    for (m_type, m_param), score in sorted_scores:
-        name = f"Poly {m_param}" if m_type == 'Polynomial' else "Kriging"
-        table_data.append([name, f"{score:.1e}"])
+    for key, score in sorted_scores:
+        row = [_name(key), f"{score:.3g}"]
+        if show_se:
+            se = cv_se.get(key, np.nan)
+            row.append(f"{se:.2g}" if np.isfinite(se) else "-")
+        table_data.append(row)
 
     # --- 4. Create figure ---
     fig, (ax_plot, ax_table) = plt.subplots(
@@ -460,56 +722,72 @@ def plot_model_selection(
                 }
             )
 
-    ax_plot.axhline(1.0, color='red', linestyle='-.', linewidth=1.5, label='Min Error (CV)')
-    ax_plot.set_title('Model Selection: Bias-Variance Tradeoff', fontweight='bold', pad=25)
+    ax_plot.axhline(1.0, color='red', linestyle='-.', linewidth=1.5)
+
+    # One-standard-error threshold ([M25] Sec. 4b(i), see select_cv_winner)
+    best_key = keys[int(np.argmin(mses))]
+    se_threshold = None
+    if cv_se and np.isfinite(cv_se.get(best_key, np.nan)):
+        se_threshold = (min_mse + cv_se[best_key]) / min_mse
+        ax_plot.axhline(se_threshold, color='grey', linestyle='--', linewidth=1.2)
+    ax_plot.set_title('Model Selection: Bias-Variance Tradeoff', fontweight='bold')
     ax_plot.set_ylabel('Error / Min Error [-]')
     ax_plot.grid(True, axis='y', linestyle=':', alpha=0.7)
     ax_plot.tick_params(axis='x', rotation=45)
 
     # Legend placed cleanly above the plot
-    legend_handles = [mpatches.Patch(color='crimson', label='CV Winner')]
+    from matplotlib.lines import Line2D
+    winner_label = 'Selected (1-SE rule)' if se_threshold is not None else 'Selected (min CV error)'
+    legend_handles = [mpatches.Patch(color='crimson', label=winner_label)]
     if forced:
         legend_handles.append(mpatches.Patch(color='#ff7f0e', label='Used (Override)'))
     legend_handles.append(mpatches.Patch(color='#1f77b4', label='Other Candidates'))
+    legend_handles.append(Line2D([0], [0], color='red', linestyle='-.', label='Min CV error'))
+    if se_threshold is not None:
+        legend_handles.append(Line2D([0], [0], color='grey', linestyle='--', label='Min + 1 SE'))
 
-    ax_plot.legend(
-        handles=legend_handles,
-        fontsize=9,
-        loc='lower center',
-        bbox_to_anchor=(0.5, 1.02), # Anchors legend just above the title
-        ncol=3,
-        frameon=False
-    )
+    # Inside the axes, in the empty space above the bars (y-limit is 6x the minimum)
+    ax_plot.legend(handles=legend_handles, fontsize=9, loc='upper right', ncol=2, framealpha=0.9)
 
     # --- Table ---
     ax_table.axis('off')
-    ax_table.set_title('MSE Values\n(Best Fit Order)', fontweight='bold')
+    ax_table.set_title('CV MSE\n(lowest first)', fontweight='bold')
 
     # Bounding box [x0, y0, width, height] prevents table from expanding into the title
+    col_labels = ["Model", "CV MSE", "± SE"] if show_se else ["Model", "CV MSE"]
     table = ax_table.table(
         cellText=table_data,
-        colLabels=["Model", "MSE"],
-        bbox=[0, 0, 1, 0.85],
+        colLabels=col_labels,
+        bbox=[0, 0.08, 1, 0.77],
         cellLoc='center'
     )
     table.auto_set_font_size(False)
     table.set_fontsize(10)
 
-    # Style table rows: bold headers, highlight CV winner and used model
-    cv_winner_name = f"Poly {cv_winner_key[1]}" if cv_winner_key[0] == 'Polynomial' else "Kriging"
-    used_name = f"Poly {used_key[1]}" if used_key[0] == 'Polynomial' else "Kriging"
+    # Style table rows: bold headers and lowest-MSE row, highlight selected and used models
+    cv_winner_name = _name(cv_winner_key)
+    used_name = _name(used_key)
+    lowest_name = _name(best_key)
 
     for (row, col), cell in table.get_celld().items():
         if row == 0:
             cell.set_text_props(weight='bold')
             continue
         cell_label = table_data[row - 1][0]
+        if cell_label == lowest_name:
+            cell.set_text_props(weight='bold')
         if cell_label == cv_winner_name:
             cell.set_facecolor('#ffcccc')
         if forced and cell_label == used_name:
             cell.set_facecolor('#ffe0b2')
 
-    fig.tight_layout(rect=[0, 0, 1, 0.90]) # Leaves a 10% margin at the top for the title and legend
+    note = "Bold: lowest CV MSE.  Red: selected."
+    if forced:
+        note += "\nOrange: used (override)."
+    ax_table.text(0.5, 0.0, note, ha='center', va='bottom', fontsize=8.5,
+                  style='italic', transform=ax_table.transAxes)
+
+    fig.tight_layout()
     return fig
 
 
@@ -600,10 +878,21 @@ def fit_variance_model(
     """
     Calculates residuals and defines the smoothing bandwidth for variance estimation.
 
-    This function acts as the setup phase for modeling heteroscedasticity. It computes
-    the raw residuals from the provided mean model and establishes the smoothing
+    This function acts as the setup phase for modeling heteroscedasticity ([M25] Sec. 2e).
+    It computes the residuals from the provided mean model and establishes the smoothing
     bandwidth either via automated Cross-Validation or a fixed user-defined ratio.
-    It also generates a linearly spaced evaluation grid over the X domain.
+
+    For polynomial mean models the residuals are the in-sample residuals, as in [M25]
+    Eq. 2.9. For Kriging models they are the leave-one-out residuals ``y - loo_means_``
+    [digiqual]. A Kriging model with a learned nugget partly fits the scatter at the
+    training points, so its in-sample residuals understate the scatter, which would make
+    the PoD curve too steep. The LOO residuals measure how far a new observation falls
+    from a prediction made without it.
+
+    The Kriging outlier factor gamma ([M26] Sec. 2.2.5.2) is *not* applied here. In [M26]
+    it widens the Kriging interpolation uncertainty used for the PoD bound only, and the
+    PoD curve itself is unchanged; digiqual's bound comes from the bootstrap, so gamma is
+    kept as a diagnostic (see `compute_kriging_loo_residuals`).
 
     Args:
         X (np.ndarray): The 1D array of original input data (e.g., parameter of interest).
@@ -619,7 +908,8 @@ def fit_variance_model(
 
     Returns:
         tuple[np.ndarray, float]:
-            - residuals: Raw differences between `y` and the mean model predictions.
+            - residuals: Differences between `y` and the mean model predictions
+              (leave-one-out predictions for Kriging).
             - bandwidth: The selected smoothing window size (in absolute units of X).
 
     Examples:
@@ -642,17 +932,18 @@ def fit_variance_model(
         )
 
         print(f"Calculated Bandwidth: {bandwidth:.4f}")
-        print(f"Evaluation Grid Size: {len(X_eval)}")
         ```
     """
     X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
-    y_pred = mean_model.predict(X_2d)
-    residuals = y - y_pred
+    y = np.asarray(y, dtype=np.float64).flatten()
 
-    outlier_scale = getattr(mean_model, 'outlier_scale_factor_', 1.0)
-    if outlier_scale > 1.0:
-        print(f"   -> Outlier calibration active: Inflating variance by factor gamma = {outlier_scale:.3f} (max |e_i| > 3)")
-        residuals = residuals * np.sqrt(outlier_scale)
+    loo_means = getattr(mean_model, 'loo_means_', None)
+    if getattr(mean_model, 'model_type_', None) == 'Kriging':
+        if loo_means is None or len(loo_means) != len(y):
+            loo_means, _, _, _ = compute_kriging_loo_residuals(mean_model, X_2d, y)
+        residuals = y - loo_means
+    else:
+        residuals = y - mean_model.predict(X_2d)
 
     if auto_bandwidth:
         print("   -> Optimizing bandwidth via LOO-CV...")
@@ -842,12 +1133,17 @@ def _single_bootstrap_step(
             Ridge(alpha=0.1, random_state=42)
         )
     elif model_type == 'Kriging':
+        # Frozen hyperparameters and input scaling ([digiqual], see build_fixed_kernel_gpr)
         mean_model = build_fixed_kernel_gpr(model_params)
 
     mean_model.fit(X_res_2d, y_res)
 
-    y_pred = mean_model.predict(X_res_2d)
-    res_res = y_res - y_pred
+    if model_type == 'Kriging':
+        # LOO residuals, as in fit_variance_model. All copies of a resampled point are
+        # left out together so a point is never predicted from its own duplicate.
+        res_res = y_res - compute_kriging_group_loo_means(mean_model, X_res_2d, y_res, groups=idx)
+    else:
+        res_res = y_res - mean_model.predict(X_res_2d)
 
     dist_name, _dist_params = dist_info
     try:
@@ -898,9 +1194,16 @@ def bootstrap_pod_ci(
     For each resample, it refits the Mean Model (dynamically rebuilding either
     a Polynomial or Kriging model), recalculates residuals, and generates a new PoD curve.
     If Kriging is selected, the optimizer is disabled during bootstrapping to remain
-    computationally tractable: each resample reuses the fitted kernel (including its
-    learned WhiteKernel noise level) via `build_fixed_kernel_gpr`, so only the
-    posterior mean is recomputed.
+    computationally tractable [digiqual]: each resample reuses the fitted kernel (including
+    its learned WhiteKernel noise level) and the full-data input scaling via
+    `build_fixed_kernel_gpr`, so only the posterior mean is recomputed. [M25] Sec. 2i
+    re-estimates the model on every resample, so this interval does not include the
+    uncertainty in the Kriging hyperparameters. Kriging residuals for the variance model
+    are leave-one-out residuals, matching `fit_variance_model`.
+
+    Args:
+        model_params (Any): The polynomial degree, or for Kriging the model's
+            ``model_params_`` dict (``kernel``, ``x_mean``, ``x_std``).
     """
     import gc
 

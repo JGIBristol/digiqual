@@ -2630,8 +2630,8 @@ def server(input, output, session):
         model_type = locked_model_type()
         model_degree = locked_model_degree()
 
-        from sklearn.preprocessing import PolynomialFeatures
-        from sklearn.linear_model import LinearRegression
+        from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+        from sklearn.linear_model import Ridge
         from sklearn.pipeline import make_pipeline
         import matplotlib.pyplot as plt
         from sklearn.metrics import r2_score
@@ -2707,12 +2707,14 @@ def server(input, output, session):
             X_b, y_b = X[idx], y[idx]
 
             if model_type == 'Polynomial':
-                m = make_pipeline(PolynomialFeatures(degree=model_degree), LinearRegression())
+                # Same pipeline as the production model and the PoD bootstrap.
+                m = make_pipeline(PolynomialFeatures(degree=model_degree), StandardScaler(),
+                                  Ridge(alpha=0.1, random_state=42))
             elif model_type == 'Kriging':
                 # Same fixed-kernel refit as the PoD bootstrap: reuses the learned
-                # length scales and WhiteKernel noise, with normalize_y=True.
+                # length scales, WhiteKernel noise and full-data input scaling.
                 from digiqual.pod import build_fixed_kernel_gpr
-                m = build_fixed_kernel_gpr(model.kernel_)
+                m = build_fixed_kernel_gpr(model.model_params_)
 
             m.fit(X_b, y_b)
             accumulated_preds.append(m.predict(probe_points))

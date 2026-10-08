@@ -79,3 +79,23 @@ h1.title {
     max-height: 48px;
   }
 }
+
+// --- SOURCE BADGES ---
+// Provenance tags on the method pages (e.g. docs/kriging_metamodeling.qmd):
+// [M25] Malkiel 2025, [M26] Malkiel 2026, [UQLab] UQLab default, [digiqual] own choice.
+// Usage in .qmd: [M26]{.src .src-m26}
+.src {
+  display: inline-block;
+  font-size: 0.72em;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 0 0.45em;
+  border-radius: 0.35em;
+  vertical-align: 0.1em;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.src-m25      { background: #e0ecf8; color: #1d4f85; border-color: #b9d3ee; }
+.src-m26      { background: #e3f4ea; color: #1e6b3d; border-color: #bfe3cd; }
+.src-uqlab    { background: #f1e8f8; color: #5b2e86; border-color: #dccaee; }
+.src-digiqual { background: #fdf0dc; color: #8a4b08; border-color: #f5d6a8; }

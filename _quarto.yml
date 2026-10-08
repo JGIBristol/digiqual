@@ -62,7 +62,7 @@ website:
             href: docs/cpp_acceleration.qmd
           - text: "Generalised PoD Theory"
             href: docs/generalised_pod.qmd
-          - text: "Kriging Metamodeling & Calibration"
+          - text: "Kriging Metamodeling"
             href: docs/kriging_metamodeling.qmd
           - text: "Classical vs Generalised PoD"
             href: docs/comparison.qmd
@@ -133,15 +133,19 @@ quartodoc:
 
         # -- PoD Analysis --
         - pod.fit_all_robust_mean_models
+        - pod.select_cv_winner
         - pod.generate_latex_equation
         - pod.optimise_bandwidth
         - pod.fit_variance_model
         - pod.infer_best_distribution
         - pod.plot_model_selection
         - pod.predict_local_std
+        - pod.ScaledGaussianProcessRegressor
         - pod.build_kriging_candidate_kernels
+        - pod.build_kriging_gpr
         - pod.build_fixed_kernel_gpr
         - pod.compute_kriging_loo_residuals
+        - pod.compute_kriging_group_loo_means
         - pod.compute_pod_curve
         - pod.bootstrap_pod_ci
         - pod.calculate_reliability_point

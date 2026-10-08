@@ -12,25 +12,22 @@ Interaction with complex physics—such as crack roughness or angle variations�
 ## 1. Automated Model Selection (Relaxing Linearity)
 Instead of forcing a linear relationship $\hat{a} = \beta_0 + \beta_1 a$, `digiqual` treats the expectation model as a selection problem.
 
-It evaluates a pool of candidate models $f(x)$ including polynomials up to degree $10$ and Gaussian Process (Kriging) models. For each model, it performs **$K$-fold Cross-Validation (CV)** to estimate the Mean Squared Error (MSE):
-$$ MSE_{CV} = \frac{1}{n} \sum_{i=1}^n (y_i - \hat{f}^{-k(i)}(x_i))^2 $$
-Where $\hat{f}^{-k(i)}$ is the model trained without the $k$-th fold containing observation $i$. The model minimizing this error is automatically selected, balancing bias and variance.
+It evaluates a pool of candidate models $f(x)$: polynomials of degree $1$ to $10$ and a Gaussian Process (Kriging) model. For each one it performs **$K$-fold Cross-Validation (CV)** with $K = 10$ (Malkiel 2025, Eq. 2.7–2.8) to estimate the Mean Squared Error:
+$$ MSE_{CV} = \frac{1}{K} \sum_{j=1}^{K} \frac{1}{N_j} \sum_{i \in \text{fold } j} \left(y_i - \hat{f}^{\setminus j}(x_i)\right)^2 $$
+where $\hat{f}^{\setminus j}$ is the model trained without fold $j$.
 
-### Kriging Covariance Optimization & Anisotropic Fitting (Malkiel 2026)
-When Kriging metamodeling is active, `digiqual` optimizes the covariance structure across 4 candidate kernel families with anisotropic per-dimension length scale vectors $\boldsymbol{\theta} = [\theta_1, \dots, \theta_d]$:
-- **Matérn 3/2:** Smoothness $\nu=1.5$
-- **Matérn 5/2:** Smoothness $\nu=2.5$
-- **Gaussian (RBF):** Infinite smoothness
-- **Rational Quadratic:** Scale mixture of Gaussian kernels (single shared length scale)
+The winner is chosen by the **one-standard-error rule**. digiqual finds the model with the lowest $MSE_{CV}$, computes the standard error of that estimate, $SE = \text{std}(MSE_1,\dots,MSE_K)/\sqrt{K}$, and selects the *simplest* model whose $MSE_{CV}$ is within one $SE$ of the minimum. Complexity runs Polynomial 1, 2, …, 10, then Kriging. This formalises the choice made in Malkiel 2025 (Fig. 5), where a 3rd-order polynomial was preferred over Kriging and higher-order polynomials with almost identical CV errors "since it is the simplest one among those with smaller errors".
 
-Every candidate includes a white-noise (nugget) variance $\tau^2$ that is learned by maximum likelihood alongside $\boldsymbol{\theta}$, and the response is standardised before fitting. Learning $\tau^2$ stops the surrogate from interpolating scatter caused by variables it was not trained on. With a fixed, too-small noise level it would shrink a length scale onto that scatter and produce a spiky, unstable surface (see [Kriging Metamodeling](kriging_metamodeling.qmd)). The kernel minimising the $K$-fold $MSE_{CV}$ above is selected. Leave-One-Out predictions $\mu_{\hat{Y}_{-i}}$ and variances $\sigma_{\hat{Y}_{-i}}^2$ are then computed via the matrix inverse $B = S^{-1}$ for outlier calibration.
+### Kriging as a candidate (Malkiel 2026, UQLab)
+The Kriging candidate is built in two stages. Every element is tagged with its source on the [Kriging Metamodeling](kriging_metamodeling.qmd) page.
 
-### Standardized LOO Residual Outlier Calibration (Malkiel 2026)
-`digiqual` validates surrogate uncertainty by computing standardized LOO residual errors:
+1. **Choose the correlation family by leave-one-out (LOO) error** (Malkiel 2026, §2.2.2). Four anisotropic families are each fitted once to all the data: exponential (Matérn 1/2), Matérn 3/2, Matérn 5/2 and Gaussian. The one with the lowest normalised LOO error $MSE_{LOO}$ (Malkiel 2026, Eq. 14) is kept. Inputs are standardised first, as in UQLab, and a white-noise (nugget) variance $\tau^2$ is learned with the other hyperparameters, as in the Malkiel 2025 reference code.
+2. **Compare with the polynomials on equal terms.** The chosen kernel is then scored by the same 10-fold CV as the polynomials and enters the one-SE rule above.
+
+### Standardised LOO residuals (Malkiel 2026)
+For the Kriging model `digiqual` reports the standardised LOO residuals
 $$ e_i = \frac{y_i - \mu_{\hat{Y}_{-i}}}{\sigma_{\hat{Y}_{-i}}} $$
-If extreme outliers occur where $\max |e_i| > 3$, the engine automatically computes a conservative variance scaling factor:
-$$ \gamma = \max\left(1.0, \frac{\max |e_i|}{3}\right) $$
-and inflates prediction variance $\hat{\sigma}^2 \leftarrow \gamma \cdot \hat{\sigma}^2$ to guarantee mathematically reliable 95% worst-case bounds.
+and the factor $\gamma = \max\left(1, \max_i |e_i| / 3\right)$. In Malkiel 2026, $\gamma$ widens the Kriging *interpolation* uncertainty used to draw GP sample paths for the PoD bound, and it never changes the PoD curve itself. digiqual takes its bounds from the bootstrap (§5) instead, so $\gamma$ is shown as a **diagnostic** of how well the Kriging uncertainty matches the observed errors, and is not applied to the PoD. See [Kriging Metamodeling](kriging_metamodeling.qmd#loo-diagnostics) for the reasoning.
 
 ## 2. Modeling Heteroscedasticity (Relaxing Constant Variance)
 Signal scatter often increases with flaw size. `digiqual` abandons the constant variance assumption $\sigma^2 = c$, replacing it with a localized estimation $\sigma^2(x)$.
@@ -41,6 +38,8 @@ $$ \hat{\sigma}^2(x) = \frac{\sum_{i=1}^n K_h(x - x_i) e_i^2}{\sum_{i=1}^n K_h(x
 Where $K_h$ is the Gaussian kernel with bandwidth $h$:
 $$ K_h(u) = \frac{1}{\sqrt{2\pi h^2}} \exp\left(-\frac{u^2}{2h^2}\right) $$
 The optimal bandwidth $h$ is determined automatically via **Leave-One-Out Cross-Validation (LOO-CV)**.
+
+For polynomial models the residuals $e_i$ are the in-sample residuals, as in Malkiel 2025 (Eq. 2.9). For Kriging they are the leave-one-out residuals $y_i - \mu_{\hat{Y}_{-i}}$, because a Kriging model with a learned nugget partly fits the scatter at its own training points and would otherwise understate it.
 
 ## 3. Inferring Error Distributions (Relaxing Normality)
 Noise is rarely perfectly Gaussian. `digiqual` infers the true shape of the error.
@@ -76,7 +75,7 @@ Because the model is non-linear and non-normal, traditional analytical confidenc
 
 1. Draw $N$ samples with replacement from the original dataset.
 
-2. Completely physically re-fit the mean model, variance model, and error distribution.
+2. Completely physically re-fit the mean model, variance model, and error distribution. The model *type* (polynomial degree, or Kriging kernel) and the distribution family stay fixed, as in Malkiel 2025 §2i. For Kriging the hyperparameters (length scales, variance, nugget) and the input scaling are also held at their full-data values to keep 1000 refits tractable, so the interval does not include hyperparameter uncertainty.
 
 3. Calculate the PoD curve.
 

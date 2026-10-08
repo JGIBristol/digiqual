@@ -506,12 +506,13 @@ class SimulationStudy:
 
         # 2. Evaluate Caching State
         if n_boot == 0 and not self.models_cache:
-            # INITIAL CACHE BUILD: 10 polys * 10 folds = 100 fits. Kriging = ~12 heavy fits.
+            # INITIAL CACHE BUILD: 10 polys * 10 folds = 100 fits. Kriging = 4 full-data kernel fits
+            # (LOO selection) + 10 CV folds of the winner, ~40% of the old 4x10-fold cost (~5 heavy fits).
             # Plus Leave-One-Out CV for the variance smoothing bandwidth (~2 seconds)
             if n_samples > 1000:
                 t_fit = (100 * t_poly) + 2.0 # Kriging is skipped automatically for N>1000
             else:
-                t_fit = (100 * t_poly) + (12 * t_kriging) + 2.0
+                t_fit = (100 * t_poly) + (5 * t_kriging) + 2.0
         elif model_type.lower() == "kriging":
             t_fit = t_kriging
         else:
@@ -686,7 +687,7 @@ class SimulationStudy:
         else:
             best_kernel = getattr(mean_model, 'best_kernel_name_', 'Gaussian Process')
             outlier_gamma = getattr(mean_model, 'outlier_scale_factor_', 1.0)
-            print(f"-> Selected Model: Kriging ({best_kernel}) | Outlier Calibration Gamma: {outlier_gamma:.3f}")
+            print(f"-> Selected Model: Kriging ({best_kernel}) | LOO outlier factor gamma (diagnostic): {outlier_gamma:.3f}")
 
         # ---------------------------------------------------------
         # 5. LAYER 2 CACHE: Variance Model, Distribution & Sobol
@@ -1003,7 +1004,8 @@ class SimulationStudy:
             self.plots["model_selection"] = pod.plot_model_selection(
                 mean_model.cv_scores_,
                 used_key=used_key,
-                cv_winner_key=cv_winner_key
+                cv_winner_key=cv_winner_key,
+                cv_se=getattr(mean_model, 'cv_se_', None)
             )
 
         # 1. Signal Model Plot

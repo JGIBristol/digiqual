@@ -319,15 +319,20 @@ def plot_kriging_diagnostics(
     ax: Optional[plt.Axes] = None
 ) -> plt.Axes:
     """
-    Diagnostic Plot: Visualizes Standardized LOO Residuals and Outlier Calibration.
+    Diagnostic Plot: Visualizes Standardized LOO Residuals and the outlier factor gamma.
 
     Plots a histogram of standardized LOO residuals e_i against the Standard Normal
     distribution N(0, 1) alongside a scatter plot against the [-3, 3] outlier threshold bounds.
     Equivalent to Figure 10 in Malkiel et al. (2026).
 
+    When gamma > 1 the residuals rescaled by 1/gamma are also shown, which puts the largest
+    one exactly on the threshold. This is the right-hand axis of Malkiel et al. (2026)
+    Fig. 10b: it shows how much the Kriging uncertainty would need to be inflated to remove
+    every outlier. digiqual reports gamma as a diagnostic and does not apply it to the PoD.
+
     Args:
         std_residuals (np.ndarray): Array of standardized LOO residuals e_i.
-        outlier_scale_factor (float, optional): Outlier scaling factor gamma. Defaults to 1.0.
+        outlier_scale_factor (float, optional): Outlier factor gamma = max(1, max|e_i| / 3). Defaults to 1.0.
         best_kernel_name (str, optional): Name of the selected Kriging kernel. Defaults to "Matérn 5/2".
         ax (Optional[plt.Axes], optional): Matplotlib axes to plot on. Defaults to None.
 
@@ -374,8 +379,8 @@ def plot_kriging_diagnostics(
         ax_scatter.axhline(0.0, color='black', linestyle=':', alpha=0.5)
 
         if outlier_scale_factor > 1.0:
-            calibrated_res = std_res / np.sqrt(outlier_scale_factor)
-            ax_scatter.scatter(indices, calibrated_res, color='green', marker='x', alpha=0.8, s=25, label=f'Calibrated (gamma={outlier_scale_factor:.2f})')
+            rescaled_res = std_res / outlier_scale_factor
+            ax_scatter.scatter(indices, rescaled_res, color='green', marker='x', alpha=0.8, s=25, label=f'e_i / gamma (gamma={outlier_scale_factor:.2f})')
 
         ax_scatter.set_xlabel("Observation Index")
         ax_scatter.set_ylabel("Standardized Residual")
