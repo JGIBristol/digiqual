@@ -52,24 +52,26 @@ website:
           - text: "Launch the App"
             href: docs/gui.qmd
 
-      - section: "Detailed Manuals & Theory"
+      - section: "User Guides"
         contents:
           - text: "GUI Desktop Manual"
             href: docs/gui_manual.qmd
           - text: "Automated Optimisation"
             href: docs/optimisation.qmd
-          - text: "C++ Acceleration & Fallback"
-            href: docs/cpp_acceleration.qmd
-          - text: "Generalised PoD Theory"
+
+      - section: "Theory"
+        contents:
+          - text: "Generalised PoD"
             href: docs/generalised_pod.qmd
           - text: "Kriging Metamodeling"
             href: docs/kriging_metamodeling.qmd
-          - text: "Classical vs Generalised PoD"
-            href: docs/comparison.qmd
-          - docs/caching.qmd
 
       - section: "Development"
         contents:
+          - text: "Caching Architecture"
+            href: docs/caching.qmd
+          - text: "C++ Acceleration & Fallback"
+            href: docs/cpp_acceleration.qmd
           - text: "Desktop App Architecture"
             href: docs/app_architecture.qmd
 

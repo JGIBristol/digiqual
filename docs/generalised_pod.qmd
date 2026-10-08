@@ -1,108 +1,315 @@
 ---
 title: "Generalised Probability of Detection"
+description: "How digiqual relaxes the assumptions of the classical â-versus-a method, with a worked classical-vs-generalised comparison."
 ---
 
-In traditional non-destructive evaluation (NDE), the standard $\hat{a}$-versus-$a$ approach relies on several restrictive assumptions:
-1. **Linearity** of the signal response to defect size.
-2. **Homoscedasticity** (constant variance) of noise across all defect sizes.
-3. **Normality** (Gaussian shape) of the residuals.
+The classical $\hat{a}$-versus-$a$ method fits a straight line to the signal response and assumes:
 
-Interaction with complex physics—such as crack roughness or angle variations—often breaks these assumptions. `digiqual` implements a generalized framework based on Malkiel et al. (2025) to relax these constraints.
+1. **Linearity** of the signal response with defect size, possibly after a log transform;
+2. **Homoscedasticity**: the scatter around that line has constant variance;
+3. **Normality**: the scatter is Gaussian.
 
-## 1. Automated Model Selection (Relaxing Linearity)
-Instead of forcing a linear relationship $\hat{a} = \beta_0 + \beta_1 a$, `digiqual` treats the expectation model as a selection problem.
+Real inspections often break all three. Signals saturate, and roughness, angle or other nuisance effects make the scatter grow and become skewed. When that happens the classical PoD curve and its confidence bounds can be badly wrong. `digiqual` implements the generalised framework of Malkiel et al. (2025) [M25]{.src .src-m25}, which relaxes each assumption in turn. The sections below follow the steps of that framework; §7 runs both methods on the same data so you can see the difference.
 
-It evaluates a pool of candidate models $f(x)$: polynomials of degree $1$ to $10$ and a Gaussian Process (Kriging) model. For each one it performs **$K$-fold Cross-Validation (CV)** with $K = 10$ (Malkiel 2025, Eq. 2.7–2.8) to estimate the Mean Squared Error:
-$$ MSE_{CV} = \frac{1}{K} \sum_{j=1}^{K} \frac{1}{N_j} \sum_{i \in \text{fold } j} \left(y_i - \hat{f}^{\setminus j}(x_i)\right)^2 $$
+The Kriging candidate model has its own page, [Kriging Metamodeling](kriging_metamodeling.qmd). It covers the GP maths, kernel choice, LOO diagnostics and pitfalls, and tags where each element comes from ([M25]{.src .src-m25}, [M26]{.src .src-m26}, [UQLab]{.src .src-uqlab} or [digiqual]{.src .src-digiqual}).
+
+## 1. Choosing the expectation model (relaxing linearity) {#model-selection}
+
+Instead of forcing $\hat{a} = \beta_0 + \beta_1 a$, `digiqual` treats the mean response as a model-selection problem. The candidates are polynomials of degree 1 to 10 and one Kriging model. Each is scored by **10-fold cross-validation** [M25]{.src .src-m25} (Eq. 2.7–2.8):
+
+$$
+MSE_j = \frac{1}{N_j}\sum_{i \in \text{fold } j}\left(y_i - \hat{f}^{\setminus j}(x_i)\right)^2,
+\qquad
+CV_{(10)} = \frac{1}{10}\sum_{j=1}^{10} MSE_j
+$$
+
 where $\hat{f}^{\setminus j}$ is the model trained without fold $j$.
 
-The winner is chosen by the **one-standard-error rule**. digiqual finds the model with the lowest $MSE_{CV}$, computes the standard error of that estimate, $SE = \text{std}(MSE_1,\dots,MSE_K)/\sqrt{K}$, and selects the *simplest* model whose $MSE_{CV}$ is within one $SE$ of the minimum. Complexity runs Polynomial 1, 2, …, 10, then Kriging. This formalises the choice made in Malkiel 2025 (Fig. 5), where a 3rd-order polynomial was preferred over Kriging and higher-order polynomials with almost identical CV errors "since it is the simplest one among those with smaller errors".
+**Picking the winner: the one-standard-error rule.** In [M25]{.src .src-m25} (Fig. 5) the 3rd-, 4th- and 5th-order polynomials and Kriging all had almost the same CV error, and the authors chose the cubic "since it is the simplest one among those with smaller errors". `digiqual` turns that judgement into a fixed rule [digiqual]{.src .src-digiqual}:
 
-### Kriging as a candidate (Malkiel 2026, UQLab)
-The Kriging candidate is built in two stages. Every element is tagged with its source on the [Kriging Metamodeling](kriging_metamodeling.qmd) page.
+1. Find the model with the lowest $CV_{(10)}$.
+2. Compute its standard error, $SE = \operatorname{std}(MSE_1, \dots, MSE_{10}) / \sqrt{10}$. The [M25]{.src .src-m25} reference code records this quantity.
+3. Choose the **simplest** model with $CV_{(10)} \le \min CV + SE$. The complexity order is Polynomial 1, 2, …, 10, then Kriging.
 
-1. **Choose the correlation family by leave-one-out (LOO) error** (Malkiel 2026, §2.2.2). Four anisotropic families are each fitted once to all the data: exponential (Matérn 1/2), Matérn 3/2, Matérn 5/2 and Gaussian. The one with the lowest normalised LOO error $MSE_{LOO}$ (Malkiel 2026, Eq. 14) is kept. Inputs are standardised first, as in UQLab, and a white-noise (nugget) variance $\tau^2$ is learned with the other hyperparameters, as in the Malkiel 2025 reference code.
-2. **Compare with the polynomials on equal terms.** The chosen kernel is then scored by the same 10-fold CV as the polynomials and enters the one-SE rule above.
+A more flexible model, and Kriging in particular, is therefore chosen only when it is *clearly* better, not when it wins by less than the noise in the CV estimate. You can always override the choice with `model_override="kriging"` or `"polynomial"` (and `force_degree`), or with the model selector in the app.
 
-### Standardised LOO residuals (Malkiel 2026)
-For the Kriging model `digiqual` reports the standardised LOO residuals
-$$ e_i = \frac{y_i - \mu_{\hat{Y}_{-i}}}{\sigma_{\hat{Y}_{-i}}} $$
-and the factor $\gamma = \max\left(1, \max_i |e_i| / 3\right)$. In Malkiel 2026, $\gamma$ widens the Kriging *interpolation* uncertainty used to draw GP sample paths for the PoD bound, and it never changes the PoD curve itself. digiqual takes its bounds from the bootstrap (§5) instead, so $\gamma$ is shown as a **diagnostic** of how well the Kriging uncertainty matches the observed errors, and is not applied to the PoD. See [Kriging Metamodeling](kriging_metamodeling.qmd#loo-diagnostics) for the reasoning.
+**Example.** The true mean response below is quadratic in flaw length, plus a weak linear effect of probe angle. The cubic polynomial has the lowest CV error, but the fold-to-fold spread is large (the outlier lands in one fold), so every model except Poly 1 is within one standard error of it. Poly 2 is the simplest of those, so it is the automatic choice (red bar). In this case that is also the true model.
 
-## 2. Modeling Heteroscedasticity (Relaxing Constant Variance)
-Signal scatter often increases with flaw size. `digiqual` abandons the constant variance assumption $\sigma^2 = c$, replacing it with a localized estimation $\sigma^2(x)$.
+```{python}
+#| label: fig-one-se
+#| fig-cap: "Model selection with the one-standard-error rule. The lowest CV error (bold row, red dash-dot line) belongs to Poly 3, but every bar below the dashed min + 1 SE line is statistically indistinguishable from it, so the simplest of those, Poly 2, is selected."
+import numpy as np
+import matplotlib.pyplot as plt
+from digiqual.pod import fit_all_robust_mean_models, plot_model_selection
 
-### The Mathematics
-It implements a **Nadaraya-Watson Gaussian kernel average smoother**. The variance at any point $x$ is calculated as a weighted average of the surrounding squared residuals $e_i^2 = (y_i - \hat{y}_i)^2$:
-$$ \hat{\sigma}^2(x) = \frac{\sum_{i=1}^n K_h(x - x_i) e_i^2}{\sum_{i=1}^n K_h(x - x_i)} $$
-Where $K_h$ is the Gaussian kernel with bandwidth $h$:
-$$ K_h(u) = \frac{1}{\sqrt{2\pi h^2}} \exp\left(-\frac{u^2}{2h^2}\right) $$
-The optimal bandwidth $h$ is determined automatically via **Leave-One-Out Cross-Validation (LOO-CV)**.
+rng = np.random.default_rng(42)
+N = 100
+length = rng.uniform(0.5, 5.0, N)
+angle = rng.uniform(-15.0, 15.0, N)
+y = 2.0 * length - 0.3 * length**2 + 0.05 * angle + rng.normal(0, 0.3, N)
+y[10] += 3.5  # one outlier
 
-For polynomial models the residuals $e_i$ are the in-sample residuals, as in Malkiel 2025 (Eq. 2.9). For Kriging they are the leave-one-out residuals $y_i - \mu_{\hat{Y}_{-i}}$, because a Kriging model with a learned nugget partly fits the scatter at its own training points and would otherwise understate it.
+models, cv_scores, winner = fit_all_robust_mean_models(np.column_stack([length, angle]), y)
+lowest = min(cv_scores, key=cv_scores.get)
+print(f"Lowest CV MSE: {lowest}   Selected (one-SE rule): {winner}")
 
-## 3. Inferring Error Distributions (Relaxing Normality)
-Noise is rarely perfectly Gaussian. `digiqual` infers the true shape of the error.
+plot_model_selection(cv_scores, cv_winner_key=winner, cv_se=models[winner].cv_se_)
+plt.show()
+```
 
-### The Mathematics
-Residuals are first standardized into $Z$-scores using the local standard deviation:
-$$ Z_i = \frac{y_i - \hat{f}(x_i)}{\hat{\sigma}(x_i)} $$
-These $Z$-scores are then fitted against an expanded suite of candidate distributions: Normal (`norm`), Gumbel Right (`gumbel_r`), Gumbel Left (`gumbel_l` - highly relevant for skewed ultrasonic crack reflection data), Weibull Minimum (`weibull_min`), Weibull Maximum (`weibull_max`), Gamma (`gamma`), Exponential (`expon`), Logistic (`logistic`), Laplace (`laplace`), Student's t (`t`), Beta (`beta`), and Uniform (`uniform`). The best-fitting distribution is selected using the **Akaike Information Criterion (AIC)**:
+**The Kriging candidate.** Kriging enters this comparison in two stages. First its correlation function is chosen by leave-one-out error [M26]{.src .src-m26}. Then that one kernel is scored by the same 10-fold CV as the polynomials. Details, including the LOO residual diagnostics and the factor $\gamma$, are on the [Kriging Metamodeling](kriging_metamodeling.qmd#loo) page. Kriging is skipped for datasets above 1000 samples.
+
+## 2. Modelling heteroscedasticity (relaxing constant variance)
+
+Signal scatter often changes across the input space. `digiqual` replaces the constant variance $\sigma^2 = c$ with a local estimate $\sigma^2(x)$, using a **Nadaraya-Watson Gaussian kernel smoother** of the squared residuals $e_i^2 = (y_i - \hat{y}_i)^2$ [M25]{.src .src-m25} (Eq. 2.9–2.11):
+
+$$ \hat{\sigma}^2(x) = \frac{\sum_{i=1}^n K_h(x - x_i)\, e_i^2}{\sum_{i=1}^n K_h(x - x_i)},
+\qquad
+K_h(u) = \frac{1}{\sqrt{2\pi h^2}} \exp\left(-\frac{u^2}{2h^2}\right) $$
+
+The bandwidth $h$ is chosen automatically by leave-one-out cross-validation. For polynomial models the residuals are the usual in-sample ones. For Kriging they are leave-one-out residuals ([why](kriging_metamodeling.qmd#variance-and-bootstrap)).
+
+## 3. Inferring the error distribution (relaxing normality)
+
+The residuals are standardised by the local standard deviation,
+
+$$ Z_i = \frac{y_i - \hat{f}(x_i)}{\hat{\sigma}(x_i)}, $$
+
+and the $Z_i$ are fitted by maximum likelihood to a suite of candidate distributions [M25]{.src .src-m25} (§2f): Normal (`norm`), Gumbel Right (`gumbel_r`), Gumbel Left (`gumbel_l`, often a good fit to skewed ultrasonic crack reflections), Weibull Minimum (`weibull_min`), Weibull Maximum (`weibull_max`), Gamma (`gamma`), Exponential (`expon`), Logistic (`logistic`), Laplace (`laplace`), Student's t (`t`), Beta (`beta`) and Uniform (`uniform`). The best fit is selected by the **Akaike Information Criterion**:
+
 $$ AIC = 2k - 2\ln(\hat{L}) $$
-Where $k$ is the number of parameters and $\hat{L}$ is the Maximum Likelihood.
 
-## 4. Multi-Dimensional Evaluation (Marginalisation & Slicing)
-When evaluating multidimensional datasets with additional variables (e.g., angle $\theta$, roughness $R$), `digiqual` fits the surrogate model to the *entire* $n$-dimensional parameter space. To project this down to a 1D or 2D Probability of Detection curve, it uses two distinct techniques:
+where $k$ is the number of parameters and $\hat{L}$ is the maximised likelihood. The PoD at each point is then $1 - F\big((t - \hat{f}(x))/\hat{\sigma}(x)\big)$ for threshold $t$ and the inferred CDF $F$.
 
-### Active Marginalisation (Nuisance Parameters)
-For parameters treated as random noise, the expected PoD for a Parameter of Interest (PoI) vector $\mathbf{x}$ is calculated by integrating the conditional PoD over the probability density function $p(\mathbf{z})$ of the nuisance variables $\mathbf{z}$:
-$$PoD(\mathbf{x}) = \int_{\Omega_z} PoD(\mathbf{x}, \mathbf{z}) p(\mathbf{z}) d\mathbf{z}$$
+## 4. Multi-dimensional evaluation (marginalisation and slicing)
 
-`digiqual` approximates this integral computationally via Monte Carlo integration (Latin Hypercube Sampling) to average the signal response across the noise spectrum.
+`digiqual` fits the mean and variance models to the *entire* $n$-dimensional input space. To project this onto a 1D or 2D PoD, every input not being plotted is either integrated out or held fixed.
 
-If custom nuisance distributions are configured (such as Normal, Lognormal, or Weibull), `digiqual` scales the initial standard LHS samples (lying in $[0, 1]^d$) using **Inverse Transform Sampling**. For each nuisance dimension $j$, the physical values are obtained by applying the target distribution's Cumulative Distribution Function (CDF) inverse, or Percent Point Function (PPF), denoted $F_j^{-1}$:
-$$ z_{i, j} = F_j^{-1}(u_{i, j}) $$
-where $u_{i, j}$ is the $[0,1]$ space-filling LHS coordinate.
+### Active marginalisation (nuisance parameters)
 
-### Parameter Slicing (Constant Parameters)
-For parameters that are neither plotted nor integrated out, `digiqual` treats them as strict mathematical constants. The evaluation grid takes a "slice" through the $n$-dimensional response surface at these specific values (defaulting to the parameter's median), allowing you to explore specific physical scenarios without retraining the underlying model.
+For a nuisance vector $\mathbf{z}$ with density $p(\mathbf{z})$, the PoD for parameters of interest $\mathbf{x}$ is
 
-## 5. Bootstrapping for Confidence Bounds
-Because the model is non-linear and non-normal, traditional analytical confidence bounds are invalid.
+$$PoD(\mathbf{x}) = \int_{\Omega_z} PoD(\mathbf{x}, \mathbf{z})\, p(\mathbf{z})\, d\mathbf{z}$$
 
-### The Process
-`digiqual` uses **Bootstrap resampling**:
+`digiqual` approximates this integral by Monte Carlo integration with Latin Hypercube Sampling. Nuisance inputs are uniform over their observed range by default. For a custom distribution (Normal, Lognormal or Weibull), the $[0, 1]$ LHS coordinates $u_{i,j}$ are mapped through the inverse CDF, $z_{i,j} = F_j^{-1}(u_{i,j})$. The [Quick Start](qs_class.qmd) explains why a realistic nuisance distribution matters.
 
-1. Draw $N$ samples with replacement from the original dataset.
+### Parameter slicing (constant parameters)
 
-2. Completely physically re-fit the mean model, variance model, and error distribution. The model *type* (polynomial degree, or Kriging kernel) and the distribution family stay fixed, as in Malkiel 2025 §2i. For Kriging the hyperparameters (length scales, variance, nugget) and the input scaling are also held at their full-data values to keep 1000 refits tractable, so the interval does not include hyperparameter uncertainty.
+Inputs that are neither plotted nor integrated out are held constant, at their median by default or at a value you choose. The PoD is then a "slice" through the response surface, which lets you explore a specific scenario without refitting the models.
 
+## 5. Bootstrapping for confidence bounds {#bootstrap}
+
+With a non-linear, non-normal model, the classical analytical confidence bounds no longer apply. `digiqual` uses **bootstrap resampling** [M25]{.src .src-m25} (§2i):
+
+1. Draw $N$ samples with replacement from the data.
+2. Refit the mean model, variance model and error distribution. The model *type* (polynomial degree or Kriging kernel) and the distribution family stay fixed; for Kriging the hyperparameters are frozen too ([details](kriging_metamodeling.qmd#variance-and-bootstrap)).
 3. Calculate the PoD curve.
+4. Repeat $B$ times (typically $B = 1000$).
+5. Take percentiles at every point to form confidence bounds at several levels at once (50 %, 90 %, 95 %, 99 %). From these, `digiqual` builds the reliability matrix of $a_{X/Y}$ values (e.g. $a_{90/95}$).
 
-4. Repeat this $B$ times (typically $B=1000$).
+## 6. Global sensitivity analysis (Sobol indices)
 
-5. Extract the percentiles at every point $a$ to form the robust confidence interval curves across multiple standard confidence levels (50%, 90%, 95%, 99%) simultaneously (e.g., $PoD_{50}$, $PoD_{90}$, $PoD_{95}$, $PoD_{99}$). This builds the complete reliability matrix mapping target PoDs and confidence bounds.
+To show which inputs drive the signal, `digiqual` computes **total-order Sobol indices** of the fitted mean response. For $Y = f(X_1, \dots, X_d)$,
 
-## 6. Global Sensitivity Analysis (Sobol Indices)
-To help engineers identify which inputs contribute most to signal variance, `digiqual` calculates **Total-Order Sobol Sensitivity Indices** ($S_T$) using Variance-Based Sensitivity Analysis.
+$$ S_{T_i} = \frac{E_{\sim i}\left(V_{i}(Y \mid X_{\sim i})\right)}{V(Y)} = 1 - \frac{V_{\sim i}\left(E_i(Y \mid X_{\sim i})\right)}{V(Y)} $$
 
-### The Mathematics
-For a model output $Y = f(X_1, X_2, \dots, X_d)$, the total-order sensitivity index $S_{T_i}$ measures the total contribution of input $X_i$ to the variance of $Y$, including its direct effect and all interaction terms of any order:
-$$ S_{T_i} = \frac{E_{\sim i}(V_{i}(Y \mid X_{\sim i}))}{V(Y)} = 1 - \frac{V_{\sim i}(E_i(Y \mid X_{\sim i}))}{V(Y)} $$
-where $X_{\sim i}$ denotes all variables except $X_i$.
+where $X_{\sim i}$ denotes all inputs except $X_i$. $S_{T_i}$ includes $X_i$'s direct effect and all its interactions. The indices are estimated with `SALib` by sampling the input space and evaluating the mean model. They are cached with the variance model and shown as percentages in the app.
 
-`digiqual` uses the `SALib` package to compute these indices:
-1. It defines the parameter space bounds.
-2. It samples the space-filling coordinates.
-3. It evaluates the surrogate expectation model (mean response) at these coordinates.
-4. It estimates the total-order indices $S_T$ for each variable, which are cached and displayed as percentages in the GUI.
+## Summary: how each type of parameter is treated
 
-## Summary: The 3-Tier Parameter Taxonomy
-
-To understand how `digiqual` handles high-dimensional data, it is helpful to see exactly how each parameter type is treated during the three phases of reliability assessment:
-
-| Parameter Type | 1. Model Fit (Training Phase) | 2. Evaluation Phase (Mean Curve) | 3. PoD Generation (Bootstrapping) |
+| Parameter type | Model fit | Mean curve / PoD | Bootstrap |
 | :--- | :--- | :--- | :--- |
-| **Parameter(s) of Interest (PoI)** | Treated as a standard geometric dimension to train the n-dimensional surrogate model. | Defines the evaluation grid. Steps evenly from its minimum to maximum value to form the plot axes. | Forms the primary axes for the final Probability of Detection confidence bounds. |
-| **Sliced Parameter (Constant)** | Treated as a standard geometric dimension. The model learns its physical impact globally. | Held **strictly constant** at a user-defined value. Acts as a targeted, multi-dimensional "laser beam" slice. | Remains rigidly locked at the exact same constant value across all bootstrap resamples. |
-| **Nuisance Parameter (Marginalised)** | Treated as a standard geometric dimension. The model learns its physical impact globally. | **Randomly sampled** via Monte Carlo integration across its physical bounds (Uniform or custom Normal/Lognormal/Weibull). Results are averaged out. | Re-sampled and averaged inside *every single* bootstrap iteration to capture real-world uncertainty. |
+| **Parameter(s) of interest** | Input dimension of the surrogate. | Defines the evaluation grid (the plot axes). | Same grid in every resample. |
+| **Sliced (constant)** | Input dimension of the surrogate. | Held at a fixed value. | Held at the same value in every resample. |
+| **Nuisance (marginalised)** | Input dimension of the surrogate. | Monte Carlo sampled from its distribution and averaged out. | Re-sampled and averaged in every resample. |
+
+
+## 7. Worked example: classical vs generalised {#worked-example}
+
+This example generates data that deliberately breaks the classical assumptions and runs both methods on it. The signal grows quadratically with flaw length, falls with misalignment angle, and has scatter that grows with surface roughness, a nuisance parameter.
+
+### 7.1 Setup and data
+
+```{python}
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from digiqual.core import SimulationStudy
+from digiqual.sampling import generate_lhs
+
+
+# --- Define the Non-Linear Physics ---
+def apply_physics(df):
+    """Simulates a multidimensional signal with nuisance parameters."""
+    # Base Signal: Quadratic trend (2*L + 0.5*L^2)
+    # Angle Penalty: Misalignment (-0.1*Angle) reduces signal
+    signal = (
+        10.0
+        + (2.0 * df["Length"])
+        + (0.5 * df["Length"] ** 2)
+        - (0.1 * np.abs(df["Angle"]))
+    )
+
+    # Heteroscedastic Noise: Higher roughness = More scatter
+    noise_scale = 0.5 + (1.5 * df["Roughness"])
+    noise = np.random.normal(loc=0, scale=noise_scale, size=len(df))
+
+    return signal + noise
+
+
+# --- Create the Dataset ---
+# Latin Hypercube Sampling covers the 3D space efficiently
+vars_df = pd.DataFrame(
+    [
+        {"Name": "Length", "Min": 0.1, "Max": 10.0},
+        {"Name": "Angle", "Min": -45.0, "Max": 45.0},
+        {"Name": "Roughness", "Min": 0.0, "Max": 1.0},
+    ]
+)
+
+np.random.seed(42)
+df = generate_lhs(ranges=vars_df, n=150)  # 150 points for 3D space
+df["Signal"] = apply_physics(df)
+
+study = SimulationStudy()
+study.add_data(df, outcome_col="Signal")
+```
+
+### 7.2 The classical approach
+
+The classical method is applied with log transforms of both axes (`xlog=True`, `ylog=True`) to give the straight line its best chance. Its confidence bounds are computed by bootstrap rather than the MIL-HDBK-1823A formulas, which keeps the classical assumptions (a straight line, constant variance, normal errors) while making the worst-case curve easy to obtain. Like the generalised path, `linear_pod` stores bounds for 50 %, 90 %, 95 % and 99 % confidence in `ci_bounds` and `reliability_table`.
+
+```{python}
+# | label: fig-classical
+# | fig-cap: "Classical Linear Analysis Results"
+# | fig-subcap:
+# |   - "Linear Signal Response Model (Assuming Constant Variance)"
+# |   - "Classical PoD Curve (With Bootstrapped Confidence Bounds)"
+# | layout-ncol: 1
+
+# Run the classical linear PoD analysis
+linear_results = study.linear_pod(
+    poi_col="Length",
+    threshold=30,
+    xlog=True,
+    ylog=True,
+    n_jobs=-1,  # Use all CPU cores for fast bootstrapping
+)
+
+# Visualise the standard signal fit and PoD curve
+study.visualise_linear(show=True)
+```
+
+::: {.callout-tip}
+Look at the 95 % prediction interval. The classical method assumes one constant scatter for every flaw, so the interval has the same width everywhere. In this data the scatter depends on roughness, which the classical fit ignores, and on top of that the straight line cannot follow the curved trend.
+:::
+
+### 7.3 The generalised approach
+
+The generalised method selects the mean model by cross-validation (§1), models the changing scatter (§2), infers the error distribution (§3) and integrates out Angle and Roughness (§4). Its bootstrap (§5) gives the same set of confidence levels.
+
+```{python}
+# | label: fig-generalised
+# | fig-cap: "Generalised Relaxed Analysis Results"
+# | fig-subcap:
+# |   - "Model Selection (Bias-Variance Tradeoff)"
+# |   - "Signal Response Model (Capturing Heteroscedastic Noise)"
+# |   - "Generalised PoD Curve (With Bootstrapped Confidence Bounds)"
+# | layout-ncol: 1
+# Run the generalised PoD analysis
+# n_jobs=-1 runs the bootstrap process on all available CPU cores
+study.pod(
+    poi_col="Length", nuisance_col=["Angle", "Roughness"], threshold=30.0, n_jobs=-1
+)
+
+# Visualise the relaxed signal fit and PoD curve
+study.visualise(show=True)
+```
+
+### 7.4 Head-to-head
+
+Extracting both PoD curves from the `SimulationStudy` and plotting them together shows how much the assumptions matter.
+
+```{python}
+# | label: fig-comparison
+# | fig-cap: "Head-to-Head Reliability Comparison"
+# | layout-ncol: 1
+
+# 1. Extract the evaluation grids (X) and PoD curves (Y) from the internal class state
+X_linear = study.linear_pod_results["X_eval"]
+pod_linear = study.linear_pod_results["curves"]["pod"]
+ci_lower_linear = study.linear_pod_results["curves"]["ci_lower"]
+ci_upper_linear = study.linear_pod_results["curves"]["ci_upper"]
+
+X_relaxed = study.pod_results["X_eval"].flatten()
+pod_relaxed = study.pod_results["curves"]["pod"]
+ci_lower_relaxed = study.pod_results["curves"]["ci_lower"]
+ci_upper_relaxed = study.pod_results["curves"]["ci_upper"]
+
+# Set up the comparison plot
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 2. Plot Classical Linear Method
+ax.plot(
+    X_linear,
+    pod_linear,
+    color="red",
+    linestyle="--",
+    linewidth=2,
+    label="Classical Linear PoD",
+)
+# Shade Classical Bounds instead of plotting a single line
+ax.fill_between(
+    X_linear,
+    ci_lower_linear,
+    ci_upper_linear,
+    color="red",
+    alpha=0.1,  # Keep alpha low so we can see overlaps
+    label="Classical 95% Confidence Bounds",
+)
+
+# 3. Plot Generalised Relaxed Method
+ax.plot(
+    X_relaxed, pod_relaxed, color="black", linewidth=2, label="Generalised Relaxed PoD"
+)
+# Shade Generalised Bounds between lower and upper
+ax.fill_between(
+    X_relaxed,
+    ci_lower_relaxed,
+    ci_upper_relaxed,
+    color="gray",
+    alpha=0.2,
+    label="Generalised 95% Confidence Bounds",
+)
+
+# Formatting
+ax.axhline(
+    0.90, color="green", linestyle=":", alpha=0.6, label="90% Target Reliability"
+)
+ax.set_ylim(-0.05, 1.05)
+ax.set_xlabel("Flaw Length (mm)")
+ax.set_ylabel("Probability of Detection")
+ax.set_title("PoD Comparison: Classical vs. Generalised")
+ax.legend(loc="lower right")
+ax.grid(True, alpha=0.3)
+
+plt.show()
+
+# Print a comparative summary
+print("--- Reliability Summary ---")
+print("Target Threshold: 30")
+
+# Find the a90 points (where the LOWER bounds cross 0.90)
+try:
+    a90_linear = X_linear[np.argmax(ci_lower_linear >= 0.90)]
+    a90_relaxed = X_relaxed[np.argmax(ci_lower_relaxed >= 0.90)]
+
+    print(f"Classical a90/95 (Estimated):  {a90_linear:.2f} mm")
+    print(f"Generalised a90/95 (Estimated): {a90_relaxed:.2f} mm")
+
+    diff = abs(a90_relaxed - a90_linear)
+    print(f"\nDifference in critical sizing: {diff:.2f} mm")
+except IndexError:
+    print("Curves did not reach 90% reliability.")
+```

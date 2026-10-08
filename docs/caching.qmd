@@ -1,5 +1,5 @@
 ---
-title: "DigiQual Caching Architecture"
+title: "Caching Architecture"
 description: "A deep dive into the 4-layer caching system that powers real-time Reliability Analysis."
 ---
 
@@ -19,9 +19,9 @@ The state of the caches is managed inside `core.py`. Whenever the physical datas
 
 ### Layer 1: The Mean Model Cache (`models_cache`)
 **What it does:** Caches the fundamental physics regressions.
-**Trigger:** Hitting "Fit Physics Model" on Tab 4.
+**Trigger:** Clicking **Step 1: Fit Physics Model** on the *Model Fit* tab (or the first `study.pod()` call).
 
-Instead of only fitting the single "best" model, the engine evaluates *all* polynomial degrees (1-10) and the Kriging (Gaussian Process) model via Cross-Validation, and then fits every single one of them to the full dataset.
+Instead of only fitting the single "best" model, the engine evaluates *all* polynomial degrees (1-10) and the Kriging (Gaussian Process) model via cross-validation, and then fits every one of them to the full dataset. The CV scores, their standard errors (`cv_se_`) and the automatic choice made by the one-standard-error rule are cached with them ([how the choice is made](generalised_pod.qmd#model-selection)).
 
 * **Cache Key:** `('Polynomial', 3)` or `('Kriging', None)`
 * **Stored Data:** The fitted `scikit-learn` pipeline.
@@ -55,7 +55,7 @@ The `integration.py` engine is fully vectorized to handle multiple thresholds si
 
 * **Cache Key:** strictly *excludes* the threshold: `(selected_key, poi_cols, nuisance_cols, slice_values)`
 * **Stored Data:** A massive 2D matrix (`pod_matrix`) where rows are X-axis grid points and columns are the 100 different thresholds.
-* **Benefit:** When the user drags the "Detection Threshold" slider on Tab 5, the app intercepts the slider value, performs a 1D linear interpolation across the pre-calculated `pod_matrix`, and returns the shifted S-Curve in less than a millisecond.
+* **Benefit:** When the user drags the "Detection Threshold" slider on the *PoD Explorer* tab, the app intercepts the slider value, performs a 1D linear interpolation across the pre-calculated `pod_matrix`, and returns the shifted S-Curve in less than a millisecond.
 
 ---
 
@@ -64,7 +64,7 @@ The `integration.py` engine is fully vectorized to handle multiple thresholds si
 Let's trace exactly what happens in the engine when a user interacts with the application.
 
 #### Step 1: The Initial Fit
-The user uploads 500 simulations of an ultrasonic inspection with `Length`, `Angle`, and `Roughness`. They select `Length` as the Parameter of Interest, and click **"Fit Physics Model"**.
+The user uploads 500 simulations of an ultrasonic inspection with `Length`, `Angle`, and `Roughness`. They select `Length` as the Parameter of Interest, and click **Step 1: Fit Physics Model**.
 
 1. **Layer 1 Miss:** The engine trains 10 polynomials and 1 Kriging model. It caches all 11 models. It selects "Polynomial (Degree 2)" as the winner.
 2. **Layer 2 Miss:** It optimizes the bandwidth and fits a Normal distribution for Poly 2. It caches the variance parameters.
@@ -74,7 +74,7 @@ The user uploads 500 simulations of an ultrasonic inspection with `Length`, `Ang
 *Total Compute Time: ~2.5 seconds.*
 
 #### Step 2: The Real-Time Slider
-The user navigates to Tab 5 (PoD Explorer) and rapidly drags the **Detection Threshold** slider from `15.0 dB` to `22.5 dB`.
+The user moves to the *PoD Explorer* tab and rapidly drags the **Detection Threshold** slider from `15.0 dB` to `22.5 dB`.
 
 1. The `realtime_threshold_update` function fires in `digiqual/gui/app.py`.
 2. It calls `study.pod(threshold=22.5, n_boot=0)`.
@@ -97,7 +97,7 @@ The user moves the **Angle Slice Slider** from 0 degrees to 45 degrees.
 *Total Compute Time: ~0.05 seconds.*
 
 #### Step 4: Uncertainty Quantification (Bypassing the Cache)
-The user is happy with a threshold of `22.5 dB` and clicks **"Run Uncertainty Quantification"** on Tab 6.
+The user is happy with a threshold of `22.5 dB` and clicks **Run Uncertainty Quantification** on the *UQ Analysis* tab.
 
 1. The function calls `study.pod(threshold=22.5, n_boot=1000)`.
 2. The engine recognizes `n_boot > 0`.

@@ -16,10 +16,32 @@ flowchart TD
 ```
 
 ### Breakdowns of the Steps
-1. **Initialisation**: If you have no existing data, DigiQual generates an initial batch of input coordinates using Latin Hypercube Sampling (LHS) to ensure a good spread across your variable ranges.
+1. **Initialisation**: If you have no existing data, DigiQual generates an initial batch of input coordinates using a space-filling Latin Hypercube Sample ([details](#diagnostics)).
 2. **Execution**: It passes these coordinates to your solver and waits for the results.
-3. **Diagnostics (Sense)**: Once the results are back, DigiQual runs statistical checks. It looks for "gaps" in your input coverage, measures "model uncertainty" using a technique called Bootstrap Query-by-Committee, and checks for **multicollinearity (VIF)** to ensure your input variables are not highly correlated (which could cause model fit instability).
+3. **Diagnostics (Sense)**: Once the results are back, DigiQual runs the [diagnostic tests](#diagnostics): input coverage gaps, model fit, bootstrap stability and multicollinearity.
 4. **Refinement (Decide & Act)**: If the diagnostics fail, DigiQual generates *targeted* new samples exactly where the model needs them most (e.g., in the middle of an empty gap, or in highly uncertain regions) and repeats the loop.
+
+## Sampling & Diagnostics {#diagnostics}
+
+The same sampling and diagnostic tools are used by `optimise`, by `study.diagnose()` / `study.refine()` in the [Quick Start](qs_class.qmd), and by the *Experimental Design* and *Simulation Diagnostics* tabs of the [app](gui_manual.qmd).
+
+### Space-filling designs
+
+`digiqual.sampling.generate_lhs(ranges, n)` (the app's *Experimental Design* tab) draws a Latin Hypercube Sample over the input ranges. It then reorders the points with a **greedy max-min distance algorithm**: each next point is the one furthest from all points chosen so far. As a result, any first $k$ rows of the design are themselves as space-filling as possible, so you can run the simulations in order and stop early, or run them in batches, and still have good coverage.
+
+### Diagnostic tests
+
+The diagnostics check whether the data is good enough to fit a reliable model. Each test has a threshold you can change, as an argument to `diagnose()` / `optimise()` or in the app:
+
+| Test | What it measures | Passes when (default) |
+|:---|:---|:---|
+| Input Coverage | For each input, the largest gap between neighbouring sorted values, as a fraction of its range | gap ratio < 0.20 (`max_gap_ratio`) |
+| Model Fit (CV) | Cross-validated $R^2$ of a cubic polynomial: is there a learnable signal? | $R^2$ > 0.50 (`min_r2_score`) |
+| Bootstrap Convergence (average) | Spread of bootstrap predictions at the 10th, 50th and 90th percentiles of the inputs, relative to their mean, averaged | < 0.15 (`max_avg_cv`) |
+| Bootstrap Convergence (worst) | The largest of those relative spreads | < 0.30 (`max_max_cv`) |
+| Collinearity Check | Variance Inflation Factor of each input against the others | VIF ≤ 5.0 (`max_allowed_vif`) |
+
+If a test fails, **refinement** (`study.refine()`, or the app's Remediation tool) generates targeted new points: in the largest coverage gaps, and where a bootstrap committee of models disagrees most (Query-by-Committee). Failed solver runs are excluded from future sampling (see the graveyard, below).
 
 ## Connecting Your External Solver
 

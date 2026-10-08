@@ -87,13 +87,8 @@ For more information about the GUI, head over to the **[Launch the App](docs/gui
 ### Desktop Application
 A standard desktop application for Windows and macOS, so you or your colleagues can run the complete DigiQual toolkit without installing Python, managing virtual environments, or touching a command line.
 
-Download it from the **[latest GitHub Release](https://github.com/JGIBristol/digiqual/releases/latest)**:
-
-- **Windows 10/11:** the `.msi` installer, which doesn't need administrator rights, or the portable `.zip`
-- **macOS 12+ (Apple Silicon):** the `.dmg` disk image
-
 ::: {.callout-tip}
-The installers aren't code-signed yet, so Windows or macOS may warn you on first launch. The **[Launch the App](docs/gui.qmd)** page explains how to get past those warnings.
+Download it from the **[latest GitHub Release](https://github.com/JGIBristol/digiqual/releases/latest)**. The **[Launch the App](docs/gui.qmd)** page lists which file to pick and how to get past the first-launch security warnings.
 :::
 
 :::

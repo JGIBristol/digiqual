@@ -69,9 +69,8 @@ print(f"Auto-Threshold suggestion (Median Signal): {threshold_defaults['median']
 ```
 
 ::: {.callout-tip}
-### Note on Design Generation: `generate_lhs`
-When creating initial space-filling designs programmatically (instead of synthetic random samples), you can use the `digiqual.sampling.generate_lhs(n, ranges)` utility.
-The library automatically applies a **greedy max-min distance reordering algorithm** to the generated coordinates. This ensures that any prefix of size $k$ is as space-filling as possible, allowing you to stop the physical solver early or execute runs incrementally while maintaining optimal coverage of the parameter space.
+### Designing real experiments: `generate_lhs`
+Here we use random synthetic data. For real simulations, build the input design with `digiqual.sampling.generate_lhs(ranges, n)`, which gives a space-filling design you can run in order and stop early ([details](optimisation.qmd#diagnostics)).
 :::
 
 ### 2. Diagnosis (Detecting the Issue)
@@ -79,9 +78,7 @@ The library automatically applies a **greedy max-min distance reordering algorit
 We ask the `SimulationStudy` manager to diagnose the health of our experiment.
 
 ::: {.callout-warning}
-Because of our deliberate gap, we expect the diagnostic engine to flag the **Input Coverage** test as failed.
-
-Additionally, the diagnostic suite now automatically checks for multicollinearity by calculating the **Variance Inflation Factor (VIF)** for each input variable (controlled by the `max_allowed_vif` parameter, which defaults to `5.0`).
+Because of our deliberate gap, we expect the diagnostic engine to flag the **Input Coverage** test as failed. The full list of tests and their default thresholds is in [Sampling & Diagnostics](optimisation.qmd#diagnostics).
 :::
 
 
@@ -130,17 +127,15 @@ With a validated dataset, we can now run the complete PoD pipeline.
 
 ::: {.callout-tip}
 
-The SimulationStudy engine uses a **Layered Caching Architecture**.
+The single `pod()` method runs the whole [Generalised PoD](generalised_pod.qmd) pipeline:
 
-When you run `.pod()` for the first time, it evaluates all possible models and stores the mathematical heavy-lifting in memory. If you want to change a parameter slice (e.g., investigating a different 'Angle'), you can use `.update_slice()` to instantly generate a new PoD curve without refitting the model!
+- **Model Selection**: polynomial or Kriging, chosen by cross-validation with the one-standard-error rule
+- **Variance Modelling** and **Distribution Inference**: the changing scatter and its best-fitting error distribution
+- **Monte-Carlo Integration**: marginalising out nuisance variables (Uniform, or custom Normal, Lognormal or Weibull)
+- **Sobol Sensitivity Analysis**: total-order sensitivity indices for each input
+- **Bootstrapping**: confidence bounds (when `n_boot > 0`)
 
-The single `pod()` method automatically handles:
-
-- **Monte-Carlo Integration** (marginalising out Nuisance variables using Uniform or custom distributions like Normal, Lognormal, and Weibull)
-- **Sobol Sensitivity Analysis** (calculating total-order parameter sensitivity indices)
-- **Model Selection** (finding the best polynomial fit)
-- **Distribution Inference** (finding the best error distribution)
-- **Bootstrapping** (generating confidence bounds)
+The first call fits and caches all the models, so later calls that only change a slice or threshold are almost instant ([how the caching works](caching.qmd)).
 
 :::
 

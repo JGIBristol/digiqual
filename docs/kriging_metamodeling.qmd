@@ -181,53 +181,13 @@ $$ MSE_{LOO} = \frac{1}{m}\sum_{i=1}^{m} \frac{\left(y_i - \mu_{\hat{Y}_{-i}}\ri
 
 $MSE_{LOO} = 1$ means the model predicts left-out points no better than the sample mean. The scores of all four kernels are stored on the model as `kernel_loo_scores_`.
 
-### 2.2 Kriging against the polynomials: 10-fold CV
+### 2.2 Kriging against the polynomials {#winner}
 
-LOO error with fixed hyperparameters is ideal for comparing kernels, but it is not on the same footing as the polynomials' scores. The chosen kernel is therefore also scored by the same **10-fold cross-validation** as every polynomial, with its hyperparameters re-optimised inside each fold [M25]{.src .src-m25} (Eq. 2.7–2.8):
+LOO error with fixed hyperparameters is ideal for comparing kernels, but it is not on the same footing as the polynomials' scores. The chosen kernel is therefore also scored by the same **10-fold cross-validation** as every polynomial, with its hyperparameters re-optimised inside each fold [M25]{.src .src-m25}. This is the Kriging bar in the model-selection chart.
 
-$$
-MSE_j = \frac{1}{N_j}\sum_{i \in \text{fold } j}\left(y_i - \hat{f}^{\setminus j}(\mathbf{x}_i)\right)^2,
-\qquad
-CV_{(10)} = \frac{1}{10}\sum_{j=1}^{10} MSE_j
-$$
+The overall winner is then picked by the one-standard-error rule [digiqual]{.src .src-digiqual}: the simplest model whose CV error is within one standard error of the best, with Kriging counted as the most complex candidate. Kriging is therefore chosen only when it is clearly better than every polynomial. The rule, its link to [M25]{.src .src-m25} Fig. 5, and a worked example are on the [Generalised PoD](generalised_pod.qmd#model-selection) page.
 
-This is the Kriging bar in the model-selection chart.
-
-### 2.3 Picking the winner: the one-standard-error rule {#winner}
-
-In [M25]{.src .src-m25} (Fig. 5) the 3rd-order polynomial, the 4th and 5th orders and Kriging all had almost the same CV error, and the authors chose the cubic "since it is the simplest one among those with smaller errors". `digiqual` turns that judgement into a fixed rule [digiqual]{.src .src-digiqual}:
-
-1. Find the model with the lowest $CV_{(10)}$.
-2. Compute its standard error, $SE = \operatorname{std}(MSE_1, \dots, MSE_{10}) / \sqrt{10}$. The [M25]{.src .src-m25} reference code records this quantity.
-3. Choose the **simplest** model with $CV_{(10)} \le \min CV + SE$. The complexity order is Polynomial 1, 2, …, 10, then Kriging.
-
-Kriging is therefore chosen only when it is *clearly* better than every polynomial, not when it wins by a margin smaller than the noise in the CV estimate. You can always override the choice with `model_override="kriging"` or `"polynomial"` (and `force_degree`).
-
-**Example.** The true mean response below is quadratic in flaw length, plus a weak linear effect of probe angle. The cubic polynomial has the lowest CV error, but the fold-to-fold spread is large (the outlier lands in one fold), so every model except Poly 1 is within one standard error of it. Poly 2 is the simplest of those, so it is the automatic choice (red bar). In this case that is also the true model.
-
-```{python}
-#| label: fig-one-se
-#| fig-cap: "Model selection with the one-standard-error rule. The lowest CV error (bold row, red dash-dot line) belongs to Poly 3, but every bar below the dashed min + 1 SE line is statistically indistinguishable from it, so the simplest of those, Poly 2, is selected."
-import numpy as np
-import matplotlib.pyplot as plt
-from digiqual.pod import fit_all_robust_mean_models, plot_model_selection
-
-rng = np.random.default_rng(42)
-N = 100
-length = rng.uniform(0.5, 5.0, N)
-angle = rng.uniform(-15.0, 15.0, N)
-y = 2.0 * length - 0.3 * length**2 + 0.05 * angle + rng.normal(0, 0.3, N)
-y[10] += 3.5  # one outlier
-
-models, cv_scores, winner = fit_all_robust_mean_models(np.column_stack([length, angle]), y)
-lowest = min(cv_scores, key=cv_scores.get)
-print(f"Lowest CV MSE: {lowest}   Selected (one-SE rule): {winner}")
-
-plot_model_selection(cv_scores, cv_winner_key=winner, cv_se=models[winner].cv_se_)
-plt.show()
-```
-
-### 2.4 Cost
+### 2.3 Cost
 
 Kriging needs an $O(N^3)$ factorisation for every likelihood evaluation. One full model build costs 4 kernels × 11 optimiser starts, plus 10 CV folds × 6 starts. Above $N = 1000$ samples Kriging is skipped and only the polynomials are fitted [digiqual]{.src .src-digiqual}.
 
@@ -253,7 +213,7 @@ and **multiplies the Kriging interpolation standard deviation by $\gamma$**, whi
 A large $\gamma$ is still worth acting on: look for a missing input, a transformation (e.g. $\log a$), more samples, or a polynomial instead. GP-sample-path bounds in the style of [M26]{.src .src-m26} are a possible future addition.
 
 
-## 4. Variance model and bootstrap with Kriging
+## 4. Variance model and bootstrap with Kriging {#variance-and-bootstrap}
 
 **Variance model.** The scatter around the mean is modelled by the Gaussian kernel smoother of [M25]{.src .src-m25} (Eq. 2.9–2.11), applied to squared residuals. For polynomials those residuals are the usual in-sample ones. For Kriging they are the **LOO residuals** $y_i - \mu_{\hat{Y}_{-i}}$ [digiqual]{.src .src-digiqual}. A Kriging model with a learned nugget still bends towards each training point, so its in-sample residuals understate the scatter. That would give too narrow a response distribution and a PoD curve that is too steep. LOO residuals measure how far an observation falls from a prediction that did not use it. The same residuals are used to infer the error distribution ([M25]{.src .src-m25} §2f).
 
