@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Optional
+from typing import Optional, Tuple, Union
 
 def plot_signal_model(
     X: np.ndarray,
@@ -316,7 +316,7 @@ def plot_kriging_diagnostics(
     std_residuals: np.ndarray,
     outlier_scale_factor: float = 1.0,
     best_kernel_name: str = "Matérn 5/2",
-    ax: Optional[plt.Axes] = None
+    ax: Optional[Union[plt.Axes, Tuple[plt.Axes, plt.Axes]]] = None
 ) -> plt.Axes:
     """
     Diagnostic Plot: Visualizes Standardized LOO Residuals and the outlier factor gamma.
@@ -334,7 +334,10 @@ def plot_kriging_diagnostics(
         std_residuals (np.ndarray): Array of standardized LOO residuals e_i.
         outlier_scale_factor (float, optional): Outlier factor gamma = max(1, max|e_i| / 3). Defaults to 1.0.
         best_kernel_name (str, optional): Name of the selected Kriging kernel. Defaults to "Matérn 5/2".
-        ax (Optional[plt.Axes], optional): Matplotlib axes to plot on. Defaults to None.
+        ax (optional): Where to draw. ``None`` (default) creates a figure with the
+            histogram and the outlier scatter side by side. A single Axes draws the
+            histogram only. A pair ``(ax_hist, ax_scatter)`` draws both panels on the
+            given axes, e.g. on two separate figures.
 
     Returns:
         plt.Axes: The configured Matplotlib axis containing the plot.
@@ -354,8 +357,9 @@ def plot_kriging_diagnostics(
 
     if ax is None:
         fig, (ax_hist, ax_scatter) = plt.subplots(1, 2, figsize=(10, 4.5))
+    elif isinstance(ax, (tuple, list)):
+        ax_hist, ax_scatter = ax
     else:
-        fig = ax.get_figure()
         ax_hist, ax_scatter = ax, None
 
     # 1. Histogram of Standardized LOO Residuals vs Standard Normal N(0,1)
@@ -388,5 +392,9 @@ def plot_kriging_diagnostics(
         ax_scatter.legend(loc='upper right')
         ax_scatter.grid(True, alpha=0.3)
 
-    fig.tight_layout()
+    figures = {ax_hist.get_figure()}
+    if ax_scatter is not None:
+        figures.add(ax_scatter.get_figure())
+    for f in figures:
+        f.tight_layout()
     return ax_hist

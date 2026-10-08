@@ -201,7 +201,31 @@ In [M25]{.src .src-m25} (Fig. 5) the 3rd-order polynomial, the 4th and 5th order
 2. Compute its standard error, $SE = \operatorname{std}(MSE_1, \dots, MSE_{10}) / \sqrt{10}$. The [M25]{.src .src-m25} reference code records this quantity.
 3. Choose the **simplest** model with $CV_{(10)} \le \min CV + SE$. The complexity order is Polynomial 1, 2, …, 10, then Kriging.
 
-Kriging is therefore chosen only when it is *clearly* better than every polynomial, not when it wins by a margin smaller than the noise in the CV estimate. The model-selection chart draws the $\min + 1\,SE$ threshold as a dashed line. You can always override the choice with `model_override="kriging"` or `"polynomial"` (and `force_degree`).
+Kriging is therefore chosen only when it is *clearly* better than every polynomial, not when it wins by a margin smaller than the noise in the CV estimate. You can always override the choice with `model_override="kriging"` or `"polynomial"` (and `force_degree`).
+
+**Example.** The true mean response below is quadratic in flaw length, plus a weak linear effect of probe angle. The cubic polynomial has the lowest CV error, but the fold-to-fold spread is large (the outlier lands in one fold), so every model except Poly 1 is within one standard error of it. Poly 2 is the simplest of those, so it is the automatic choice (red bar). In this case that is also the true model.
+
+```{python}
+#| label: fig-one-se
+#| fig-cap: "Model selection with the one-standard-error rule. The lowest CV error (bold row, red dash-dot line) belongs to Poly 3, but every bar below the dashed min + 1 SE line is statistically indistinguishable from it, so the simplest of those, Poly 2, is selected."
+import numpy as np
+import matplotlib.pyplot as plt
+from digiqual.pod import fit_all_robust_mean_models, plot_model_selection
+
+rng = np.random.default_rng(42)
+N = 100
+length = rng.uniform(0.5, 5.0, N)
+angle = rng.uniform(-15.0, 15.0, N)
+y = 2.0 * length - 0.3 * length**2 + 0.05 * angle + rng.normal(0, 0.3, N)
+y[10] += 3.5  # one outlier
+
+models, cv_scores, winner = fit_all_robust_mean_models(np.column_stack([length, angle]), y)
+lowest = min(cv_scores, key=cv_scores.get)
+print(f"Lowest CV MSE: {lowest}   Selected (one-SE rule): {winner}")
+
+plot_model_selection(cv_scores, cv_winner_key=winner, cv_se=models[winner].cv_se_)
+plt.show()
+```
 
 ### 2.4 Cost
 
@@ -246,7 +270,11 @@ Away from the data, the correlation with every observation decays to zero and th
 
 ```{python}
 #| label: fig-length-scale
-#| fig-cap: "Sparse data (10 points) from a saturating response. Left: the length scale chosen by maximum likelihood gives a smooth fit; a length scale shorter than the sample spacing collapses to the mean between points. Grey: outside the data, Kriging decays slowly towards the mean while the cubic polynomial runs away. Right: the same failure seen in a PoD calculation, where the PoD dips between samples."
+#| fig-cap: "Sparse data (10 points) from a saturating response, fitted with the length scale chosen by maximum likelihood and with a length scale shorter than the sample spacing."
+#| fig-subcap:
+#|   - "Mean response. The ML length scale gives a smooth fit; the short length scale collapses to the mean between points. Grey: outside the data, Kriging decays slowly towards the mean while the cubic polynomial runs away."
+#|   - "The same failure seen in a PoD calculation: with the short length scale the PoD dips between samples."
+#| layout-ncol: 1
 import warnings
 import numpy as np
 import matplotlib.pyplot as plt
@@ -274,7 +302,7 @@ krig_short = build_fixed_kernel_gpr(short_kernel, krig.x_mean_, krig.x_std_).fit
 grid = np.linspace(0, 6, 400).reshape(-1, 1)
 ls = float(np.atleast_1d(krig.kernel_.k1.k2.length_scale)[0]) * krig.x_std_[0]
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
+fig, ax1 = plt.subplots(figsize=(8, 4.5))
 ax1.axvspan(a.max(), 6, color="grey", alpha=0.15, label="Outside the data")
 ax1.plot(grid, truth(grid), "k:", label="True mean")
 ax1.plot(grid, krig.predict(grid), lw=2, label=f"Kriging, ML length scale ({ls:.1f})")
@@ -285,7 +313,10 @@ ax1.text(5.9, y.mean() + 0.03, r"$\bar{y}$", ha="right", color="grey")
 ax1.plot(a, y, "ko", ms=5, label="Samples")
 ax1.set_ylim(-0.3, 1.4); ax1.set_xlabel("Flaw size a"); ax1.set_ylabel("Response")
 ax1.legend(fontsize=8, loc="lower right")
+fig.tight_layout()
+plt.show()
 
+fig, ax2 = plt.subplots(figsize=(8, 4))
 threshold, sd = 0.8, 0.05
 for model, label in [(krig, "ML length scale"), (krig_short, "Length scale 0.08")]:
     ax2.plot(grid, 1 - stats.norm.cdf((threshold - model.predict(grid)) / sd), label=label)
@@ -296,7 +327,7 @@ fig.tight_layout()
 plt.show()
 ```
 
-Maximum likelihood normally avoids this, as in the left panel, where the fitted length scale is roughly ten times the mean spacing. It goes wrong in three situations:
+Maximum likelihood normally avoids this, as in @fig-length-scale-1, where the fitted length scale is roughly ten times the mean spacing. It goes wrong in three situations:
 
 - **Fixed or under-estimated noise.** This is the callout in §1.3. A length scale collapses onto the scatter.
 - **Sparse sampling in one direction.** With $n$ inputs, $N$ samples are only about $N^{1/n}$ per axis. [M26]{.src .src-m26} needed 700 points in 4-D, about 5 per axis. The data cannot tell a short length scale apart from a long one along a sparsely sampled direction, so the likelihood is flat there and the estimate is unreliable.
@@ -381,7 +412,11 @@ Outside the sampled region a Kriging mean decays back to $\bar{y}$, at a rate se
 
 ```{python}
 #| label: fig-kriging-results
-#| fig-cap: "Standardised LOO residuals for the selected Kriging model. Green crosses are the residuals divided by γ (diagnostic only)."
+#| fig-cap: "Standardised LOO residuals for the selected Kriging model."
+#| fig-subcap:
+#|   - "Distribution of the standardised LOO residuals against N(0, 1)."
+#|   - "Residuals against the ±3 outlier threshold. Green crosses are the residuals divided by γ (diagnostic only)."
+#| layout-ncol: 1
 import numpy as np
 import matplotlib.pyplot as plt
 from digiqual.pod import fit_all_robust_mean_models, compute_kriging_loo_residuals
@@ -409,7 +444,10 @@ print(f"gamma (diagnostic): {gpr.outlier_scale_factor_:.2f}")
 
 # 3. LOO residual diagnostics
 loo_means, loo_stds, std_res, gamma = compute_kriging_loo_residuals(gpr, X, y)
-plot_kriging_diagnostics(std_res, outlier_scale_factor=gamma, best_kernel_name=gpr.best_kernel_name_)
+fig_hist, ax_hist = plt.subplots(figsize=(8, 4))
+fig_scatter, ax_scatter = plt.subplots(figsize=(8, 4))
+plot_kriging_diagnostics(std_res, outlier_scale_factor=gamma, best_kernel_name=gpr.best_kernel_name_,
+                         ax=(ax_hist, ax_scatter))
 plt.show()
 ```
 

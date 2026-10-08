@@ -737,7 +737,7 @@ def plot_model_selection(
 
     # Legend placed cleanly above the plot
     from matplotlib.lines import Line2D
-    winner_label = 'Selected (1-SE rule)' if se_threshold is not None else 'Selected (min CV error)'
+    winner_label = 'Auto choice (1-SE rule)' if se_threshold is not None else 'Auto choice (min CV error)'
     legend_handles = [mpatches.Patch(color='crimson', label=winner_label)]
     if forced:
         legend_handles.append(mpatches.Patch(color='#ff7f0e', label='Used (Override)'))
@@ -781,7 +781,7 @@ def plot_model_selection(
         if forced and cell_label == used_name:
             cell.set_facecolor('#ffe0b2')
 
-    note = "Bold: lowest CV MSE.  Red: selected."
+    note = "Bold: lowest CV MSE.  Red: auto choice."
     if forced:
         note += "\nOrange: used (override)."
     ax_table.text(0.5, 0.0, note, ha='center', va='bottom', fontsize=8.5,

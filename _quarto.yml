@@ -82,6 +82,10 @@ format:
     theme: [cosmo, custom.scss]
     toc: true
     page-layout: article
+    # Widen the central text column (Quarto's default body-width is 800px) so
+    # code blocks and side-by-side figures have room; sidebar and TOC unchanged.
+    grid:
+      body-width: 1000px
     code-copy: true
     mainfont: "Inter, system-ui, -apple-system, sans-serif"
     fontcolor: "#212529"
