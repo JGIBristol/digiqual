@@ -5,16 +5,49 @@ on:
     branches: [main, dev]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v1
+      - uses: astral-sh/setup-uv@v5
+      - name: Ruff
+        run: uvx ruff check src tests
 
-      - name: Run Tests
+  test:
+    name: Tests (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.11", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      # Builds the C++ extension in place so the C++/Python equivalence tests run.
+      - name: Install and build extension
         run: |
-          uv python install 3.11
-          uv sync --extra dev
-          uv run pytest
+          uv sync --no-group docs
+          uv run python setup.py build_ext --inplace
+
+      - name: Run tests
+        run: uv run --no-group docs pytest
+
+  # Slow, machine-dependent memory test. Run on demand from the Actions tab.
+  stress:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+      - run: |
+          uv sync --no-group docs
+          uv run --no-group docs pytest -m stress

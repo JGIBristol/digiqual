@@ -1,20 +1,25 @@
-import pandas as pd
+import logging
+import time
+from typing import Dict, List, Optional, Tuple, Union
+
 import numpy as np
-from typing import List, Dict, Tuple, Optional
+import pandas as pd
 from scipy.stats import qmc
 from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.utils import resample
 
-from .diagnostics import sample_sufficiency, validate_simulation
+from .defaults import MAX_ALLOWED_VIF, MAX_AVG_CV, MAX_GAP_RATIO, MAX_MAX_CV, MIN_R2_SCORE
+from .diagnostics import ValidationError, sample_sufficiency, validate_simulation
+from .executors import CLIExecutor, Executor
 from .sampling import generate_lhs
 
-from typing import Union # Add this to your typing imports
-from .executors import Executor, CLIExecutor # Import our new architecture
+logger = logging.getLogger(__name__)
 
-import time
-from sklearn.model_selection import cross_val_score
+# Diagnostics (sample_sufficiency) need at least this many valid rows.
+MIN_DIAGNOSTIC_ROWS = 10
 
 
 #### Helper Functions for generate_targeted_samples()
@@ -63,7 +68,8 @@ def _fill_gaps(
     all_inputs: List[str],
     n: int,
     graveyard: Optional[pd.DataFrame] = None,
-    threshold: float = 0.05
+    threshold: float = 0.05,
+    seed: Optional[int] = None
 ) -> pd.DataFrame:
     """Identifies the largest empty interval and generates samples inside it."""
     # 1. Find the coordinates of the largest gap
@@ -75,7 +81,7 @@ def _fill_gaps(
 
     # 2. Generate random candidates (Oversample to ensure we have enough after filtering)
     n_pool = max(n * 10, 100)
-    sampler = qmc.LatinHypercube(d=len(all_inputs))
+    sampler = qmc.LatinHypercube(d=len(all_inputs), seed=seed)
     sample_01 = sampler.random(n=n_pool)
 
     # 3. Scale candidates: Target col fits in gap; others span full range
@@ -121,7 +127,8 @@ def _sample_uncertainty(
     outcome_col: str,
     n: int,
     graveyard: Optional[pd.DataFrame] = None,
-    threshold: float = 0.05
+    threshold: float = 0.05,
+    seed: Optional[int] = None
 ) -> pd.DataFrame:
     """Uses Bootstrap Query-by-Committee to find regions of high variance."""
 
@@ -131,7 +138,7 @@ def _sample_uncertainty(
     # --- STEP 1: GENERATE CANDIDATE POOL ---
     # We create 1,000 "what-if" scenarios across your input ranges.
     n_candidates = 1000
-    sampler = qmc.LatinHypercube(d=len(input_cols))
+    sampler = qmc.LatinHypercube(d=len(input_cols), seed=seed)
     sample_01 = sampler.random(n=n_candidates)
 
     candidates = pd.DataFrame(index=range(n_candidates))
@@ -207,10 +214,12 @@ def generate_targeted_samples(
     n_new_per_fix: int = 10,
     failed_data: Optional[pd.DataFrame] = None,
     distance_threshold: float = 0.05,
-    max_gap_ratio: float = 0.20,
-    min_r2_score: float = 0.50,
-    max_avg_cv: float = 0.15,
-    max_max_cv: float = 0.30
+    max_gap_ratio: float = MAX_GAP_RATIO,
+    min_r2_score: float = MIN_R2_SCORE,
+    max_avg_cv: float = MAX_AVG_CV,
+    max_max_cv: float = MAX_MAX_CV,
+    max_allowed_vif: float = MAX_ALLOWED_VIF,
+    seed: Optional[int] = None
 ) -> pd.DataFrame:
     """
     Active Learning Engine: Generates new samples based on diagnostic failures.
@@ -218,6 +227,10 @@ def generate_targeted_samples(
     It consumes the results table from `sample_sufficiency`.
     - If `Input Coverage` fails -> Triggers `_fill_gaps` (Exploration).
     - If `Model Fit` or `Bootstrap` fails -> Triggers `_sample_uncertainty` (Exploitation).
+    - A `Collinearity Check` failure cannot be fixed by adding samples (it is a
+      property of how the inputs are related), so it is reported rather than
+      sampled. Any such failures are listed in ``result.attrs["unresolved"]``, so a
+      caller can tell "nothing left to fix" apart from "cannot fix by sampling".
 
     Args:
         df (pd.DataFrame): Current simulation data.
@@ -226,15 +239,23 @@ def generate_targeted_samples(
         n_new_per_fix (int): Number of samples to generate per detected issue.
         failed_data (Optional[pd.DataFrame]): Graveyard of inputs that crashed the solver.
         distance_threshold (float): Minimum normalized distance to maintain from failed points.
+        max_gap_ratio (float): Largest allowed coverage gap, as a fraction of each input's range.
+        min_r2_score (float): Minimum cross-validated R² for the model-fit check.
+        max_avg_cv (float): Maximum average bootstrap spread (relative to the response std).
+        max_max_cv (float): Maximum bootstrap spread at any probe point.
+        max_allowed_vif (float): Maximum Variance Inflation Factor for the collinearity check.
+        seed (int, optional): Seed for the candidate samplers, for reproducible runs.
 
     Returns:
         pd.DataFrame: New recommended samples.
 
     Examples:
         ```python
+        import numpy as np
         import pandas as pd
         # 1. Setup data with a massive gap in 'Length' (0-1, then 9-10)
-        df = pd.DataFrame({'Length': [0.1, 0.9, 9.1, 9.9], 'Signal': [1, 1, 1, 1]})
+        length = np.r_[np.linspace(0.1, 0.9, 6), np.linspace(9.1, 9.9, 6)]
+        df = pd.DataFrame({'Length': length, 'Signal': 2 * length})
 
         # 2. Ask for new samples to fix the gap
         new_pts = generate_targeted_samples(
@@ -255,19 +276,20 @@ def generate_targeted_samples(
         max_gap_ratio=max_gap_ratio,
         min_r2_score=min_r2_score,
         max_avg_cv=max_avg_cv,
-        max_max_cv=max_max_cv
+        max_max_cv=max_max_cv,
+        max_allowed_vif=max_allowed_vif
     )
 
     # Quick exit if everything is green
     if report.empty or report['Pass'].all():
-        print("All diagnostic checks passed. No new samples needed.")
+        logger.info("All diagnostic checks passed. No new samples needed.")
         return pd.DataFrame()
 
-    print("Diagnostics flagged issues. Initiating Active Learning...")
+    logger.info("Diagnostics flagged issues. Initiating Active Learning...")
 
     # Check if we have anything to report from the graveyard diagnostic checks
     if failed_data is not None and not failed_data.empty:
-        print(f" -> Active Graveyard Tracker: Protecting against {len(failed_data)} known bad regions.")
+        logger.warning(f" -> Active Graveyard Tracker: Protecting against {len(failed_data)} known bad regions.")
 
     new_samples_list = []
 
@@ -276,6 +298,7 @@ def generate_targeted_samples(
 
     # We use a set to track handled variables so we don't over-sample
     handled_vars = set()
+    unresolved = []
 
     for _, row in failures.iterrows():
         test_name = row['Test']
@@ -287,14 +310,13 @@ def generate_targeted_samples(
             if var_name in handled_vars:
                 continue
 
-            print(f" -> Strategy: Exploration (Filling gaps in {var_name})")
+            logger.info(f" -> Strategy: Exploration (Filling gaps in {var_name})")
             # Call the specific solver for gaps, passing graveyard limits
             samples = _fill_gaps(
                 df, var_name, input_cols, n_new_per_fix,
-                graveyard=failed_data, threshold=distance_threshold
+                graveyard=failed_data, threshold=distance_threshold, seed=seed
             )
 
-            # --- NEW: Tag the reason for these samples ---
             samples['Refinement_Reason'] = f"Gap in {var_name}"
 
             new_samples_list.append(samples)
@@ -304,24 +326,30 @@ def generate_targeted_samples(
         # Only run this once per batch, even if multiple metrics fail
         elif test_name in ["Model Fit (CV)", "Bootstrap Convergence"]:
             if "Global_Model" not in handled_vars:
-                print(" -> Strategy: Exploitation (Targeting high uncertainty regions)")
+                logger.info(" -> Strategy: Exploitation (Targeting high uncertainty regions)")
                 # Call the specific solver for uncertainty, passing graveyard limits
                 samples = _sample_uncertainty(
                     df, input_cols, outcome_col, n_new_per_fix,
-                    graveyard=failed_data, threshold=distance_threshold
+                    graveyard=failed_data, threshold=distance_threshold, seed=seed
                 )
 
-                # --- NEW: Tag the reason for these samples ---
                 samples['Refinement_Reason'] = "High Model Uncertainty"
 
                 new_samples_list.append(samples)
                 handled_vars.add("Global_Model")
 
-    # 3. ACT: Combine all recommendations
-    if not new_samples_list:
-        return pd.DataFrame()
+        # --- Not fixable by sampling ---
+        elif test_name == "Collinearity Check":
+            unresolved.append(f"Collinearity Check ({var_name})")
 
-    return pd.concat(new_samples_list, ignore_index=True)
+    if unresolved:
+        logger.warning(" -> Cannot be fixed by adding samples: " + ", ".join(unresolved)
+              + ". Consider removing or combining strongly correlated inputs.")
+
+    # 3. ACT: Combine all recommendations
+    result = pd.concat(new_samples_list, ignore_index=True) if new_samples_list else pd.DataFrame()
+    result.attrs["unresolved"] = unresolved
+    return result
 
 #### Helper Function for Adaptive Search
 
@@ -362,11 +390,13 @@ def run_adaptive_search(
     max_iter: int = 5,
     max_hours: Optional[float] = None,
     # --- The 4 Custom Diagnostic Thresholds ---
-    max_gap_ratio: float = 0.20,
-    min_r2_score: float = 0.50,
-    max_avg_cv: float = 0.15,
-    max_max_cv: float = 0.30,
-    output_csv: Optional[str] = None
+    max_gap_ratio: float = MAX_GAP_RATIO,
+    min_r2_score: float = MIN_R2_SCORE,
+    max_avg_cv: float = MAX_AVG_CV,
+    max_max_cv: float = MAX_MAX_CV,
+    output_csv: Optional[str] = None,
+    max_allowed_vif: float = MAX_ALLOWED_VIF,
+    seed: Optional[int] = None
 ) -> pd.DataFrame:
     """
     Orchestrates the Active Learning loop on raw DataFrames using the Executor architecture.
@@ -387,20 +417,24 @@ def run_adaptive_search(
         max_avg_cv (float): Decimal Percentage threshold for average CI diagnostics,
         max_max_cv (float): Decimal Percentage threshold for maximum CI diagnostics
         output_csv (str, optional): Path to write the output CSV results incrementally.
+        max_allowed_vif (float): Collinearity (VIF) threshold. A collinearity failure
+            cannot be fixed by sampling, so it stops the loop with a warning.
+        seed (int, optional): Seed for the initial design and every refinement step,
+            for reproducible runs.
 
     Returns:
         pd.DataFrame: Final dataset containing all successful runs.
     """
-    print("\n" + "="*40)
-    print("      STARTING ADAPTIVE OPTIMIZATION")
-    print("="*40)
+    logger.info("\n" + "="*40)
+    logger.info("      STARTING ADAPTIVE OPTIMIZATION")
+    logger.info("="*40)
 
     start_time = time.time()
     max_seconds = max_hours * 3600 if max_hours is not None else None
 
     # --- BACKWARD COMPATIBILITY ---
     if isinstance(executor, str):
-        print("   -> Legacy command string detected. Wrapping in CLIExecutor.")
+        logger.info("   -> Legacy command string detected. Wrapping in CLIExecutor.")
         executor = CLIExecutor(command_template=executor)
 
     current_data = existing_data.copy() if existing_data is not None else pd.DataFrame()
@@ -409,8 +443,8 @@ def run_adaptive_search(
 
     # --- STEP 1: INITIALIZATION ---
     if current_data.empty:
-        print(f"--- Iteration 0: Generating Initial Design ({n_start} points) ---")
-        initial_samples = generate_lhs(n_start, ranges)
+        logger.info(f"--- Iteration 0: Generating Initial Design ({n_start} points) ---")
+        initial_samples = generate_lhs(n_start, ranges, seed=seed)
         total_attempted += len(initial_samples)
 
         results = executor.run(initial_samples)
@@ -424,58 +458,78 @@ def run_adaptive_search(
             current_data = results[successful_mask].reset_index(drop=True)
             failed_data = pd.concat([failed_data, results[~successful_mask][input_cols]], ignore_index=True)
     else:
-        print(f"--- Iteration 0: Resuming with {len(current_data)} existing points ---")
+        logger.info(f"--- Iteration 0: Resuming with {len(current_data)} existing points ---")
 
     if output_csv and not current_data.empty:
         current_data.to_csv(output_csv, index=False)
-        print(f"   -> Progress saved to: {output_csv}")
+        logger.info(f"   -> Progress saved to: {output_csv}")
 
     # --- STEP 2: REFINEMENT LOOP ---
     for i in range(max_iter):
         if max_seconds is not None:
             elapsed = time.time() - start_time
             if elapsed > max_seconds:
-                print(f"\n[!] TIME LIMIT REACHED ({max_hours} hrs). Stopping gracefully.")
+                logger.warning(f"\n[!] TIME LIMIT REACHED ({max_hours} hrs). Stopping gracefully.")
                 break
 
-        print(f"\n--- Iteration {i+1}: Diagnostics Check ---")
+        logger.info(f"\n--- Iteration {i+1}: Diagnostics Check ---")
+        step_seed = None if seed is None else seed + i + 1
 
-        clean_df, _ = validate_simulation(current_data, input_cols, outcome_col)
-        current_data = clean_df.copy()
+        try:
+            clean_df, _ = validate_simulation(current_data, input_cols, outcome_col)
+        except ValidationError as e:
+            logger.info(f">> {e}")
+            clean_df = None
 
-        if clean_df.empty:
-            diag = pd.DataFrame()
+        if clean_df is not None and clean_df.empty:
+            clean_df = None
+        if clean_df is None:
+            # Too few successful runs so far for the diagnostics. Top up the design
+            # with more space-filling points instead of giving up.
+            logger.info(f">> Not enough valid runs yet (diagnostics need {MIN_DIAGNOSTIC_ROWS}). "
+                  f"Adding {n_step} more design points...")
+
+        if clean_df is None:
+            new_samples = generate_lhs(n_step, ranges, seed=step_seed)
         else:
-            # --- UPDATED: Pass the custom thresholds into sample_sufficiency ---
+            current_data = clean_df.copy()
             diag = sample_sufficiency(
                 clean_df, input_cols, outcome_col,
                 skip_validation=True,
                 max_gap_ratio=max_gap_ratio,
                 min_r2_score=min_r2_score,
                 max_avg_cv=max_avg_cv,
-                max_max_cv=max_max_cv
+                max_max_cv=max_max_cv,
+                max_allowed_vif=max_allowed_vif
             )
 
-        # Convergence Check
-        if not diag.empty and diag['Pass'].all():
-            print("\n>>> CONVERGENCE REACHED! <<<")
-            break
+            # Convergence Check
+            if not diag.empty and diag['Pass'].all():
+                logger.info("\n>>> CONVERGENCE REACHED! <<<")
+                break
 
-        print(">> Model invalid. Refining design...")
-        new_samples = generate_targeted_samples(
-            clean_df, input_cols, outcome_col, n_new_per_fix=n_step,
-            failed_data=failed_data, distance_threshold=0.05,
-            max_gap_ratio=max_gap_ratio,
-            min_r2_score=min_r2_score,
-            max_avg_cv=max_avg_cv,
-            max_max_cv=max_max_cv
-        )
+            logger.warning(">> Model invalid. Refining design...")
+            new_samples = generate_targeted_samples(
+                clean_df, input_cols, outcome_col, n_new_per_fix=n_step,
+                failed_data=failed_data, distance_threshold=0.05,
+                max_gap_ratio=max_gap_ratio,
+                min_r2_score=min_r2_score,
+                max_avg_cv=max_avg_cv,
+                max_max_cv=max_max_cv,
+                max_allowed_vif=max_allowed_vif,
+                seed=step_seed
+            )
 
-        if new_samples.empty:
-            print("\n>> Refinement algorithm converged (no new valid samples needed).")
-            break
+            if new_samples.empty:
+                unresolved = new_samples.attrs.get("unresolved", [])
+                if unresolved:
+                    logger.warning("\n>> Stopping: the remaining diagnostic failures cannot be fixed by "
+                          "adding samples (" + ", ".join(unresolved) + ").")
+                else:
+                    logger.info("\n>> Refinement algorithm converged (no new valid samples needed).")
+                break
 
-        print(f"--- Running Batch {i+1} ({len(new_samples)} points) ---")
+        logger.info(f"--- Running Batch {i+1} ({len(new_samples)} points) ---")
         total_attempted += len(new_samples)
 
         new_results = executor.run(new_samples)
@@ -493,18 +547,18 @@ def run_adaptive_search(
 
         if output_csv and not current_data.empty:
             current_data.to_csv(output_csv, index=False)
-            print(f"   -> Progress saved to: {output_csv}")
+            logger.info(f"   -> Progress saved to: {output_csv}")
 
     # --- STEP 3: FINAL REPORTING ---
     end_time = time.time()
     total_duration_mins = (end_time - start_time) / 60
 
-    print("\n" + "-"*40)
-    print(">>> SEARCH COMPLETE <<<")
-    print(f"Total Time:      {total_duration_mins:.2f} minutes")
-    print(f"Successful Runs: {len(current_data)}")
-    print(f"Failed Runs:     {len(failed_data)} (in graveyard)")
-    print(f"Total Attempted: {total_attempted}")
-    print("-"*40 + "\n")
+    logger.info("\n" + "-"*40)
+    logger.info(">>> SEARCH COMPLETE <<<")
+    logger.info(f"Total Time:      {total_duration_mins:.2f} minutes")
+    logger.info(f"Successful Runs: {len(current_data)}")
+    logger.warning(f"Failed Runs:     {len(failed_data)} (in graveyard)")
+    logger.info(f"Total Attempted: {total_attempted}")
+    logger.info("-"*40 + "\n")
 
     return current_data

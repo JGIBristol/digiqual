@@ -1,6 +1,8 @@
-import pytest
+from unittest.mock import MagicMock, patch
+
 import numpy as np
-from unittest.mock import patch, MagicMock
+import pytest
+
 from digiqual.integration import compute_multi_dim_pod
 
 # --- Fixtures ---

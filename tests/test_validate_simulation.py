@@ -1,6 +1,8 @@
-import pytest
 import pandas as pd
-from digiqual.diagnostics import validate_simulation, ValidationError
+import pytest
+
+from digiqual.diagnostics import ValidationError, validate_simulation
+
 
 # 1. Test the "Happy Path" (Good Data)
 def test_validate_simulation_success():

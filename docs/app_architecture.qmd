@@ -1,26 +1,34 @@
 ---
 title: "Desktop App Architecture"
+number-sections: true
 ---
 
 This page is for developers. It explains how the DigiQual app is put together, how the Windows and macOS installers are built, and why it's built this way. To *use* the app, see [Launch the App](gui.qmd).
 
-## The Short Version
+## The Short Version {#sec-short-version}
 
 - **All of the app's code lives in the `digiqual` package**, in the `digiqual.gui` subpackage. It ships inside the normal `digiqual` wheel on PyPI, so `pip install digiqual` always includes the app.
 - **The desktop installers are that same wheel**, installed into a self-contained Python by [Briefcase](https://briefcase.beeware.org/). The top-level `app/` folder holds only Briefcase's configuration and a two-line entry point; there's no app code in it.
 
 So any change to the app goes into `src/digiqual/gui/`, and every way of launching the app picks it up.
 
-## Where Everything Lives
+## Where Everything Lives {#sec-layout}
 
 ```text
 src/digiqual/
 ├── gui/                        ← the app (a normal subpackage of digiqual)
 │   ├── __init__.py
 │   ├── __main__.py             ← makes `python -m digiqual.gui` work
-│   ├── app.py                  ← the Shiny app: UI layout + server logic
+│   ├── app.py                  ← assembles the Shiny app: page layout + server()
+│   ├── state.py                ← per-session shared state and helpers used by every tab
+│   ├── ui_home.py              ← the Home page
+│   ├── tab_design.py           ← Experimental Design tab (UI + server logic)
+│   ├── tab_diagnostics.py      ← Simulation Diagnostics tab
+│   ├── tab_model_fit.py        ← Model Fit tab
+│   ├── tab_explorer.py         ← PoD Explorer tab
+│   ├── tab_uq.py               ← UQ Analysis tab
 │   ├── launcher.py             ← starts the server and opens the window
-│   └── www/                    ← static files served by Shiny (logos, favicon)
+│   └── www/                    ← static files served by Shiny (app.css, logos, favicon, MathJax)
 ├── _digiqual_cpp.*.so / .pyd   ← compiled C++ extension (built by setup.py)
 └── ...                         ← the statistical library itself
 
@@ -38,7 +46,7 @@ scripts/make_icon.py            ← draws the icon; writes app/icons/, gui/www/f
 
 The static files in `gui/www/` are included in the wheel by `package_data` in `setup.py` and `MANIFEST.in`. `app.py` finds them relative to its own location, so this works the same installed or from a checkout.
 
-## Ways the App Gets Launched
+## Ways the App Gets Launched {#sec-launch-modes}
 
 Every route ends up in the same function, `digiqual.gui.launcher.main()`:
 
@@ -51,7 +59,7 @@ Every route ends up in the same function, `digiqual.gui.launcher.main()`:
 | `just app` (from a checkout) | `uv run python -m digiqual.gui` → `main()` |
 | `just app_dev` | `shiny run src/digiqual/gui/app.py`: browser only, skips the launcher (for UI work) |
 
-## What `launcher.main()` Does
+## What `launcher.main()` Does {#sec-launcher}
 
 ```{mermaid}
 flowchart TD
@@ -68,25 +76,25 @@ flowchart TD
 
 `launcher.py` keeps its module-level imports light (shiny and pywebview are only imported inside functions), because worker processes import it before they know they are workers.
 
-## Why It's Built This Way
+## Why It's Built This Way {#sec-design-decisions}
 
 These are the decisions most likely to puzzle someone reading the code, with the reason for each.
 
-### Briefcase rather than PyInstaller
+### Briefcase rather than PyInstaller {#sec-briefcase}
 
 PyInstaller *freezes* an app: it analyses imports to decide which files to bundle. That missed Shiny's static files, pythonnet's DLLs and some hidden imports, which needed a long hand-maintained `.spec` file. Briefcase instead runs `pip install` into a bundled, standalone Python. The app therefore gets exactly the files a normal install would, including the prebuilt C++ extension from the `digiqual` wheel. Nothing has to be listed by hand.
 
-### Worker processes and `sys.frozen`
+### Worker processes and `sys.frozen` {#sec-worker-processes}
 
 The PoD bootstrap runs in parallel with `joblib` (`backend="multiprocessing"`), which starts worker processes by running `sys.executable` again. In the desktop app, `sys.executable` is the DigiQual app itself, not `python`, and it can't run `python -c "..."` commands. Without special handling, every worker would open another DigiQual window.
 
 To prevent this, `digiqual_desktop/__main__.py` sets `sys.frozen = True`. That makes Python's `multiprocessing` start workers as `DigiQual --multiprocessing-fork ...`. The first thing `launcher.main()` does is spot those arguments, and the `-c` commands used by Python's and joblib's resource trackers, and run the requested task instead of the app. This mirrors what PyInstaller's runtime hooks do.
 
-### Redirecting stdout and stderr
+### Redirecting stdout and stderr {#sec-stdio}
 
 A desktop app has no console, so `sys.stdout` and `sys.stderr` are `None`. uvicorn, the web server under Shiny, calls `.isatty()` on them while setting up logging, and crashes the server thread. The window then shows a blank page. The launcher points them at the log file before starting the server.
 
-### Build details in `build_app.yml`
+### Build details in `build_app.yml` {#sec-build-details}
 
 | Detail | Reason |
 |---|---|
@@ -96,7 +104,7 @@ A desktop app has no console, so `sys.stdout` and `sys.stderr` are `None`. uvico
 | A `proxy_tools` wheel is built in the job | pywebview needs `proxy_tools`, which is only published as source code. Briefcase installs wheels only, so without this pip silently falls back to the ancient pywebview 3.4, which has no menu support. `pywebview>=5.0` in `pyproject.toml` makes that fail loudly instead. |
 | Self-test runs **without** redirected output | It behaves like a user double-clicking the app, so the stdout/stderr problem above would be caught. |
 
-## The Build Pipeline
+## The Build Pipeline {#sec-build-pipeline}
 
 `.github/workflows/build_app.yml` runs on Windows and macOS:
 
@@ -114,7 +122,7 @@ It runs in two situations:
 
 The version comes from `app/pyproject.toml`, which `just bump` keeps in step with the package version.
 
-## Working on the App Locally
+## Working on the App Locally {#sec-local-dev}
 
 | Task | Command |
 |---|---|
@@ -131,10 +139,10 @@ The version comes from `app/pyproject.toml`, which `just bump` keeps in step wit
 - **macOS:** `~/Library/Logs/Digiqual/digiqual.log`
 - **Linux:** `~/.local/share/Digiqual/digiqual.log`
 
-## Common Changes
+## Common Changes {#sec-common-changes}
 
 **Adding a dependency.** Add it to `dependencies` in the root `pyproject.toml`; the desktop app picks it up through the wheel. Check that it publishes wheels for Windows x64, macOS arm64 (macOS 12+) and Python 3.12. If it only publishes source, the desktop build fails or falls back to an older version; build a wheel of it in `build_app.yml` the way `proxy_tools` is.
 
 **Adding a static file** (an image, CSS or JavaScript) to the app: put it in `src/digiqual/gui/www/` and refer to it by file name (e.g. `src="my_image.png"`). It is packaged automatically.
 
-**Adding a page or feature to the app:** edit `src/digiqual/gui/app.py`. Nothing in `app/` or the workflow needs to change.
+**Adding a page or feature to the app:** edit the relevant `tab_*.py` module (each holds that tab's UI and a `register(...)` function with its server logic; shared reactive state lives in `state.py`). A new tab is a new module, added to `app.py`. Prefer calling library functions (and `digiqual.defaults` for default values) over re-implementing statistics in the GUI. Nothing in `app/` or the workflow needs to change.

@@ -1,6 +1,7 @@
 ---
 title: "Generalised Probability of Detection"
 description: "How digiqual relaxes the assumptions of the classical â-versus-a method, with a worked classical-vs-generalised comparison."
+number-sections: true
 ---
 
 The classical $\hat{a}$-versus-$a$ method fits a straight line to the signal response and assumes:
@@ -9,11 +10,11 @@ The classical $\hat{a}$-versus-$a$ method fits a straight line to the signal res
 2. **Homoscedasticity**: the scatter around that line has constant variance;
 3. **Normality**: the scatter is Gaussian.
 
-Real inspections often break all three. Signals saturate, and roughness, angle or other nuisance effects make the scatter grow and become skewed. When that happens the classical PoD curve and its confidence bounds can be badly wrong. `digiqual` implements the generalised framework of Malkiel et al. (2025) [M25]{.src .src-m25}, which relaxes each assumption in turn. The sections below follow the steps of that framework; §7 runs both methods on the same data so you can see the difference.
+Real inspections often break all three. Signals saturate, and roughness, angle or other nuisance effects make the scatter grow and become skewed. When that happens the classical PoD curve and its confidence bounds can be badly wrong. `digiqual` implements the generalised framework of Malkiel et al. (2025) [M25]{.src .src-m25}, which relaxes each assumption in turn. The sections below follow the steps of that framework; @sec-worked-example runs both methods on the same data so you can see the difference.
 
 The Kriging candidate model has its own page, [Kriging Metamodeling](kriging_metamodeling.qmd). It covers the GP maths, kernel choice, LOO diagnostics and pitfalls, and tags where each element comes from ([M25]{.src .src-m25}, [M26]{.src .src-m26}, [UQLab]{.src .src-uqlab} or [digiqual]{.src .src-digiqual}).
 
-## 1. Choosing the expectation model (relaxing linearity) {#model-selection}
+## Choosing the expectation model (relaxing linearity) {#sec-model-selection}
 
 Instead of forcing $\hat{a} = \beta_0 + \beta_1 a$, `digiqual` treats the mean response as a model-selection problem. The candidates are polynomials of degree 1 to 10 and one Kriging model. Each is scored by **10-fold cross-validation** [M25]{.src .src-m25} (Eq. 2.7–2.8):
 
@@ -57,9 +58,9 @@ plot_model_selection(cv_scores, cv_winner_key=winner, cv_se=models[winner].cv_se
 plt.show()
 ```
 
-**The Kriging candidate.** Kriging enters this comparison in two stages. First its correlation function is chosen by leave-one-out error [M26]{.src .src-m26}. Then that one kernel is scored by the same 10-fold CV as the polynomials. Details, including the LOO residual diagnostics and the factor $\gamma$, are on the [Kriging Metamodeling](kriging_metamodeling.qmd#loo) page. Kriging is skipped for datasets above 1000 samples.
+**The Kriging candidate.** Kriging enters this comparison in two stages. First its correlation function is chosen by leave-one-out error [M26]{.src .src-m26}. Then that one kernel is scored by the same 10-fold CV as the polynomials. Details, including the LOO residual diagnostics and the factor $\gamma$, are on the [Kriging Metamodeling](kriging_metamodeling.qmd#sec-loo) page. Kriging is skipped for datasets above 1000 samples.
 
-## 2. Modelling heteroscedasticity (relaxing constant variance)
+## Modelling heteroscedasticity (relaxing constant variance) {#sec-variance}
 
 Signal scatter often changes across the input space. `digiqual` replaces the constant variance $\sigma^2 = c$ with a local estimate $\sigma^2(x)$, using a **Nadaraya-Watson Gaussian kernel smoother** of the squared residuals $e_i^2 = (y_i - \hat{y}_i)^2$ [M25]{.src .src-m25} (Eq. 2.9–2.11):
 
@@ -67,9 +68,9 @@ $$ \hat{\sigma}^2(x) = \frac{\sum_{i=1}^n K_h(x - x_i)\, e_i^2}{\sum_{i=1}^n K_h
 \qquad
 K_h(u) = \frac{1}{\sqrt{2\pi h^2}} \exp\left(-\frac{u^2}{2h^2}\right) $$
 
-The bandwidth $h$ is chosen automatically by leave-one-out cross-validation. For polynomial models the residuals are the usual in-sample ones. For Kriging they are leave-one-out residuals ([why](kriging_metamodeling.qmd#variance-and-bootstrap)).
+With several inputs, $x - x_i$ is measured on **standardised** inputs (each divided by its standard deviation) [digiqual]{.src .src-digiqual}, so one bandwidth treats all inputs alike whatever their units; [M25]{.src .src-m25} had a single input, where this only rescales $h$. The bandwidth $h$, in standard deviations, is chosen automatically by leave-one-out cross-validation, or fixed with `bandwidth_ratio`. For polynomial models the residuals are the usual in-sample ones. For Kriging they are leave-one-out residuals ([why](kriging_metamodeling.qmd#sec-variance-bootstrap)).
 
-## 3. Inferring the error distribution (relaxing normality)
+## Inferring the error distribution (relaxing normality) {#sec-distribution}
 
 The residuals are standardised by the local standard deviation,
 
@@ -79,13 +80,13 @@ and the $Z_i$ are fitted by maximum likelihood to a suite of candidate distribut
 
 $$ AIC = 2k - 2\ln(\hat{L}) $$
 
-where $k$ is the number of parameters and $\hat{L}$ is the maximised likelihood. The PoD at each point is then $1 - F\big((t - \hat{f}(x))/\hat{\sigma}(x)\big)$ for threshold $t$ and the inferred CDF $F$.
+where $k$ is the number of parameters and $\hat{L}$ is the maximised likelihood. A fit is only accepted if its support contains every $Z_i$ with a margin [digiqual]{.src .src-digiqual}: bounded families (Weibull, Gamma, Exponential, Beta, Uniform) can otherwise place a support endpoint on the most extreme residual, win on AIC, and make the PoD jump to exactly 0 or 1 just outside the data. UQLab, used in [M25]{.src .src-m25}, likewise excludes unsuitable distributions. The PoD at each point is then $1 - F\big((t - \hat{f}(x))/\hat{\sigma}(x)\big)$ for threshold $t$ and the inferred CDF $F$.
 
-## 4. Multi-dimensional evaluation (marginalisation and slicing)
+## Multi-dimensional evaluation (marginalisation and slicing) {#sec-multidim}
 
 `digiqual` fits the mean and variance models to the *entire* $n$-dimensional input space. To project this onto a 1D or 2D PoD, every input not being plotted is either integrated out or held fixed.
 
-### Active marginalisation (nuisance parameters)
+### Active marginalisation (nuisance parameters) {#sec-marginalisation}
 
 For a nuisance vector $\mathbf{z}$ with density $p(\mathbf{z})$, the PoD for parameters of interest $\mathbf{x}$ is
 
@@ -93,21 +94,21 @@ $$PoD(\mathbf{x}) = \int_{\Omega_z} PoD(\mathbf{x}, \mathbf{z})\, p(\mathbf{z})\
 
 `digiqual` approximates this integral by Monte Carlo integration with Latin Hypercube Sampling. Nuisance inputs are uniform over their observed range by default. For a custom distribution (Normal, Lognormal or Weibull), the $[0, 1]$ LHS coordinates $u_{i,j}$ are mapped through the inverse CDF, $z_{i,j} = F_j^{-1}(u_{i,j})$. The [Quick Start](qs_class.qmd) explains why a realistic nuisance distribution matters.
 
-### Parameter slicing (constant parameters)
+### Parameter slicing (constant parameters) {#sec-slicing}
 
 Inputs that are neither plotted nor integrated out are held constant, at their median by default or at a value you choose. The PoD is then a "slice" through the response surface, which lets you explore a specific scenario without refitting the models.
 
-## 5. Bootstrapping for confidence bounds {#bootstrap}
+## Bootstrapping for confidence bounds {#sec-bootstrap}
 
 With a non-linear, non-normal model, the classical analytical confidence bounds no longer apply. `digiqual` uses **bootstrap resampling** [M25]{.src .src-m25} (§2i):
 
 1. Draw $N$ samples with replacement from the data.
-2. Refit the mean model, variance model and error distribution. The model *type* (polynomial degree or Kriging kernel) and the distribution family stay fixed; for Kriging the hyperparameters are frozen too ([details](kriging_metamodeling.qmd#variance-and-bootstrap)).
+2. Refit the mean model, variance model and error distribution. The model *type* (polynomial degree or Kriging kernel) and the distribution family stay fixed; for Kriging the hyperparameters are frozen too ([details](kriging_metamodeling.qmd#sec-variance-bootstrap)).
 3. Calculate the PoD curve.
 4. Repeat $B$ times (typically $B = 1000$).
 5. Take percentiles at every point to form confidence bounds at several levels at once (50 %, 90 %, 95 %, 99 %). From these, `digiqual` builds the reliability matrix of $a_{X/Y}$ values (e.g. $a_{90/95}$).
 
-## 6. Global sensitivity analysis (Sobol indices)
+## Global sensitivity analysis (Sobol indices) {#sec-sobol}
 
 To show which inputs drive the signal, `digiqual` computes **total-order Sobol indices** of the fitted mean response. For $Y = f(X_1, \dots, X_d)$,
 
@@ -115,7 +116,7 @@ $$ S_{T_i} = \frac{E_{\sim i}\left(V_{i}(Y \mid X_{\sim i})\right)}{V(Y)} = 1 - 
 
 where $X_{\sim i}$ denotes all inputs except $X_i$. $S_{T_i}$ includes $X_i$'s direct effect and all its interactions. The indices are estimated with `SALib` by sampling the input space and evaluating the mean model. They are cached with the variance model and shown as percentages in the app.
 
-## Summary: how each type of parameter is treated
+## Summary: how each type of parameter is treated {.unnumbered}
 
 | Parameter type | Model fit | Mean curve / PoD | Bootstrap |
 | :--- | :--- | :--- | :--- |
@@ -124,11 +125,11 @@ where $X_{\sim i}$ denotes all inputs except $X_i$. $S_{T_i}$ includes $X_i$'s d
 | **Nuisance (marginalised)** | Input dimension of the surrogate. | Monte Carlo sampled from its distribution and averaged out. | Re-sampled and averaged in every resample. |
 
 
-## 7. Worked example: classical vs generalised {#worked-example}
+## Worked example: classical vs generalised {#sec-worked-example}
 
 This example generates data that deliberately breaks the classical assumptions and runs both methods on it. The signal grows quadratically with flaw length, falls with misalignment angle, and has scatter that grows with surface roughness, a nuisance parameter.
 
-### 7.1 Setup and data
+### Setup and data {#sec-example-setup}
 
 ```{python}
 import numpy as np
@@ -169,14 +170,14 @@ vars_df = pd.DataFrame(
 )
 
 np.random.seed(42)
-df = generate_lhs(ranges=vars_df, n=150)  # 150 points for 3D space
+df = generate_lhs(ranges=vars_df, n=150, seed=42)  # 150 points for 3D space (seeded: reproducible)
 df["Signal"] = apply_physics(df)
 
 study = SimulationStudy()
 study.add_data(df, outcome_col="Signal")
 ```
 
-### 7.2 The classical approach
+### The classical approach {#sec-example-classical}
 
 The classical method is applied with log transforms of both axes (`xlog=True`, `ylog=True`) to give the straight line its best chance. Its confidence bounds are computed by bootstrap rather than the MIL-HDBK-1823A formulas, which keeps the classical assumptions (a straight line, constant variance, normal errors) while making the worst-case curve easy to obtain. Like the generalised path, `linear_pod` stores bounds for 50 %, 90 %, 95 % and 99 % confidence in `ci_bounds` and `reliability_table`.
 
@@ -205,9 +206,9 @@ study.visualise_linear(show=True)
 Look at the 95 % prediction interval. The classical method assumes one constant scatter for every flaw, so the interval has the same width everywhere. In this data the scatter depends on roughness, which the classical fit ignores, and on top of that the straight line cannot follow the curved trend.
 :::
 
-### 7.3 The generalised approach
+### The generalised approach {#sec-example-generalised}
 
-The generalised method selects the mean model by cross-validation (§1), models the changing scatter (§2), infers the error distribution (§3) and integrates out Angle and Roughness (§4). Its bootstrap (§5) gives the same set of confidence levels.
+The generalised method selects the mean model by cross-validation (@sec-model-selection), models the changing scatter (@sec-variance), infers the error distribution (@sec-distribution) and integrates out Angle and Roughness (@sec-marginalisation). Its bootstrap (@sec-bootstrap) gives the same set of confidence levels.
 
 ```{python}
 # | label: fig-generalised
@@ -227,7 +228,7 @@ study.pod(
 study.visualise(show=True)
 ```
 
-### 7.4 Head-to-head
+### Head-to-head {#sec-example-comparison}
 
 Extracting both PoD curves from the `SimulationStudy` and plotting them together shows how much the assumptions matter.
 

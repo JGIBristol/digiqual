@@ -1,11 +1,12 @@
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
+
 from digiqual.diagnostics import (
-    sample_sufficiency,
+    _check_bootstrap_convergence,
     _check_input_coverage,
     _check_model_fit,
-    _check_bootstrap_convergence
+    sample_sufficiency,
 )
 
 # --- Fixtures ---
@@ -15,15 +16,15 @@ def basic_df():
     """Creates a 'perfect' dataset that should pass all checks."""
     np.random.seed(123)
     n = 100
-    
+
     length_vals = np.linspace(0, 10, n)
-    
+
     angle_vals = np.linspace(-90, 90, n)
     np.random.shuffle(angle_vals)
-    
+
     roughness_vals = np.linspace(0, 1, n)
     np.random.shuffle(roughness_vals)
-    
+
     df = pd.DataFrame({
         'Length': length_vals,
         'Angle': angle_vals,

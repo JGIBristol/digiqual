@@ -1,9 +1,10 @@
-# Using the GUI
-
-
+---
+title: "Using the GUI"
+number-sections: true
+---
 While the `SimulationStudy` class offers powerful programmatic control, sometimes you just need a clean visual interface to explore your data without writing scripts. The DigiQual App wraps the core statistical engine into a modern, user-friendly graphical interface, allowing you to run the entire lifecycle—from design to diagnostics to reliability analysis—in a desktop window.
 
-## 1. How to Access the App
+## How to Access the App {#sec-access}
 
 There are two ways to get the app:
 
@@ -12,7 +13,7 @@ There are two ways to get the app:
 
 Both run the same app, from the same version of `digiqual`.
 
-### Option A: Desktop App for Windows & macOS
+### Option A: Desktop App for Windows & macOS {#sec-desktop-app}
 
 Download the installer for your computer from the **[latest GitHub Release](https://github.com/JGIBristol/digiqual/releases/latest)**. The files are listed under *Assets* at the bottom of the release:
 
@@ -22,7 +23,7 @@ Download the installer for your computer from the **[latest GitHub Release](http
 | Windows 10/11 (64-bit) | `DigiQual-<version>-Windows-x64-portable.zip` | Portable version, no installation needed |
 | macOS 12 or later on Apple Silicon (M1 or newer) | `DigiQual-<version>-macOS-AppleSilicon.dmg` | Disk image |
 
-#### Windows
+#### Windows {#sec-windows}
 
 **Installer (`.msi`):** double-click it and follow the prompts. It installs for your user account only, so **it doesn't need administrator rights**. This makes it suitable for university- or company-managed PCs. DigiQual then appears in the Start menu.
 
@@ -35,7 +36,7 @@ The installer isn't code-signed yet, so Windows SmartScreen may warn you the fir
 
 The app window uses Microsoft's **WebView2** runtime. This is already included in Windows 11 and up-to-date Windows 10. If the app opens in an Edge or browser window instead of its own window, install the [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) ("Evergreen Bootstrapper").
 
-#### macOS
+#### macOS {#sec-macos}
 
 Open the `.dmg` and drag **DigiQual** into **Applications**.
 
@@ -51,14 +52,14 @@ After that it opens normally.
 
 The app isn't yet built for Intel Macs; use Option B on those.
 
-#### If something goes wrong
+#### If something goes wrong {#sec-troubleshooting}
 
 The desktop app writes a log file, which is the most useful thing to attach to a [GitHub issue](https://github.com/JGIBristol/digiqual/issues):
 
 - **Windows:** `%LOCALAPPDATA%\Digiqual\digiqual.log` (paste that into the File Explorer address bar)
 - **macOS:** `~/Library/Logs/Digiqual/digiqual.log`
 
-### Option B: Using `uv` via CLI
+### Option B: Using `uv` via CLI {#sec-uvx}
 
 If you use `uv` for environment management, you can launch the app directly from your terminal as a Command Line Interface (CLI) tool. This is the fastest way to get started if you already have `uv`.
 
@@ -83,7 +84,7 @@ digiqual
 uv tool install "digiqual[linux-gui]"
 ```
 
-### Option C: From a Python Script
+### Option C: From a Python Script {#sec-python-launch}
 If you are already working inside a Python script or a Jupyter environment, you can launch it locally using the built-in UI function.
 
 ```{python}

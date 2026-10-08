@@ -83,19 +83,51 @@ def _setup_logging() -> Path:
     kill the server thread, leaving a blank window. Pointing them at the log
     file fixes that and captures print() progress output too.
     """
-    log_path = _resolve_log_path()
-    # Deliberately left open: it backs logging and stdio for the whole run.
-    log_stream = open(log_path, "a", buffering=1, encoding="utf-8")  # noqa: SIM115
+    try:
+        log_path = _resolve_log_path()
+        _rotate_if_large(log_path)
+        # Deliberately left open: it backs logging and stdio for the whole run.
+        log_stream = open(log_path, "a", buffering=1, encoding="utf-8")  # noqa: SIM115
+    except OSError:
+        # e.g. a read-only home or roaming profile: log to the temp folder instead
+        import tempfile
+        log_path = Path(tempfile.gettempdir()) / "digiqual.log"
+        log_stream = open(log_path, "a", buffering=1, encoding="utf-8")  # noqa: SIM115
+
     if sys.stdout is None:
         sys.stdout = log_stream
     if sys.stderr is None:
         sys.stderr = log_stream
-    logging.basicConfig(
-        stream=log_stream,
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    )
+
+    fmt = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+    root = logging.getLogger()
+    root.setLevel(logging.INFO)
+    file_handler = logging.StreamHandler(log_stream)
+    file_handler.setFormatter(fmt)
+    root.addHandler(file_handler)
+    # When started from a terminal (python -m digiqual.gui), also show the log there
+    terminal = sys.__stderr__
+    if terminal is not None and hasattr(terminal, "isatty") and terminal.isatty():
+        console = logging.StreamHandler(terminal)
+        console.setFormatter(fmt)
+        root.addHandler(console)
     return log_path
+
+
+def _rotate_if_large(log_path: Path, max_bytes: int = 5_000_000) -> None:
+    """Keeps one previous log (digiqual.log.1) once the log grows past ``max_bytes``.
+
+    Done at startup rather than with a RotatingFileHandler, because stdout/stderr
+    write to the same open file and Windows can't rename an open file.
+    """
+    try:
+        if log_path.exists() and log_path.stat().st_size > max_bytes:
+            backup = log_path.with_name(log_path.name + ".1")
+            if backup.exists():
+                backup.unlink()
+            log_path.rename(backup)
+    except OSError:
+        pass  # rotation is best-effort; keep appending to the existing file
 
 
 # --- 2. Server helpers ---
@@ -123,20 +155,61 @@ def start_server_thread(port: int) -> threading.Thread:
     return thread
 
 
-def wait_for_server(url: str, timeout: float = 20.0) -> bool:
-    """Polls the server URL until it responds or the timeout is reached."""
+def wait_for_server(url: str, timeout: float = 20.0, thread: threading.Thread | None = None) -> bool:
+    """Polls the server URL until it responds, the server thread dies, or the timeout is reached."""
     # Explicitly ignore proxy settings: university/corporate proxies can't
     # reach the sandboxed loopback server.
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
     deadline = time.time() + timeout
     while time.time() < deadline:
+        if thread is not None and not thread.is_alive():
+            return False  # the server crashed (e.g. the port was taken); no point waiting
         try:
             with opener.open(url, timeout=1.0) as response:
                 if response.status == 200:
                     return True
         except (urllib.error.URLError, TimeoutError, OSError):
-            time.sleep(0.3)
+            pass
+        time.sleep(0.3)
     return False
+
+
+def start_server(max_attempts: int = 3) -> str | None:
+    """Starts the server on a free port, retrying with a new port if it fails to start.
+
+    `get_free_port` releases the port before the server binds it, so another
+    process can occasionally grab it in between; a retry on a fresh port covers that.
+    Returns the server URL, or None if it never came up.
+    """
+    for attempt in range(1, max_attempts + 1):
+        port = get_free_port()
+        url = f"http://{HOST}:{port}"
+        thread = start_server_thread(port)
+        if wait_for_server(url, thread=thread):
+            return url
+        if thread.is_alive():
+            # Still running but slow to answer: let the window try it anyway
+            logger.warning("Server did not respond within timeout; opening window anyway.")
+            return url
+        logger.warning("Server failed to start on port %s (attempt %s/%s).", port, attempt, max_attempts)
+    return None
+
+
+def show_startup_error(log_path: Path) -> None:
+    """Tells the user the app could not start, and where the log is."""
+    message = (
+        "DigiQual could not start its local server.\n\n"
+        f"Details are in the log file:\n{log_path}\n\n"
+        "Please attach it to a GitHub issue: https://github.com/JGIBristol/digiqual/issues"
+    )
+    try:
+        import webview
+
+        html = "<pre style='font-family:sans-serif;padding:1em;white-space:pre-wrap'>" + message + "</pre>"
+        webview.create_window("DigiQual - startup error", html=html, width=640, height=320)
+        webview.start()
+    except Exception:
+        logger.error(message)
 
 
 # --- 3. Windows ---
@@ -257,9 +330,11 @@ def main() -> None:
     log_path = _setup_logging()
     logger.info("Starting DigiQual (log: %s)", log_path)
 
-    # Ensure local connections bypass any corporate/university proxy servers
-    os.environ["NO_PROXY"] = "127.0.0.1,localhost"
-    os.environ["no_proxy"] = "127.0.0.1,localhost"
+    # Ensure local connections bypass any corporate/university proxy servers,
+    # keeping any exclusions the user already has
+    for var in ("NO_PROXY", "no_proxy"):
+        existing = [h for h in os.environ.get(var, "").split(",") if h.strip()]
+        os.environ[var] = ",".join(dict.fromkeys(existing + ["127.0.0.1", "localhost"]))
 
     if "--self-test" in sys.argv:
         code = run_self_test()
@@ -267,11 +342,12 @@ def main() -> None:
         # os._exit: don't wait on the daemon server thread or joblib cleanup.
         os._exit(code)
 
-    port = get_free_port()
-    url = f"http://{HOST}:{port}"
-    start_server_thread(port)
-    if not wait_for_server(url):
-        logger.warning("Server did not respond within timeout; opening window anyway.")
+    url = start_server()
+    if url is None:
+        logger.error("DigiQual server failed to start; see the log above.")
+        show_startup_error(log_path)
+        logging.shutdown()
+        sys.exit(1)
 
     try:
         launch_webview_window(url)

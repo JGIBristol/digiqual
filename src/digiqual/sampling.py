@@ -1,6 +1,10 @@
+import logging
+from typing import Dict, Optional, Tuple, Union
+
 import pandas as pd
 from scipy.stats import qmc
-from typing import Optional, Union, Dict, Tuple
+
+logger = logging.getLogger(__name__)
 
 def generate_lhs(
     n: int,
@@ -78,8 +82,8 @@ def generate_lhs(
     try:
         l_bounds_series = pd.to_numeric(vars_df["Min"])
         u_bounds_series = pd.to_numeric(vars_df["Max"])
-    except ValueError:
-        raise ValueError("The 'Min' and 'Max' columns must be strictly numeric.")
+    except ValueError as err:
+        raise ValueError("The 'Min' and 'Max' columns must be strictly numeric.") from err
 
     if (l_bounds_series >= u_bounds_series).any():
         bad_vars = vars_df.loc[l_bounds_series >= u_bounds_series, "Name"].tolist()
@@ -113,7 +117,6 @@ def reorder_max_min(df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: The reordered DataFrame.
     """
     import numpy as np
-    from scipy.spatial.distance import cdist
 
     if len(df) <= 2:
         return df.copy()
@@ -129,24 +132,17 @@ def reorder_max_min(df: pd.DataFrame) -> pd.DataFrame:
 
     n_points = len(df)
     ordered_indices = [0]  # Start with the first point
-    remaining_indices = list(range(1, n_points))
 
-    while remaining_indices:
-        # Calculate distance from remaining points to the already selected points
-        selected_points = X_scaled[ordered_indices]
-        remaining_points = X_scaled[remaining_indices]
+    # Distance from every point to its nearest already-selected point. Updating it
+    # with the newest point only keeps each step O(n) (O(n^2) overall).
+    min_dists = np.linalg.norm(X_scaled - X_scaled[0], axis=1)
+    min_dists[0] = -np.inf  # already selected
 
-        # dists shape: (n_remaining, n_selected)
-        dists = cdist(remaining_points, selected_points, metric='euclidean')
-
-        # For each remaining point, find its minimum distance to any selected point
-        min_dists = dists.min(axis=1)
-
-        # Choose the remaining point that has the LARGEST minimum distance to the selected pool
-        best_idx_in_remaining = np.argmax(min_dists)
-        best_global_idx = remaining_indices[best_idx_in_remaining]
-
-        ordered_indices.append(best_global_idx)
-        remaining_indices.remove(best_global_idx)
+    for _ in range(n_points - 1):
+        # The point furthest from everything selected so far (ties: lowest index)
+        best = int(np.argmax(min_dists))
+        ordered_indices.append(best)
+        min_dists = np.minimum(min_dists, np.linalg.norm(X_scaled - X_scaled[best], axis=1))
+        min_dists[ordered_indices] = -np.inf
 
     return df.iloc[ordered_indices].copy()

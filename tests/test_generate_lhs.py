@@ -1,6 +1,8 @@
-import pytest
 import pandas as pd
+import pytest
+
 from digiqual.sampling import generate_lhs
+
 
 # 1. Test that the function works correctly under normal conditions
 def test_generate_lhs_success():

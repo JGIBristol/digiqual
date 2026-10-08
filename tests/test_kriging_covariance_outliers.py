@@ -1,14 +1,14 @@
-import pytest
 import numpy as np
-from digiqual.pod import (
-    fit_all_robust_mean_models,
-    compute_kriging_loo_residuals,
-    fit_variance_model,
-    plot_model_selection
-)
-from digiqual.plotting import plot_kriging_diagnostics
-from digiqual.pod import build_fixed_kernel_gpr
 from sklearn.gaussian_process.kernels import WhiteKernel
+
+from digiqual.plotting import plot_kriging_diagnostics
+from digiqual.pod import (
+    build_fixed_kernel_gpr,
+    compute_kriging_loo_residuals,
+    fit_all_robust_mean_models,
+    fit_variance_model,
+    plot_model_selection,
+)
 
 KERNEL_NAMES = {'Exponential (Matern 1/2)', 'Matern 3/2', 'Matern 5/2', 'Gaussian (RBF)'}
 
@@ -20,21 +20,21 @@ def test_kriging_covariance_optimization_and_anisotropy():
     x1 = np.linspace(0.1, 5.0, N)
     x2 = np.linspace(-10.0, 10.0, N)
     X = np.column_stack([x1, x2])
-    
+
     # Target signal response with different sensitivities in x1 vs x2
     y = 3.0 * x1 + 0.05 * x2 + np.random.normal(0, 0.2, size=N)
 
     models, scores, cv_winner_key = fit_all_robust_mean_models(X, y)
-    
+
     # Kriging should be fitted and available in models
     assert ('Kriging', None) in models
     gpr = models[('Kriging', None)]
-    
+
     assert hasattr(gpr, 'best_kernel_name_')
     assert hasattr(gpr, 'kernel_loo_scores_')
     assert len(gpr.kernel_loo_scores_) >= 3
     assert gpr.best_kernel_name_ in KERNEL_NAMES
-    
+
     # Anisotropic length scales should be present
     assert hasattr(gpr.kernel_, 'k2') or hasattr(gpr.kernel_, 'length_scale')
 
@@ -44,7 +44,7 @@ def test_kriging_standardized_loo_residuals_and_outliers():
     N = 60
     X = np.linspace(0.5, 5.0, N).reshape(-1, 1)
     y = 2.0 * X.flatten() + np.random.normal(0, 0.2, size=N)
-    
+
     # Inject an extreme outlier to trigger gamma > 1.0 calibration
     y[15] += 10.0
 

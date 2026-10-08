@@ -1,14 +1,11 @@
-import pytest
-import pandas as pd
 from unittest.mock import patch
+
+import pandas as pd
+import pytest
 
 # Import the functions to test
 # We import the private functions (_) to test their logic in isolation
-from digiqual.adaptive import (
-    generate_targeted_samples,
-    _fill_gaps,
-    _sample_uncertainty
-)
+from digiqual.adaptive import _fill_gaps, _sample_uncertainty, generate_targeted_samples
 
 # --- Fixtures ---
 

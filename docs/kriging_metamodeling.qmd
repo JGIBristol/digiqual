@@ -1,11 +1,12 @@
 ---
 title: "Kriging Metamodeling"
 format: html
+number-sections: true
 ---
 
 Kriging (Gaussian Process regression) is one of the candidate **expectation models** in `digiqual`. It competes with polynomials of degree 1–10 to describe how the mean signal response changes with the inputs. This page explains exactly how the Kriging candidate is built, how it is chosen (or not), how it feeds the PoD calculation, and where it can mislead you.
 
-## Where each piece comes from
+## Where each piece comes from {#sec-provenance .unnumbered}
 
 `digiqual` follows two papers and the toolbox they used. Each design choice on this page carries a tag showing its source:
 
@@ -14,7 +15,7 @@ Kriging (Gaussian Process regression) is one of the candidate **expectation mode
 | [M25]{.src .src-m25} | Malkiel, Croxford & Wilcox (2025). *A generalized method for the reliability assessment of safety–critical inspection.* Proc. R. Soc. A 481: 20240654. [doi:10.1098/rspa.2024.0654](https://doi.org/10.1098/rspa.2024.0654). Includes its MATLAB reference code. |
 | [M26]{.src .src-m26} | Malkiel, Croxford & Wilcox (2026). *A comprehensive investigation of flexible and multi-dimensional simulation-based PoD analysis.* NDT&E Int. 159: 103596. [doi:10.1016/j.ndteint.2025.103596](https://doi.org/10.1016/j.ndteint.2025.103596). |
 | [UQLab]{.src .src-uqlab} | A default of the UQLab Kriging module (v2.1). Both papers built their Kriging models with UQLab and its default settings, so these choices are inherited rather than stated in the papers. |
-| [digiqual]{.src .src-digiqual} | A deliberate deviation from the references. Each one is justified in [Deviations from the references](#deviations). |
+| [digiqual]{.src .src-digiqual} | A deliberate deviation from the references. Each one is justified in [Deviations from the references](#sec-deviations). |
 
 The roles of the two papers differ:
 
@@ -43,9 +44,9 @@ The full map of what comes from where:
 | Kriging only when $N \le 1000$ | [digiqual]{.src .src-digiqual} | Above that, only polynomials are fitted |
 
 
-## 1. The Kriging model
+## The Kriging model {#sec-model}
 
-### 1.1 Prior
+### Prior {#sec-prior}
 
 Kriging treats the response $y = \mathcal{M}(\mathbf{x})$ as one realisation of a Gaussian Process [M26]{.src .src-m26} (Eq. 2–3):
 
@@ -59,7 +60,7 @@ The first term is the trend, $\sigma^2$ is the process variance and $R$ is a cor
 
 **In digiqual.** The response is standardised, $\tilde{y} = (y - \bar{y})/s_y$, and a zero-mean GP is fitted to $\tilde{y}$. This is *simple* Kriging with the trend fixed at the sample mean $\bar{y}$ [digiqual]{.src .src-digiqual}, because scikit-learn's Gaussian Process has no estimated trend. Near the data the two are practically identical. Far from the data the prediction returns to $\bar{y}$ rather than to the GLS estimate $\hat\beta_0$ (Eq. 6 of [M26]{.src .src-m26}). For a constant trend these are usually close.
 
-### 1.2 Distance and correlation functions
+### Distance and correlation functions {#sec-correlation}
 
 Each input is first standardised with the mean and standard deviation of the training data [UQLab]{.src .src-uqlab}:
 
@@ -82,7 +83,7 @@ The four candidate correlation functions [M26]{.src .src-m26} (§4.3.1) are:
 
 [M26]{.src .src-m26} also tried UQLab's "linear" correlation. `digiqual` omits it [digiqual]{.src .src-digiqual} because scikit-learn does not provide it, and in [M26]{.src .src-m26} the Matérn functions consistently beat it.
 
-### 1.3 Noise (nugget)
+### Noise (nugget) {#sec-nugget}
 
 [M26]{.src .src-m26} studies *deterministic* simulations, where the same inputs always give the same output, so its Kriging model interpolates every training point exactly. `digiqual` is used on data where that is often false. Any influential input you did not include (crack roughness, shape, a random noise realisation) shows up as scatter. Following the [M25]{.src .src-m25} reference code (UQLab option `Regression.SigmaNSQ = 'auto'`), every candidate therefore includes a learned white-noise variance $\tau^2$:
 
@@ -102,7 +103,7 @@ If $\tau^2$ is fixed below the true scatter variance, the likelihood "explains" 
 With $\tau^2$ learned, the scatter is attributed to noise and the length scales stay physically sensible. Inputs with no influence get length scales far longer than their range.
 :::
 
-### 1.4 Estimating the hyperparameters
+### Estimating the hyperparameters {#sec-hyperparameters}
 
 For a given correlation function, the hyperparameters $(\sigma^2, \boldsymbol{\theta}, \tau^2)$ are chosen by maximising the log-likelihood of the standardised training responses [M26]{.src .src-m26} (§2.1.2):
 
@@ -134,7 +135,7 @@ With a nugget, `digiqual` optimises $\sigma^2$, $\boldsymbol{\theta}$ and $\tau^
 
 UQLab caps the length scale at 10. `digiqual` allows up to $10^{3}$ so that an input with no influence can become effectively flat instead of sitting on the bound.
 
-### 1.5 Predicting
+### Predicting {#sec-predicting}
 
 Conditioning the prior on the data gives the posterior mean and variance at a new point $\mathbf{x}_0$. In the standardised units used by `digiqual` (simple Kriging):
 
@@ -146,12 +147,12 @@ $$
 
 where $\mathbf{k}_0$ holds the covariances $\sigma^2 R(\mathbf{u}_0, \mathbf{u}_i)$ between the new point and the training points. Eq. 8–9 of [M26]{.src .src-m26} are the ordinary-Kriging versions. They contain one extra variance term for the uncertainty in $\hat\beta$, which only matters far from the data.
 
-Only $\mu(\mathbf{x})$ is used for the PoD in `digiqual`. The spread of the response around it comes from the separate variance model (§4).
+Only $\mu(\mathbf{x})$ is used for the PoD in `digiqual`. The spread of the response around it comes from the separate variance model (@sec-variance-bootstrap).
 
 
-## 2. Choosing the kernel and the model
+## Choosing the kernel and the model {#sec-selection}
 
-### 2.1 Choosing the correlation function: LOO error {#loo}
+### Choosing the correlation function: LOO error {#sec-loo}
 
 Each of the four candidates is fitted once to all the data. Its leave-one-out predictions then come from a single matrix inverse, without refitting [M26]{.src .src-m26} (Eq. 10–13, after Dubrule 1983). Build the augmented matrix
 
@@ -172,7 +173,7 @@ $$
 As in [M26]{.src .src-m26}, the hyperparameters are those fitted to the full data and are not re-optimised for each left-out point. Because $\mathbf{K}$ includes $\tau^2$, $\sigma^2_{\hat{Y}_{-i}}$ is the variance of a new *noisy* observation, which is the right scale for comparing with observed residuals. UQLab computes the same quantities in `uq_Kriging_calc_KFold` [UQLab]{.src .src-uqlab}.
 
 ::: {.callout-note}
-These LOO formulas are the *ordinary*-Kriging ones (the $\mathbf{F}$ row and column re-estimate the constant trend without point $i$), whereas `digiqual`'s predictions use the sample mean (§1.1). The test suite checks that the matrix formula reproduces an explicit ordinary-Kriging refit to machine precision. The gap between the two trend treatments is negligible for LOO purposes.
+These LOO formulas are the *ordinary*-Kriging ones (the $\mathbf{F}$ row and column re-estimate the constant trend without point $i$), whereas `digiqual`'s predictions use the sample mean (@sec-prior). The test suite checks that the matrix formula reproduces an explicit ordinary-Kriging refit to machine precision. The gap between the two trend treatments is negligible for LOO purposes.
 :::
 
 The kernel with the smallest normalised LOO error is kept [M26]{.src .src-m26} (Eq. 14):
@@ -181,18 +182,18 @@ $$ MSE_{LOO} = \frac{1}{m}\sum_{i=1}^{m} \frac{\left(y_i - \mu_{\hat{Y}_{-i}}\ri
 
 $MSE_{LOO} = 1$ means the model predicts left-out points no better than the sample mean. The scores of all four kernels are stored on the model as `kernel_loo_scores_`.
 
-### 2.2 Kriging against the polynomials {#winner}
+### Kriging against the polynomials {#sec-kriging-vs-poly}
 
 LOO error with fixed hyperparameters is ideal for comparing kernels, but it is not on the same footing as the polynomials' scores. The chosen kernel is therefore also scored by the same **10-fold cross-validation** as every polynomial, with its hyperparameters re-optimised inside each fold [M25]{.src .src-m25}. This is the Kriging bar in the model-selection chart.
 
-The overall winner is then picked by the one-standard-error rule [digiqual]{.src .src-digiqual}: the simplest model whose CV error is within one standard error of the best, with Kriging counted as the most complex candidate. Kriging is therefore chosen only when it is clearly better than every polynomial. The rule, its link to [M25]{.src .src-m25} Fig. 5, and a worked example are on the [Generalised PoD](generalised_pod.qmd#model-selection) page.
+The overall winner is then picked by the one-standard-error rule [digiqual]{.src .src-digiqual}: the simplest model whose CV error is within one standard error of the best, with Kriging counted as the most complex candidate. Kriging is therefore chosen only when it is clearly better than every polynomial. The rule, its link to [M25]{.src .src-m25} Fig. 5, and a worked example are on the [Generalised PoD](generalised_pod.qmd#sec-model-selection) page.
 
-### 2.3 Cost
+### Cost {#sec-cost}
 
 Kriging needs an $O(N^3)$ factorisation for every likelihood evaluation. One full model build costs 4 kernels × 11 optimiser starts, plus 10 CV folds × 6 starts. Above $N = 1000$ samples Kriging is skipped and only the polynomials are fitted [digiqual]{.src .src-digiqual}.
 
 
-## 3. LOO residual diagnostics and γ {#loo-diagnostics}
+## LOO residual diagnostics and γ {#sec-loo-diagnostics}
 
 To judge whether the Kriging uncertainty estimate can be trusted, [M26]{.src .src-m26} (Eq. 19) standardises each LOO error by its predicted standard deviation:
 
@@ -208,23 +209,23 @@ and **multiplies the Kriging interpolation standard deviation by $\gamma$**, whi
 
 1. `digiqual` builds its PoD bounds by the [M25]{.src .src-m25} bootstrap, not by GP sample paths, so there is no interpolation-uncertainty term for $\gamma$ to scale.
 2. Applying $\gamma$ to the *response scatter* instead would change the PoD curve itself, which [M26]{.src .src-m26} never does. Wider scatter also *raises* the PoD wherever the mean response is below the threshold, so that change is not conservative for small flaws.
-3. The nugget $\tau^2$ is one value for the whole input space. When the real scatter varies with flaw size, LOO residuals in high-scatter regions exceed 3 simply because of that. The variance model (§4) already handles this heteroscedasticity, so inflating by $\gamma$ as well would count it twice.
+3. The nugget $\tau^2$ is one value for the whole input space. When the real scatter varies with flaw size, LOO residuals in high-scatter regions exceed 3 simply because of that. The variance model (@sec-variance-bootstrap) already handles this heteroscedasticity, so inflating by $\gamma$ as well would count it twice.
 
 A large $\gamma$ is still worth acting on: look for a missing input, a transformation (e.g. $\log a$), more samples, or a polynomial instead. GP-sample-path bounds in the style of [M26]{.src .src-m26} are a possible future addition.
 
 
-## 4. Variance model and bootstrap with Kriging {#variance-and-bootstrap}
+## Variance model and bootstrap with Kriging {#sec-variance-bootstrap}
 
 **Variance model.** The scatter around the mean is modelled by the Gaussian kernel smoother of [M25]{.src .src-m25} (Eq. 2.9–2.11), applied to squared residuals. For polynomials those residuals are the usual in-sample ones. For Kriging they are the **LOO residuals** $y_i - \mu_{\hat{Y}_{-i}}$ [digiqual]{.src .src-digiqual}. A Kriging model with a learned nugget still bends towards each training point, so its in-sample residuals understate the scatter. That would give too narrow a response distribution and a PoD curve that is too steep. LOO residuals measure how far an observation falls from a prediction that did not use it. The same residuals are used to infer the error distribution ([M25]{.src .src-m25} §2f).
 
 **Bootstrap.** [M25]{.src .src-m25} (§2i) refits the chosen model to each resample of the data, keeping the model type and distribution family fixed. For Kriging, `digiqual` also keeps the hyperparameters ($\sigma^2$, $\boldsymbol{\theta}$, $\tau^2$) and the input scaling at their full-data values. Only the posterior is recomputed, which keeps 1000 refits fast [digiqual]{.src .src-digiqual}. The resulting interval reflects the sampling variability of the data, but **not** uncertainty in the hyperparameters, so it may be somewhat narrow when the length scales are poorly determined (see the pitfalls below). In each resample the variance-model residuals are again leave-out residuals. All copies of a duplicated point are left out together, using the block form of the LOO formula [UQLab]{.src .src-uqlab}.
 
 
-## 5. Correlation length and other pitfalls (Kriging vs polynomials)
+## Correlation length and other pitfalls (Kriging vs polynomials) {#sec-pitfalls}
 
 Polynomials are *global*: every data point influences the whole curve, and the shape is fixed by the degree. Kriging is *local*: a prediction is a weighted blend of nearby observations, and the length scale $\theta$ decides what "nearby" means. That locality is why Kriging can follow features a low-order polynomial smooths over ([M25]{.src .src-m25} Fig. 6). It is also the source of most Kriging failures.
 
-### 5.1 The length scale must be longer than the gap between samples
+### The length scale must be longer than the gap between samples {#sec-length-scale}
 
 Away from the data, the correlation with every observation decays to zero and the Kriging mean falls back to the prior mean $\bar{y}$. If $\theta$ is *shorter* than the typical spacing between samples, this happens **between** data points. The surface becomes a row of bumps on a flat sheet at $\bar{y}$.
 
@@ -289,13 +290,13 @@ plt.show()
 
 Maximum likelihood normally avoids this, as in @fig-length-scale-1, where the fitted length scale is roughly ten times the mean spacing. It goes wrong in three situations:
 
-- **Fixed or under-estimated noise.** This is the callout in §1.3. A length scale collapses onto the scatter.
+- **Fixed or under-estimated noise.** This is the callout in @sec-nugget. A length scale collapses onto the scatter.
 - **Sparse sampling in one direction.** With $n$ inputs, $N$ samples are only about $N^{1/n}$ per axis. [M26]{.src .src-m26} needed 700 points in 4-D, about 5 per axis. The data cannot tell a short length scale apart from a long one along a sparsely sampled direction, so the likelihood is flat there and the estimate is unreliable.
 - **Slices through empty regions.** A PoD slice holds unused inputs at their median. If few samples lie near that median for a short-length-scale input, the slice is mostly prior mean.
 
 **What to check.** Compare each fitted length scale (`model.kernel_`, in standard deviations of that input) with the sample spacing along that input. A length scale near its lower bound ($10^{-3}$) is a red flag. A length scale near the upper bound means that input has essentially no effect.
 
-### 5.2 Sparse, uncorrelated (scattered) data
+### Sparse, uncorrelated (scattered) data {#sec-scattered}
 
 When the signal is weak compared with the scatter, or there are few points, the GP may find no correlation structure at all. The likelihood then puts all the variance in the nugget, pushes $\theta$ to its lower bound and leaves a flat line at $\bar{y}$, so **the trend disappears**.
 
@@ -323,20 +324,19 @@ print(f"Selected model: {w2}")
 
 Polynomials degrade more gracefully here, because a straight line through scattered points still estimates the slope. The model selection usually catches this case: the Kriging CV error is no better than a low-order polynomial's, so the one-SE rule picks the polynomial. Signs to look for are $MSE_{LOO} \gtrsim 1$, a nugget close to 1 (in units of $\text{var}(y)$), and length scales at their lower bound.
 
-### 5.3 Extrapolation
+### Extrapolation {#sec-extrapolation}
 
 Outside the sampled region a Kriging mean decays back to $\bar{y}$, at a rate set by the length scale (grey region in @fig-length-scale). For a PoD curve that means the mean response at flaw sizes *beyond* the largest simulated flaw drifts towards the average response, so **the PoD can start to fall**. Polynomials fail differently: a cubic or higher-order term can make the mean run away to $\pm\infty$. Neither model should be used outside the sampled range. Keep the PoD evaluation grid inside the range of your simulations.
 
-### 5.4 Other things to be wary of
+### Other things to be wary of {#sec-other-pitfalls}
 
 - **In-sample fit says nothing.** Kriging can pass (almost) through every training point, so in-sample $R^2$ is near 1 for any data. Always judge it by CV or LOO error. The GUI's model-fit diagnostic uses LOO predictions for Kriging for exactly this reason.
 - **One length scale for the whole space (stationarity).** A response that rises steeply for small flaws and then saturates has two very different "natural" length scales, and a stationary GP must compromise. Transforming the input (e.g. working in $\log a$, as [M25]{.src .src-m25} §2g recommends) often makes the response closer to stationary.
 - **One noise level for the whole space.** The nugget $\tau^2$ is constant. If the real scatter varies strongly, the Kriging surface may be over-smoothed where the scatter is small and under-smoothed where it is large, and the LOO residuals will flag outliers ($\gamma > 1$). The variance model accounts for the varying scatter in the PoD itself.
 - **No equation.** A polynomial can be written down and checked by hand. A Kriging model is defined by its training data and hyperparameters, which makes it harder to audit.
 - **Cost and size limit.** Fitting is $O(N^3)$, and Kriging is skipped above 1000 samples.
-- **The variance smoother is not scaled.** The Kriging inputs are standardised, but the kernel smoother for the variance model still uses Euclidean distance in the raw input units, with a single bandwidth.
 
-### 5.5 Summary: Kriging vs polynomials
+### Summary: Kriging vs polynomials {#sec-summary-table}
 
 | | Polynomial | Kriging |
 |:---|:---|:---|
@@ -351,7 +351,7 @@ Outside the sampled region a Kriging mean decays back to $\bar{y}$, at a rate se
 | Cost | Negligible | $O(N^3)$; $N \le 1000$ |
 
 
-## Deviations from the references {#deviations}
+## Deviations from the references {#sec-deviations .unnumbered}
 
 | Deviation | Reference | Why `digiqual` differs | Expected effect |
 |:---|:---|:---|:---|
@@ -361,14 +361,14 @@ Outside the sampled region a Kriging mean decays back to $\bar{y}$, at a rate se
 | Multi-start L-BFGS-B | [UQLab]{.src .src-uqlab}: hybrid GA | scikit-learn optimiser | Same optimum in well-posed problems |
 | ML estimation | [UQLab]{.src .src-uqlab} default: LOO-CV | Follows the [M26]{.src .src-m26} text | — |
 | One-SE winner rule | [M25]{.src .src-m25}: qualitative "simplest of the near-best" | A reproducible version of the same idea | Prefers simpler models in near-ties |
-| $\gamma$ not applied | [M26]{.src .src-m26}: inflates interpolation std for GP-path bounds | No GP-path bounds in `digiqual`; applying it to scatter would change the PoD curve and double-count heteroscedasticity (§3) | PoD curve and bounds unaffected by $\gamma$ |
+| $\gamma$ not applied | [M26]{.src .src-m26}: inflates interpolation std for GP-path bounds | No GP-path bounds in `digiqual`; applying it to scatter would change the PoD curve and double-count heteroscedasticity (@sec-loo-diagnostics) | PoD curve and bounds unaffected by $\gamma$ |
 | LOO residuals for the variance model | [M25]{.src .src-m25}: in-sample residuals | A nugget GP's in-sample residuals understate the scatter | Wider, more honest scatter for Kriging |
 | Frozen hyperparameters in the bootstrap | [M25]{.src .src-m25}: refit each resample | 1000 re-optimisations are too slow | Bounds omit hyperparameter uncertainty |
 | Ridge polynomials | [M25]{.src .src-m25}: ordinary least squares | Stabilises high degrees | Slight shrinkage of high-degree terms |
 | $N \le 1000$ for Kriging | — | $O(N^3)$ cost | Polynomials only for large data |
 
 
-## 6. Python example
+## Python example {#sec-example}
 
 ```{python}
 #| label: fig-kriging-results
@@ -412,7 +412,7 @@ plt.show()
 ```
 
 
-## API summary
+## API summary {.unnumbered}
 
 | Function | Purpose |
 |:---|:---|

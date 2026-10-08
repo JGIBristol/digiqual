@@ -32,8 +32,13 @@ app/dist/
 app/build/
 app/logs/
 wheelhouse/
+/package/
 
-package
+# Desktop app installers and archives (never commit these: they bloat history)
+*.zip
+*.exe
+*.dmg
+*.msi
 
 **/*.csv
 !app/sufficient_data.csv
@@ -43,10 +48,9 @@ package
 # --- Testing & Code Quality ---
 .pytest_cache/
 .coverage
-.vscode
 
 # --- Project Data & Outputs ---
-materials
+/materials/
 /.quarto/
 
 **/*.quarto_ipynb

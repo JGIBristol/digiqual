@@ -1,10 +1,13 @@
-import pandas as pd
+import logging
+import os
+import shlex
+import subprocess
 from abc import ABC, abstractmethod
 from typing import Callable
 
-import subprocess
-import shlex
-import os
+import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 class Executor(ABC):
     """
@@ -65,30 +68,37 @@ class PythonExecutor(Executor):
         """
         The actual translation process for pure Python models.
         """
-        print(f"   -> Executing Python model for {len(samples)} points...")
+        logger.info(f"   -> Executing Python model for {len(samples)} points...")
 
         # Step 1: Make a safe copy of the incoming data so we don't accidentally corrupt it.
         results = samples.copy()
 
-        try:
-            # Step 2: The magic line.
-            # '.apply' with 'axis=1' tells Pandas to take our DataFrame, slice it into individual rows,
-            # and feed each row one-by-one into the user's 'solver_func'.
-            # It then takes all the answers and creates a brand new column named by 'outcome_col'.
-            results[self.outcome_col] = results.apply(self.solver_func, axis=1)
+        # Step 2: Run the solver one row at a time. A row that raises gets NaN, so only
+        # that point is treated as a failed run (and added to the graveyard); the rest of
+        # the batch is kept.
+        outcomes = []
+        n_failed = 0
+        for _, row in results.iterrows():
+            try:
+                outcomes.append(self.solver_func(row))
+            except KeyError as e:
+                # Usually a typo in the column names used inside solver_func
+                if n_failed == 0:
+                    logger.warning(f"   -> Python simulation failed due to a missing variable: {e}")
+                    logger.info("   -> Tip: Check your solver_func to ensure the column names match exactly!")
+                outcomes.append(float("nan"))
+                n_failed += 1
+            except Exception as e:
+                if n_failed == 0:
+                    logger.warning(f"   -> Python simulation failed for a point: {e}")
+                outcomes.append(float("nan"))
+                n_failed += 1
 
-        except KeyError as e:
-            # --- NEW SAFEGUARD: Catch typos inside the user's custom function ---
-            print(f"   -> Python simulation FAILED due to a missing variable: {e}")
-            print("   -> Tip: Check your solver_func to ensure the column names match exactly!")
-            return pd.DataFrame()
+        if n_failed:
+            logger.warning(f"   -> {n_failed} of {len(results)} points failed and will be skipped.")
 
-        except Exception as e:
-            # Step 3: Catch all other mathematical errors gracefully
-            print(f"   -> Python simulation FAILED: {e}")
-            return pd.DataFrame()
-
-        # Step 4: Return the finished table (Inputs + New Outcome Column) back to DigiQual
+        # Step 3: Return the finished table (Inputs + New Outcome Column) back to DigiQual
+        results[self.outcome_col] = outcomes
         return results
 
 
@@ -127,24 +137,30 @@ class CLIExecutor(Executor):
         """
         The translation process for heavy, external software.
         """
-        # Step 1: Write inputs to CSV
+        # Step 1: Write inputs to CSV, and remove any output left over from a previous
+        # batch so a solver that exits without writing can't be mistaken for success.
         samples.to_csv(self.input_path, index=False)
+        if os.path.exists(self.output_path):
+            os.remove(self.output_path)
 
         # Step 2 & 3: Format and split the command
         cmd = self.command_template.format(input=self.input_path, output=self.output_path)
-        print(f"   -> Executing Isolated Process: {cmd}")
+        logger.info(f"   -> Executing Isolated Process: {cmd}")
         cmd_list = shlex.split(cmd)
 
         try:
             # Step 4: Spawn the isolated process
             subprocess.run(cmd_list, shell=False, check=True)
         except subprocess.CalledProcessError as e:
-            print(f"   -> Simulation FAILED (Exit Code {e.returncode}).")
+            logger.warning(f"   -> Simulation FAILED (Exit Code {e.returncode}).")
+            return pd.DataFrame()
+        except FileNotFoundError:
+            logger.warning(f"   -> Simulation FAILED: command not found ({cmd_list[0]!r}). Check it is installed and on your PATH.")
             return pd.DataFrame()
 
         # Step 5: Check if output file exists
         if not os.path.exists(self.output_path):
-            print("   -> Simulation failed to produce an output file.")
+            logger.warning("   -> Simulation failed to produce an output file.")
             return pd.DataFrame()
 
         # Step 6: Read CSV and Apply Auto-Stitching
@@ -157,19 +173,19 @@ class CLIExecutor(Executor):
             if missing_cols:
                 # If row counts match, safely stitch the inputs back on!
                 if len(results) == len(samples):
-                    print(f"   -> Info: Auto-stitching missing input columns {missing_cols} back to results.")
+                    logger.info(f"   -> Info: Auto-stitching missing input columns {missing_cols} back to results.")
                     for col in missing_cols:
                         results[col] = samples[col].values
                 else:
                     # If row counts don't match, we cannot safely align the data
-                    print(f"   -> ERROR: External solver returned {len(results)} rows, but we sent {len(samples)}.")
-                    print(f"   -> Cannot safely align missing input columns {missing_cols}.")
+                    logger.warning(f"   -> ERROR: External solver returned {len(results)} rows, but we sent {len(samples)}.")
+                    logger.warning(f"   -> Cannot safely align missing input columns {missing_cols}.")
                     return pd.DataFrame() # Fail gracefully
 
             return results
 
         except Exception as e:
-            print(f"   -> Failed to read output file: {e}")
+            logger.warning(f"   -> Failed to read output file: {e}")
             return pd.DataFrame()
 
 class MatlabExecutor(CLIExecutor):
@@ -198,7 +214,7 @@ class MatlabExecutor(CLIExecutor):
             output_path (str): Temporary file path to read outputs.
         """
         # Safely remove the '.m' extension if the user accidentally included it
-        func_name = wrapper_name.replace('.m', '')
+        func_name = wrapper_name.removesuffix('.m')
 
         # Construct the MATLAB headless command string.
         # This formats it as: matlab -batch "func_name('{input}', '{output}')" -nosplash -nodesktop

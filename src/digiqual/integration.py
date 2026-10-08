@@ -1,8 +1,52 @@
+import warnings
+from typing import Any, Dict, Tuple, Union
+
 import numpy as np
 import scipy.stats as stats
-import warnings
-from typing import Any, Tuple, Dict, Union
 from scipy.stats import qmc
+
+NUISANCE_DISTRIBUTIONS = ("Uniform", "Normal", "Lognormal", "Weibull")
+
+
+def estimate_nuisance_distribution(values, kind: str) -> Tuple[str, Tuple] | None:
+    """
+    Fits a nuisance-parameter distribution to observed values, for use as `nuisance_dists`.
+
+    Args:
+        values: Observed values of the nuisance parameter.
+        kind (str): One of ``"Uniform"``, ``"Normal"``, ``"Lognormal"`` or ``"Weibull"``.
+
+    Returns:
+        ``None`` for Uniform (the default, over the observed range), otherwise a
+        ``(scipy_name, params)`` tuple. Normal uses the sample mean and standard
+        deviation; Lognormal and Weibull are fitted by maximum likelihood with the
+        location fixed at 0.
+
+    Raises:
+        ValueError: For an unknown ``kind``, too few values, or non-positive values
+            with a Lognormal/Weibull distribution (both need positive data).
+    """
+    vals = np.asarray(values, dtype=float)
+    vals = vals[np.isfinite(vals)]
+    if kind == "Uniform":
+        return None
+    if kind not in NUISANCE_DISTRIBUTIONS:
+        raise ValueError(f"Unknown distribution {kind!r}; expected one of {NUISANCE_DISTRIBUTIONS}.")
+    if vals.size < 2:
+        raise ValueError("Need at least two values to estimate a distribution.")
+
+    if kind == "Normal":
+        std = float(vals.std(ddof=1))
+        return ("norm", (float(vals.mean()), std if std > 0 else 1.0))
+
+    if np.any(vals <= 0):
+        raise ValueError(f"A {kind} distribution needs strictly positive values.")
+    if kind == "Lognormal":
+        shape, loc, scale = stats.lognorm.fit(vals, floc=0)
+        return ("lognorm", (float(shape), 0.0, float(scale)))
+    shape, loc, scale = stats.weibull_min.fit(vals, floc=0)
+    return ("weibull_min", (float(shape), 0.0, float(scale)))
+
 
 def compute_multi_dim_pod(
     poi_grid: np.ndarray,
@@ -78,8 +122,15 @@ def compute_multi_dim_pod(
     n_nuisance = len(nuisance_ranges)
     total_vars = n_pois + n_nuisance
 
-    dist_name, dist_params = dist_info
-    dist_obj = getattr(stats, dist_name)
+    # Every training input must be either a PoI or a nuisance/slice entry; otherwise
+    # some model inputs would silently be left at zero.
+    n_train_vars = np.atleast_2d(X_train).shape[1] if np.asarray(X_train).ndim > 1 else 1
+    if total_vars != n_train_vars:
+        raise ValueError(
+            f"PoI ({n_pois}) + nuisance/slice ({n_nuisance}) columns must cover all "
+            f"{n_train_vars} training inputs."
+        )
+
 
     # --- Explicit Column Index Mapping ---
     nuisance_names = list(nuisance_ranges.keys()) if nuisance_ranges else []
@@ -119,15 +170,23 @@ def compute_multi_dim_pod(
                 custom_dist_obj = getattr(stats, custom_dist_name)
                 if not isinstance(custom_dist_params, (tuple, list)):
                     custom_dist_params = (custom_dist_params,)
-                # Inverse Transform Sampling
-                nuisance_samples[:, i] = custom_dist_obj.ppf(lhs_01[:, i], *custom_dist_params)
+                # Inverse transform sampling, truncated to [min_val, max_val] so the
+                # models are never evaluated outside the range they were trained on.
+                lo = custom_dist_obj.cdf(min_val, *custom_dist_params)
+                hi = custom_dist_obj.cdf(max_val, *custom_dist_params)
+                if hi > lo:
+                    u = lo + lhs_01[:, i] * (hi - lo)
+                    nuisance_samples[:, i] = np.clip(custom_dist_obj.ppf(u, *custom_dist_params), min_val, max_val)
+                else:
+                    # Distribution has (almost) no mass in the range: fall back to uniform
+                    nuisance_samples[:, i] = lhs_01[:, i] * (max_val - min_val) + min_val
             else:
                 # Default: Uniform distribution over [min_val, max_val]
                 nuisance_samples[:, i] = lhs_01[:, i] * (max_val - min_val) + min_val
     else:
         nuisance_samples = np.empty((n_mc_samples, 0))
 
-    from .cpp_fallback import predict_local_std_fast, compute_pod_probs_fast
+    from .cpp_fallback import compute_pod_probs_fast, predict_local_std_scaled
 
     # ---------------------------------------------------------
     # FAST PATH: Fully Vectorized (No active nuisances)
@@ -143,7 +202,7 @@ def compute_multi_dim_pod(
                 X_eval_full[:, idx] = nuisance_samples[0, i]
 
         mean_resp = model.predict(X_eval_full).flatten()
-        sigma_resp = predict_local_std_fast(X_train, residuals, X_eval_full, bandwidth).flatten()
+        sigma_resp = predict_local_std_scaled(X_train, residuals, X_eval_full, bandwidth).flatten()
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
@@ -188,7 +247,7 @@ def compute_multi_dim_pod(
                 X_eval_sub[:, idx] = nuisance_tiled[:, j]
 
         sub_mean_resp = model.predict(X_eval_sub).flatten()
-        sub_sigma_resp = predict_local_std_fast(X_train, residuals, X_eval_sub, bandwidth).flatten()
+        sub_sigma_resp = predict_local_std_scaled(X_train, residuals, X_eval_sub, bandwidth).flatten()
 
         mean_integrated[start_idx:end_idx] = sub_mean_resp.reshape(sub_n_grid, n_mc_samples).mean(axis=1)
 

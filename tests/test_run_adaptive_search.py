@@ -1,6 +1,8 @@
-import pytest
-import pandas as pd
 from unittest.mock import patch
+
+import pandas as pd
+import pytest
+
 from digiqual.adaptive import run_adaptive_search
 
 # --- Fixtures ---
@@ -44,7 +46,7 @@ def test_adaptive_cold_start(mock_validate, mock_sufficiency, mock_lhs, mock_exe
     )
 
     # Assert LHS was called (Cold Start)
-    mock_lhs.assert_called_once_with(5, ranges)
+    mock_lhs.assert_called_once_with(5, ranges, seed=None)
     # Assert Execution happened
     mock_exec.assert_called()
     # Assert result contains the data
@@ -171,7 +173,7 @@ def test_run_adaptive_search_output_csv(mock_validate, mock_sufficiency, mock_ta
 
     # Setup Mocks: diagnostics pass in second iteration
     mock_validate.side_effect = lambda df, *args: (df, pd.DataFrame())
-    
+
     fail_report = pd.DataFrame({'Test': ['Coverage'], 'Pass': [False]})
     pass_report = pd.DataFrame({'Test': ['Coverage'], 'Pass': [True]})
     mock_sufficiency.side_effect = [fail_report, pass_report]

@@ -1,6 +1,8 @@
-import numpy as np
 import matplotlib.pyplot as plt
-from digiqual.plotting import plot_signal_model, plot_pod_curve, plot_pod_surface, plot_signal_surface
+import numpy as np
+
+from digiqual.plotting import plot_pod_curve, plot_pod_surface, plot_signal_model, plot_signal_surface
+
 
 def test_plot_signal_model_no_ax():
     X = np.array([1, 2, 3])

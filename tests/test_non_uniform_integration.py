@@ -1,9 +1,12 @@
-import pytest
-import pandas as pd
+from unittest.mock import MagicMock, patch
+
 import numpy as np
-from unittest.mock import patch, MagicMock
+import pandas as pd
+import pytest
+
 from digiqual.core import SimulationStudy
 from digiqual.integration import compute_multi_dim_pod
+
 
 @pytest.fixture
 def clean_df():

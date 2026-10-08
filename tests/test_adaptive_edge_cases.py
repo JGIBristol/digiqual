@@ -1,16 +1,18 @@
-import pandas as pd
-import numpy as np
 from unittest.mock import patch
+
+import numpy as np
+import pandas as pd
+import pytest
+
 from digiqual.adaptive import (
-    _filter_by_graveyard,
     _fill_gaps,
+    _filter_by_graveyard,
     _sample_uncertainty,
+    _validate_executor_output,
     generate_targeted_samples,
     run_adaptive_search,
-    _validate_executor_output
 )
 
-import pytest
 
 def test_filter_by_graveyard():
     cands = pd.DataFrame({'A': [1.0, 5.0, 9.0]})
@@ -94,7 +96,9 @@ def test_run_adaptive_search_edge_cases(mock_exec, mock_lhs):
         _ = run_adaptive_search(executor=cmd, input_cols=['A'], outcome_col='Signal', ranges=ranges, max_iter=1)
 
     # max_hours hit
-    with patch("time.time", side_effect=[0, 10000, 10000]):
+    # Patch only the adaptive module's clock (logging also calls time.time())
+    with patch("digiqual.adaptive.time") as mock_time:
+            mock_time.time.side_effect = [0, 10000, 10000]
             existing_df = pd.DataFrame({
                 'A': np.linspace(0, 10, 15),
                 'Signal': np.linspace(0, 10, 15)

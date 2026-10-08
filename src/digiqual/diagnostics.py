@@ -1,10 +1,16 @@
-import pandas as pd
+import logging
+from typing import Dict, List, Tuple
+
 import numpy as np
-from typing import List, Dict, Tuple
+import pandas as pd
 from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import PolynomialFeatures, StandardScaler
-from sklearn.model_selection import cross_val_score, KFold
+from sklearn.model_selection import KFold, cross_val_score
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+
+from .defaults import MAX_ALLOWED_VIF, MAX_AVG_CV, MAX_GAP_RATIO, MAX_MAX_CV, MIN_R2_SCORE
+
+logger = logging.getLogger(__name__)
 
 #### Error Function ####
 class ValidationError(Exception):
@@ -35,12 +41,12 @@ def validate_simulation(
 
     Examples:
         ```python
+        import numpy as np
         import pandas as pd
-        # Create dirty data (includes text and negative values)
-        df = pd.DataFrame({
-            'Length': [1.0, 'BadValue', 5.0],
-            'Signal': [0.5, 0.8, -1.2]
-        })
+        # 12 rows, one of which has a non-numeric input
+        length = list(np.linspace(1.0, 5.0, 12))
+        length[3] = 'BadValue'
+        df = pd.DataFrame({'Length': length, 'Signal': np.linspace(0.5, 2.0, 12)})
 
         # Validate
         clean, removed = validate_simulation(df, ['Length'], 'Signal')
@@ -82,7 +88,7 @@ def validate_simulation(
 
 #### Helper Functions for sample_sufficiency() ####
 
-def _check_input_coverage(df: pd.DataFrame, input_cols: List[str], max_gap_ratio: float = 0.20) -> Dict:
+def _check_input_coverage(df: pd.DataFrame, input_cols: List[str], max_gap_ratio: float = MAX_GAP_RATIO) -> Dict:
     """
     Evaluates if the input space is sampled densely enough without excessively large gaps.
     Calculates the maximum distance between adjacent sorted points as a ratio of the total range.
@@ -106,7 +112,64 @@ def _check_input_coverage(df: pd.DataFrame, input_cols: List[str], max_gap_ratio
         }
     return results
 
-def _check_model_fit(df: pd.DataFrame, input_cols: List[str], outcome_col: str, min_r2_score: float = 0.50) -> Dict:
+def check_input_coverage(df: pd.DataFrame, input_cols: List[str], max_gap_ratio: float = MAX_GAP_RATIO) -> Dict:
+    """
+    Largest gap between neighbouring sorted values of each input, as a fraction of its range.
+
+    Public wrapper of the Input Coverage diagnostic, returning per-input details
+    (``max_gap_ratio``, ``sufficient_coverage``, the gap location, min and max).
+    """
+    return _check_input_coverage(df, input_cols, max_gap_ratio)
+
+
+def bootstrap_convergence_trace(
+    make_model,
+    X: np.ndarray,
+    y: np.ndarray,
+    n_boot: int = 100,
+    percentiles=(10, 50, 90),
+    seed: int = 42,
+) -> Dict[str, np.ndarray]:
+    """
+    Running bootstrap stability of a model's predictions, for a convergence plot.
+
+    Refits ``make_model()`` to ``n_boot`` bootstrap resamples of ``(X, y)`` and
+    predicts at the given percentiles of the inputs. After each resample it records
+    the average and largest prediction spread so far, measured with `relative_spread`
+    (as the Bootstrap Convergence diagnostic does).
+
+    Args:
+        make_model (Callable[[], estimator]): Returns a fresh, unfitted model.
+        X (np.ndarray): Training inputs.
+        y (np.ndarray): Training responses.
+        n_boot (int): Number of bootstrap resamples.
+        percentiles: Input percentiles used as probe points.
+        seed (int): Seed for the resampling.
+
+    Returns:
+        dict: ``iterations``, ``running_avg`` and ``running_max`` arrays.
+    """
+    X = np.asarray(X, dtype=float)
+    X = X.reshape(-1, 1) if X.ndim == 1 else X
+    y = np.asarray(y, dtype=float)
+    probe = np.percentile(X, list(percentiles), axis=0)
+    rng = np.random.default_rng(seed)
+
+    preds, running_avg, running_max = [], [], []
+    for _ in range(n_boot):
+        idx = rng.choice(len(y), len(y), replace=True)
+        preds.append(make_model().fit(X[idx], y[idx]).predict(probe))
+        widths = relative_spread(np.array(preds), y)
+        running_avg.append(float(np.mean(widths)))
+        running_max.append(float(np.max(widths)))
+    return {
+        "iterations": np.arange(1, n_boot + 1),
+        "running_avg": np.array(running_avg),
+        "running_max": np.array(running_max),
+    }
+
+
+def _check_model_fit(df: pd.DataFrame, input_cols: List[str], outcome_col: str, min_r2_score: float = MIN_R2_SCORE) -> Dict:
     """
     Checks if a basic surrogate model can capture a meaningful signal-to-noise relationship.
     Uses a 3rd-degree polynomial and cross-validation to ensure the fit is stable.
@@ -127,13 +190,33 @@ def _check_model_fit(df: pd.DataFrame, input_cols: List[str], outcome_col: str, 
         "stable_fit": np.mean(scores) > min_r2_score
     }
 
+def relative_spread(predictions: np.ndarray, y: np.ndarray) -> np.ndarray:
+    """
+    Spread of bootstrap predictions at each probe point, relative to the spread of the data.
+
+    ``std(predictions) / std(y)``, per probe point. Dividing by the scatter of the
+    observed response, rather than by the size of the mean prediction, makes the
+    measure independent of where the response's zero is: a signal in dB that sits
+    near 0, or one with a large constant offset, is judged on the same footing.
+    """
+    predictions = np.asarray(predictions, dtype=float)
+    y_scale = float(np.std(y))
+    if y_scale <= 0:
+        y_scale = 1.0
+    return np.std(predictions, axis=0) / y_scale
+
+
 def _check_bootstrap_convergence(
     df: pd.DataFrame, input_cols: List[str], outcome_col: str,
-    n_bootstraps: int = 100, max_avg_cv: float = 0.15, max_max_cv: float = 0.30
+    n_bootstraps: int = 100, max_avg_cv: float = MAX_AVG_CV, max_max_cv: float = MAX_MAX_CV
 ) -> Dict:
     """
     Evaluates the stability of model predictions across different random sub-samples of the data.
     Ensures that adding or removing points does not wildly change the predicted outcome.
+
+    A quadratic polynomial is refitted to bootstrap resamples and evaluated at the 10th,
+    50th and 90th percentiles of the inputs. The spread of those predictions is divided
+    by the standard deviation of the response (see `relative_spread`).
     """
     X = df[input_cols].values
     y = df[outcome_col].values
@@ -142,11 +225,10 @@ def _check_bootstrap_convergence(
     probe_points = np.percentile(X, [10, 50, 90], axis=0)
     all_predictions = []
 
-    # --- FIX: Initialize a seeded random number generator to sync with app.py ---
+    # Seeded so repeated diagnostics on the same data give the same result
     rng = np.random.default_rng(42)
 
     for _ in range(n_bootstraps):
-        # --- FIX: Use rng to sample instead of sklearn.resample ---
         idx = rng.choice(n_samples, n_samples, replace=True)
         X_res, y_res = X[idx], y[idx]
 
@@ -157,9 +239,7 @@ def _check_bootstrap_convergence(
 
     all_predictions = np.array(all_predictions)
 
-    stds = np.std(all_predictions, axis=0)
-    means = np.abs(np.mean(all_predictions, axis=0))
-    relative_widths = stds / (means + 1e-6)
+    relative_widths = relative_spread(all_predictions, y)
 
     avg_rel_width = np.mean(relative_widths)
     max_rel_width = np.max(relative_widths)
@@ -178,10 +258,12 @@ def _check_bootstrap_convergence(
 
 
 
-def _check_collinearity(df: pd.DataFrame, input_cols: List[str], max_allowed_vif: float = 5.0) -> Dict[str, float]:
+def _check_collinearity(df: pd.DataFrame, input_cols: List[str], max_allowed_vif: float = MAX_ALLOWED_VIF) -> Dict[str, float]:
     """
-    Checks for multicollinearity using the Variance Inflation Factor (VIF).
-    If an input variable has a VIF > max_allowed_vif, it is flagged as collinear.
+    Computes the Variance Inflation Factor (VIF) of each input against the others.
+
+    Returns the VIF per input; the pass/fail comparison against ``max_allowed_vif``
+    is made by `sample_sufficiency`, which reports it.
     """
     vifs = {}
     if len(input_cols) > 1:
@@ -189,7 +271,7 @@ def _check_collinearity(df: pd.DataFrame, input_cols: List[str], max_allowed_vif
             other_cols = [c for c in input_cols if c != col]
             X = df[other_cols].values
             y = df[col].values
-            
+
             try:
                 model = LinearRegression()
                 model.fit(X, y)
@@ -200,12 +282,12 @@ def _check_collinearity(df: pd.DataFrame, input_cols: List[str], max_allowed_vif
                     vif = 1.0 / (1.0 - r2)
             except Exception:
                 vif = float('inf')
-                
+
             vifs[col] = round(vif, 4)
     else:
         for col in input_cols:
             vifs[col] = 1.0
-            
+
     return vifs
 
 
@@ -216,11 +298,11 @@ def sample_sufficiency(
     input_cols: List[str],
     outcome_col: str,
     skip_validation: bool = False,
-    max_gap_ratio: float = 0.20,
-    min_r2_score: float = 0.50,
-    max_avg_cv: float = 0.15,
-    max_max_cv: float = 0.30,
-    max_allowed_vif: float = 5.0
+    max_gap_ratio: float = MAX_GAP_RATIO,
+    min_r2_score: float = MIN_R2_SCORE,
+    max_avg_cv: float = MAX_AVG_CV,
+    max_max_cv: float = MAX_MAX_CV,
+    max_allowed_vif: float = MAX_ALLOWED_VIF
 ) -> pd.DataFrame:
     """
     Performs a suite of statistical diagnostics to evaluate if the current sample size is sufficient.
@@ -236,8 +318,8 @@ def sample_sufficiency(
         skip_validation (bool, optional): If True, skips the initial data cleaning step. Defaults to False.
         max_gap_ratio (float, optional): The maximum allowable gap between data points as a fraction of the total range. Defaults to 0.20.
         min_r2_score (float, optional): The minimum cross-validated R-squared score required to pass the fit test. Defaults to 0.50.
-        max_avg_cv (float, optional): The maximum allowable average relative width of the bootstrap predictions. Defaults to 0.15.
-        max_max_cv (float, optional): The maximum allowable relative width at the tail ends (10th and 90th percentiles) of the predictions. Defaults to 0.30.
+        max_avg_cv (float, optional): The maximum allowable average spread of the bootstrap predictions, relative to the standard deviation of the response. Defaults to 0.15.
+        max_max_cv (float, optional): The maximum allowable relative width at any of the three probe points (10th, 50th and 90th percentiles of the inputs). Defaults to 0.30.
         max_allowed_vif (float, optional): The maximum allowable Variance Inflation Factor (VIF) to detect multicollinearity. Defaults to 5.0.
 
     Returns:
@@ -272,7 +354,7 @@ def sample_sufficiency(
     if not skip_validation:
         df_clean, df_removed = validate_simulation(df, input_cols, outcome_col)
         if not df_removed.empty:
-            print(f"Note: {len(df_removed)} invalid rows were dropped automatically.")
+            logger.warning(f"Note: {len(df_removed)} invalid rows were dropped automatically.")
     else:
         df_clean = df
 

@@ -1,6 +1,7 @@
 ---
 title: "SimulationStudy Class"
 description: "A streamlined guide using the SimulationStudy manager."
+number-sections: true
 ---
 
 Use the `SimulationStudy` manager to handle the entire lifecycle: storage, diagnostics, active refinement, analysis, and intelligent caching.
@@ -9,7 +10,7 @@ Use the `SimulationStudy` manager to handle the entire lifecycle: storage, diagn
 In this tutorial, we will intentionally feed the study **"bad" data** (with a large gap in the input space) to demonstrate how the active learning module automatically identifies and fixes issues. We will also demonstrate how the new **Layered Caching** engine makes exploring multi-dimensional parameter spaces nearly instantaneous.
 :::
 
-### 1. Setup, Generation & Smart Initialization
+## Setup, Generation & Smart Initialization {#sec-setup}
 
 We'll define a simulated physics function with heteroscedastic noise and generate an initial design containing a deliberate gap between 3mm and 7mm.
 
@@ -70,15 +71,15 @@ print(f"Auto-Threshold suggestion (Median Signal): {threshold_defaults['median']
 
 ::: {.callout-tip}
 ### Designing real experiments: `generate_lhs`
-Here we use random synthetic data. For real simulations, build the input design with `digiqual.sampling.generate_lhs(ranges, n)`, which gives a space-filling design you can run in order and stop early ([details](optimisation.qmd#diagnostics)).
+Here we use random synthetic data. For real simulations, build the input design with `digiqual.sampling.generate_lhs(n, ranges)`, which gives a space-filling design you can run in order and stop early ([details](optimisation.qmd#sec-diagnostics)).
 :::
 
-### 2. Diagnosis (Detecting the Issue)
+## Diagnosis (Detecting the Issue) {#sec-diagnosis}
 
 We ask the `SimulationStudy` manager to diagnose the health of our experiment.
 
 ::: {.callout-warning}
-Because of our deliberate gap, we expect the diagnostic engine to flag the **Input Coverage** test as failed. The full list of tests and their default thresholds is in [Sampling & Diagnostics](optimisation.qmd#diagnostics).
+Because of our deliberate gap, we expect the diagnostic engine to flag the **Input Coverage** test as failed. The full list of tests and their default thresholds is in [Sampling & Diagnostics](optimisation.qmd#sec-diagnostics).
 :::
 
 
@@ -96,7 +97,7 @@ study.plot_collinearity()
 ```
 
 
-### 3. Adaptive Refinement (The Fix)
+## Adaptive Refinement (The Fix) {#sec-refinement}
 
 Instead of manually guessing where to add new simulations, we use the `refine()` method.
 
@@ -121,7 +122,7 @@ study.diagnose()
 ```
 
 
-### 4. Reliability Analysis & Layered Caching
+## Reliability Analysis & Layered Caching {#sec-reliability}
 
 With a validated dataset, we can now run the complete PoD pipeline.
 
@@ -137,11 +138,12 @@ The single `pod()` method runs the whole [Generalised PoD](generalised_pod.qmd) 
 
 The first call fits and caches all the models, so later calls that only change a slice or threshold are almost instant ([how the caching works](caching.qmd)).
 
+Progress messages are printed through Python's `logging` (the `"digiqual"` logger). To silence them, use `logging.getLogger("digiqual").setLevel(logging.WARNING)`.
+
 :::
 
 ::: {.callout-note}
-
-### Why Configure Custom Nuisance Profiles?
+## Why Configure Custom Nuisance Profiles?
 In the code snippet below, we pass `nuisance_dists={"Roughness": ("norm", (0.25, 0.08))}` to the `.pod()` engine instead of letting it default to a Uniform distribution.
 
 If we assume surface roughness is Uniformly distributed between its extreme bounds, the Monte Carlo integration treats an incredibly rough, worst-case surface as just as likely to occur as a nominal, well-machined surface. This would unnecessarily degrade our final Probability of Detection curve. By specifying a **Normal distribution** centered around the nominal design specification ($0.25$ with a standard deviation of $0.08$), `digiqual` samples coordinates that mirror real-world production distributions. This ensures your final calculated reliability curves represent field performance, rather than an unphysical worst-case scenario.
@@ -193,7 +195,7 @@ print(f"New a90/95 point at Angle 5.0: {new_results['a90_95']:.3f}")
 study.visualise()
 ```
 
-### 5. Uncertainty Quantification & Threshold Sensitivity
+## Uncertainty Quantification & Threshold Sensitivity {#sec-uq}
 
 To calculate reliability indices with confidence intervals, we run the bootstrapping algorithm.
 
@@ -238,7 +240,7 @@ We can specify a custom `target_pod` and `confidence_level` when calling `visual
 study.visualise(target_pod=0.90, confidence_level=90)
 ```
 
-#### Threshold Sensitivity Plots
+### Threshold Sensitivity Plots {#sec-threshold-sensitivity}
 
 Using the cached 100-threshold spectrum, we can also generate a sensitivity plot using `plot_pod_vs_threshold()` to see how changing the threshold affects PoD across defect sizes.
 
@@ -253,7 +255,7 @@ _ = study.plot_pod_vs_threshold()
 ```
 
 
-### Appendix: Full Script
+## Appendix: Full Script {#sec-full-script}
 
 ```{python}
 #| label: analysis-full

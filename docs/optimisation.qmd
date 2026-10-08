@@ -1,8 +1,10 @@
-# Automated Optimisation
-
+---
+title: "Automated Optimisation"
+number-sections: true
+---
 The `optimise` method allows you to run a complete "Active Learning" loop. DigiQual will generate an initial design, run your external solver, check the results, and automatically add new points where the model is weak.
 
-## The Active Learning Lifecycle
+## The Active Learning Lifecycle {#sec-lifecycle}
 
 When you trigger the `optimise` method, DigiQual acts as an orchestrator, completing the following active learning loop until statistical requirements are satisfied.
 
@@ -15,21 +17,21 @@ flowchart TD
     E --> B
 ```
 
-### Breakdowns of the Steps
-1. **Initialisation**: If you have no existing data, DigiQual generates an initial batch of input coordinates using a space-filling Latin Hypercube Sample ([details](#diagnostics)).
+### Breakdowns of the Steps {#sec-lifecycle-steps}
+1. **Initialisation**: If you have no existing data, DigiQual generates an initial batch of input coordinates using a space-filling Latin Hypercube Sample (see @sec-lhs).
 2. **Execution**: It passes these coordinates to your solver and waits for the results.
-3. **Diagnostics (Sense)**: Once the results are back, DigiQual runs the [diagnostic tests](#diagnostics): input coverage gaps, model fit, bootstrap stability and multicollinearity.
+3. **Diagnostics (Sense)**: Once the results are back, DigiQual runs the diagnostic tests in @sec-diagnostic-tests: input coverage gaps, model fit, bootstrap stability and multicollinearity.
 4. **Refinement (Decide & Act)**: If the diagnostics fail, DigiQual generates *targeted* new samples exactly where the model needs them most (e.g., in the middle of an empty gap, or in highly uncertain regions) and repeats the loop.
 
-## Sampling & Diagnostics {#diagnostics}
+## Sampling & Diagnostics {#sec-diagnostics}
 
 The same sampling and diagnostic tools are used by `optimise`, by `study.diagnose()` / `study.refine()` in the [Quick Start](qs_class.qmd), and by the *Experimental Design* and *Simulation Diagnostics* tabs of the [app](gui_manual.qmd).
 
-### Space-filling designs
+### Space-filling designs {#sec-lhs}
 
-`digiqual.sampling.generate_lhs(ranges, n)` (the app's *Experimental Design* tab) draws a Latin Hypercube Sample over the input ranges. It then reorders the points with a **greedy max-min distance algorithm**: each next point is the one furthest from all points chosen so far. As a result, any first $k$ rows of the design are themselves as space-filling as possible, so you can run the simulations in order and stop early, or run them in batches, and still have good coverage.
+`digiqual.sampling.generate_lhs(n, ranges)` (the app's *Experimental Design* tab) draws a Latin Hypercube Sample over the input ranges. It then reorders the points with a **greedy max-min distance algorithm**: each next point is the one furthest from all points chosen so far. As a result, any first $k$ rows of the design are themselves as space-filling as possible, so you can run the simulations in order and stop early, or run them in batches, and still have good coverage.
 
-### Diagnostic tests
+### Diagnostic tests {#sec-diagnostic-tests}
 
 The diagnostics check whether the data is good enough to fit a reliable model. Each test has a threshold you can change, as an argument to `diagnose()` / `optimise()` or in the app:
 
@@ -37,13 +39,15 @@ The diagnostics check whether the data is good enough to fit a reliable model. E
 |:---|:---|:---|
 | Input Coverage | For each input, the largest gap between neighbouring sorted values, as a fraction of its range | gap ratio < 0.20 (`max_gap_ratio`) |
 | Model Fit (CV) | Cross-validated $R^2$ of a cubic polynomial: is there a learnable signal? | $R^2$ > 0.50 (`min_r2_score`) |
-| Bootstrap Convergence (average) | Spread of bootstrap predictions at the 10th, 50th and 90th percentiles of the inputs, relative to their mean, averaged | < 0.15 (`max_avg_cv`) |
+| Bootstrap Convergence (average) | Spread (std) of bootstrap predictions of a quadratic model at the 10th, 50th and 90th percentiles of the inputs, divided by the std of the response, averaged | < 0.15 (`max_avg_cv`) |
 | Bootstrap Convergence (worst) | The largest of those relative spreads | < 0.30 (`max_max_cv`) |
 | Collinearity Check | Variance Inflation Factor of each input against the others | VIF ≤ 5.0 (`max_allowed_vif`) |
 
+The bootstrap spread is measured relative to the scatter of the response, so a signal recorded near zero (e.g. in dB) or with a large constant offset is judged fairly. Versions up to 0.27 divided by the mean prediction instead, which made near-zero signals fail regardless of stability.
+
 If a test fails, **refinement** (`study.refine()`, or the app's Remediation tool) generates targeted new points: in the largest coverage gaps, and where a bootstrap committee of models disagrees most (Query-by-Committee). Failed solver runs are excluded from future sampling (see the graveyard, below).
 
-## Connecting Your External Solver
+## Connecting Your External Solver {#sec-executors}
 
 To automate this process, DigiQual needs to communicate with your simulation model (whether that is a Python function, MATLAB script, or heavy FEA software like Ansys). It does this using the **Executor** pattern.
 
@@ -53,16 +57,16 @@ DigiQual provides three built-in Executors to bridge the gap:
 2. **`CLIExecutor` (Process Isolation)**: Best for heavy physics engines (FEA/CFD) or heavy Python FEA scripts. It writes the inputs to a temporary CSV and spawns a completely isolated Operating System process to solve it. This guarantees that 100% of the solver's memory is cleared after every run, preventing memory leaks.
 3. **`MatlabExecutor`**: A specialized wrapper that automatically handles the complex terminal syntax required to run MATLAB in a headless "batch" mode.
 
-*(See the [Appendix](#sec-appendix) for examples on connecting MATLAB and external software).*
+*(See @sec-appendix for examples on connecting MATLAB and external software.)*
 
-### Handling Failures (Graveyard)
+### Handling Failures (Graveyard) {#sec-graveyard}
 If your external solver crashes or fails to converge for a specific input row (e.g., a meshing error), your solver should return `NaN` or leave the outcome blank. DigiQual will automatically detect this and add those coordinates to a "graveyard", ensuring the active learning loop navigates around that "dead zone" and never samples that exact region again!
 
-## The Auto-Pilot Workflow
+## The Auto-Pilot Workflow {#sec-workflow}
 
 Let's walk through setting up a complete optimisation loop using a pure Python model.
 
-### 1. Define a Solver and Executor
+### Define a Solver and Executor {#sec-workflow-solver}
 
 For this tutorial, we will write a standard Python function to simulate our physics. We will then wrap it in the `PythonExecutor`.
 
@@ -109,7 +113,7 @@ def mock_sensor_model(row):
 executor = PythonExecutor(solver_func=mock_sensor_model, outcome_col="Signal")
 ```
 
-### 2. Configure the Study
+### Configure the Study {#sec-workflow-configure}
 
 We define our input variables and the ranges we want to explore.
 
@@ -123,7 +127,7 @@ ranges = {"Length": (0.0, 10.0), "Angle": (-45.0, 45.0), "Roughness": (0, 1)}
 study = SimulationStudy()
 ```
 
-### 3. Run Optimisation
+### Run Optimisation {#sec-workflow-run}
 
 This single command handles the entire Active Learning loop:
 
@@ -139,7 +143,7 @@ study.optimise(
 )
 ```
 
-### 4. View Results
+### View Results {#sec-workflow-results}
 
 Once the loop finishes, `study.data` contains all the valid simulation results accumulated across all refinement iterations.
 
@@ -165,14 +169,14 @@ study.visualise()
 
 When connecting DigiQual to external engines like MATLAB or Ansys, you will use the heavy-duty Executors.
 
-### Example A: Connecting to MATLAB
+### Example A: Connecting to MATLAB {#sec-example-matlab}
 
 **📥 [Download MATLAB Executor Demo](../optimise_examples/demo_matlab.py){download="demo_matlab.py"}**
 **📥 [Download Dummy MATLAB Solver](../optimise_examples/dummy_matlab_solver.m){download="dummy_matlab_solver.m"}**
 
 The `MatlabExecutor` makes connecting to MATLAB effortless. You simply write a top-level MATLAB function that reads an input CSV, does the math, writes an output CSV, and exits.
 
-#### A1. The MATLAB Solver (`matlab_wrapper.m`)
+#### The MATLAB Solver (`matlab_wrapper.m`) {#sec-matlab-solver}
 
 ```{MATLAB}
 function matlab_wrapper(input_csv, output_csv)
@@ -207,7 +211,7 @@ function matlab_wrapper(input_csv, output_csv)
 end
 ```
 
-#### A2. The Digiqual Execution
+#### The DigiQual Execution {#sec-matlab-run}
 
 You just provide the name of the MATLAB file. The Executor builds the headless terminal command automatically.
 
@@ -221,14 +225,14 @@ study.optimise(executor=executor, ranges=ranges, outcome_col="Signal")
 
 ---
 
-### Example B: Command Line Software (Ansys/Abaqus)
+### Example B: Command Line Software (Ansys/Abaqus) {#sec-example-cli}
 
 **📥 [Download CLI Executor Demo](../optimise_examples/demo_cli.py){download="demo_cli.py"}**
 **📥 [Download Dummy FEA Script](../optimise_examples/dummy_fea.py){download="dummy_fea.py"}**
 
 For software triggered via the command line, use the `CLIExecutor`. You must provide a command template containing `{input}` and `{output}` placeholders. DigiQual will write the design space to a temporary input CSV, spawn the terminal command, and read the resulting output CSV.
 
-#### B1. The External Solver Script (`run_ansys_simulation.py`)
+#### The External Solver Script (`run_ansys_simulation.py`) {#sec-cli-solver}
 This script represents your standalone software. It must accept the input and output file paths as command-line arguments, read the input CSV, perform its calculations, and save the output CSV.
 
 ```{python}
@@ -261,7 +265,7 @@ if __name__ == "__main__":
     run_simulation(sys.argv[1], sys.argv[2])
 ```
 
-#### B2. The DigiQual Execution
+#### The DigiQual Execution {#sec-cli-run}
 
 You define the exact terminal command needed to run the script above, and pass it to the `CLIExecutor`.
 

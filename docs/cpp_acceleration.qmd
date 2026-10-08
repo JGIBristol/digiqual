@@ -1,9 +1,10 @@
 ---
 title: "C++ Acceleration & Fallback System"
 format: html
+number-sections: true
 ---
 
-## Overview
+## Overview {#sec-overview}
 
 `digiqual` includes a native C++ high-performance backend powered by **Pybind11** and **multi-threaded C++17 worker pools** to accelerate intensive statistical computations.
 
@@ -26,7 +27,7 @@ Heavy computational routines—specifically Nadaraya-Watson local variance kerne
 
 
 
-## Executable Benchmark Workflow Script
+## Executable Benchmark Workflow Script {#sec-benchmark}
 
 Below is a self-contained executable Python script that benchmarks a large realistic dataset ($N=300$ samples, 3D input domain: Length, Angle, Roughness) across **Workflow A (C++ Accelerated)** and **Workflow B (Python-Only Fallback)** step-by-step, recording precise execution times for each phase.
 
@@ -141,7 +142,7 @@ if __name__ == "__main__":
     run_performance_comparison()
 ```
 
-## Automatic Fallback System
+## Automatic Fallback System {#sec-fallback}
 
 `digiqual` guarantees full cross-platform compatibility. If the C++ binaries are not compiled (for example, in lightweight embedded environments or minimal Python installations), the toolkit **automatically and seamlessly defaults back to Python**.
 
@@ -158,7 +159,7 @@ else:
 
 Both C++ and Python fallback implementations produce **identical numerical results** down to double-precision floating-point machine epsilon ($\le 10^{-16}$).
 
-## Building and Installation
+## Building and Installation {#sec-building}
 
 When installing `digiqual` from source, `setup.py` automatically detects available compilers (GCC, Clang, or MSVC) and compiles the native C++ extension module `_digiqual_cpp`:
 

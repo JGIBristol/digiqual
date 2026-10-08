@@ -1,12 +1,15 @@
-import pytest
+from unittest.mock import patch
+
 import pandas as pd
+import pytest
+
 from digiqual.diagnostics import (
     ValidationError,
     _check_input_coverage,
     sample_sufficiency,
     validate_simulation,
 )
-from unittest.mock import patch
+
 
 def test_validate_simulation_not_dataframe():
     with pytest.raises(

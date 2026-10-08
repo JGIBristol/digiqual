@@ -1,10 +1,14 @@
+import logging
+from typing import Any, Optional, Tuple
+
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as stats
-import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
-from typing import Tuple, Optional, Any
-import os
-from joblib import Parallel, delayed
+
+from ._parallel import percentile_bounds, run_bootstrap
+
+logger = logging.getLogger(__name__)
 
 
 def fit_linear_a_hat_model(
@@ -121,10 +125,6 @@ def compute_linear_pod_curve(
 
 def _single_linear_bootstrap_step(X, y, X_eval, threshold, xlog, ylog, seed=None):
     """Internal helper to process a single linear bootstrap iteration."""
-    os.environ["OMP_NUM_THREADS"] = "1"
-    os.environ["OPENBLAS_NUM_THREADS"] = "1"
-    os.environ["MKL_NUM_THREADS"] = "1"
-
     # 1. Resample the data with replacement
     n_samples = len(X)
     if seed is not None:
@@ -161,64 +161,13 @@ def bootstrap_linear_pod_ci(
     Estimates Confidence Bounds for the classical linear PoD curve via Bootstrapping.
     Maintains the strict assumptions of constant variance and normally distributed errors.
     """
-    import gc
-
-    total_cores = os.cpu_count() or 4
-    if n_jobs is None or n_jobs == -1:
-        n_jobs_actual = max(1, total_cores - 2)
-    elif n_jobs == 1:
-        n_jobs_actual = 1
-    else:
-        n_jobs_actual = min(max(1, n_jobs), total_cores)
-
-    print(f"   -> [Linear Bootstrap] Running {n_boot} iterations on {n_jobs_actual} worker core(s)...", flush=True)
-
-    N_eval_len = len(X_eval)
-    pod_matrix = np.empty((n_boot, N_eval_len))
-
-    chunk_size = 100
-    for b_start in range(0, n_boot, chunk_size):
-        b_end = min(b_start + chunk_size, n_boot)
-        n_chunk = b_end - b_start
-
-        if n_jobs_actual > 1:
-            chunk_results = Parallel(n_jobs=n_jobs_actual, backend="multiprocessing", verbose=0)(
-                delayed(_single_linear_bootstrap_step)(
-                    X, y, X_eval, threshold, xlog, ylog, seed=b_start + i
-                ) for i in range(n_chunk)
-            )
-        else:
-            chunk_results = [
-                _single_linear_bootstrap_step(
-                    X, y, X_eval, threshold, xlog, ylog, seed=b_start + i
-                ) for i in range(n_chunk)
-            ]
-
-        for i, res in enumerate(chunk_results):
-            pod_matrix[b_start + i] = res
-
-        completed = b_end
-        pct = int((completed / n_boot) * 100)
-        print(f"   -> [Linear Bootstrap Progress] Completed {completed}/{n_boot} iterations ({pct}%)...", flush=True)
-
-        if progress_callback is not None:
-            try:
-                progress_callback(completed, n_boot)
-            except Exception as e:
-                print(f"   -> Progress Callback Warning: {e}", flush=True)
-
-        del chunk_results
-        gc.collect()
-
-    if confidence_levels is None:
-        return np.percentile(pod_matrix, 2.5, axis=0), np.percentile(pod_matrix, 97.5, axis=0)
-
-    bounds = {}
-    for cl in confidence_levels:
-        low_p = (100.0 - cl) / 2.0
-        high_p = 100.0 - low_p
-        bounds[cl] = (np.percentile(pod_matrix, low_p, axis=0), np.percentile(pod_matrix, high_p, axis=0))
-    return bounds
+    pod_matrix = run_bootstrap(
+        _single_linear_bootstrap_step,
+        args=(X, y, X_eval, threshold, xlog, ylog),
+        n_boot=n_boot, n_jobs=n_jobs, n_points=len(X_eval),
+        label="Linear Bootstrap", progress_callback=progress_callback, chunk_size=100,
+    )
+    return percentile_bounds(pod_matrix, confidence_levels)
 
 
 

@@ -1,10 +1,8 @@
 import logging
-import os
 import warnings
 from typing import Any
 
 import numpy as np
-from joblib import Parallel, delayed
 from scipy import stats
 from scipy.optimize import minimize_scalar
 from sklearn.exceptions import ConvergenceWarning
@@ -15,6 +13,9 @@ from sklearn.linear_model import Ridge
 from sklearn.model_selection import KFold, cross_val_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+
+from ._parallel import percentile_bounds, run_bootstrap
+from .defaults import KRIGING_MAX_SAMPLES, MAX_POLY_DEGREE, N_CV_FOLDS
 
 logger = logging.getLogger(__name__)
 
@@ -431,8 +432,8 @@ def select_cv_winner(
 def fit_all_robust_mean_models(
     X: np.ndarray,
     y: np.ndarray,
-    max_degree: int = 10,
-    n_folds: int = 10
+    max_degree: int = MAX_POLY_DEGREE,
+    n_folds: int = N_CV_FOLDS
 ) -> tuple[dict[tuple[str, Any], Any], dict[tuple[str, Any], float], tuple[str, Any]]:
     """
     Fits all polynomial models (and optionally Kriging) and returns them for caching.
@@ -475,6 +476,8 @@ def fit_all_robust_mean_models(
     Examples:
         ```python
         import numpy as np
+        from digiqual.pod import fit_all_robust_mean_models
+
         X = np.linspace(0, 10, 50)
         y = 3 * X + np.random.normal(0, 1, 50)
 
@@ -503,11 +506,7 @@ def fit_all_robust_mean_models(
 
     # 1. Evaluate & Fit Polynomials ([M25] Sec. 2c; [digiqual] Ridge on standardised features instead of OLS)
     for d in range(1, max_degree + 1):
-        model = make_pipeline(
-            PolynomialFeatures(degree=d),
-            StandardScaler(),
-            Ridge(alpha=0.1, random_state=42)
-        )
+        model = build_polynomial_model(d)
         _record_cv(('Polynomial', d), cross_val_score(model, X_2d, y, cv=cv, scoring='neg_mean_squared_error'))
 
         model.fit(X_2d, y)
@@ -517,7 +516,7 @@ def fit_all_robust_mean_models(
 
     # 2. Kriging. [digiqual] skipped above 1000 samples: every fit is O(N^3).
     n_samples = len(y)
-    if n_samples <= 1000:
+    if n_samples <= KRIGING_MAX_SAMPLES:
         candidate_kernels = build_kriging_candidate_kernels(X_2d.shape[1])
         var_y = float(np.var(y)) if np.var(y) > 0 else 1.0
 
@@ -568,7 +567,7 @@ def fit_all_robust_mean_models(
             }
             fitted_models[('Kriging', None)] = best_kriging_gpr
     else:
-        print(f"Skipping Kriging evaluation to prevent timeout (Dataset N={n_samples} > 1000).")
+        logger.warning(f"Skipping Kriging evaluation to prevent timeout (Dataset N={n_samples} > {KRIGING_MAX_SAMPLES}).")
 
     # 3. Overall winner by the one-standard-error rule ([M25] Sec. 4b(i))
     cv_winner_key = select_cv_winner(cv_scores, cv_se)
@@ -578,28 +577,67 @@ def fit_all_robust_mean_models(
     return fitted_models, cv_scores, cv_winner_key
 
 
+def polynomial_raw_coefficients(model: Any, feature_names: list) -> tuple[float, np.ndarray, list[str]]:
+    """
+    Returns the coefficients of a fitted polynomial model in terms of the raw inputs.
+
+    The polynomial pipeline is ``PolynomialFeatures -> StandardScaler -> Ridge``, so
+    the Ridge coefficients apply to *standardised* polynomial terms. Undoing the
+    scaling gives ``y = intercept + sum_k coef_k * term_k(x)`` in the original units.
+
+    Args:
+        model: A fitted polynomial pipeline from `fit_all_robust_mean_models`.
+        feature_names (list): Names of the input columns, in training order.
+
+    Returns:
+        tuple: ``(intercept, coefs, terms)``, where ``terms`` are the polynomial term
+        names (e.g. ``'Length^2'``, ``'Length Angle'``), excluding the constant term.
+    """
+    poly = model.named_steps['polynomialfeatures']
+    scaler = model.named_steps['standardscaler']
+    ridge = model.named_steps['ridge']
+
+    terms = list(poly.get_feature_names_out(feature_names))
+    coefs_std = np.ravel(ridge.coef_)
+    intercept_std = float(np.ravel(ridge.intercept_)[0]) if np.ndim(ridge.intercept_) else float(ridge.intercept_)
+
+    scale = np.asarray(scaler.scale_, dtype=float) if scaler.scale_ is not None else np.ones_like(coefs_std)
+    mean = np.asarray(scaler.mean_, dtype=float) if scaler.mean_ is not None else np.zeros_like(coefs_std)
+
+    # ridge(x_std) = b + sum c_k (t_k - mean_k) / scale_k
+    coefs_raw = coefs_std / scale
+    intercept = intercept_std - float(np.sum(coefs_raw * mean))
+
+    # The constant term (named "1") is always 1, so fold it into the intercept.
+    keep = []
+    for i, term in enumerate(terms):
+        if term == "1":
+            intercept += coefs_raw[i]
+        else:
+            keep.append(i)
+    return intercept, coefs_raw[keep], [terms[i] for i in keep]
+
+
 def generate_latex_equation(model: Any, feature_names: list, outcome_name: str = "y") -> str:
     """
     Extracts a LaTeX formatted equation from a fitted Polynomial Pipeline.
+
+    Coefficients are expressed in the original input units (see
+    `polynomial_raw_coefficients`), so the equation reproduces ``model.predict``
+    up to the 4 significant figures shown.
     """
+    import re
+
     if getattr(model, 'model_type_', None) != 'Polynomial':
         return "Equation not available for Kriging models (Gaussian Process)."
 
-    poly = model.named_steps['polynomialfeatures']
-    # Changed from linearregression to ridge to match our new pipeline step
-    lr = model.named_steps['ridge']
-
-    terms = poly.get_feature_names_out(feature_names)
-    import numpy as np
-    coefs = lr.coef_[0] if lr.coef_.ndim > 1 else lr.coef_
-    intercept = lr.intercept_[0] if np.ndim(lr.intercept_) > 0 else lr.intercept_
+    intercept, coefs, terms = polynomial_raw_coefficients(model, feature_names)
 
     latex_outcome = outcome_name.replace("_", "\\_")
     equation = f"{latex_outcome} = {intercept:.4g}"
 
-    import re
-    for coef, term in zip(coefs, terms):
-        if term == "1" or abs(coef) < 1e-7:  # Skip intercept or terms shrunk near zero
+    for coef, term in zip(coefs, terms, strict=True):
+        if abs(coef) < 1e-12:  # Skip terms shrunk to (numerically) zero
             continue
 
         formatted_term = term.replace(" ", " \\cdot ")
@@ -769,7 +807,7 @@ def plot_model_selection(
     used_name = _name(used_key)
     lowest_name = _name(best_key)
 
-    for (row, col), cell in table.get_celld().items():
+    for (row, _col), cell in table.get_celld().items():
         if row == 0:
             cell.set_text_props(weight='bold')
             continue
@@ -812,12 +850,13 @@ def optimise_bandwidth(
         residuals (np.ndarray): The raw residuals calculated from the mean model
             (differences between observed y and predicted mean y).
         min_ratio (float, optional): The lower bound for the optimizer's search space,
-            defined as a fraction of the total range of X (X.max() - X.min()). Defaults to 0.01.
+            as a fraction of the largest range of the standardised inputs. Defaults to 0.01.
         max_ratio (float, optional): The upper bound for the optimizer's search space,
-            defined as a fraction of the total range of X. Defaults to 0.5.
+            as a fraction of the same range. Defaults to 0.5.
 
     Returns:
-        float: The optimal smoothing bandwidth in the absolute units of X.
+        float: The optimal smoothing bandwidth, in standard deviations of the inputs
+        (the units `predict_local_std` expects).
 
     Examples:
         ```python
@@ -829,21 +868,27 @@ def optimise_bandwidth(
         residuals = np.random.normal(0, X * 0.5, size=50)
 
         # 2. Find the optimal bandwidth
-        optimal_bw = optimize_bandwidth(X, residuals)
+        optimal_bw = optimise_bandwidth(X, residuals)
         print(f"Optimal Bandwidth: {optimal_bw:.4f}")
         ```
     """
     from scipy.spatial.distance import cdist
-    X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
+
+    from .cpp_fallback import input_scale
+
+    # Work on standardised inputs (each divided by its std), as the smoother does
+    # (see `predict_local_std`), so the bandwidth is in standard deviations.
+    X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X, dtype=float)
+    X_2d = X_2d / input_scale(X_2d)
     sq_residuals = residuals.flatten() ** 2
     data_range = np.max(X_2d.max(axis=0) - X_2d.min(axis=0))
 
-    def loo_cv_objective(bw: float) -> float:
-        # Calculate euclidean distance matrix
-        dists = cdist(X_2d, X_2d, metric='euclidean')
+    # The distances don't depend on the bandwidth, so compute them once.
+    sq_dists = cdist(X_2d, X_2d, metric='sqeuclidean')
 
-        # Calculate Gaussian weights
-        weights = stats.norm.pdf(dists, loc=0, scale=bw)
+    def loo_cv_objective(bw: float) -> float:
+        # Gaussian weights (the normalising constant cancels after row-normalisation)
+        weights = np.exp(-0.5 * sq_dists / bw ** 2)
 
         # Leave-One-Out: Set diagonal to zero so a point doesn't predict itself
         np.fill_diagonal(weights, 0)
@@ -903,14 +948,14 @@ def fit_variance_model(
             bandwidth using Leave-One-Out Cross-Validation. If False, falls back to
             the fixed `bandwidth_ratio`. Defaults to True.
         bandwidth_ratio (float, optional): The kernel smoothing window size as a
-            fraction of the data range (X.max() - X.min()). Only used if
+            fraction of the largest range of the standardised inputs. Only used if
             `auto_bandwidth` is False. Defaults to 0.1.
 
     Returns:
         tuple[np.ndarray, float]:
             - residuals: Differences between `y` and the mean model predictions
               (leave-one-out predictions for Kriging).
-            - bandwidth: The selected smoothing window size (in absolute units of X).
+            - bandwidth: The selected smoothing window size, in standard deviations of the inputs.
 
     Examples:
         ```python
@@ -946,10 +991,12 @@ def fit_variance_model(
         residuals = y - mean_model.predict(X_2d)
 
     if auto_bandwidth:
-        print("   -> Optimizing bandwidth via LOO-CV...")
+        logger.info("   -> Optimizing bandwidth via LOO-CV...")
         bandwidth = optimise_bandwidth(X_2d, residuals)
     else:
-        data_range = np.max(X_2d.max(axis=0) - X_2d.min(axis=0))
+        from .cpp_fallback import input_scale
+        X_std = X_2d / input_scale(X_2d)
+        data_range = np.max(X_std.max(axis=0) - X_std.min(axis=0))
         bandwidth = data_range * bandwidth_ratio
 
     return residuals, bandwidth
@@ -964,11 +1011,16 @@ def predict_local_std(
     """
     Estimates the local standard deviation using Gaussian Kernel Smoothing.
 
-    This implements a Nadaraya-Watson estimator specifically for the squared
-    residuals to model how noise varies across the input domain (heteroscedasticity).
+    This implements a Nadaraya-Watson estimator ([M25] Eq. 2.9-2.11) for the squared
+    residuals, to model how noise varies across the input domain (heteroscedasticity).
+
+    [digiqual] With several inputs, each input is first divided by its standard
+    deviation in ``X``, so one bandwidth (in standard deviations) treats all inputs
+    alike regardless of their units. [M25] used a single input, where this only
+    rescales the bandwidth.
     """
-    from .cpp_fallback import predict_local_std_fast
-    return predict_local_std_fast(X, residuals, X_eval, bandwidth)
+    from .cpp_fallback import predict_local_std_scaled
+    return predict_local_std_scaled(X, residuals, X_eval, bandwidth)
 
 
 #### Residual Distribution Fitting ####
@@ -981,9 +1033,19 @@ def infer_best_distribution(
     """
     Selects the best statistical distribution for the standardized residuals using AIC.
 
-    This function normalizes residuals by their local standard deviation (Z-scores)
-    and tests them against a suite of candidate distributions (Normal, Gumbel,
-    Logistic, Laplace, t-Student).
+    The residuals are divided by their local standard deviation (`predict_local_std`)
+    to give z-scores, which are fitted by maximum likelihood to each of 12 candidate
+    distributions: Normal, Gumbel (right and left), Weibull (min and max), Gamma,
+    Exponential, Logistic, Laplace, Student's t, Beta and Uniform ([M25] Sec. 2f).
+    The fit with the lowest AIC wins.
+
+    [digiqual] Bounded-support families (Weibull, Gamma, Exponential, Beta, Uniform)
+    have a free location parameter, so maximum likelihood can push a support endpoint
+    right up against the most extreme z-score. Such a degenerate fit can win on AIC yet
+    give PoD values of exactly 0 or 1 just outside the observed range, and kinked
+    a90/95 values. A fit is therefore only accepted if its support contains every
+    z-score with a margin of 5 % of their range, and its log-likelihood is finite.
+    [M25] used UQLab's inference, which similarly excludes unsuitable distributions.
 
     Args:
         residuals (np.ndarray): Raw residuals from the mean model.
@@ -997,18 +1059,33 @@ def infer_best_distribution(
 
     Examples:
         ```python
-        dist_name, dist_params = infer_best_distribution(residuals, X, bandwidth)
+        import numpy as np
+        from digiqual.pod import infer_best_distribution
+
+        X = np.linspace(0, 10, 200)
+        residuals = np.random.default_rng(0).gumbel(0, 1 + 0.1 * X)
+        dist_name, dist_params = infer_best_distribution(residuals, X, bandwidth=0.5)
         print(f"Best distribution: {dist_name}")
         ```
     """
-    local_std = predict_local_std(X, residuals, X, bandwidth)
-    z_scores = residuals.flatten() / local_std.flatten()
+    residuals = np.asarray(residuals, dtype=float).flatten()
+    finite = np.isfinite(residuals)
+    if finite.sum() < 3 or np.allclose(residuals[finite], 0.0):
+        logger.warning("Too few non-zero, finite residuals; defaulting to a standard normal error model.")
+        return ("norm", (0, 1))
+
+    X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
+    local_std = np.maximum(predict_local_std(X_2d[finite], residuals[finite], X_2d[finite], bandwidth).flatten(), 1e-12)
+    z_scores = residuals[finite] / local_std
+
+    z_min, z_max = float(np.min(z_scores)), float(np.max(z_scores))
+    margin = 0.05 * max(z_max - z_min, 1e-12)
 
     candidates = [
         "norm",         # Gaussian (Classical standard)
         "gumbel_r",     # Right-skewed Extreme Value
         "gumbel_l",     # Left-skewed Extreme Value (Common for cracks)
-        "weibull_min",  # Weibull Minimum (Malkiel 2025)
+        "weibull_min",  # Weibull Minimum
         "weibull_max",  # Weibull Maximum
         "gamma",        # Gamma distribution
         "expon",        # Exponential distribution
@@ -1025,12 +1102,21 @@ def infer_best_distribution(
     for dist_name in candidates:
         try:
             dist_obj = getattr(stats, dist_name)
-            params = dist_obj.fit(z_scores)
-            log_likelihood = np.sum(np.log(dist_obj.pdf(z_scores, *params)))
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                params = dist_obj.fit(z_scores)
 
-            k = len(params)
-            aic = 2*k - 2*log_likelihood
+            lower, upper = dist_obj.support(*params)
+            if not (lower < z_min - margin and upper > z_max + margin):
+                logger.debug("Distribution '%s' rejected: support (%.3g, %.3g) too tight for the data.",
+                             dist_name, lower, upper)
+                continue
 
+            log_likelihood = float(np.sum(dist_obj.logpdf(z_scores, *params)))
+            if not np.isfinite(log_likelihood):
+                continue
+
+            aic = 2 * len(params) - 2 * log_likelihood
             if aic < best_aic:
                 best_aic = aic
                 best_result = (dist_name, params)
@@ -1091,7 +1177,7 @@ def compute_pod_curve(
 
     X_eval_2d = np.atleast_2d(X_eval).T if np.asarray(X_eval).ndim == 1 else np.asarray(X_eval)
     mean_curve = mean_model.predict(X_eval_2d)
-    sigma_curve = predict_local_std(X, residuals, X_eval_2d, bandwidth)
+    sigma_curve = np.maximum(predict_local_std(X, residuals, X_eval_2d, bandwidth), 1e-10)
 
     z_threshold = (threshold - mean_curve) / sigma_curve
 
@@ -1102,6 +1188,34 @@ def compute_pod_curve(
 
 
 
+def build_polynomial_model(degree: int):
+    """The polynomial mean model used throughout: features -> standardise -> Ridge(0.1)."""
+    return make_pipeline(
+        PolynomialFeatures(degree=degree),
+        StandardScaler(),
+        Ridge(alpha=0.1, random_state=42)
+    )
+
+
+def build_refit_model(model_type: str, model_params: Any):
+    """
+    An unfitted model with the same structure as a selected mean model, for refits.
+
+    Used by the bootstrap (and the app's convergence trace) to refit the *chosen*
+    model to resampled data: the same polynomial degree, or the same Kriging kernel
+    with frozen hyperparameters and input scaling (see `build_fixed_kernel_gpr`).
+
+    Args:
+        model_type (str): ``'Polynomial'`` or ``'Kriging'``.
+        model_params: The model's ``model_params_`` (degree, or the Kriging dict).
+    """
+    if model_type == 'Polynomial':
+        return build_polynomial_model(model_params)
+    if model_type == 'Kriging':
+        return build_fixed_kernel_gpr(model_params)
+    raise ValueError(f"Unknown model type {model_type!r}")
+
+
 def _single_bootstrap_step(
     X_2d, y, X_eval, threshold, model_type, model_params,
     bandwidth, dist_info, nuisance_ranges, n_samples,
@@ -1109,10 +1223,6 @@ def _single_bootstrap_step(
     seed=None, n_mc_samples=500
 ):
     """Internal helper to process a single bootstrap iteration."""
-    os.environ["OMP_NUM_THREADS"] = "1"
-    os.environ["OPENBLAS_NUM_THREADS"] = "1"
-    os.environ["MKL_NUM_THREADS"] = "1"
-
     # Resample indices
     if seed is not None:
         rng = np.random.default_rng(seed)
@@ -1122,20 +1232,7 @@ def _single_bootstrap_step(
     X_res_2d = X_2d[idx]
     y_res = y[idx]
 
-    # Fit Mean Model with regularized Ridge regression to prevent bumpy intervals
-    if model_type == 'Polynomial':
-        from sklearn.linear_model import Ridge  # <-- regularized bootstrap model
-        from sklearn.pipeline import make_pipeline
-        from sklearn.preprocessing import PolynomialFeatures, StandardScaler
-        mean_model = make_pipeline(
-            PolynomialFeatures(model_params),
-            StandardScaler(),
-            Ridge(alpha=0.1, random_state=42)
-        )
-    elif model_type == 'Kriging':
-        # Frozen hyperparameters and input scaling ([digiqual], see build_fixed_kernel_gpr)
-        mean_model = build_fixed_kernel_gpr(model_params)
-
+    mean_model = build_refit_model(model_type, model_params)
     mean_model.fit(X_res_2d, y_res)
 
     if model_type == 'Kriging':
@@ -1205,73 +1302,19 @@ def bootstrap_pod_ci(
         model_params (Any): The polynomial degree, or for Kriging the model's
             ``model_params_`` dict (``kernel``, ``x_mean``, ``x_std``).
     """
-    import gc
-
     n_samples = len(y)
     X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
 
-    total_cores = os.cpu_count() or 4
-    if n_jobs is None or n_jobs == -1:
-        n_jobs_actual = max(1, total_cores - 2)
-    elif n_jobs == 1:
-        n_jobs_actual = 1
-    else:
-        n_jobs_actual = min(max(1, n_jobs), total_cores)
-
-    print(f"   -> [Bootstrap] Running {n_boot} iterations on {n_jobs_actual} worker core(s)...", flush=True)
-
-    N_eval_len = len(X_eval)
-    pod_matrix = np.empty((n_boot, N_eval_len))
-
-    chunk_size = 50
-    for b_start in range(0, n_boot, chunk_size):
-        b_end = min(b_start + chunk_size, n_boot)
-        n_chunk = b_end - b_start
-
-        if n_jobs_actual > 1:
-            chunk_results = Parallel(n_jobs=n_jobs_actual, backend="multiprocessing", verbose=0)(
-                delayed(_single_bootstrap_step)(
-                    X_2d, y, X_eval, threshold, model_type, model_params,
-                    bandwidth, dist_info, nuisance_ranges, n_samples,
-                    feature_names, poi_names, nuisance_dists,
-                    seed=b_start + i, n_mc_samples=n_mc_samples
-                ) for i in range(n_chunk)
-            )
-        else:
-            chunk_results = [
-                _single_bootstrap_step(
-                    X_2d, y, X_eval, threshold, model_type, model_params,
-                    bandwidth, dist_info, nuisance_ranges, n_samples,
-                    feature_names, poi_names, nuisance_dists,
-                    seed=b_start + i, n_mc_samples=n_mc_samples
-                ) for i in range(n_chunk)
-            ]
-
-        for i, res in enumerate(chunk_results):
-            pod_matrix[b_start + i] = res
-
-        completed = b_end
-        pct = int((completed / n_boot) * 100)
-        print(f"   -> [Bootstrap Progress] Completed {completed}/{n_boot} iterations ({pct}%)...", flush=True)
-
-        if progress_callback is not None:
-            try:
-                progress_callback(completed, n_boot)
-            except Exception as e:  # noqa: BLE001 - user-supplied callback, must not abort bootstrap
-                logger.warning("Progress callback raised an exception: %s", e)
-
-        del chunk_results
-        gc.collect()
-
-    if confidence_levels is None:
-        return np.percentile(pod_matrix, 2.5, axis=0), np.percentile(pod_matrix, 97.5, axis=0)
-
-    bounds = {}
-    for cl in confidence_levels:
-        low_p = (100.0 - cl) / 2.0
-        high_p = 100.0 - low_p
-        bounds[cl] = (np.percentile(pod_matrix, low_p, axis=0), np.percentile(pod_matrix, high_p, axis=0))
-    return bounds
+    pod_matrix = run_bootstrap(
+        _single_bootstrap_step,
+        args=(X_2d, y, X_eval, threshold, model_type, model_params,
+              bandwidth, dist_info, nuisance_ranges, n_samples,
+              feature_names, poi_names, nuisance_dists),
+        step_kwargs={"n_mc_samples": n_mc_samples},
+        n_boot=n_boot, n_jobs=n_jobs, n_points=len(X_eval),
+        label="Bootstrap", progress_callback=progress_callback, chunk_size=50,
+    )
+    return percentile_bounds(pod_matrix, confidence_levels)
 
 
 def calculate_reliability_point(
@@ -1289,22 +1332,86 @@ def calculate_reliability_point(
         target_pod (float, optional): Target reliability level. Defaults to 0.90.
 
     Returns:
-        float: The interpolated x-value, or np.nan if not reached.
+        float: The interpolated x-value where the bound first reaches the target, or
+        np.nan if it never does. If the bound is already at or above the target at the
+        first grid point, that point is returned (the true crossing is at or below it)
+        and a warning is logged.
 
     Examples:
         ```python
+        import numpy as np
+        X_eval = np.linspace(0, 10, 101)
+        lower_ci = 1 / (1 + np.exp(-(X_eval - 5)))
         a90_95 = calculate_reliability_point(X_eval, lower_ci, target_pod=0.90)
         print(f"a90/95 point: {a90_95:.2f}")
         ```
     """
-    # Check if the curve actually reaches the target
-    if np.max(ci_lower) < target_pod:
+    x = np.asarray(X_eval, dtype=float).ravel()
+    y = np.asarray(ci_lower, dtype=float).ravel()
+
+    # NaNs (e.g. from failed bootstrap curves) are treated as "not reached"
+    y = np.where(np.isfinite(y), y, -np.inf)
+    reached = np.flatnonzero(y >= target_pod)
+    if reached.size == 0:
         return np.nan
 
-    # Interpolate to find exact crossing point
-    # We swap args because we are solving for X given Y=0.90
-    monotonic_ci = np.maximum.accumulate(ci_lower)
-    return float(np.interp(target_pod, monotonic_ci, X_eval))
+    i = int(reached[0])
+    if i == 0:
+        logger.warning(
+            "PoD bound is already %.3f at the smallest evaluated size (%.4g); "
+            "the true crossing of %.2f is at or below it.", y[0], x[0], target_pod
+        )
+        return float(x[0])
+
+    # Linear interpolation between the last point below the target and the first
+    # point at or above it (the first upward crossing).
+    y0, y1 = y[i - 1], y[i]
+    if not np.isfinite(y0):
+        return float(x[i])
+    frac = (target_pod - y0) / (y1 - y0) if y1 > y0 else 1.0
+    return float(x[i - 1] + frac * (x[i] - x[i - 1]))
+
+
+def reliability_matrix(
+    reliability_table: dict,
+    target_pods=None,
+    confidence_levels=None,
+    as_text: bool = False,
+):
+    """
+    Arranges a reliability table as a matrix of a_{X/Y} values.
+
+    Args:
+        reliability_table (dict): ``{(target_pod_percent, confidence_level): size}``,
+            as stored in ``pod_results["reliability_table"]``.
+        target_pods (sequence of int, optional): Row values (percent). Defaults to
+            the standard levels in `digiqual.defaults`.
+        confidence_levels (sequence of int, optional): Column values (percent).
+            Defaults to the standard levels in `digiqual.defaults`.
+        as_text (bool): Format numbers to 3 decimals and missing values as
+            ``"Not Reached"`` (for display), instead of returning floats and NaN.
+
+    Returns:
+        pd.DataFrame: One row per target PoD (``"a90"`` etc.), one column per
+        confidence level (``"Conf 95%"`` etc.).
+    """
+    import pandas as pd
+
+    from .defaults import CONFIDENCE_LEVELS, TARGET_PODS
+
+    target_pods = TARGET_PODS if target_pods is None else target_pods
+    confidence_levels = CONFIDENCE_LEVELS if confidence_levels is None else confidence_levels
+    rows = []
+    for tp in target_pods:
+        row = {"Target PoD": f"a{tp}"}
+        for cl in confidence_levels:
+            val = reliability_table.get((tp, cl), np.nan)
+            if as_text:
+                row[f"Conf {cl}%"] = f"{val:.3f}" if np.isfinite(val) else "Not Reached"
+            else:
+                row[f"Conf {cl}%"] = val
+        rows.append(row)
+    return pd.DataFrame(rows)
 
 
 def calculate_sobol_indices(mean_model: Any, feature_names: list, data_df, n_samples: int = 1024) -> dict | None:
@@ -1316,7 +1423,7 @@ def calculate_sobol_indices(mean_model: Any, feature_names: list, data_df, n_sam
         from SALib.analyze import sobol as salib_analyze
         from SALib.sample import sobol as salib_sample
     except ImportError:
-        print("Warning: SALib not found. Skipping Sobol index calculation.")
+        logger.warning("Warning: SALib not found. Skipping Sobol index calculation.")
         return None
 
     # 1. Define the bounds for each feature

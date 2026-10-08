@@ -1,19 +1,20 @@
-import pytest
+from unittest.mock import patch
+
 import numpy as np
+import pytest
 import scipy.stats as stats
 from sklearn.gaussian_process.kernels import RBF
-from digiqual.pod import (
-    fit_all_robust_mean_models, # <-- Updated Import
-    fit_variance_model,
-    predict_local_std,
-    infer_best_distribution,
-    compute_pod_curve,
-    bootstrap_pod_ci,
-    plot_model_selection
-)
 
-from unittest.mock import patch
-from digiqual.pod import calculate_reliability_point
+from digiqual.pod import (
+    bootstrap_pod_ci,
+    calculate_reliability_point,
+    compute_pod_curve,
+    fit_all_robust_mean_models,  # <-- Updated Import
+    fit_variance_model,
+    infer_best_distribution,
+    plot_model_selection,
+    predict_local_std,
+)
 
 # --- FIXTURES: Synthetic Physics Data ---
 

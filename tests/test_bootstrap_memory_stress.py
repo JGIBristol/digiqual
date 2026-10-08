@@ -1,11 +1,13 @@
-import os
 import gc
-import time
+import os
 import threading
+import time
+
+import numpy as np
 import psutil
 import pytest
-import numpy as np
-from digiqual.pod import bootstrap_pod_ci, fit_all_robust_mean_models, fit_variance_model
+
+from digiqual.pod import bootstrap_pod_ci
 
 
 def measure_memory_during_task(task_func, sample_interval_sec=0.05):

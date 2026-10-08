@@ -1,9 +1,11 @@
-import pytest
-import pandas as pd
-import numpy as np
-from unittest.mock import patch, MagicMock
-from digiqual.core import SimulationStudy
 import sys
+from unittest.mock import MagicMock, patch
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from digiqual.core import SimulationStudy
 
 # --- Fixtures ---
 
@@ -254,8 +256,8 @@ def test_visualise(mock_savefig, mock_show, study, clean_df):
     study.visualise()
 
     from sklearn.linear_model import LinearRegression
-    from sklearn.preprocessing import PolynomialFeatures
     from sklearn.pipeline import make_pipeline
+    from sklearn.preprocessing import PolynomialFeatures
 
     mean_model = make_pipeline(PolynomialFeatures(1), LinearRegression())
     mean_model.model_type_ = 'Polynomial'
@@ -301,18 +303,18 @@ def test_pod_reliability_table(study, clean_df):
     """Verify that reliability_table and ci_bounds are correctly populated in core study pod()."""
     study.add_data(clean_df, outcome_col="Signal")
     study._validate()
-    
+
     # Run pod with bootstrap iterations = 10 for speed
     res = study.pod(poi_col="Length", threshold=10.5, n_boot=10, n_jobs=1)
-    
+
     assert "reliability_table" in res
     assert "ci_bounds" in res
     assert (90, 95) in res["reliability_table"]
     assert 95 in res["ci_bounds"]
-    
+
     # Check that reliability values are computed
     assert isinstance(res["reliability_table"][(90, 95)], float)
-    
+
     # Check that n_boot=0 defaults to mean curves
     res_no_boot = study.pod(poi_col="Length", threshold=10.5, n_boot=0)
     assert 95 in res_no_boot["ci_bounds"]
@@ -325,24 +327,26 @@ def test_plot_pod_vs_threshold_wrapper(mock_subplots, study):
     mock_fig = MagicMock()
     mock_ax = MagicMock()
     mock_subplots.return_value = (mock_fig, mock_ax)
-    
+
+    current_key = ("current_key", ("Length",), (), frozenset())
     study.threshold_spectrum_cache = {
-        ("dummy_key", ("Length",), (), frozenset()): {
+        # An older spectrum (e.g. from a previous fit) must not be used
+        ("old_key", ("Length",), (), frozenset()): {
+            "thresholds": np.array([9.0]),
+            "pod_matrix": np.zeros((10, 1)),
+            "mean_curve": np.zeros(10)
+        },
+        current_key: {
             "thresholds": np.array([2.0, 3.0, 4.0]),
             "pod_matrix": np.ones((10, 3)),
             "mean_curve": np.ones(10)
-        }
+        },
     }
-    
-    # Set up matching pod curves cache for evaluation grid
-    study.pod_curves_cache = {
-        ("dummy_key", 10.5, ("Length",), (), frozenset()): {
-            "X_eval": np.linspace(1, 10, 10)
-        }
-    }
-    
+    study.pod_results = {"spectrum_key": current_key, "X_eval": np.linspace(1, 10, 10)}
+
     with patch("digiqual.plotting.plot_pod_vs_threshold") as mock_plot:
         fig = study.plot_pod_vs_threshold(show=False)
         assert fig == mock_fig
         mock_plot.assert_called_once()
+        assert np.array_equal(mock_plot.call_args.kwargs["thresholds"], [2.0, 3.0, 4.0])
 

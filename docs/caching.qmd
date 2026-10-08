@@ -1,9 +1,10 @@
 ---
 title: "Caching Architecture"
 description: "A deep dive into the 4-layer caching system that powers real-time Reliability Analysis."
+number-sections: true
 ---
 
-## Introduction
+## Introduction {#sec-introduction}
 
 In simulation-based NDT reliability assessment, generating a single Probability of Detection (PoD) curve requires computationally expensive operations: Cross-Validation (CV), Gaussian Kernel Smoothing (bandwidth optimization), and Monte Carlo Integration.
 
@@ -13,31 +14,31 @@ This architecture ensures that heavy math is only executed once. Subsequent UI i
 
 ---
 
-## The 4 Caching Layers
+## The 4 Caching Layers {#sec-layers}
 
 The state of the caches is managed inside `core.py`. Whenever the physical dataset changes (e.g., a user uploads a new CSV), all caches are instantly wiped to prevent state mismatch.
 
-### Layer 1: The Mean Model Cache (`models_cache`)
+### Layer 1: The Mean Model Cache (`models_cache`) {#sec-layer-models}
 **What it does:** Caches the fundamental physics regressions.
 **Trigger:** Clicking **Step 1: Fit Physics Model** on the *Model Fit* tab (or the first `study.pod()` call).
 
-Instead of only fitting the single "best" model, the engine evaluates *all* polynomial degrees (1-10) and the Kriging (Gaussian Process) model via cross-validation, and then fits every one of them to the full dataset. The CV scores, their standard errors (`cv_se_`) and the automatic choice made by the one-standard-error rule are cached with them ([how the choice is made](generalised_pod.qmd#model-selection)).
+Instead of only fitting the single "best" model, the engine evaluates *all* polynomial degrees (1-10) and the Kriging (Gaussian Process) model via cross-validation, and then fits every one of them to the full dataset. The CV scores, their standard errors (`cv_se_`) and the automatic choice made by the one-standard-error rule are cached with them ([how the choice is made](generalised_pod.qmd#sec-model-selection)).
 
 * **Cache Key:** `('Polynomial', 3)` or `('Kriging', None)`
 * **Stored Data:** The fitted `scikit-learn` pipeline.
 * **Benefit:** If a user looks at the CV bar chart and decides to manually override the "Auto (Best Fit)" selection from Polynomial Degree 3 to Degree 4, the app retrieves the pre-trained Degree 4 model instantly without running regression again.
 
-### Layer 2: The Variance Model Cache (`variance_cache`)
+### Layer 2: The Variance Model Cache (`variance_cache`) {#sec-layer-variance}
 **What it does:** Caches the heteroscedastic noise profile and parameter sensitivity results.
 **Trigger:** Resolving a specific mean model.
 
 Once a mean model is selected, the engine must estimate how the noise (variance) changes across the surface. It uses Leave-One-Out Cross-Validation (LOO-CV) to find the optimal smoothing bandwidth for the residuals, and tests candidate statistical distributions to find the best fit. In addition, the engine computes the Total-Order Sobol Sensitivity Indices to quantify parameter importance.
 
-* **Cache Key:** Inherits the Mean Model key (e.g., `('Polynomial', 3)`).
+* **Cache Key:** The Mean Model key plus the bandwidth setting (e.g., `(('Polynomial', 3), None)`, where `None` means the bandwidth was chosen automatically). Layers 3 and 4 build on this key, so changing `bandwidth_ratio` never reuses a stale variance model.
 * **Stored Data:** `residuals`, `bandwidth`, `dist_info` (name and parameters), and `sobol_indices`.
 * **Benefit:** Bandwidth optimization and Sobol sensitivity computations are slow. By caching them, the system never has to recalculate the noise profile or parameter sensitivities for a model it has already analyzed.
 
-### Layer 3: Individual PoD Curve Cache (`pod_curves_cache`)
+### Layer 3: Individual PoD Curve Cache (`pod_curves_cache`) {#sec-layer-curves}
 **What it does:** Caches a specific, integrated S-Curve.
 **Trigger:** Evaluating a specific slice of the parameter space.
 
@@ -47,7 +48,7 @@ This layer stores the output of the `integration.py` engine. It locks in the spe
 * **Stored Data:** The final `pod_curve` (1D array), `mean_curve`, and the mathematical grids used.
 * **Benefit:** If a user navigates away from a specific slice and then comes back to it, the fully integrated curve is loaded instantly.
 
-### Layer 4: Threshold Spectrum Cache (`threshold_spectrum_cache`)
+### Layer 4: Threshold Spectrum Cache (`threshold_spectrum_cache`) {#sec-layer-spectrum}
 **What it does:** The "Crown Jewel" that enables real-time threshold scrubbing.
 **Trigger:** Runs silently in the background immediately after Layer 1 & 2 are complete.
 
@@ -59,11 +60,11 @@ The `integration.py` engine is fully vectorized to handle multiple thresholds si
 
 ---
 
-## Example: A User's Journey Through the Caches
+## Example: A User's Journey Through the Caches {#sec-journey}
 
 Let's trace exactly what happens in the engine when a user interacts with the application.
 
-#### Step 1: The Initial Fit
+### Step 1: The Initial Fit {#sec-journey-fit}
 The user uploads 500 simulations of an ultrasonic inspection with `Length`, `Angle`, and `Roughness`. They select `Length` as the Parameter of Interest, and click **Step 1: Fit Physics Model**.
 
 1. **Layer 1 Miss:** The engine trains 10 polynomials and 1 Kriging model. It caches all 11 models. It selects "Polynomial (Degree 2)" as the winner.
@@ -73,7 +74,7 @@ The user uploads 500 simulations of an ultrasonic inspection with `Length`, `Ang
 
 *Total Compute Time: ~2.5 seconds.*
 
-#### Step 2: The Real-Time Slider
+### Step 2: The Real-Time Slider {#sec-journey-slider}
 The user moves to the *PoD Explorer* tab and rapidly drags the **Detection Threshold** slider from `15.0 dB` to `22.5 dB`.
 
 1. The `realtime_threshold_update` function fires in `digiqual/gui/app.py`.
@@ -85,7 +86,7 @@ The user moves to the *PoD Explorer* tab and rapidly drags the **Detection Thres
 
 *Total Compute Time: ~0.001 seconds.*
 
-#### Step 3: Changing a Slice
+### Step 3: Changing a Slice {#sec-journey-slice}
 The user moves the **Angle Slice Slider** from 0 degrees to 45 degrees.
 
 1. The `realtime_slice_update` function fires.
@@ -96,7 +97,7 @@ The user moves the **Angle Slice Slider** from 0 degrees to 45 degrees.
 
 *Total Compute Time: ~0.05 seconds.*
 
-#### Step 4: Uncertainty Quantification (Bypassing the Cache)
+### Step 4: Uncertainty Quantification (Bypassing the Cache) {#sec-journey-uq}
 The user is happy with a threshold of `22.5 dB` and clicks **Run Uncertainty Quantification** on the *UQ Analysis* tab.
 
 1. The function calls `study.pod(threshold=22.5, n_boot=1000)`.
@@ -108,5 +109,5 @@ The user is happy with a threshold of `22.5 dB` and clicks **Run Uncertainty Qua
 
 ---
 
-## Conclusion
+## Conclusion {#sec-conclusion}
 By cleanly separating the **Physics (Layer 1 & 2)**, the **Exploration (Layer 3 & 4)**, and the **Rigorous Confidence Bounds (Bootstrap Bypass)**, `digiqual` achieves the interactivity of a dashboard while preserving the mathematical integrity required for safety-critical statistical analysis.

@@ -9,9 +9,17 @@ default:
 sync:
     uv sync --all-extras
 
-# Runs pytest
+# Runs pytest (the memory stress test is excluded by default)
 test:
     uv run pytest
+
+# Runs only the memory stress test
+test_stress:
+    uv run pytest -m stress
+
+# Lints the package and tests with ruff
+lint:
+    uv run ruff check src tests
 
 # Runs pytest across all supported Python versions (3.11 to 3.14)
 test_matrix:
@@ -27,13 +35,13 @@ test_matrix:
         echo "🧪 Testing with Python $ver..."
         echo "========================================"
         echo ""
-        uv run --python "$ver" --extra dev python setup.py build_ext --inplace
-        uv run --python "$ver" --extra dev pytest
+        uv run --python "$ver" python setup.py build_ext --inplace
+        uv run --python "$ver" pytest
     done
 
     echo ""
     echo "🧹 Cleaning up: Reverting .venv back to Python 3.11..."
-    uv sync --python 3.11 --extra dev
+    uv sync --python 3.11
     uv run python setup.py build_ext --inplace
     echo "✅ All tests passed and development environment restored!"
 
@@ -183,7 +191,7 @@ _commit_tag_push:
     #!/usr/bin/env bash
     set -euo pipefail
     NEW_VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' pyproject.toml | head -n1)
-    git add pyproject.toml uv.lock README.md index.qmd src/digiqual/__init__.py docs/install.qmd app/pyproject.toml
+    git add pyproject.toml uv.lock README.md index.qmd src/digiqual/__init__.py docs/install.qmd app/pyproject.toml CITATION.cff
     git commit -m "Bump to v${NEW_VERSION}"
     git push
     git tag "v${NEW_VERSION}"

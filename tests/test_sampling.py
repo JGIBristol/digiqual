@@ -1,6 +1,8 @@
-import pytest
 import pandas as pd
+import pytest
+
 from digiqual.sampling import generate_lhs
+
 
 def test_generate_lhs_missing_cols():
     ranges_df = pd.DataFrame([{'Name': 'A', 'Min': 0}]) # Missing 'Max'
@@ -36,18 +38,19 @@ def test_generate_lhs_min_greater_than_max():
 
 
 def test_reorder_max_min():
-    from digiqual.sampling import reorder_max_min
     import numpy as np
+
+    from digiqual.sampling import reorder_max_min
 
     # Create a simple DataFrame of coordinates with clusters at (0,0) and (1,1)
     df = pd.DataFrame({
         'x': [0.0, 0.1, 0.9, 1.0],
         'y': [0.0, 0.05, 0.85, 1.0]
     })
-    
+
     reordered = reorder_max_min(df)
     assert len(reordered) == len(df)
-    
+
     # The first point chosen is index 0. The second point should be from the (1,1) cluster (either idx 2 or 3)
     # since it is far away, rather than index 1 (which is close to index 0).
     pt0 = reordered.iloc[0].values

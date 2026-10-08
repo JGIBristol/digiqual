@@ -1,13 +1,14 @@
-import pytest
-import numpy as np
 import matplotlib.pyplot as plt
-from digiqual.ahat import (
-    fit_linear_a_hat_model,
-    compute_linear_pod_curve,
-    bootstrap_linear_pod_ci,
-    plot_linear_signal_model
-)
+import numpy as np
+import pytest
 from sklearn.linear_model import LinearRegression
+
+from digiqual.ahat import (
+    bootstrap_linear_pod_ci,
+    compute_linear_pod_curve,
+    fit_linear_a_hat_model,
+    plot_linear_signal_model,
+)
 
 # --- Fixtures ---
 

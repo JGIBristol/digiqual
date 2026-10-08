@@ -51,15 +51,15 @@ pip install "git+https://github.com/JGIBristol/digiqual.git"
 
 Before running expensive Finite Element (FE) simulations, `digiqual` helps you design your experiment efficiently.
 
-- **Latin Hypercube Sampling (LHS):** Generate space-filling experimental designs to cover your deterministic parameter space (e.g., defect size) and stochastic nuisance parameters (e.g., roughness, orientation).
-- **Scale & Bound:** Automatically scale samples to your specific variable bounds.
+- **Latin Hypercube Sampling (LHS):** Generate space-filling designs over your parameter ranges, covering both the parameters of interest (e.g. defect size) and nuisance parameters (e.g. roughness, orientation).
+- **Run in any order, stop early:** Points are reordered with a greedy max-min algorithm, so any first *k* runs are already well spread.
 
 ### 2. Data Validation & Diagnostics
 
 Ensure your simulation outputs are statistically valid before processing.
 
 - **Sanity Checks:** Detects overlap between variables, type errors, and insufficient sample sizes.
-- **Sufficiency Diagnostics:** rigorous statistical tests to flag issues like "Input Coverage Gaps" or "Model Instability" before you trust the results.
+- **Sufficiency Diagnostics:** Five tests (input coverage gaps, model fit, two bootstrap-stability checks and collinearity/VIF) flag problems before you trust the results.
 
 ### 3. Adaptive Refinement (Active Learning)
 
@@ -75,8 +75,21 @@ The package includes a full statistical engine for calculating Probability of De
 
 -   **Relaxed Assumptions:** Moves beyond the rigid constraints of the classical $\hat{a}$-versus-$a$ method by handling non-linear signal responses and heteroscedastic noise.
 -   **Multi-Dimensional Active Marginalisation:** Resolves multidimensional physics by integrating out stochastic nuisance parameters (like roughness) via Monte Carlo methods, outputting high-fidelity 2D PoD surface heatmaps alongside standard 1D curves.
--   **Robust Statistics:** Automatically selects the best polynomial degree and error distribution (e.g., Normal, Gumbel, Logistic) based on data fit (AIC).
--   **Uncertainty Quantification:** Uses bootstrap resampling to generate robust confidence bounds and $a_{90/95}$ estimates.
+-   **Model Selection:** Compares polynomials (degree 1–10) and a Kriging (Gaussian Process) model by 10-fold cross-validation, and picks the simplest model within one standard error of the best.
+-   **Kriging Metamodelling:** Anisotropic Matérn/Gaussian kernels with a learned noise term, kernel choice by leave-one-out error and LOO residual diagnostics, following Malkiel et al. (2026).
+-   **Varying Scatter and Non-Gaussian Errors:** Models how the scatter changes across the inputs with a kernel smoother, and picks the error distribution (e.g. Normal, Gumbel, Logistic) by AIC.
+-   **Uncertainty Quantification:** Bootstrap resampling gives confidence bounds at several levels at once, and a full $a_{X/Y}$ reliability matrix (e.g. $a_{90/95}$).
+-   **Sensitivity Analysis:** Total-order Sobol indices show which inputs drive the signal.
+-   **Classical Comparison:** `linear_pod()` runs the classical $\hat{a}$-versus-$a$ analysis on the same data for side-by-side comparison.
+
+### 5. Speed
+
+-   **Layered caching:** Models are fitted once, so changing a threshold or slice afterwards is near-instant.
+-   **C++ acceleration:** The kernel smoother and Monte Carlo integration run in a multi-threaded C++ extension, with an automatic NumPy fallback.
+
+### 6. Desktop and Browser App
+
+The full workflow, from experimental design to UQ, is also available as a point-and-click app: a Windows/macOS desktop application, or `uvx digiqual` from a terminal.
 
 
 
@@ -93,12 +106,13 @@ git clone https://github.com/JGIBristol/digiqual.git
 cd digiqual
 ```
 
-2.  Run Tests
+2.  Run Tests and Lint
 
-The package includes a full test suite using pytest.
+The package includes a full test suite using pytest. Development tools are uv dependency groups, installed automatically by `uv run`.
 
 ``` bash
-uv run pytest
+uv run pytest            # or: just test  (the memory stress test is opt-in: just test_stress)
+just lint                # ruff
 ```
 
 3.  Build Documentation
@@ -117,4 +131,4 @@ The GUI is the `digiqual.gui` subpackage (`src/digiqual/gui/`); `app/` only hold
 
 **Malkiel, N., Croxford, A. J., & Wilcox, P. D. (2025).** A generalized method for the reliability assessment of safety–critical inspection. Proceedings of the Royal Society A, 481: 20240654. https://doi.org/10.1098/rspa.2024.0654
 
-**Malkiel, N., Croxford, A. J., & Wilcox, P. D. (2026).** A comprehensive investigation of flexible and multi-dimensional simulation-based PoD analysis.                    NDT & E International, https://doi.org/10.1016/j.ndteint.2025.103596
+**Malkiel, N., Croxford, A. J., & Wilcox, P. D. (2026).** A comprehensive investigation of flexible and multi-dimensional simulation-based PoD analysis. NDT & E International, 159: 103596. https://doi.org/10.1016/j.ndteint.2025.103596
