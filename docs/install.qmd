@@ -15,7 +15,7 @@ If you only want to use the graphical tool, and not the Python API, you don't ne
 
 If you are managing a project with `uv`, add `digiqual` as a dependency:
 
-- To install the latest stable release (v0.27.1):
+- To install the latest stable release (v0.28.0):
 ```bash
 uv add "digiqual"
 ```
@@ -33,7 +33,7 @@ uv pip install digiqual
 
 ## Option 2: Install via standard pip {#sec-install-pip}
 
-To install the latest stable release (v0.27.1):
+To install the latest stable release (v0.28.0):
 
 ```bash
 pip install digiqual
