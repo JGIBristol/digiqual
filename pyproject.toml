@@ -67,6 +67,8 @@ dev = [
     "psutil",
     "ruff>=0.16.1",
     "pytest-timeout>=2.3",
+    # starlette's TestClient (test_gui_smoke serves the app); without it that test skips
+    "httpx>=0.28.1",
     # Not runtime dependencies (wheels ship the compiled extension), but
     # `setup.py build_ext --inplace` (CI, just test_matrix) runs in the project env.
     "pybind11>=2.12.0",

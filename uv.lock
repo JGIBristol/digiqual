@@ -689,6 +689,7 @@ linux-gui = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "httpx" },
     { name = "psutil" },
     { name = "pybind11" },
     { name = "pytest" },
@@ -723,6 +724,7 @@ provides-extras = ["linux-gui"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "psutil" },
     { name = "pybind11", specifier = ">=2.12.0" },
     { name = "pytest", specifier = ">=8.4.2" },
