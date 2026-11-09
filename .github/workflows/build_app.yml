@@ -20,6 +20,9 @@ jobs:
   build:
     name: Build (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
+    # The wheel build runs the full test suite (cibuildwheel test-command) before
+    # Briefcase packaging; a hang should fail, not run to GitHub's 6 h default.
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
