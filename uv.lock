@@ -695,6 +695,7 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-timeout" },
     { name = "ruff" },
+    { name = "setuptools" },
 ]
 docs = [
     { name = "jupyter" },
@@ -728,6 +729,7 @@ dev = [
     { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "pytest-timeout", specifier = ">=2.3" },
     { name = "ruff", specifier = ">=0.16.1" },
+    { name = "setuptools", specifier = ">=82.0.0" },
 ]
 docs = [
     { name = "jupyter" },

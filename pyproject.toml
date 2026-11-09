@@ -66,10 +66,11 @@ dev = [
     "pytest-cov>=7.0.0",
     "psutil",
     "ruff>=0.16.1",
-    # Not a runtime dependency (wheels ship the compiled extension), but
-    # `setup.py build_ext --inplace` (just test_matrix) runs in the project env.
-    "pybind11>=2.12.0",
     "pytest-timeout>=2.3",
+    # Not runtime dependencies (wheels ship the compiled extension), but
+    # `setup.py build_ext --inplace` (CI, just test_matrix) runs in the project env.
+    "pybind11>=2.12.0",
+    "setuptools>=82.0.0",
 ]
 docs = [
     "quartodoc",
