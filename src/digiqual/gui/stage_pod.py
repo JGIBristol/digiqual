@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from faicons import icon_svg
 from shiny import reactive, render, ui
+from shiny.types import SilentException
 
 from digiqual.defaults import CONFIDENCE_LEVELS, DEFAULT_N_BOOT, N_THRESHOLD_POINTS, TARGET_PODS
 from digiqual.pod import reliability_matrix
@@ -25,7 +26,37 @@ from .components import (
     stage_page,
 )
 from .script_export import analysis_script
-from .state import AppState, logger, read_input
+from .state import AppState, logger, read_input, visualise
+
+MIN_N_BOOT = 10
+
+
+def parse_n_boot(value) -> int | None:
+    """The bootstrap iterations typed in, or None if not a whole number >= MIN_N_BOOT."""
+    try:
+        n = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not np.isfinite(n) or n != int(n) or n < MIN_N_BOOT:
+        return None
+    return int(n)
+
+
+def uq_metrics(res: dict, target: int, conf: int) -> dict:
+    """The metrics table of bootstrap results `res`, for a target PoD and confidence (%)."""
+    rows = {"Detection Threshold": res["threshold"], "Bootstrap Iterations": res["n_boot"]}
+    if len(res["poi_cols"]) > 1:
+        # A PoD surface has no single flaw size, so no aX/Y value
+        rows["Confidence Level (%)"] = f"{conf}%"
+        return rows
+    val = res["reliability_table"].get((target, conf), np.nan)
+    return {
+        **rows,
+        "Target PoD (%)": f"{target}%",
+        "Confidence Level (%)": f"{conf}%",
+        f"a{target}/{conf} Reliability Index": f"{val:.3f}" if not np.isnan(val) else "Not Reached",
+    }
+
 
 panel = stage_page(
     "pod",
@@ -33,7 +64,7 @@ panel = stage_page(
         ui.tags.h6("Analysis setup", class_="text-secondary small text-uppercase fw-bold mb-2"),
         ui.output_ui("setup_summary_ui"),
         ui.tags.h6("Bootstrap", class_="text-secondary small text-uppercase fw-bold mt-3 mb-2"),
-        ui.input_numeric("pod_n_boot", "Iterations", value=DEFAULT_N_BOOT, min=10, step=100),
+        ui.input_numeric("pod_n_boot", "Iterations", value=DEFAULT_N_BOOT, min=MIN_N_BOOT, step=100),
         ui.input_checkbox("pod_parallel", "Parallel compute (faster)", value=True),
         ui.layout_columns(
             ui.input_select("pod_target_val", "Target PoD (%)", choices=[str(p) for p in TARGET_PODS], selected="90"),
@@ -119,10 +150,17 @@ def register(input, output, session, state: AppState):
         if study is None or config is None:
             ui.notification_show("Update the PoD in the Model Explorer first.", type="warning")
             return
-        if state.uq_running() or state.pod_running():
+        if state.uq_running():
+            return
+        if state.pod_running() or state.fit_running():
+            ui.notification_show("Wait for the model fit or PoD computation to finish first.", type="warning")
+            return
+        n_boot = parse_n_boot(input.pod_n_boot())
+        if n_boot is None:
+            ui.notification_show(f"Bootstrap iterations must be a whole number of at least {MIN_N_BOOT}.",
+                                 type="warning")
             return
 
-        n_boot = int(input.pod_n_boot() or DEFAULT_N_BOOT)
         n_jobs = -1 if input.pod_parallel() else 1
         # Keep everything the run used, so the exports describe it even if settings change later
         record = {
@@ -160,7 +198,7 @@ def register(input, output, session, state: AppState):
                 return  # the data changed meanwhile
             uq_result.set(result)
             # The explorer shows these results (with bounds) until a setting changes
-            study.visualise(show=False)
+            visualise(study)
             state.bump_plots()
 
     def _uq_view():
@@ -194,26 +232,6 @@ def register(input, output, session, state: AppState):
     def _targets():
         return int(input.pod_target_val()), int(input.pod_conf_val())
 
-    @reactive.calc
-    def uq_metrics():
-        uq = uq_result()
-        if uq is None:
-            return None
-        res = uq["results"]
-        target, conf = _targets()
-        if len(res["poi_cols"]) > 1:
-            value = "N/A (Surface)"
-        else:
-            val = res["reliability_table"].get((target, conf), np.nan)
-            value = f"{val:.3f}" if not np.isnan(val) else "Not Reached"
-        return {
-            "Detection Threshold": res["threshold"],
-            "Bootstrap Iterations": res["n_boot"],
-            "Target PoD (%)": f"{target}%",
-            "Confidence Level (%)": f"{conf}%",
-            f"a{target}/{conf} Reliability Index": value,
-        }
-
     @render.ui
     def uq_results_ui():
         uq = uq_result()
@@ -224,17 +242,19 @@ def register(input, output, session, state: AppState):
                        "since; run the bootstrap again to update them.", kind="warning", title="Results out of date") \
             if explorer_config() != uq["config"] else ui.div()
 
-        matrix_card = ui.card(
-            ui.card_header("Reliability Index Matrix (aX/Y)"),
-            ui.output_data_frame("uq_reliability_matrix_table"),
-            ui.p("Flaw sizes for combinations of Target PoD (rows) and Confidence Level (columns)."
-                 if not is_multi_dim else
-                 "Reliability matrices and threshold sensitivity plots need a single plotted variable.",
-                 class_="small text-muted mt-2 mb-0"),
-        )
         if is_multi_dim:
-            row2 = matrix_card
+            # aX/Y values and PoD vs threshold need one plotted variable (a flaw size)
+            row2 = ui.p(ui.span(icon_svg("circle-info"), class_="me-1"),
+                        "With two plotted variables the PoD is a surface, so there are no aX/Y flaw sizes or "
+                        "PoD vs threshold plot. Plot a single variable in the Model Explorer to get them.",
+                        class_="small text-muted mb-3")
         else:
+            matrix_card = ui.card(
+                ui.card_header("Reliability Index Matrix (aX/Y)"),
+                ui.output_data_frame("uq_reliability_matrix_table"),
+                ui.p("Flaw sizes for combinations of Target PoD (rows) and Confidence Level (columns).",
+                     class_="small text-muted mt-2 mb-0"),
+            )
             row2 = ui.layout_columns(
                 ui.card(
                     ui.card_header("PoD vs Detection Threshold"),
@@ -256,7 +276,8 @@ def register(input, output, session, state: AppState):
             ),
             row2,
             ui.layout_columns(
-                ui.card(ui.card_header("Selected Reliability Metric"), ui.output_data_frame("uq_stats_table")),
+                ui.card(ui.card_header("Run Summary" if is_multi_dim else "Selected Reliability Metric"),
+                        ui.output_data_frame("uq_stats_table")),
                 ui.card(
                     ui.card_header("Export"),
                     ui.download_button("download_excel_report", "Excel Report", class_="btn-success w-100 mb-2",
@@ -275,7 +296,7 @@ def register(input, output, session, state: AppState):
     def plot_uq_curve():
         uq = uq_result()
         if uq is None:
-            return None
+            raise SilentException()
         from digiqual.plotting import plot_pod_curve, plot_pod_surface
 
         res = uq["results"]
@@ -294,7 +315,7 @@ def register(input, output, session, state: AppState):
     def plot_uq_sensitivity():
         uq = uq_result()
         if uq is None or uq["spectrum"] is None:
-            return None
+            raise SilentException()
         from digiqual.plotting import plot_pod_vs_threshold
 
         res, spec = uq["results"], uq["spectrum"]
@@ -314,7 +335,8 @@ def register(input, output, session, state: AppState):
 
     @render.data_frame
     def uq_stats_table():
-        data = uq_metrics()
+        uq = uq_result()
+        data = uq_metrics(uq["results"], *_targets()) if uq else None
         return render.DataGrid(metrics_table(data), width="100%", filters=False) if data else None
 
     @render.download(filename="digiqual_pod_report.xlsx")
@@ -331,7 +353,9 @@ def register(input, output, session, state: AppState):
                 metrics_table(model_rows).to_excel(writer, sheet_name="Model", index=False)
                 metrics_table(setup_rows(uq["config"], fit["model_name"])).to_excel(
                     writer, sheet_name="Analysis Setup", index=False)
-                metrics_table(uq_metrics()).to_excel(writer, sheet_name="UQ Metrics", index=False)
+                # The bootstrap's own target and confidence, as in the script export
+                metrics = uq_metrics(uq["results"], uq["settings"]["target"], uq["settings"]["conf"])
+                metrics_table(metrics).to_excel(writer, sheet_name="UQ Metrics", index=False)
                 curve_export_df(uq["results"]).to_excel(writer, sheet_name="PoD Curve Data", index=False)
                 table = uq["results"].get("reliability_table")
                 if table:
@@ -346,4 +370,5 @@ def register(input, output, session, state: AppState):
         """A runnable Python script that repeats the bootstrapped analysis with the library."""
         uq = uq_result()
         if uq is not None:
-            yield analysis_script(uq["config"], uq["fit"]["choice"], uq["settings"])
+            yield analysis_script(uq["config"], uq["fit"]["choice"], uq["settings"],
+                                  used_dists=uq["results"].get("nuisance_dists"))

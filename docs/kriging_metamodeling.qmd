@@ -330,7 +330,7 @@ Outside the sampled region a Kriging mean decays back to $\bar{y}$, at a rate se
 
 ### Other things to be wary of {#sec-other-pitfalls}
 
-- **In-sample fit says nothing.** Kriging can pass (almost) through every training point, so in-sample $R^2$ is near 1 for any data. Always judge it by CV or LOO error. The GUI's model-fit diagnostic uses LOO predictions for Kriging for exactly this reason.
+- **In-sample fit says nothing.** Kriging can pass (almost) through every training point, so in-sample $R^2$ is near 1 for any data. Always judge it by CV or LOO error. For this reason the app's *Fit quality* plot (in Model Diagnostics) shows leave-one-out predictions for Kriging. Its pass/fail mark uses the model's 10-fold cross-validated $R^2$, and the *Model Fit (CV)* check in Data Diagnostics also uses cross-validation (10-fold, of a cubic polynomial).
 - **One length scale for the whole space (stationarity).** A response that rises steeply for small flaws and then saturates has two very different "natural" length scales, and a stationary GP must compromise. Transforming the input (e.g. working in $\log a$, as [M25]{.src .src-m25} §2g recommends) often makes the response closer to stationary.
 - **One noise level for the whole space.** The nugget $\tau^2$ is constant. If the real scatter varies strongly, the Kriging surface may be over-smoothed where the scatter is small and under-smoothed where it is large, and the LOO residuals will flag outliers ($\gamma > 1$). The variance model accounts for the varying scatter in the PoD itself.
 - **No equation.** A polynomial can be written down and checked by hand. A Kriging model is defined by its training data and hyperparameters, which makes it harder to audit.

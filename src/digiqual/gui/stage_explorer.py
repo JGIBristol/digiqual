@@ -10,6 +10,7 @@ detection threshold update the plots live.
 
 from faicons import icon_svg
 from shiny import reactive, render, ui
+from shiny.types import SilentException
 
 from digiqual.defaults import N_THRESHOLD_POINTS
 from digiqual.integration import NUISANCE_DISTRIBUTIONS, estimate_nuisance_distribution
@@ -24,7 +25,7 @@ from .components import (
     slider_precision,
     stage_page,
 )
-from .state import AppState, logger, read_input
+from .state import AppState, logger, read_input, visualise
 
 ROLES = {"plot": "Plot", "integrate": "Integrate", "slice": "Slice"}
 
@@ -52,6 +53,7 @@ def register(input, output, session, state: AppState):
     threshold = state.threshold
     applied_structure = state.applied_structure
     explorer_config = state.explorer_config
+    col_id = state.col_id
 
 
     @reactive.calc
@@ -83,7 +85,7 @@ def register(input, output, session, state: AppState):
         """Keep the roles shown before; otherwise plot the most influential input."""
         sobol = (model_fit() or {}).get("sobol_indices") or {}
         top = max(study.inputs, key=lambda c: sobol.get(c, 0.0)) if sobol else study.inputs[0]
-        return {col: read_input(input, f"role_{col}") or ("plot" if col == top else "slice")
+        return {col: read_input(input, col_id("role", col)) or ("plot" if col == top else "slice")
                 for col in study.inputs}
 
     # ── Layout ──────────────────────────────────────────────────────────────
@@ -102,9 +104,9 @@ def register(input, output, session, state: AppState):
         exact_step = 10 ** -decimals
         with reactive.isolate():
             current = slice_values().get(col, med)
-            dist = read_input(input, f"dist_{col}", "Uniform")
-            int_lo = read_input(input, f"int_lo_{col}", rnd(lo))
-            int_hi = read_input(input, f"int_hi_{col}", rnd(hi))
+            dist = read_input(input, col_id("dist", col), "Uniform")
+            int_lo = read_input(input, col_id("int_lo", col), rnd(lo))
+            int_hi = read_input(input, col_id("int_hi", col), rnd(hi))
 
         def labelled(label, control, class_=""):
             return ui.div(ui.span(label, class_="small text-muted"), control, class_=f"dq-inline-field {class_}")
@@ -112,30 +114,30 @@ def register(input, output, session, state: AppState):
         return ui.div(
             ui.div(ui.tags.strong(col), ui.div(f"{fmt_value(lo)} to {fmt_value(hi)}", class_="small text-muted"),
                    class_="dq-role-name"),
-            ui.div(ui.input_radio_buttons(f"role_{col}", None, choices=ROLES, selected=role, inline=True),
+            ui.div(ui.input_radio_buttons(col_id("role", col), None, choices=ROLES, selected=role, inline=True),
                    class_="dq-role"),
             ui.div(
                 ui.panel_conditional(
-                    f"input.role_{col} === 'plot'",
+                    f"input.{col_id('role', col)} === 'plot'",
                     ui.span("On an axis of the plots, across its full data range.", class_="text-muted small"),
                 ),
                 ui.panel_conditional(
-                    f"input.role_{col} === 'slice'",
+                    f"input.{col_id('role', col)} === 'slice'",
                     ui.div(
-                        ui.input_slider(f"slice_{col}", None, min=rnd(lo), max=rnd(hi), value=rnd(current),
+                        ui.input_slider(col_id("slice", col), None, min=rnd(lo), max=rnd(hi), value=rnd(current),
                                         step=step, ticks=False),
-                        labelled("Value", ui.input_numeric(f"slice_num_{col}", None, value=rnd(current),
+                        labelled("Value", ui.input_numeric(col_id("slice_num", col), None, value=rnd(current),
                                                            min=rnd(lo), max=rnd(hi), step=exact_step)),
                         class_="dq-slice-controls"
                     ),
                 ),
                 ui.panel_conditional(
-                    f"input.role_{col} === 'integrate'",
+                    f"input.{col_id('role', col)} === 'integrate'",
                     ui.div(
-                        ui.input_select(f"dist_{col}", None, choices=list(NUISANCE_DISTRIBUTIONS), selected=dist),
-                        labelled("from", ui.input_numeric(f"int_lo_{col}", None, value=int_lo, min=rnd(lo),
+                        ui.input_select(col_id("dist", col), None, choices=list(NUISANCE_DISTRIBUTIONS), selected=dist),
+                        labelled("from", ui.input_numeric(col_id("int_lo", col), None, value=int_lo, min=rnd(lo),
                                                           max=rnd(hi), step=exact_step)),
-                        labelled("to", ui.input_numeric(f"int_hi_{col}", None, value=int_hi, min=rnd(lo),
+                        labelled("to", ui.input_numeric(col_id("int_hi", col), None, value=int_hi, min=rnd(lo),
                                                         max=rnd(hi), step=exact_step)),
                         class_="dq-integrate-controls"
                     ),
@@ -281,13 +283,21 @@ def register(input, output, session, state: AppState):
             col_widths=[6, 6]
         )
 
+    # Plots raise SilentException when empty: returning None would make Shiny draw
+    # pyplot's current figure, a stray one from elsewhere.
+    def _study_plot(key):
+        plot = state.study_plot(key)
+        if plot is None:
+            raise SilentException()
+        return plot
+
     @render.plot
     def plot_signal_explorer():
-        return state.study_plot("signal_model")
+        return _study_plot("signal_model")
 
     @render.plot
     def plot_pod_explorer():
-        return state.study_plot("pod_curve")
+        return _study_plot("pod_curve")
 
     # ── Slider <-> number box sync (both write the exact value to state) ────
     def _sync(slider_id, number_id, get, put, r):
@@ -314,12 +324,12 @@ def register(input, output, session, state: AppState):
         if study is None or not r:
             return
         for col in study.inputs:
-            read_input(input, f"slice_{col}")
-            read_input(input, f"slice_num_{col}")  # take dependencies on both
+            read_input(input, col_id("slice", col))
+            read_input(input, col_id("slice_num", col))  # take dependencies on both
         with reactive.isolate():
             values = dict(slice_values())
             for col in study.inputs:
-                _sync(f"slice_{col}", f"slice_num_{col}", lambda c=col: values.get(c),
+                _sync(col_id("slice", col), col_id("slice_num", col), lambda c=col: values.get(c),
                       lambda v, c=col: values.__setitem__(c, v), r[col])
             if values != slice_values():
                 slice_values.set(values)
@@ -359,7 +369,10 @@ def register(input, output, session, state: AppState):
         if study is None or errors:
             ui.notification_show(" ".join(errors) or "Fit a model first.", type="error")
             return
-        if state.pod_running() or state.uq_running():
+        if state.pod_running():
+            return
+        if state.uq_running() or state.fit_running():
+            ui.notification_show("Wait for the model fit or bootstrap to finish first.", type="warning")
             return
         progress.reset(integrated=list(config["integrate"]))
         state.pod_running.set(True)
@@ -382,7 +395,7 @@ def register(input, output, session, state: AppState):
             study, config = pod_task.result()
             if study is not current_study():
                 return  # the data changed meanwhile
-            study.visualise(show=False)
+            visualise(study)
             applied_structure.set(state.structure(config))
             state.bump_plots()
 
@@ -430,7 +443,7 @@ def register(input, output, session, state: AppState):
                     # the new slice and keep threshold changes instant (cached per slice)
                     study.compute_pod_spectrum(n_threshold_points=N_THRESHOLD_POINTS, **kwargs)
                 study.pod(threshold=config["threshold"], n_boot=0, **kwargs)
-                study.visualise(show=False)
+                visualise(study)
                 state.bump_plots()
             except Exception as e:
                 logger.exception("Live PoD update failed")

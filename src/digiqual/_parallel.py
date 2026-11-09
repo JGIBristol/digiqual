@@ -26,10 +26,14 @@ def resolve_n_jobs(n_jobs: int | None) -> int:
 def _call_single_threaded(step, *args, **kwargs):
     """Runs ``step`` with native thread pools (BLAS/OpenMP) limited to one thread.
 
-    Used inside worker processes so N workers don't each start N BLAS threads.
+    Used inside worker processes so N workers don't each start N BLAS threads. The
+    C++ kernels use their own threads, so they are limited separately.
     """
     from threadpoolctl import threadpool_limits
 
+    from .cpp_fallback import set_cpp_threads
+
+    set_cpp_threads(1)  # each worker is its own process, so this only affects workers
     with threadpool_limits(limits=1):
         return step(*args, **kwargs)
 

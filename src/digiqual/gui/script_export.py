@@ -11,14 +11,7 @@ import datetime
 import pprint
 
 from digiqual import __version__
-
-
-def _override_args(model_key) -> tuple[str, int | None]:
-    """`model_override`, `force_degree` for a fitted model key like ('Polynomial', 3).
-
-    The key form of `digiqual.core.model_override_args`, which takes the model itself.
-    """
-    return ("polynomial", model_key[1]) if model_key[0] == "Polynomial" else ("kriging", None)
+from digiqual.core import model_key_args
 
 
 def _dict_literal(d: dict) -> str:
@@ -30,7 +23,7 @@ def _dict_literal(d: dict) -> str:
 _CHOICE_TEXT = {"auto": "Auto (the cross-validation pick)", "kriging": "Kriging"}
 
 
-def analysis_script(config: dict, model_choice: str, settings: dict) -> str:
+def analysis_script(config: dict, model_choice: str, settings: dict, used_dists: dict | None = None) -> str:
     """
     The Python source of a script that repeats a bootstrapped analysis from the app.
 
@@ -40,8 +33,11 @@ def analysis_script(config: dict, model_choice: str, settings: dict) -> str:
         model_choice (str): The model dropdown value ('auto', 'poly-3' or 'kriging').
         settings (dict): The run settings stored with the bootstrap result: n_boot,
             n_jobs, target, conf, csv_name, inputs, outcome and the diagnostic thresholds.
+        used_dists (dict | None): The non-uniform distributions the run actually used
+            (``results["nuisance_dists"]``). A chosen distribution that couldn't be
+            fitted was replaced by Uniform in the app, so it is left out here too.
     """
-    override, degree = _override_args(config["model"])
+    override, degree = model_key_args(config["model"])
     choice_text = _CHOICE_TEXT.get(model_choice, f"Polynomial of degree {model_choice.split('-')[-1]}")
     thresholds = settings["thresholds"]
     one_plotted = len(config["plot"]) == 1
@@ -54,7 +50,9 @@ def analysis_script(config: dict, model_choice: str, settings: dict) -> str:
         "model_override": override,
         "force_degree": degree,
     }
-    non_uniform = {c: s["dist"] for c, s in config["integrate"].items() if s["dist"] != "Uniform"}
+    used_dists = used_dists or {}
+    non_uniform = {c: s["dist"] for c, s in config["integrate"].items() if c in used_dists}
+    fell_back = [c for c, s in config["integrate"].items() if s["dist"] != "Uniform" and c not in used_dists]
 
     lines = [
         f'"""DigiQual analysis exported from the DigiQual app on {datetime.date.today():%d %B %Y}.',
@@ -108,6 +106,9 @@ def analysis_script(config: dict, model_choice: str, settings: dict) -> str:
     else:
         lines.append("# 4. Integrated variables (if any) are sampled uniformly over their range")
         lines.append("nuisance_dists = None")
+    for col in fell_back:
+        lines.append(f"# {col!r}: {config['integrate'][col]['dist']} could not be fitted to its values, "
+                     "so it is integrated uniformly (as the app did).")
     lines += [
         "",
         "# 5. The PoD setup from the Model Explorer: plotted (poi_col), integrated",

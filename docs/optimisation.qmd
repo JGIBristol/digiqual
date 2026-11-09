@@ -25,11 +25,11 @@ flowchart TD
 
 ## Sampling & Diagnostics {#sec-diagnostics}
 
-The same sampling and diagnostic tools are used by `optimise`, by `study.diagnose()` / `study.refine()` in the [Quick Start](qs_class.qmd), and by the *Simulation Design* and *Data Diagnostics* tabs of the [app](gui_manual.qmd).
+The same sampling and diagnostic tools are used by `optimise`, by `study.diagnose()` / `study.refine()` in the [Quick Start](qs_class.qmd), and by the *Simulation Design* and *Data Diagnostics* stages of the [app](gui_manual.qmd).
 
 ### Space-filling designs {#sec-lhs}
 
-`digiqual.sampling.generate_lhs(n, ranges)` (the app's *Simulation Design* tab) draws a Latin Hypercube Sample over the input ranges. It then reorders the points with a **greedy max-min distance algorithm**: each next point is the one furthest from all points chosen so far. As a result, any first $k$ rows of the design are themselves as space-filling as possible, so you can run the simulations in order and stop early, or run them in batches, and still have good coverage.
+`digiqual.sampling.generate_lhs(n, ranges)` (the app's *Simulation Design* stage) draws a Latin Hypercube Sample over the input ranges. It then reorders the points with a **greedy max-min distance algorithm**: each next point is the one furthest from all points chosen so far. As a result, any first $k$ rows of the design are themselves as space-filling as possible, so you can run the simulations in order and stop early, or run them in batches, and still have good coverage.
 
 ### Diagnostic tests {#sec-diagnostic-tests}
 
@@ -45,7 +45,7 @@ The diagnostics check whether the data is good enough to fit a reliable model. E
 
 The bootstrap spread is measured relative to the scatter of the response, so a signal recorded near zero (e.g. in dB) or with a large constant offset is judged fairly. Versions up to 0.27 divided by the mean prediction instead, which made near-zero signals fail regardless of stability.
 
-If a test fails, **refinement** (`study.refine()`, or the app's Remediation tool) generates targeted new points: in the largest coverage gaps, and where a bootstrap committee of models disagrees most (Query-by-Committee). Failed solver runs are excluded from future sampling (see the graveyard, below).
+If a test fails, **refinement** (`study.refine()`, or **Generate New Samples** in the app's *Fix it with more runs* box) generates targeted new points: in the largest coverage gaps, and where a bootstrap committee of models disagrees most (Query-by-Committee). Failed solver runs are excluded from future sampling (see the graveyard, below).
 
 ## Connecting Your External Solver {#sec-executors}
 

@@ -133,6 +133,19 @@ class CLIExecutor(Executor):
         self.input_path = input_path
         self.output_path = output_path
 
+    def _command(self) -> list[str] | str:
+        """The command to run, with the file paths filled in as whole arguments.
+
+        On POSIX the template is split into arguments first and the paths substituted
+        inside them, so paths with spaces stay one argument. On Windows the command
+        line is passed to Windows as a string, so backslashes in the template are kept;
+        put quotes around ``{input}``/``{output}`` there if the paths contain spaces.
+        """
+        if os.name == "nt":
+            return self.command_template.format(input=self.input_path, output=self.output_path)
+        return [token.format(input=self.input_path, output=self.output_path)
+                for token in shlex.split(self.command_template)]
+
     def run(self, samples: pd.DataFrame) -> pd.DataFrame:
         """
         The translation process for heavy, external software.
@@ -143,10 +156,9 @@ class CLIExecutor(Executor):
         if os.path.exists(self.output_path):
             os.remove(self.output_path)
 
-        # Step 2 & 3: Format and split the command
-        cmd = self.command_template.format(input=self.input_path, output=self.output_path)
-        logger.info(f"   -> Executing Isolated Process: {cmd}")
-        cmd_list = shlex.split(cmd)
+        # Step 2 & 3: Build the command
+        cmd_list = self._command()
+        logger.info(f"   -> Executing Isolated Process: {cmd_list}")
 
         try:
             # Step 4: Spawn the isolated process
@@ -155,7 +167,7 @@ class CLIExecutor(Executor):
             logger.warning(f"   -> Simulation FAILED (Exit Code {e.returncode}).")
             return pd.DataFrame()
         except FileNotFoundError:
-            logger.warning(f"   -> Simulation FAILED: command not found ({cmd_list[0]!r}). Check it is installed and on your PATH.")
+            logger.warning(f"   -> Simulation FAILED: command not found ({cmd_list if isinstance(cmd_list, str) else cmd_list[0]!r}). Check it is installed and on your PATH.")
             return pd.DataFrame()
 
         # Step 5: Check if output file exists

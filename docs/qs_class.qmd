@@ -179,7 +179,13 @@ for var, val in results["sobol_indices"].items():
 t1 = time.time()
 new_results = study.update_slice({"Angle": 5.0})
 print(f"Run 2 completed in: {time.time() - t1:.4f} seconds (Near Instant!)")
-print(f"New a90/95 point at Angle 5.0: {new_results['a90_95']:.3f}")
+
+# update_slice() re-runs pod() with n_boot=0: the PoD curve without confidence
+# bounds, so there are no aX/Y values yet (they need the bootstrap, below).
+# Read the PoD of a 5 mm flaw off the curve instead.
+lengths = new_results["X_eval"].flatten()
+pod_5mm = np.interp(5.0, lengths, new_results["curves"]["pod"])
+print(f"PoD of a 5 mm flaw at Angle 5.0: {pod_5mm:.3f}")
 ```
 
 ```{python}
@@ -206,16 +212,24 @@ These are saved in the results dictionaries:
 - `results['ci_bounds']`: Maps confidence levels to lower/upper curves.
 - `results['reliability_table']`: Maps `(target_pod_percent, confidence_level)` tuples to their corresponding flaw sizing reliability indices (e.g., `a90/95`).
 
+The bootstrap below uses the same settings as Run 2, including the Normal distribution for `Roughness`. Leave out `nuisance_dists` and `Roughness` would be integrated uniformly instead, giving a different curve.
+
 ```{python}
-# Run the parallelised bootstrap to get multi-level confidence bounds
-t2 = time.time()
-uq_results = study.pod(
+# The PoD setup from Run 2, reused below
+settings = dict(
     poi_col="Length",
     nuisance_col=["Roughness"],
     slice_values={"Angle": 5.0},
+    nuisance_dists={"Roughness": ("norm", (0.25, 0.08))},
+)
+
+# Run the parallelised bootstrap to get multi-level confidence bounds
+t2 = time.time()
+uq_results = study.pod(
+    **settings,
     threshold=34.0,
     n_boot=100,  # Small value for quick demonstration
-    n_jobs=-1    # Use all available CPU cores
+    n_jobs=-1,   # All CPU cores except two (1 = a single core, same results)
 )
 print(f"UQ Bootstrapping completed in: {time.time() - t2:.4f} seconds")
 
@@ -242,17 +256,121 @@ study.visualise(target_pod=0.90, confidence_level=90)
 
 ### Threshold Sensitivity Plots {#sec-threshold-sensitivity}
 
-Using the cached 100-threshold spectrum, we can also generate a sensitivity plot using `plot_pod_vs_threshold()` to see how changing the threshold affects PoD across defect sizes.
+`compute_pod_spectrum()` takes the same settings as `pod()` and computes the PoD for 100 thresholds across the observed signal range in one pass, caching the result (Layer 4 in [Caching](caching.qmd)). Afterwards, `pod()` calls with those settings, `n_boot=0` and a threshold inside that range interpolate from it instead of integrating. It does not replace `study.pod_results`, so the bootstrap results above are kept.
+
+`plot_pod_vs_threshold()` then plots the spectrum for the current results, to show how the threshold affects PoD across defect sizes. The spectrum must have been computed with the same settings as those results.
 
 ```{python}
 #| label: fig-sensitivity
 #| fig-cap: "PoD vs. Threshold Sensitivity Plot"
-# Generate threshold spectrum (using Layer 4 caching)
-study.compute_pod_spectrum(poi_col="Length")
+# Generate the threshold spectrum for the bootstrap's settings (Layer 4 cache)
+spectrum = study.compute_pod_spectrum(**settings)
+print(f"{len(spectrum['thresholds'])} thresholds from {spectrum['thresholds'][0]:.1f} to {spectrum['thresholds'][-1]:.1f}")
 
 # Plot sensitivity curves
 _ = study.plot_pod_vs_threshold()
 ```
+
+### The reliability matrix {#sec-reliability-matrix}
+
+`digiqual.pod.reliability_matrix()` arranges `reliability_table` as a table: one row per target PoD, one column per confidence level. With `as_text=True` the values are rounded and unreached targets read *Not Reached*; without it they stay numbers (NaN when not reached).
+
+```{python}
+from digiqual.pod import reliability_matrix
+
+reliability_matrix(uq_results["reliability_table"], as_text=True)
+```
+
+## More Control {#sec-more-control}
+
+### Fitting the model on its own: `fit_model()` {#sec-fit-model}
+
+`pod()` fits the model itself, but you can also fit it first, for example to check the chosen model before any PoD. `fit_model(model_override="auto", force_degree=None, bandwidth_ratio=None, progress_callback=None)` fits the surrogate (mean) model, the scatter (variance) model, the error distribution and the Sobol indices, all on every input. The result is cached and also stored in `study.model_results`, so a later `pod()` with the same model reuses it.
+
+```{python}
+fit = study.fit_model()  # "auto": the cross-validation pick
+print("Model:", fit["model_key"], "| error distribution:", fit["dist_info"][0])
+
+# Force a different model: model_override is "auto", "polynomial" or "kriging"
+fit_cubic = study.fit_model(model_override="polynomial", force_degree=3)
+print("Forced model:", fit_cubic["model_key"])
+```
+
+To make `pod()` use a forced model, pass the same `model_override` and `force_degree` to it.
+
+### Integration ranges and fitted distributions {#sec-nuisance}
+
+Integrated (nuisance) variables are sampled uniformly over their observed range unless you say otherwise:
+
+- `nuisance_dists` gives a variable a distribution, as a `(scipy_name, params)` pair. `digiqual.integration.estimate_nuisance_distribution(values, kind)` fits one to data, for each `kind` in `NUISANCE_DISTRIBUTIONS` (Uniform, Normal, Lognormal, Weibull). It returns `None` for Uniform, and raises a `ValueError` if the distribution can't be fitted (Lognormal and Weibull need positive values).
+- `nuisance_bounds` narrows the integration range, as `{column: (low, high)}`. Limits outside the observed data are clamped to it, because the model can't be trusted there.
+
+```{python}
+from digiqual.integration import NUISANCE_DISTRIBUTIONS, estimate_nuisance_distribution
+
+print("Available:", NUISANCE_DISTRIBUTIONS)
+roughness_dist = estimate_nuisance_distribution(study.clean_data["Roughness"], "Normal")
+print("Fitted Normal:", roughness_dist)
+
+bounded = study.pod(
+    poi_col="Length",
+    nuisance_col=["Roughness"],
+    slice_values={"Angle": 0.0},
+    threshold=34.0,
+    n_boot=0,
+    nuisance_dists={"Roughness": roughness_dist},
+    nuisance_bounds={"Roughness": (0.1, 0.9)},  # 0.9 is beyond the data
+)
+print("Integration range used:", bounded["nuisance_bounds"])
+```
+
+### Progress callbacks {#sec-progress}
+
+`fit_model()` and `pod()` take a `progress_callback`, called as `(done, total)` or `(done, total, label)`: `fit_model()` while it cross-validates the candidate models (only the first, slow fit for a dataset), and `pod()` during the bootstrap. The app uses these for its progress panels. Progress messages also go to the `"digiqual"` logger.
+
+```{python}
+def report(done, total, label=""):
+    if done == total:
+        print(f"Finished {total} bootstrap iterations")
+
+_ = study.pod(**settings, threshold=34.0, n_boot=20, progress_callback=report)
+```
+
+### Reading results from a CSV: `digiqual.io` {#sec-io}
+
+`digiqual.io.read_results_csv(path)` reads a results file and cleans it exactly as the app does. The cleaning itself is `clean_columns(df)`, which returns the cleaned table, the names of the dropped text columns and the number of text cells turned into missing values:
+
+- column names are trimmed, spaces become underscores and other special characters are removed;
+- duplicate names are numbered (`Signal`, `Signal_1`);
+- text columns, and completely empty ones, are dropped;
+- stray text cells in a numeric column become missing values, so validation later drops those rows.
+
+```{python}
+from digiqual.io import clean_columns
+
+raw = pd.DataFrame({
+    "Crack Length (mm)": [1.0, 2.0, 3.0],
+    "Operator": ["A", "B", "C"],
+    "Signal": [0.5, "n/a", 1.4],
+    "Signal ": [0.6, 0.9, 1.3],
+})
+clean, dropped, n_bad = clean_columns(raw)
+print("Columns:", list(clean.columns))
+print("Dropped text columns:", dropped, "| text cells made missing:", n_bad)
+```
+
+## Reproducing an App Analysis {#sec-reproduce-app}
+
+After a bootstrap, the app's *PoD Analysis* stage can export the analysis as a Python script, `digiqual_analysis.py` ([GUI manual](gui_manual.qmd#sec-tab-pod)). It uses the calls on this page, with the app's settings filled in:
+
+1. `read_results_csv()` and `add_data()` with the chosen input and outcome columns;
+2. `diagnose()` with the app's diagnostic thresholds;
+3. `fit_model()` for the chosen model;
+4. `estimate_nuisance_distribution()` for any non-uniform integrated variable;
+5. `compute_pod_spectrum()` (one plotted variable) and `pod()` with the plotted, integrated and sliced variables, `nuisance_bounds`, the threshold and the bootstrap settings;
+6. `reliability_matrix()`, `visualise()` and `plot_pod_vs_threshold()`.
+
+All randomness in `digiqual` is seeded, so running the script next to the same CSV reproduces the app's numbers. It is a good starting point for scripting variations of an analysis made in the app.
 
 
 ## Appendix: Full Script {#sec-full-script}
@@ -325,6 +443,7 @@ study.plot_pod_vs_threshold()
 
 # --- 6. Uncertainty Quantification (Bootstrapping) ---
 # Run the heavy, parallelised bootstrap to get multi-level Confidence Intervals
+# (n_jobs=-1 uses all CPU cores except two)
 results = study.pod(poi_col="Length", threshold=15.0, n_boot=100, n_jobs=-1)
 
 # Print specific reliability matrix values (e.g. a90/95)

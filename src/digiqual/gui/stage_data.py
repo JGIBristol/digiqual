@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from faicons import icon_svg
 from shiny import reactive, render, ui
+from shiny.types import SilentException
 
 from digiqual.defaults import MAX_ALLOWED_VIF, MAX_AVG_CV, MAX_GAP_RATIO, MAX_MAX_CV, MIN_R2_SCORE
 from digiqual.io import clean_columns
@@ -104,11 +105,12 @@ def register(input, output, session, state: AppState):
                 max_gap_ratio=input.ui_max_gap(),
                 min_r2_score=input.ui_min_r2(),
                 max_avg_cv=input.ui_avg_cv(),
-                max_max_cv=input.ui_max_cv()
+                max_max_cv=input.ui_max_cv(),
+                max_allowed_vif=input.ui_max_vif(),
             )
 
             new_samples.set(refined_df)
-            ui.notification_show(f"Generated {n_to_gen} targeted samples.", type="message")
+            ui.notification_show(f"Generated {len(refined_df)} targeted samples.", type="message")
         except Exception as e:
             ui.notification_show(f"Refinement failed: {e}", type="error")
 
@@ -368,16 +370,16 @@ def register(input, output, session, state: AppState):
 
         df = uploaded_data()
         if df is None:
-            return None
+            raise SilentException()
 
         try:
             var = input.viz_variable()
             plot_type = input.viz_plot_type()
         except Exception:
-            return None
+            raise SilentException() from None
 
         if var not in df.columns:
-            return None
+            raise SilentException()
 
         outcome = input.outcome_col()
 
@@ -485,7 +487,7 @@ def register(input, output, session, state: AppState):
 
         df = uploaded_data()
         if df is None:
-            return None
+            raise SilentException()
 
         # Use selected inputs, falling back to all-but-outcome if none chosen yet
         input_cols_list = list(input.input_cols())
@@ -497,7 +499,7 @@ def register(input, output, session, state: AppState):
         input_cols_list = [c for c in input_cols_list if c in df.columns]
 
         if not input_cols_list:
-            return None
+            raise SilentException()
 
         # --- Fetch the dynamic gap threshold from the UI ---
         try:
@@ -568,7 +570,7 @@ def register(input, output, session, state: AppState):
     def viz_collinearity_matrix():
         study = current_study()
         if study is None or study.clean_data.empty:
-            return None
+            raise SilentException()
 
         import matplotlib.pyplot as plt
         fig, ax = plt.subplots(figsize=(6, 5))

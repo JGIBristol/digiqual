@@ -15,7 +15,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 from ._parallel import percentile_bounds, run_bootstrap
-from .defaults import KRIGING_MAX_SAMPLES, MAX_POLY_DEGREE, N_CV_FOLDS
+from .defaults import BOOTSTRAP_MC_SAMPLES, KRIGING_MAX_SAMPLES, MAX_POLY_DEGREE, N_CV_FOLDS
 
 logger = logging.getLogger(__name__)
 
@@ -1235,7 +1235,7 @@ def _single_bootstrap_step(
     X_2d, y, X_eval, threshold, model_type, model_params,
     bandwidth, dist_info, nuisance_ranges, n_samples,
     feature_names=None, poi_names=None, nuisance_dists=None,
-    seed=None, n_mc_samples=500
+    seed=None, n_mc_samples=BOOTSTRAP_MC_SAMPLES
 ):
     """Internal helper to process a single bootstrap iteration."""
     # Resample indices
@@ -1297,7 +1297,7 @@ def bootstrap_pod_ci(
     confidence_levels: list | None = None,
     nuisance_dists: dict | None = None,
     progress_callback: Any = None,
-    n_mc_samples: int = 500
+    n_mc_samples: int = BOOTSTRAP_MC_SAMPLES
 ) -> tuple[np.ndarray, np.ndarray] | dict:
     """
     Estimates Confidence Bounds for the PoD curve via Bootstrapping.
@@ -1441,22 +1441,32 @@ def calculate_sobol_indices(mean_model: Any, feature_names: list, data_df, n_sam
         logger.warning("Warning: SALib not found. Skipping Sobol index calculation.")
         return None
 
-    # 1. Define the bounds for each feature
-    bounds = []
-    for col in feature_names:
-        bounds.append([float(data_df[col].min()), float(data_df[col].max())])
+    # 1. Define the bounds for each feature. A constant input can't vary, so it has
+    # no effect (index 0); SALib rejects zero-width bounds, so it is held fixed.
+    bounds = {col: (float(data_df[col].min()), float(data_df[col].max())) for col in feature_names}
+    varying = [col for col in feature_names if bounds[col][1] > bounds[col][0]]
+    constant = [col for col in feature_names if col not in varying]
+    if constant:
+        logger.warning(f"Input(s) {constant} are constant in the data; their Sobol index is 0.")
+    if not varying:
+        return {name: 0.0 for name in feature_names}
 
     problem = {
-        'num_vars': len(feature_names),
-        'names': feature_names,
-        'bounds': bounds
+        'num_vars': len(varying),
+        'names': varying,
+        'bounds': [list(bounds[col]) for col in varying]
     }
 
     # 2. FAST SAMPLING: explicitly disable second-order calculations
-    X_sample = salib_sample.sample(problem, n_samples, calc_second_order=False)
+    X_varying = salib_sample.sample(problem, n_samples, calc_second_order=False)
 
-    if X_sample.ndim == 1:
-        X_sample = X_sample.reshape(-1, 1)
+    if X_varying.ndim == 1:
+        X_varying = X_varying.reshape(-1, 1)
+
+    # Full model inputs, in feature order, with the constant inputs at their value
+    X_sample = np.empty((len(X_varying), len(feature_names)))
+    for i, col in enumerate(feature_names):
+        X_sample[:, i] = X_varying[:, varying.index(col)] if col in varying else bounds[col][0]
 
     y_sample = mean_model.predict(X_sample)
 
@@ -1468,8 +1478,8 @@ def calculate_sobol_indices(mean_model: Any, feature_names: list, data_df, n_sam
         Si = salib_analyze.analyze(problem, y_sample.flatten(), print_to_console=False, calc_second_order=False)
 
     # 4. Extract ONLY the Total-Order effect (ST) and clamp numerical noise
-    results = {}
-    for i, name in enumerate(feature_names):
+    results = {name: 0.0 for name in feature_names}
+    for i, name in enumerate(varying):
         raw_val = float(Si['ST'][i])
 
         # --- Clamp the value strictly between 0.0 and 1.0 ---

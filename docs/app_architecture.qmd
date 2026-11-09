@@ -23,7 +23,8 @@ src/digiqual/
 │   ├── components.py           ← STAGES (order and names), the stage page template, shared helpers
 │   ├── state.py                ← per-session shared state, invalidation and the explorer settings
 │   ├── stepper.py              ← the workflow stepper: status rules (pure function) and rendering
-│   ├── start_page.py           ← the start page
+│   ├── start_page.py           ← the start page (entry cards and stage overview)
+│   ├── about_page.py           ← the About page (version, links, papers, funders)
 │   ├── stage_design.py         ← 1. Simulation Design (UI + server logic)
 │   ├── stage_data.py           ← 2. Data Diagnostics
 │   ├── stage_model.py          ← 3. Model Diagnostics (Run models: background fit with progress)
@@ -31,8 +32,9 @@ src/digiqual/
 │   ├── stage_pod.py            ← 5. PoD Analysis
 │   ├── script_export.py        ← writes the analysis as a standalone Python script
 │   ├── background.py           ← runs slow steps in a worker thread; progress tracking and panel
-│   ├── launcher.py             ← starts the server and opens the window
-│   └── www/                    ← static files served by Shiny (app.css, logos, favicon, MathJax)
+│   ├── launcher.py             ← starts the server and opens the window (with its Help menu)
+│   └── www/                    ← static files served by Shiny: app.css, favicon.png, the funder
+│                                 logos and, if downloaded, mathjax-tex-svg.js
 ├── _digiqual_cpp.*.so / .pyd   ← compiled C++ extension (built by setup.py)
 └── ...                         ← the statistical library itself
 
@@ -50,24 +52,42 @@ scripts/make_icon.py            ← draws the icon; writes app/icons/, gui/www/f
 
 The static files in `gui/www/` are included in the wheel by `package_data` in `setup.py` and `MANIFEST.in`. `app.py` finds them relative to its own location, so this works the same installed or from a checkout.
 
-## How Results Flow Between Tabs {#sec-state}
+MathJax (which renders the model equation) is not kept in the repository. `mathjax-tex-svg.js` is downloaded into `www/` at build time, by `just fetch_mathjax` or the `build_app.yml` workflow, so the desktop app works offline. Without it, `app.py` loads MathJax from a CDN instead.
 
-Each tab's results depend on the tab before it, and `AppState.invalidate()` in `state.py` clears a layer and everything after it:
+## How Results Flow Between Stages {#sec-state}
+
+Each stage's results depend on the stages before it. `state.py` holds the per-session `AppState`, and `register_shared()` keeps the study in sync with the data: a new file or column choice builds a new `SimulationStudy` and calls `AppState.invalidate("data")`, which clears every result. `invalidate("diagnostics")` clears only the diagnostics (the model doesn't use them).
 
 ```{mermaid}
 flowchart LR
     D[Data + columns<br/>study_instance] --> G[Diagnostics<br/>diagnostic_table]
-    D --> M[Candidate models + choice<br/>model_fit]
+    G -. unlocks .-> C[Candidate models<br/>candidates_ready]
+    D --> C
+    C --> M[Chosen model<br/>model_fit]
     M --> E[Explorer settings<br/>explorer_config]
-    E --> V[PoD on screen<br/>study.pod_results]
-    E --> U[Bootstrap<br/>uq_result]
+    E --> A[Applied PoD setup<br/>applied_structure]
+    A --> U[Bootstrap<br/>uq_result]
 ```
 
-- New data or columns clear everything. Changing a diagnostic threshold only marks the diagnostics as out of date.
-- The candidate models are fitted once per dataset, when the user presses Run models in Model Diagnostics.
-- The three slow steps (Run models, Update PoD, the bootstrap) run in a worker thread as `reactive.extended_task`s, so the page stays live. `background.TaskProgress` follows each one through its progress callback (`fit_model` and `pod` take one) and the library's log messages from that thread, and `background.progress_panel` draws it. While a task runs, `fit_running` / `pod_running` / `uq_running` in `AppState` are set, the stepper shows it, and the explorer's live updates pause so nothing else changes the study. Choosing another model is part of the explorer settings: like a role change, it needs Update PoD and marks the bootstrap out of date.
-- `explorer_config` (a `reactive.calc`) is the single source of the model, the plotted, integrated and sliced variables and the threshold. The explorer and the PoD Analysis tab both read it, and `AppState.pod_kwargs()` turns it into `study.pod()` arguments.
-- The bootstrap result keeps a copy of the settings it used. When they no longer match `explorer_config`, the PoD Analysis tab marks it as out of date instead of discarding it.
+- New data or columns clear everything. Changing a diagnostic threshold only marks the diagnostics as out of date (`diagnostics_stale`).
+- The candidate models are cross-validated once per dataset, when the user presses Run models in Model Diagnostics (which needs the diagnostics to have run). `candidates_ready` is then set, and `model_fit` holds the `study.fit_model()` result for the chosen model.
+- `explorer_config` (a `reactive.calc`) is the single source of the model, the plotted, integrated and sliced variables and the threshold. `AppState.structure(config)` is the part that needs the Update PoD button (model, plotted and integrated variables, distributions and ranges); after Update PoD it is stored as `applied_structure`. When the current structure differs from it, the explorer asks for Update PoD and the PoD Analysis stage won't run. Slices and the threshold are not part of it: they update the plots live. Choosing another model therefore needs Update PoD, like a role change, and marks the bootstrap out of date.
+- The bootstrap result (`uq_result`) is a record of everything the run used: `config` (the explorer settings), `fit` (model metrics, equation, name and dropdown choice), `settings` (iterations, `n_jobs`, target PoD and confidence, CSV name, columns and diagnostic thresholds), `results` (the `pod()` output) and `spectrum` (the threshold spectrum, for one plotted variable). When `config` no longer matches `explorer_config`, the PoD Analysis stage marks the result as out of date instead of discarding it. The exports are built from this record.
+
+### From app settings to library calls {#sec-analysis-kwargs}
+
+`state.analysis_kwargs(study, config)` is the single translation from an explorer config to `study.pod()` arguments: `poi_col`, `nuisance_col`, `slice_values`, `nuisance_dists`, `nuisance_bounds`, and `model_override` / `force_degree` from the config's model key (via `core.model_key_args`). `AppState.pod_kwargs()` is a thin wrapper around it. Two other module-level helpers go with it: `nuisance_dists_for()` fits the chosen distributions (one that can't be fitted is left out, so that variable is integrated uniformly) and `column_values()` gives a column's numeric values. Update PoD, the live updates and the bootstrap all use it, and so do the tests of the exported script, which check that the script reproduces the app's numbers.
+
+`script_export.analysis_script(config, model_choice, settings, used_dists)` writes that script from the bootstrap record. It turns the model key into `fit_model()` arguments with the same `core.model_key_args`, and only includes the distributions the run actually used.
+
+### Background tasks {#sec-background}
+
+The three slow steps (Run models or a model change, Update PoD, the bootstrap) run in a worker thread as `reactive.extended_task`s, so the page stays live. While a task runs, `fit_running` / `pod_running` / `uq_running` in `AppState` are set, the stepper shows a spinner, and the explorer's live updates pause so nothing else changes the study. `background.py` provides the pieces:
+
+- `TaskProgress` follows one task: the library's log messages from its thread (which mark its steps) and its `(done, total, label)` progress callback (`fit_model` and `pod` take one).
+- `step_states(reached, n)` turns "how far it got" into each step's state (`done`, `active`, `todo`).
+- `progress_panel()` draws the panel once: spinner, elapsed time, bar and steps.
+- `push_progress()` then updates it in place twice a second through a custom message, handled in the browser by `PROGRESS_JS` (added to the page head in `app.py`). Redrawing the panel instead would restart its spinners.
 
 ## Ways the App Gets Launched {#sec-launch-modes}
 
@@ -80,7 +100,7 @@ Every route ends up in the same function, `digiqual.gui.launcher.main()`:
 | `dq_ui()` in Python / Jupyter | starts `python -m digiqual.gui` in a new process → `main()` |
 | `python -m digiqual.gui` | `gui/__main__.py` → `main()` |
 | `just app` (from a checkout) | `uv run python -m digiqual.gui` → `main()` |
-| `just app_dev` | `shiny run src/digiqual/gui/app.py`: browser only, skips the launcher (for UI work) |
+| `just app_dev` | `shiny run digiqual.gui.app:app`: browser only, skips the launcher (for UI work) |
 
 ## What `launcher.main()` Does {#sec-launcher}
 
@@ -149,7 +169,7 @@ The version comes from `app/pyproject.toml`, which `just bump` keeps in step wit
 
 | Task | Command |
 |---|---|
-| Edit the UI with live reload in a browser | `just app_dev` |
+| Run the app in a browser, without the launcher (restart it to see code changes) | `just app_dev` |
 | Run the full desktop window from your checkout | `just app` |
 | Check the C++ extension, workers and server, without a window | `uv run python -m digiqual.gui --self-test` |
 | Build the desktop app on your own machine | `uv tool install briefcase`, then `just build_app_local` |
@@ -168,4 +188,6 @@ The version comes from `app/pyproject.toml`, which `just bump` keeps in step wit
 
 **Adding a static file** (an image, CSS or JavaScript) to the app: put it in `src/digiqual/gui/www/` and refer to it by file name (e.g. `src="my_image.png"`). It is packaged automatically.
 
-**Adding a page or feature to the app:** edit the relevant `stage_*.py` module. Each builds its page with `components.stage_page()` (settings sidebar, results, Back / Next) and has a `register(...)` function with its server logic; shared reactive state lives in `state.py`. A new stage is a new module, added to `STAGE_MODULES` in `app.py`, to `STAGES` in `components.py` (which names the stages everywhere: stepper, start page, buttons) and to the status rules in `stepper.stage_statuses`. Navigation needs no server code per button: `components.nav_button()` sets the `goto_stage` input from the browser and one effect in `stepper.py` switches stage. Prefer calling library functions (and `digiqual.defaults` for default values) over re-implementing statistics in the GUI. Nothing in `app/` or the workflow needs to change.
+**Adding a page or feature to the app:** edit the relevant `stage_*.py` module. Each builds its page with `components.stage_page()` (settings sidebar, results, Back / Next) and has a `register(...)` function with its server logic; shared reactive state lives in `state.py`. A new stage is a new module, added to `STAGE_MODULES` in `app.py`, to `STAGES` in `components.py` (which names the stages everywhere: stepper, start page, buttons), to the status rules in `stepper.stage_statuses` and, if those rules need new state, to `snapshot()` in `stepper.register`. A page that is not a stage (like Start and About) is a `ui.nav_panel` added to the `navset_hidden` in `app.py` and to the `("start", "about")` check in `stepper_ui`, which hides the stepper on it. Navigation needs no server code per button: `components.nav_button()` sets the `goto_stage` input from the browser and one effect in `stepper.py` switches stage. Prefer calling library functions (and `digiqual.defaults` for default values) over re-implementing statistics in the GUI. Nothing in `app/` or the workflow needs to change.
+
+**The desktop menu.** The native window has a **Help** menu with *View Documentation* (opens the docs site in the browser) and *About DigiQual* (the version). It is defined in `launcher.launch_webview_window`, so it only exists in the pywebview window, not in a browser.

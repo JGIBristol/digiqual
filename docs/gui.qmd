@@ -58,6 +58,9 @@ The desktop app writes a log file, which is the most useful thing to attach to a
 
 - **Windows:** `%LOCALAPPDATA%\Digiqual\digiqual.log` (paste that into the File Explorer address bar)
 - **macOS:** `~/Library/Logs/Digiqual/digiqual.log`
+- **Linux** (when launched with Option B or C): `~/.local/share/Digiqual/digiqual.log`
+
+The app window's **Help** menu has *View Documentation* (opens this site) and *About DigiQual* (shows the version, which is worth including in an issue).
 
 ### Option B: Using `uv` via CLI {#sec-uvx}
 

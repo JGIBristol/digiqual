@@ -1,4 +1,4 @@
-"""Per-session reactive state and helpers shared by the app's tabs.
+"""Per-session reactive state and helpers shared by the app's stages.
 
 Results are layered, and each layer is only valid while the ones above it are:
 
@@ -7,7 +7,7 @@ Results are layered, and each layer is only valid while the ones above it are:
 
 `AppState.invalidate` clears a layer and the ones that depend on it. The Model Explorer's
 settings (`explorer_config`) are the single source the explorer and the PoD Analysis
-tab read from.
+stage read from.
 """
 
 import logging
@@ -16,7 +16,7 @@ import pandas as pd
 from shiny import reactive
 
 from digiqual import SimulationStudy
-from digiqual.core import model_override_args
+from digiqual.core import model_key_args
 from digiqual.integration import estimate_nuisance_distribution
 
 logger = logging.getLogger("digiqual.gui")
@@ -32,7 +32,7 @@ def read_input(input, input_id: str, default=None):
 
 
 class AppState:
-    """Reactive values shared between tabs, created once per session in `server()`."""
+    """Reactive values shared between stages, created once per session in `server()`."""
 
     def __init__(self, input):
         self.input = input
@@ -49,7 +49,7 @@ class AppState:
         self.diagnostics_stale = reactive.value(False)  # thresholds changed since the run
         self.new_samples = reactive.value(None)
 
-        # Model fit (in the Model Explorer): all candidate models are cross-validated
+        # Model fit (in Model Diagnostics): all candidate models are cross-validated
         # once per dataset; model_fit is `study.fit_model()` for the chosen one
         self.candidates_ready = reactive.value(False)
         self.fit_error = reactive.value(None)
@@ -64,11 +64,14 @@ class AppState:
         self.threshold = reactive.value(None)
         self.applied_structure = reactive.value(None)
 
-        # PoD Analysis: {"config", "results", "metrics"} from the last bootstrap
+        # PoD Analysis: the last bootstrap, {"config", "fit", "settings", "results", "spectrum"}
         self.uq_result = reactive.value(None)
 
         # Bumped whenever study.plots is regenerated
         self.plot_trigger = reactive.value(0)
+
+        # Bumped for every new study; versions the explorer's per-column input IDs (see col_id)
+        self.study_version = 0
 
         self.current_study = reactive.calc(lambda: self.study_instance())
         self.explorer_config = reactive.calc(self._explorer_config)
@@ -78,7 +81,7 @@ class AppState:
         """Clear stale results.
 
         'data' clears everything; 'diagnostics' only the diagnostics (the model doesn't
-        use them); 'pod' the explorer PoD and the bootstrap.
+        use them).
         """
         with reactive.isolate():
             if level in ("data", "diagnostics"):
@@ -92,7 +95,6 @@ class AppState:
                 self.model_fit.set(None)
                 self.slice_values.set({})
                 self.threshold.set(None)
-            if level in ("data", "pod"):
                 self.applied_structure.set(None)
                 self.uq_result.set(None)
 
@@ -104,6 +106,14 @@ class AppState:
         _ = self.plot_trigger()
         study = self.current_study()
         return study.plots.get(plot_key) if study else None
+
+    def col_id(self, kind: str, col: str) -> str:
+        """ID of an explorer control for column `col` (kind 'role', 'dist', 'slice', ...).
+
+        Versioned per study: Shiny keeps the values of removed controls, so with plain
+        IDs a new dataset would inherit the previous one's roles and ranges.
+        """
+        return f"{kind}_{self.study_version}_{col}"
 
     # ---- Columns -----------------------------------------------------------
     def selected_columns(self) -> list[str]:
@@ -119,9 +129,7 @@ class AppState:
         return cols or list(df.columns)
 
     def data_values(self, col: str) -> pd.Series:
-        study = self.current_study()
-        df = study.clean_data if not study.clean_data.empty else study.data
-        return pd.to_numeric(df[col], errors="coerce").dropna()
+        return column_values(self.current_study(), col)
 
     # ---- Model Explorer configuration --------------------------------------
     def _explorer_config(self):
@@ -134,15 +142,16 @@ class AppState:
         slice_values = self.slice_values()
         plot, integrate, slices = [], {}, {}
         for col in study.inputs:
-            role = read_input(input, f"role_{col}")
+            role = read_input(input, self.col_id("role", col))
             if role is None:
                 return None  # role table not rendered yet
             if role == "plot":
                 plot.append(col)
             elif role == "integrate":
                 integrate[col] = {
-                    "dist": read_input(input, f"dist_{col}", "Uniform"),
-                    "bounds": (read_input(input, f"int_lo_{col}"), read_input(input, f"int_hi_{col}")),
+                    "dist": read_input(input, self.col_id("dist", col), "Uniform"),
+                    "bounds": (read_input(input, self.col_id("int_lo", col)),
+                               read_input(input, self.col_id("int_hi", col))),
                 }
             else:
                 slices[col] = slice_values.get(col)
@@ -156,34 +165,68 @@ class AppState:
             return None
         return {"model": config["model"], "plot": config["plot"], "integrate": config["integrate"]}
 
-    def nuisance_dists(self, config: dict) -> dict:
-        """Fitted non-uniform distributions for the integrated variables."""
-        dists = {}
-        for col, spec in config["integrate"].items():
-            if spec["dist"] == "Uniform":
-                continue
-            try:
-                dist = estimate_nuisance_distribution(self.data_values(col), spec["dist"])
-            except ValueError as e:
-                # The explorer's integration notes already show this to the user
-                logger.warning("Nuisance '%s': %s Using Uniform instead.", col, e)
-                continue
-            if dist is not None:
-                dists[col] = dist
-        return dists
-
     def pod_kwargs(self, config: dict) -> dict:
-        """`study.pod()` arguments for a config, locked to the fitted model."""
-        override, degree = model_override_args(self.model_fit()["mean_model"])
-        return dict(
-            poi_col=list(config["plot"]),
-            nuisance_col=list(config["integrate"]),
-            slice_values=dict(config["slice"]),
-            nuisance_dists=self.nuisance_dists(config),
-            nuisance_bounds={c: tuple(s["bounds"]) for c, s in config["integrate"].items()},
-            model_override=override,
-            force_degree=degree,
-        )
+        """`study.pod()` arguments for a config (see `analysis_kwargs`)."""
+        return analysis_kwargs(self.current_study(), config)
+
+
+def column_values(study, col: str) -> pd.Series:
+    """A column's numeric values, from the validated data once there is some."""
+    df = study.clean_data if not study.clean_data.empty else study.data
+    return pd.to_numeric(df[col], errors="coerce").dropna()
+
+
+def nuisance_dists_for(study, config: dict) -> dict:
+    """Fitted non-uniform distributions for the integrated variables.
+
+    A distribution that can't be fitted (e.g. Lognormal for negative values) is left
+    out, so that variable is integrated uniformly; the explorer tells the user so.
+    """
+    dists = {}
+    for col, spec in config["integrate"].items():
+        if spec["dist"] == "Uniform":
+            continue
+        try:
+            dist = estimate_nuisance_distribution(column_values(study, col), spec["dist"])
+        except ValueError as e:
+            logger.warning("Nuisance '%s': %s Using Uniform instead.", col, e)
+            continue
+        if dist is not None:
+            dists[col] = dist
+    return dists
+
+
+def visualise(study):
+    """`study.visualise()` for the explorer's plots, closing the figures the app never shows.
+
+    The model selection and Kriging plots are drawn by Model Diagnostics itself; left
+    open, they would build up in pyplot's global state.
+    """
+    import matplotlib.pyplot as plt
+
+    study.visualise(show=False)
+    for key in ("model_selection", "kriging_diagnostics"):
+        plot = study.plots.pop(key, None)
+        if plot is not None:
+            plt.close(plot if isinstance(plot, plt.Figure) else plot.get_figure())
+
+
+def analysis_kwargs(study, config: dict) -> dict:
+    """`study.pod()` arguments for a Model Explorer config, locked to its fitted model.
+
+    The single translation from the app's settings to the library: the explorer, the
+    bootstrap and the tests of the exported script all use it.
+    """
+    override, degree = model_key_args(config["model"])
+    return dict(
+        poi_col=list(config["plot"]),
+        nuisance_col=list(config["integrate"]),
+        slice_values=dict(config["slice"]),
+        nuisance_dists=nuisance_dists_for(study, config),
+        nuisance_bounds={c: tuple(s["bounds"]) for c, s in config["integrate"].items()},
+        model_override=override,
+        force_degree=degree,
+    )
 
 
 def register_shared(input, output, session, state: AppState):
@@ -207,6 +250,7 @@ def register_shared(input, output, session, state: AppState):
 
         study = SimulationStudy()
         study.add_data(df, outcome_col=selected_outcome, input_cols=selected_inputs, overwrite=True)
+        state.study_version += 1
         state.study_instance.set(study)
 
     @reactive.effect

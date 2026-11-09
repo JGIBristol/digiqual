@@ -123,14 +123,18 @@ quartodoc:
 
     # SECTION C: THE POWER USER
     - title: "Functional API"
-      desc: "Standalone tools for Sampling, Diagnostics, PoD, and Plotting."
+      desc: "Standalone tools for sampling, diagnostics, refinement, PoD, integration, plotting and solver execution, plus the shared default settings."
       contents:
         # -- Sampling --
         - sampling.generate_lhs
+        - sampling.reorder_max_min
 
         # -- Diagnostics --
         - diagnostics.validate_simulation
         - diagnostics.sample_sufficiency
+        - diagnostics.check_input_coverage
+        - diagnostics.bootstrap_convergence_trace
+        - diagnostics.relative_spread
         - diagnostics.ValidationError
 
         # -- Adaptive --
@@ -156,9 +160,20 @@ quartodoc:
         - pod.bootstrap_pod_ci
         - pod.calculate_reliability_point
         - pod.calculate_sobol_indices
+        - pod.reliability_matrix
+        - pod.polynomial_raw_coefficients
+        - pod.build_polynomial_model
+        - pod.build_refit_model
+
+        # -- Model selection helpers --
+        - core.model_key_args
+        - core.model_override_args
 
         # -- Integration --
         - integration.compute_multi_dim_pod
+        - integration.estimate_nuisance_distribution
+        - name: integration.NUISANCE_DISTRIBUTIONS
+          dynamic: false
 
         # -- Classical Linear PoD --
         - ahat.fit_linear_a_hat_model
@@ -169,6 +184,7 @@ quartodoc:
         # -- Plotting --
         - plotting.plot_signal_model
         - plotting.plot_pod_curve
+        - plotting.plot_pod_vs_threshold
         - plotting.plot_pod_surface
         - plotting.plot_signal_surface
         - plotting.plot_collinearity_matrix
@@ -179,3 +195,14 @@ quartodoc:
         - executors.PythonExecutor
         - executors.CLIExecutor
         - executors.MatlabExecutor
+
+        # -- Defaults --
+        - name: defaults
+          dynamic: false
+
+    # SECTION D: READING RESULTS
+    - title: "I/O"
+      desc: "Read simulation results from CSV files, cleaned exactly as the app does."
+      contents:
+        - io.read_results_csv
+        - io.clean_columns

@@ -56,3 +56,59 @@ def test_cpp_compute_pod_probs_equivalence():
 
         np.testing.assert_allclose(cpp_actual, expected, rtol=1e-5, atol=1e-7, err_msg=f"C++ calculation failed for {dist_name}")
 
+
+
+def test_cpp_matches_fallback_far_from_data():
+    """Tiny (but non-zero) kernel weight sums must not be clamped in C++ only."""
+    X_train = np.array([[0.0], [1.0], [2.0]])
+    residuals = np.array([0.5, 1.0, 2.0])
+    X_eval = np.array([[10.0], [11.0]])  # 8+ bandwidths away: weight sums below 1e-12
+    bandwidth = 1.0
+
+    from scipy.spatial.distance import cdist
+    w = stats.norm.pdf(cdist(X_eval, X_train), scale=bandwidth)
+    expected = np.sqrt((w / w.sum(axis=1, keepdims=True)) @ residuals ** 2)
+
+    cpp_actual = _digiqual_cpp.predict_local_std(X_train, residuals, X_eval, bandwidth)
+    np.testing.assert_allclose(cpp_actual, expected, rtol=1e-6)
+
+
+def test_cpp_rejects_mismatched_shapes():
+    X_train = np.zeros((5, 2))
+    with pytest.raises(ValueError):
+        _digiqual_cpp.predict_local_std(X_train, np.zeros(5), np.zeros((3, 3)), 1.0)  # wrong columns
+    with pytest.raises(ValueError):
+        _digiqual_cpp.predict_local_std(X_train, np.zeros(4), np.zeros((3, 2)), 1.0)  # residual count
+    with pytest.raises(ValueError):
+        _digiqual_cpp.predict_local_std(X_train, np.zeros(5), np.zeros((3, 2)), 1.0, np.zeros(2))  # out too small
+    with pytest.raises(ValueError):
+        _digiqual_cpp.compute_pod_probs(np.zeros(4), np.ones(3), 0.0, "norm", (0.0, 1.0))
+
+
+def test_out_argument_is_filled_in_place():
+    """A non-contiguous or non-float64 `out` is still filled (by copy), as in the fallback."""
+    from digiqual.cpp_fallback import compute_pod_probs_fast, predict_local_std_fast
+
+    X_train = np.linspace(0, 1, 10).reshape(-1, 1)
+    residuals = np.linspace(0.1, 1, 10)
+    X_eval = np.linspace(0, 1, 4).reshape(-1, 1)
+    out = np.zeros((4, 2))[:, 0]  # strided view
+    result = predict_local_std_fast(X_train, residuals, X_eval, 0.3, out=out)
+    assert result is out
+    np.testing.assert_allclose(out, predict_local_std_fast(X_train, residuals, X_eval, 0.3))
+
+    out32 = np.zeros(4, dtype=np.float32)
+    compute_pod_probs_fast(np.zeros(4), np.ones(4), 0.0, ("norm", (0.0, 1.0)), out=out32)
+    np.testing.assert_allclose(out32, 0.5)
+
+
+def test_set_num_threads_does_not_change_results():
+    rng = np.random.default_rng(0)
+    X_train, residuals, X_eval = rng.uniform(size=(200, 2)), rng.normal(size=200), rng.uniform(size=(500, 2))
+    full = _digiqual_cpp.predict_local_std(X_train, residuals, X_eval, 0.2)
+    _digiqual_cpp.set_num_threads(1)
+    try:
+        single = _digiqual_cpp.predict_local_std(X_train, residuals, X_eval, 0.2)
+    finally:
+        _digiqual_cpp.set_num_threads(0)
+    np.testing.assert_array_equal(full, single)

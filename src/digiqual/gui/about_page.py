@@ -14,10 +14,10 @@ from .components import STAGE, accent_style, hero, icon_tile
 PAPERS = (
     ("Malkiel, N., Croxford, A. J., & Wilcox, P. D. (2025). ",
      "A generalized method for the reliability assessment of safety–critical inspection. ",
-     "Proceedings of the Royal Society A.", "https://doi.org/10.1098/rspa.2024.0654"),
+     "Proceedings of the Royal Society A, 481: 20240654.", "https://doi.org/10.1098/rspa.2024.0654"),
     ("Malkiel, N., Croxford, A. J., & Wilcox, P. D. (2026). ",
      "A comprehensive investigation of flexible and multi-dimensional simulation-based PoD analysis. ",
-     "NDT & E International.", "https://doi.org/10.1016/j.ndteint.2025.103596"),
+     "NDT & E International, 159: 103596.", "https://doi.org/10.1016/j.ndteint.2025.103596"),
 )
 
 LINKS = (

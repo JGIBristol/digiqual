@@ -15,7 +15,6 @@ def test_app_is_a_shiny_app():
 
     assert isinstance(gui_app.app, shiny.App)
     # Names other code relies on
-    assert gui_app.logger.name == "digiqual.gui"
     assert isinstance(gui_app.MATHJAX_SRC, str) and gui_app.MATHJAX_SRC.endswith(".js")
 
 

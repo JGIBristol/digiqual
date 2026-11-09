@@ -9,7 +9,7 @@ def clean_columns(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str], int]:
 
     Column names are stripped, internal spaces become underscores, other special
     characters are removed and duplicates are numbered (``Signal``, ``Signal_1``).
-    Columns with no numeric values are dropped; stray text cells in a numeric
+    Columns with no numeric values (text or completely blank) are dropped; stray text cells in a numeric
     column become missing values, which validation later drops as invalid rows.
 
     Args:
@@ -17,7 +17,7 @@ def clean_columns(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str], int]:
 
     Returns:
         tuple: The cleaned numeric DataFrame, the names of the dropped text
-        columns, and the number of text cells turned into missing values.
+        columns (blank columns are dropped without being listed), and the number of text cells turned into missing values.
 
     Examples:
         ```python
@@ -40,8 +40,10 @@ def clean_columns(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str], int]:
 
     numeric = df.apply(pd.to_numeric, errors="coerce")
     text_cols = [c for c in df.columns if numeric[c].isna().all() and df[c].notna().any()]
+    # Completely blank columns (e.g. from trailing commas) hold nothing to report; drop them quietly
+    empty_cols = [c for c in df.columns if df[c].isna().all()]
     n_bad_cells = int((numeric.isna() & df.notna()).drop(columns=text_cols).sum().sum())
-    return numeric.drop(columns=text_cols), text_cols, n_bad_cells
+    return numeric.drop(columns=text_cols + empty_cols), text_cols, n_bad_cells
 
 
 def read_results_csv(path) -> pd.DataFrame:

@@ -9,6 +9,12 @@ except ImportError:
     HAS_CPP = False
     _digiqual_cpp = None
 
+def set_cpp_threads(n: int) -> None:
+    """Limits the threads each C++ kernel call starts (0 = one per core). No-op without C++."""
+    if HAS_CPP and hasattr(_digiqual_cpp, "set_num_threads"):
+        _digiqual_cpp.set_num_threads(int(n))
+
+
 def predict_local_std_fast(
     X: np.ndarray,
     residuals: np.ndarray,
@@ -39,7 +45,9 @@ def predict_local_std_fast(
             try:
                 return _digiqual_cpp.predict_local_std(X_source, res, X_target, float(bandwidth), out)
             except TypeError:
-                pass
+                # `out` isn't a C-contiguous float64 array: compute, then copy into it
+                np.copyto(out, _digiqual_cpp.predict_local_std(X_source, res, X_target, float(bandwidth)))
+                return out
         return _digiqual_cpp.predict_local_std(X_source, res, X_target, float(bandwidth))
 
     # Vectorized Python Fallback (batch cdist across all evaluation points)
@@ -112,7 +120,10 @@ def compute_pod_probs_fast(
             try:
                 return _digiqual_cpp.compute_pod_probs(mean_arr, sigma_arr, float(threshold), dist_name, dist_params, out)
             except TypeError:
-                pass
+                # `out` isn't a C-contiguous float64 array: compute, then copy into it
+                np.copyto(out, _digiqual_cpp.compute_pod_probs(mean_arr, sigma_arr, float(threshold),
+                                                               dist_name, dist_params))
+                return out
         return _digiqual_cpp.compute_pod_probs(mean_arr, sigma_arr, float(threshold), dist_name, dist_params)
 
     sig = np.maximum(sigma_arr, 1e-10)

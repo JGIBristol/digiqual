@@ -7,9 +7,12 @@ variance model), so it is quick. Nothing
 here depends on which variables are later plotted, integrated or sliced.
 """
 
+import asyncio
+
 import numpy as np
 from faicons import icon_svg
 from shiny import reactive, render, ui
+from shiny.types import SilentException
 
 from digiqual.defaults import KRIGING_MAX_SAMPLES
 
@@ -93,6 +96,22 @@ def _fit_fraction(progress: TaskProgress, steps) -> float:
     return 0.85 * done / max(total, 1)
 
 
+def _fit_check(fit_) -> dict:
+    """Predictions and the bootstrap convergence trace (100 refits) for the Fit quality view."""
+    from digiqual.diagnostics import bootstrap_convergence_trace
+    from digiqual.pod import build_refit_model, compute_kriging_loo_residuals
+
+    model, X, y = fit_["mean_model"], fit_["X"], fit_["y"]
+    if model.model_type_ == "Kriging":
+        y_pred = compute_kriging_loo_residuals(model, X, y)[0]
+    else:
+        y_pred = model.predict(X)
+    trace = bootstrap_convergence_trace(
+        lambda: build_refit_model(model.model_type_, model.model_params_), X, y, n_boot=100
+    )
+    return {"y": y, "y_pred": y_pred, "trace": trace}
+
+
 def model_choices(study) -> dict:
     """Dropdown choices for the candidate models fitted for `study`."""
     winner = study.cv_winner_key
@@ -133,11 +152,28 @@ def register(input, output, session, state: AppState):
                                     progress_callback=progress.on_count)
         return study, choice, result
 
+    last_choice = reactive.value(None)     # of the latest fit, for Try again
+    pending_choice = reactive.value(None)  # chosen while a fit was running
+
+    def sync_choice():
+        """Show the fitted model in the dropdown again (after a failed or refused change)."""
+        if model_fit() is not None:
+            ui.update_select("model_choice", selected=model_fit()["choice"])
+
     def start_fit(choice: str):
         study = current_study()
-        if study is None or state.fit_running():
+        if study is None:
+            return
+        if state.fit_running():
+            pending_choice.set(choice)  # started when the running fit finishes
+            return
+        if state.pod_running() or state.uq_running():
+            ui.notification_show("Wait for the PoD computation or bootstrap to finish before changing the model.",
+                                 type="warning")
+            sync_choice()
             return
         override, degree = _parse_choice(choice)
+        last_choice.set(choice)
         # first: the slow fit of all candidates, rather than a quick model change
         progress.reset(first=not state.candidates_ready())
         state.fit_error.set(None)
@@ -151,18 +187,25 @@ def register(input, output, session, state: AppState):
             return
         with reactive.isolate():
             state.fit_running.set(False)
+            pending = pending_choice()
+            pending_choice.set(None)
             if status == "error":
                 try:
                     fit_task.result()
                 except Exception as e:
                     logger.exception("Model fit failed")
                     state.fit_error.set(str(e) or type(e).__name__)
-                return
-            study, choice, result = fit_task.result()
-            if study is not current_study():
-                return  # the data or columns changed while fitting
-            model_fit.set(_summarise(study, result, choice))
-            state.candidates_ready.set(True)
+            else:
+                study, choice, result = fit_task.result()
+                if study is not current_study():
+                    return  # the data or columns changed while fitting
+                model_fit.set(_summarise(study, result, choice))
+                state.candidates_ready.set(True)
+            # A model chosen meanwhile is fitted next; otherwise the dropdown shows the fit
+            if pending is not None and model_fit() is not None and pending != model_fit()["choice"]:
+                start_fit(pending)
+            elif status == "error":
+                sync_choice()
 
     @reactive.effect
     @reactive.event(input.btn_run_models)
@@ -173,9 +216,11 @@ def register(input, output, session, state: AppState):
     @reactive.event(input.model_choice, ignore_init=True)
     def change_model():
         current = model_fit()
-        if not state.candidates_ready() or current is None or input.model_choice() == current["choice"]:
+        if not state.candidates_ready() or current is None:
             return
-        start_fit(input.model_choice())
+        # While fitting, even the current model is queued: the running fit may replace it
+        if state.fit_running() or input.model_choice() != current["choice"]:
+            start_fit(input.model_choice())
 
     @render.ui
     def run_models_ui():
@@ -241,7 +286,10 @@ def register(input, output, session, state: AppState):
     @reactive.effect
     @reactive.event(input.btn_retry_fit)
     def retry_fit():
-        state.fit_error.set(None)
+        if last_choice() is None:
+            state.fit_error.set(None)
+        else:
+            start_fit(last_choice())
 
     # ── Sidebar ─────────────────────────────────────────────────────────────
     @render.ui
@@ -314,7 +362,7 @@ def register(input, output, session, state: AppState):
                      "one standard error of the lowest error.", class_="small text-muted pt-2 mb-0"),
             )),
             ("Fit quality", "bullseye", ui.div(
-                ui.output_plot("plot_fit_diagnostics", height="480px"),
+                ui.output_ui("fit_check_ui"),
                 ui.p("Left: actual vs predicted (in-sample for polynomials, leave-one-out for Kriging); "
                      "pass/fail uses the 10-fold cross-validated R². Right: bootstrap convergence, the running "
                      "relative std dev across iterations. Thresholds are set in Data Diagnostics.",
@@ -381,7 +429,7 @@ def register(input, output, session, state: AppState):
     def plot_model_selection():
         fit_ = model_fit()
         if fit_ is None:
-            return None
+            raise SilentException()
         from digiqual.pod import plot_model_selection
         model = fit_["mean_model"]
         return plot_model_selection(model.cv_scores_, used_key=_used_key(model),
@@ -392,7 +440,7 @@ def register(input, output, session, state: AppState):
         fit_ = model_fit()
         model = fit_["mean_model"] if fit_ else None
         if model is None or model.model_type_ != "Kriging" or getattr(model, "loo_residuals_", None) is None:
-            return None
+            raise SilentException()
         from digiqual.plotting import plot_kriging_diagnostics as plot_func
         return plot_func(
             std_residuals=model.loo_residuals_,
@@ -400,31 +448,45 @@ def register(input, output, session, state: AppState):
             best_kernel_name=getattr(model, "best_kernel_name_", "Matérn 5/2"),
         )
 
+    # The fit check (100 refits) runs in a worker thread, once per new model
+    @reactive.extended_task
+    async def fit_check_task(fit_):
+        return fit_, await asyncio.to_thread(_fit_check, fit_)
+
+    @reactive.effect
+    def start_fit_check():
+        fit_ = model_fit()
+        if fit_ is not None:
+            fit_check_task.invoke(fit_)
+
     @reactive.calc
     def fit_check_data():
-        """Predictions and the bootstrap trace (100 refits): only recomputed for a new model."""
-        fit_ = model_fit()
-        if fit_ is None:
+        """The fit check of the current model, or None while it is computed (or failed)."""
+        if fit_check_task.status() != "success":
             return None
-        from digiqual.diagnostics import bootstrap_convergence_trace
-        from digiqual.pod import build_refit_model, compute_kriging_loo_residuals
+        fit_, data = fit_check_task.result()
+        return data if fit_ is model_fit() else None
 
-        model, X, y = fit_["mean_model"], fit_["X"], fit_["y"]
-        if model.model_type_ == "Kriging":
-            y_pred = compute_kriging_loo_residuals(model, X, y)[0]
-        else:
-            y_pred = model.predict(X)
-        trace = bootstrap_convergence_trace(
-            lambda: build_refit_model(model.model_type_, model.model_params_), X, y, n_boot=100
-        )
-        return {"y": y, "y_pred": y_pred, "trace": trace}
+    @render.ui
+    def fit_check_ui():
+        if fit_check_data() is not None:
+            return ui.output_plot("plot_fit_diagnostics", height="480px")
+        if fit_check_task.status() == "error":
+            try:
+                fit_check_task.result()
+            except Exception as e:
+                logger.exception("Fit check failed")
+                return ui.p(f"Could not compute the fit check: {e}", class_="text-danger small")
+        return ui.div(ui.div(class_="spinner-border spinner-border-sm text-primary me-2", role="status"),
+                      "Checking the fit (100 bootstrap refits)...",
+                      class_="d-flex align-items-center text-muted small p-4")
 
     @render.plot
     def plot_fit_diagnostics():
         fit_ = model_fit()
         data = fit_check_data()
         if fit_ is None or data is None:
-            return None
+            raise SilentException()
 
         import matplotlib.pyplot as plt
 

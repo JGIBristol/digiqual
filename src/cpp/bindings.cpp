@@ -3,8 +3,32 @@
 #include <pybind11/stl.h>
 #include "kernel_smoothing.hpp"
 #include "mc_integration.hpp"
+#include "threads.hpp"
+
+#include <stdexcept>
+#include <string>
 
 namespace py = pybind11;
+
+// The caller's output array, written in place. It must already be a C-contiguous,
+// writable float64 array of the right length: anything else would be silently
+// copied (leaving the caller's array untouched) or overrun.
+static py::array_t<double, py::array::c_style> output_array(py::object out_arr, size_t n) {
+    if (out_arr.is_none()) {
+        return py::array_t<double, py::array::c_style>(n);
+    }
+    if (!py::isinstance<py::array_t<double, py::array::c_style>>(out_arr)) {
+        throw py::type_error("out must be a C-contiguous float64 array");
+    }
+    auto out = py::reinterpret_borrow<py::array_t<double, py::array::c_style>>(out_arr);
+    if (!out.writeable()) {
+        throw py::type_error("out must be writable");
+    }
+    if (static_cast<size_t>(out.size()) != n) {
+        throw std::invalid_argument("out has " + std::to_string(out.size()) + " elements, expected " + std::to_string(n));
+    }
+    return out;
+}
 
 py::array_t<double> py_predict_local_std(
     py::array_t<double, py::array::c_style | py::array::forcecast> X_train,
@@ -20,13 +44,16 @@ py::array_t<double> py_predict_local_std(
     size_t N_train = buf_X_train.shape[0];
     size_t D = (buf_X_train.ndim > 1) ? buf_X_train.shape[1] : 1;
     size_t N_eval = buf_X_eval.shape[0];
+    size_t D_eval = (buf_X_eval.ndim > 1) ? buf_X_eval.shape[1] : 1;
 
-    py::array_t<double, py::array::c_style> out;
-    if (!out_arr.is_none()) {
-        out = py::cast<py::array_t<double, py::array::c_style>>(out_arr);
-    } else {
-        out = py::array_t<double>(N_eval);
+    if (D_eval != D) {
+        throw std::invalid_argument("X_eval has " + std::to_string(D_eval) + " columns but X_train has " + std::to_string(D));
     }
+    if (static_cast<size_t>(buf_res.size) != N_train) {
+        throw std::invalid_argument("Need one residual per training point");
+    }
+
+    auto out = output_array(out_arr, N_eval);
     py::buffer_info buf_out = out.request();
 
     const double* ptr_X_train = static_cast<const double*>(buf_X_train.ptr);
@@ -54,6 +81,9 @@ py::array_t<double> py_compute_pod_probs(
     py::buffer_info buf_sigma = sigma_resp.request();
 
     size_t N_points = buf_mean.size;
+    if (static_cast<size_t>(buf_sigma.size) != N_points) {
+        throw std::invalid_argument("mean_resp and sigma_resp must have the same length");
+    }
 
     double loc = 0.0;
     double scale = 1.0;
@@ -64,12 +94,7 @@ py::array_t<double> py_compute_pod_probs(
         scale = dist_params[0].cast<double>();
     }
 
-    py::array_t<double, py::array::c_style> out;
-    if (!out_arr.is_none()) {
-        out = py::cast<py::array_t<double, py::array::c_style>>(out_arr);
-    } else {
-        out = py::array_t<double>(N_points);
-    }
+    auto out = output_array(out_arr, N_points);
     py::buffer_info buf_out = out.request();
 
     const double* ptr_mean = static_cast<const double*>(buf_mean.ptr);
@@ -108,5 +133,12 @@ PYBIND11_MODULE(_digiqual_cpp, m) {
         py::arg("dist_params"),
         py::arg("out") = py::none(),
         "Compute PoD survival CDF probabilities."
+    );
+
+    m.def(
+        "set_num_threads",
+        [](unsigned int n) { digiqual_thread_limit().store(n); },
+        py::arg("n"),
+        "Limit the threads each kernel call uses (0 = one per core)."
     );
 }

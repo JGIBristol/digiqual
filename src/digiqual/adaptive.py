@@ -34,6 +34,13 @@ def _filter_by_graveyard(
     if graveyard is None or graveyard.empty or candidates.empty:
         return candidates
 
+    # Failed rows can hold text or missing inputs (that may be why they failed);
+    # only points with a full set of finite coordinates can be compared
+    graveyard = graveyard[input_cols].apply(pd.to_numeric, errors="coerce")
+    graveyard = graveyard[np.isfinite(graveyard.to_numpy(dtype=float)).all(axis=1)]
+    if graveyard.empty:
+        return candidates
+
     # Combine to find the global min and max for fair 0-1 normalization
     combined = pd.concat([candidates[input_cols], graveyard[input_cols]], ignore_index=True)
 

@@ -23,14 +23,34 @@ from .plotting import plot_collinearity_matrix, plot_pod_curve, plot_signal_mode
 logger = logging.getLogger(__name__)
 
 
+def model_key_args(model_key: Tuple[str, Any]) -> Tuple[str, int | None]:
+    """The `model_override` and `force_degree` arguments that select a fitted model by its key.
+
+    Keys are those of `models_cache`, e.g. ``('Polynomial', 3)`` or ``('Kriging', None)``.
+    """
+    if model_key[0] == "Polynomial":
+        return "polynomial", model_key[1]
+    return "kriging", None
+
+
 def model_override_args(mean_model) -> Tuple[str, int | None]:
     """The `model_override` and `force_degree` arguments that select `mean_model` again.
 
     Used to keep the same fitted model when re-running `pod()` with new settings.
     """
     if mean_model.model_type_ == "Polynomial":
-        return "polynomial", mean_model.model_params_
-    return "kriging", None
+        return model_key_args(("Polynomial", mean_model.model_params_))
+    return model_key_args(("Kriging", None))
+
+
+def _check_confidence_level(res: Dict[str, Any], confidence_level: float) -> None:
+    """Raises if bootstrapped results have no bounds at `confidence_level` (rather than
+    silently plotting other bounds under that label)."""
+    if res.get("n_boot", 0) > 0 and confidence_level not in res.get("ci_bounds", {}):
+        raise ValueError(
+            f"No {confidence_level}% confidence bounds were computed. "
+            f"Choose one of {sorted(res.get('ci_bounds', {}))}."
+        )
 
 
 class SimulationStudy:
@@ -42,12 +62,16 @@ class SimulationStudy:
         outcome (str): Name of the outcome variable.
         data (pd.DataFrame): The raw simulation data.
         clean_data (pd.DataFrame): Data that has passed validation.
+        removed_data (pd.DataFrame): Rows dropped by validation (missing, non-numeric or infinite values).
         sufficiency_results (pd.DataFrame): The latest diagnostic results.
+        model_results (Dict): The fitted model from the latest `fit_model()` (or `pod()`) call.
         pod_results (Dict): Results from the latest PoD analysis.
         plots (Dict): Stores the latest generated figures.
         linear_pod_results (Dict): Results from the classical linear analysis.
         linear_plots (Dict): Stores figures from the classical linear analysis.
         models_cache (Dict): Cached mean models to prevent redundant fitting.
+        cv_scores_cache (Dict): Cross-validation error of every candidate model.
+        cv_winner_key (Tuple | None): Key of the model the one-standard-error rule picks.
         variance_cache (Dict): Cached variance models (residuals/bandwidth).
         pod_curves_cache (Dict): Cached integrated PoD curves.
         threshold_spectrum_cache (Dict): Cached threshold spectrum.
@@ -92,6 +116,8 @@ class SimulationStudy:
 
         # Layered Caches for performance optimization
         self.models_cache: Dict[str, Any] = {}       # Stores fitted mean models
+        self.cv_scores_cache: Dict[Tuple, float] = {}  # CV error of each candidate
+        self.cv_winner_key: Optional[Tuple] = None     # The automatic (1-SE rule) choice
         self.variance_cache: Dict[str, Any] = {}     # Stores residuals and bandwidths
         self.pod_curves_cache: Dict[str, Any] = {}   # Stores integrated PoD curves
         self.threshold_spectrum_cache: Dict[Tuple, Dict] = {} # Stores threshold spectrum
@@ -244,6 +270,17 @@ class SimulationStudy:
     ) -> pd.DataFrame:
         """
         Runs statistical diagnostics to evaluate if the current sample size is sufficient.
+
+        Args:
+            max_gap_ratio (float): Largest allowed coverage gap, as a fraction of each input's range.
+            min_r2_score (float): Minimum cross-validated R² for the model-fit check.
+            max_avg_cv (float): Maximum average bootstrap spread (relative to the response std).
+            max_max_cv (float): Maximum bootstrap spread at any probe point.
+            max_allowed_vif (float): Maximum Variance Inflation Factor for the collinearity check.
+
+        Returns:
+            pd.DataFrame: One row per test with its value, threshold and pass/fail
+            (empty if there is no valid data).
         """
         if self.clean_data.empty:
             if self.data.empty:
@@ -444,8 +481,30 @@ class SimulationStudy:
     ) -> Dict[str, Any]:
         """Pre-calculates a spectrum of PoD curves across a range of signal thresholds.
 
-        Takes the same settings as `pod()`. Afterwards `pod()` calls with these settings
-        and ``n_boot=0`` interpolate from the spectrum instead of integrating.
+        Takes the same settings as `pod()`. Afterwards `pod()` calls with these settings,
+        ``n_boot=0`` and a threshold inside the observed signal range interpolate from the
+        spectrum instead of integrating. `plot_pod_vs_threshold()` also reads it.
+        Existing ``self.pod_results`` and ``self.model_results`` are kept; if there
+        were none, they hold the (unbootstrapped) analysis at the median signal.
+
+        Args:
+            poi_col (list | str): The parameter(s) of interest, as in `pod()`.
+            nuisance_col (list | str | None): Parameters integrated out, as in `pod()`.
+            slice_values (dict | None): Values of the sliced parameters, as in `pod()`.
+            n_threshold_points (int): Number of thresholds, evenly spaced between the
+                smallest and largest observed signal.
+            bandwidth_ratio, model_override, force_degree, nuisance_dists, nuisance_bounds:
+                As in `pod()`.
+
+        Returns:
+            Dict: ``thresholds`` (n_threshold_points,), ``pod_matrix`` (grid points x
+            thresholds) and ``mean_curve``.
+
+        Examples:
+            ```python
+            spec = study.compute_pod_spectrum(poi_col="Length")
+            study.plot_pod_vs_threshold()
+            ```
         """
         # 1. Standardize column configurations
         if isinstance(poi_col, str):
@@ -458,19 +517,29 @@ class SimulationStudy:
 
         # 2. Establish baseline model and variance
         logger.info("--- Initiating Threshold Spectrum Generation ---")
+        if self.clean_data.empty:
+            self._validate()
+            if self.clean_data.empty:
+                raise ValueError("Cannot compute a PoD spectrum: No valid data available.")
         median_thresh = float(self.clean_data[self.outcome].median())
-        temp_results = self.pod(
-            poi_col=poi_cols,
-            threshold=median_thresh,
-            nuisance_col=nuisance_cols,
-            slice_values=slice_values,
-            bandwidth_ratio=bandwidth_ratio,
-            n_boot=0,
-            model_override=model_override,
-            force_degree=force_degree,
-            nuisance_dists=nuisance_dists,
-            nuisance_bounds=nuisance_bounds
-        )
+        # pod() below is only a means to build the caches: keep the user's results
+        saved_results = (self.pod_results, self.model_results)
+        try:
+            temp_results = self.pod(
+                poi_col=poi_cols,
+                threshold=median_thresh,
+                nuisance_col=nuisance_cols,
+                slice_values=slice_values,
+                bandwidth_ratio=bandwidth_ratio,
+                n_boot=0,
+                model_override=model_override,
+                force_degree=force_degree,
+                nuisance_dists=nuisance_dists,
+                nuisance_bounds=nuisance_bounds
+            )
+        finally:
+            if saved_results[0]:
+                self.pod_results, self.model_results = saved_results
 
         # Reuse the exact cache keys pod() just used, so the two always agree
         mean_model = temp_results['mean_model']
@@ -629,6 +698,10 @@ class SimulationStudy:
             print(fit["equation"], fit["sobol_indices"])
             ```
         """
+        model_override = (model_override or "auto").lower()
+        if model_override not in ("auto", "polynomial", "kriging"):
+            raise ValueError(f"model_override must be 'auto', 'polynomial' or 'kriging', not {model_override!r}.")
+
         if self.clean_data.empty:
             self._validate()
             if self.clean_data.empty:
@@ -858,12 +931,13 @@ class SimulationStudy:
         # 6. LAYER 3 & 4 CACHE: Integration & Spectrum Interpolation
         # ---------------------------------------------------------
         # Format nuisance_dists for caching
-        nuisance_dists_key = frozenset()
-        if nuisance_dists:
-            nuisance_dists_key = frozenset(
-                (k, (v[0], tuple(v[1]) if isinstance(v[1], (tuple, list)) else (v[1],)))
-                for k, v in nuisance_dists.items()
-            )
+        # (a None entry, as estimate_nuisance_distribution gives for "Uniform", means uniform)
+        # Parameters become a tuple of floats, so a numpy array works and can be hashed
+        nuisance_dists = {
+            k: (v[0], tuple(float(p) for p in np.ravel(v[1])))
+            for k, v in (nuisance_dists or {}).items() if v is not None
+        } or None
+        nuisance_dists_key = frozenset(nuisance_dists.items()) if nuisance_dists else frozenset()
 
         # Integration limits for each nuisance: the observed range, optionally narrowed
         integration_bounds = self._resolve_nuisance_bounds(nuisance_cols, nuisance_bounds)
@@ -892,9 +966,11 @@ class SimulationStudy:
             nuisance_ranges[c] = (val, val)
 
         # B) Resolve Analysis (Layer 4 -> Layer 3 -> Miss)
-        if spectrum_key in self.threshold_spectrum_cache and n_boot == 0:
+        # (the spectrum only covers the observed signal range; np.interp would clamp outside it)
+        spec = self.threshold_spectrum_cache.get(spectrum_key)
+        if (spec is not None and n_boot == 0
+                and spec["thresholds"][0] <= threshold <= spec["thresholds"][-1]):
             logger.info("3. Interpolating PoD Curve from Threshold Spectrum (Layer 4 Hit)...")
-            spec = self.threshold_spectrum_cache[spectrum_key]
 
             # Linear Interpolation across the pre-calculated threshold spectrum
             # pod_matrix shape: (n_grid_points, n_thresholds)
@@ -991,7 +1067,7 @@ class SimulationStudy:
                 cl_lower, _ = ci_bounds[cl]
                 for tp in std_target_pods:
                     val = pod.calculate_reliability_point(X_eval.flatten(), cl_lower, target_pod=tp)
-                    reliability_table[(int(tp*100), cl)] = val
+                    reliability_table[(int(round(tp * 100)), cl)] = val
 
         # 8. Package Results
         self.pod_results = {
@@ -1037,6 +1113,16 @@ class SimulationStudy:
         """
         Updates the evaluated slice for the PoD surface using Layer 3 Caching.
         This allows for real-time plot updates when changing constant parameters in the UI.
+
+        Re-runs `pod()` with the current settings, the new slice values and ``n_boot=0``.
+
+        Args:
+            slice_values (dict): New values for (some of) the sliced parameters.
+
+        Returns:
+            Dict: The new `pod_results` (empty if `pod()` hasn't been run). They have no
+            bootstrap bounds, so ``a90_95`` is NaN; use ``results["curves"]["pod"]``, or
+            re-run `pod()` with ``n_boot > 0`` for bounds.
         """
         if not self.pod_results:
             return {}
@@ -1175,6 +1261,7 @@ class SimulationStudy:
         # 2. PoD Curve/Surface Plot
         if len(poi_cols) == 1:
             # Extract the correct confidence bounds
+            _check_confidence_level(res, confidence_level)
             cl_lower, cl_upper = None, None
             if "ci_bounds" in res and confidence_level in res["ci_bounds"] and res.get("n_boot", 0) > 0:
                 cl_lower, cl_upper = res["ci_bounds"][confidence_level]
@@ -1344,6 +1431,7 @@ class SimulationStudy:
         )
 
         # Extract the correct confidence bounds
+        _check_confidence_level(res, confidence_level)
         cl_lower, cl_upper = None, None
         if "ci_bounds" in res and confidence_level in res["ci_bounds"] and res.get("n_boot", 0) > 0:
             cl_lower, cl_upper = res["ci_bounds"][confidence_level]

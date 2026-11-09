@@ -45,6 +45,12 @@ jobs:
       - name: Install Build Tools
         run: python -m pip install --upgrade pip briefcase cibuildwheel
 
+      # Bundled into the wheel (package data) so the app's equations render offline;
+      # same as `just fetch_mathjax`.
+      - name: Fetch MathJax
+        shell: bash
+        run: curl -fsSL -o src/digiqual/gui/www/mathjax-tex-svg.js https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js
+
       - name: Build digiqual Wheel
         shell: bash
         env:
