@@ -35,10 +35,16 @@ jobs:
           python-version: ${{ matrix.python }}
 
       # Builds the C++ extension in place so the C++/Python equivalence tests run.
+      # --no-group docs on every uv call: a bare `uv run` re-syncs the default
+      # groups and installs the ~100 docs packages (jupyterlab etc.) the tests
+      # never use. ARCHFLAGS: build for the runner's own arch only, not universal2.
       - name: Install and build extension
+        shell: bash
+        env:
+          ARCHFLAGS: ${{ runner.os == 'macOS' && '-arch arm64' || '' }}
         run: |
           uv sync --no-group docs
-          uv run python setup.py build_ext --inplace
+          uv run --no-group docs python setup.py build_ext --inplace
 
       - name: Run tests
         # --durations: list the slowest tests, so creeping test time shows up in the log
