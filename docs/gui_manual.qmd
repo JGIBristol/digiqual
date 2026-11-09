@@ -79,7 +79,7 @@ If Data Diagnostics found issues, they are listed above the views.
 
 **Purpose:** Decide how the multi-dimensional model is turned into a PoD, and explore it in real time.
 
-The sidebar shows the chosen model (with a link back to change it), then every input variable with a role:
+The sidebar holds the chosen model (with a link back to change it), the **Detection Threshold** and the **Update PoD** button. Above the plots, the **PoD setup** table has one row per input variable: its range, its role (chosen with the Plot / Integrate / Slice buttons) and the settings for that role, on one line:
 
 | Role | What it means | Controls |
 |---|---|---|

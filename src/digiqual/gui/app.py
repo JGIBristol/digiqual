@@ -28,6 +28,7 @@ from . import (  # noqa: E402
     start_page,
     stepper,
 )
+from .background import PROGRESS_JS  # noqa: E402
 from .components import _goto_js  # noqa: E402
 from .state import AppState, logger, register_shared  # noqa: E402, F401
 
@@ -65,7 +66,8 @@ app_ui = ui.page_fluid(
             Shiny.addCustomMessageHandler('refresh_page', function(message) {
                 window.location.reload();
             });
-        """)
+        """),
+        ui.tags.script(PROGRESS_JS),
     ),
     ui.div(
         ui.div(

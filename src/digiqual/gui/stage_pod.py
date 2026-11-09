@@ -13,7 +13,7 @@ from shiny import reactive, render, ui
 from digiqual.defaults import CONFIDENCE_LEVELS, DEFAULT_N_BOOT, N_THRESHOLD_POINTS, TARGET_PODS
 from digiqual.pod import reliability_matrix
 
-from .background import TaskProgress, progress_panel
+from .background import TaskProgress, progress_panel, push_progress
 from .components import (
     _goto_js,
     config_errors,
@@ -136,7 +136,8 @@ def register(input, output, session, state: AppState):
                                ("ui_max_gap", "ui_min_r2", "ui_avg_cv", "ui_max_cv", "ui_max_vif")},
             },
         }
-        progress.reset()
+        from digiqual._parallel import resolve_n_jobs
+        progress.reset(one_plotted=len(config["plot"]) == 1, n_boot=n_boot, cores=resolve_n_jobs(n_jobs))
         state.uq_running.set(True)
         uq_task.invoke(study, config, state.pod_kwargs(config), n_boot, n_jobs, record)
 
@@ -162,21 +163,33 @@ def register(input, output, session, state: AppState):
             study.visualise(show=False)
             state.bump_plots()
 
-    def _uq_panel():
-        reactive.invalidate_later(0.5)
-        config = explorer_config() or {"plot": []}
-        from digiqual._parallel import resolve_n_jobs
-        cores = resolve_n_jobs(-1 if input.pod_parallel() else 1)
-        done, total, _label = progress.count or (0, int(input.pod_n_boot() or DEFAULT_N_BOOT), "")
+    def _uq_view():
+        """(steps, fraction) of the running bootstrap."""
+        info = progress.info
+        cores = info["cores"]
+        done, total, _label = progress.count or (0, info["n_boot"], "")
         bootstrapping = progress.seen("4. Running Bootstrap")
         steps = []
-        if len(config["plot"]) == 1:
+        if info["one_plotted"]:
             steps.append(("Threshold spectrum, for the PoD vs threshold plot", "", "done" if bootstrapping else "active"))
         steps.append(("Bootstrap: refitting the model to resampled data",
                       f"{done} of {total} iterations, on {cores} core{'s' if cores > 1 else ''}",
                       "todo" if not bootstrapping else "done" if done >= total else "active"))
         steps.append(("Confidence bounds and reliability indices", "", "active" if done >= total else "todo"))
-        return progress_panel("Running the bootstrap", progress, steps, done / max(total, 1) if bootstrapping else 0.0)
+        return steps, done / max(total, 1) if bootstrapping else 0.0
+
+    def _uq_panel():
+        steps, fraction = _uq_view()
+        return progress_panel("uq-progress", "Running the bootstrap", progress, steps, fraction)
+
+    @reactive.effect
+    async def tick_uq_progress():
+        """Update the panel in place twice a second (redrawing it would restart its spinners)."""
+        if not state.uq_running():
+            return
+        reactive.invalidate_later(0.5)
+        steps, fraction = _uq_view()
+        await push_progress(session, "uq-progress", progress, steps, fraction)
 
     def _targets():
         return int(input.pod_target_val()), int(input.pod_conf_val())

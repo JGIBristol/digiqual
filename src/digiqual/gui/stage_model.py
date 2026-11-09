@@ -13,7 +13,7 @@ from shiny import reactive, render, ui
 
 from digiqual.defaults import KRIGING_MAX_SAMPLES
 
-from .background import TaskProgress, progress_panel, step_states
+from .background import TaskProgress, progress_panel, push_progress, step_states
 from .components import (
     diagnostic_failures,
     failure_list,
@@ -125,7 +125,6 @@ def register(input, output, session, state: AppState):
     # The fit runs in a worker thread (an extended task), so the page stays live and
     # shows its progress.
     progress = TaskProgress()
-    first_fit = reactive.value(True)  # the slow fit of all candidates, or a quick model change
 
     @ui.bind_task_button(button_id="btn_run_models")
     @reactive.extended_task
@@ -139,8 +138,8 @@ def register(input, output, session, state: AppState):
         if study is None or state.fit_running():
             return
         override, degree = _parse_choice(choice)
-        progress.reset()
-        first_fit.set(not state.candidates_ready())
+        # first: the slow fit of all candidates, rather than a quick model change
+        progress.reset(first=not state.candidates_ready())
         state.fit_error.set(None)
         state.fit_running.set(True)
         fit_task.invoke(study, choice, override, degree)
@@ -219,12 +218,25 @@ def register(input, output, session, state: AppState):
             class_="dq-run-models card p-4 mb-3",
         )
 
-    def _progress_panel():
-        reactive.invalidate_later(0.5)
+    def _fit_view():
+        """(title, steps, fraction) of the running fit."""
         steps = _fit_steps(progress)
-        if first_fit():
-            return progress_panel("Fitting the candidate models", progress, steps, _fit_fraction(progress, steps))
-        return progress_panel("Fitting the chosen model", progress, steps[1:])
+        if progress.info["first"]:
+            return "Fitting the candidate models", steps, _fit_fraction(progress, steps)
+        return "Fitting the chosen model", steps[1:], None
+
+    def _progress_panel():
+        title, steps, fraction = _fit_view()
+        return progress_panel("fit-progress", title, progress, steps, fraction)
+
+    @reactive.effect
+    async def tick_fit_progress():
+        """Update the panel in place twice a second (redrawing it would restart its spinners)."""
+        if not state.fit_running():
+            return
+        reactive.invalidate_later(0.5)
+        _title, steps, fraction = _fit_view()
+        await push_progress(session, "fit-progress", progress, steps, fraction)
 
     @reactive.effect
     @reactive.event(input.btn_retry_fit)

@@ -14,7 +14,7 @@ from shiny import reactive, render, ui
 from digiqual.defaults import N_THRESHOLD_POINTS
 from digiqual.integration import NUISANCE_DISTRIBUTIONS, estimate_nuisance_distribution
 
-from .background import TaskProgress, progress_panel, step_states
+from .background import TaskProgress, progress_panel, push_progress, step_states
 from .components import (
     _goto_js,
     config_errors,
@@ -32,8 +32,8 @@ panel = stage_page(
     "explorer",
     [ui.output_ui("explorer_sidebar_ui")],
     ui.output_ui("explorer_warnings_ui"),
+    ui.output_ui("explorer_setup_ui"),
     ui.output_ui("explorer_results_ui"),
-    sidebar_width=420,
 )
 
 
@@ -95,7 +95,8 @@ def register(input, output, session, state: AppState):
             return notice("Choose a model in Model Diagnostics first.", action=nav_button("model"))
         return ui.div()
 
-    def _variable_block(col, role, r):
+    def _variable_row(col, role, r):
+        """One row of the PoD setup table: the variable, its role, and that role's settings."""
         lo, hi, med, step, decimals = r
         rnd = lambda v: round(v, decimals)  # noqa: E731
         exact_step = 10 ** -decimals
@@ -105,39 +106,66 @@ def register(input, output, session, state: AppState):
             int_lo = read_input(input, f"int_lo_{col}", rnd(lo))
             int_hi = read_input(input, f"int_hi_{col}", rnd(hi))
 
-        def small(label, control):
-            return ui.div(ui.tags.label(label, class_="small text-muted mb-0"), control)
+        def labelled(label, control, class_=""):
+            return ui.div(ui.span(label, class_="small text-muted"), control, class_=f"dq-inline-field {class_}")
 
         return ui.div(
+            ui.div(ui.tags.strong(col), ui.div(f"{fmt_value(lo)} to {fmt_value(hi)}", class_="small text-muted"),
+                   class_="dq-role-name"),
+            ui.div(ui.input_radio_buttons(f"role_{col}", None, choices=ROLES, selected=role, inline=True),
+                   class_="dq-role"),
             ui.div(
-                ui.tags.strong(col),
-                ui.span(f"[{fmt_value(lo)}, {fmt_value(hi)}]", class_="small text-muted"),
-                class_="d-flex justify-content-between align-items-baseline"
-            ),
-            ui.input_radio_buttons(f"role_{col}", None, choices=ROLES, selected=role, inline=True),
-            ui.panel_conditional(
-                f"input.role_{col} === 'slice'",
-                ui.layout_columns(
-                    ui.input_slider(f"slice_{col}", None, min=rnd(lo), max=rnd(hi), value=rnd(current), step=step,
-                                    ticks=False),
-                    small("Value", ui.input_numeric(f"slice_num_{col}", None, value=rnd(current),
-                                                    min=rnd(lo), max=rnd(hi), step=exact_step)),
-                    col_widths=[8, 4], gap="8px", class_="mb-0 align-items-end"
+                ui.panel_conditional(
+                    f"input.role_{col} === 'plot'",
+                    ui.span("On an axis of the plots, across its full data range.", class_="text-muted small"),
                 ),
-            ),
-            ui.panel_conditional(
-                f"input.role_{col} === 'integrate'",
-                ui.layout_columns(
-                    small("Distribution", ui.input_select(f"dist_{col}", None, choices=list(NUISANCE_DISTRIBUTIONS),
-                                                          selected=dist)),
-                    small("From", ui.input_numeric(f"int_lo_{col}", None, value=int_lo, min=rnd(lo), max=rnd(hi),
-                                                   step=exact_step)),
-                    small("To", ui.input_numeric(f"int_hi_{col}", None, value=int_hi, min=rnd(lo), max=rnd(hi),
-                                                 step=exact_step)),
-                    col_widths=[4, 4, 4], gap="6px", class_="mb-0"
+                ui.panel_conditional(
+                    f"input.role_{col} === 'slice'",
+                    ui.div(
+                        ui.input_slider(f"slice_{col}", None, min=rnd(lo), max=rnd(hi), value=rnd(current),
+                                        step=step, ticks=False),
+                        labelled("Value", ui.input_numeric(f"slice_num_{col}", None, value=rnd(current),
+                                                           min=rnd(lo), max=rnd(hi), step=exact_step)),
+                        class_="dq-slice-controls"
+                    ),
                 ),
+                ui.panel_conditional(
+                    f"input.role_{col} === 'integrate'",
+                    ui.div(
+                        ui.input_select(f"dist_{col}", None, choices=list(NUISANCE_DISTRIBUTIONS), selected=dist),
+                        labelled("from", ui.input_numeric(f"int_lo_{col}", None, value=int_lo, min=rnd(lo),
+                                                          max=rnd(hi), step=exact_step)),
+                        labelled("to", ui.input_numeric(f"int_hi_{col}", None, value=int_hi, min=rnd(lo),
+                                                        max=rnd(hi), step=exact_step)),
+                        class_="dq-integrate-controls"
+                    ),
+                ),
+                class_="dq-role-settings"
             ),
-            class_="pb-2 mb-2 border-bottom"
+            class_="dq-role-row"
+        )
+
+    @render.ui
+    def explorer_setup_ui():
+        """The PoD setup table: one row per input variable."""
+        study = current_study()
+        if study is None or not state.candidates_ready() or model_fit() is None:
+            return ui.div()
+        r = ranges()
+        with reactive.isolate():
+            roles = _default_roles(study)
+        return ui.card(
+            ui.card_header(
+                ui.span(icon_svg("sliders"), class_="text-primary me-2"), "PoD setup",
+                ui.span("Plot 1 or 2 variables, integrate over up to 2, and slice the rest at a fixed value.",
+                        class_="small text-muted fw-normal ms-2"),
+            ),
+            ui.div(
+                ui.div(ui.span("Variable"), ui.span("Role"), ui.span("Settings"), class_="dq-role-row dq-role-head"),
+                *[_variable_row(col, roles[col], r[col]) for col in study.inputs],
+                class_="dq-role-table"
+            ),
+            ui.output_ui("integration_notes_ui"),
         )
 
     @render.ui
@@ -147,28 +175,19 @@ def register(input, output, session, state: AppState):
             return ui.p("Available once a model is chosen.", class_="small text-muted")
         r = ranges()
         with reactive.isolate():
-            roles = _default_roles(study)
             thresh = threshold() if threshold() is not None else r[study.outcome][2]
         o_lo, o_hi, _o_med, o_step, o_dec = r[study.outcome]
 
         return ui.div(
             ui.output_ui("explorer_model_ui"),
             _section(
-                "Variables",
-                ui.p("Plot 1 or 2, integrate over up to 2, slice the rest.", class_="small text-muted mb-2"),
-                *[_variable_block(col, roles[col], r[col]) for col in study.inputs],
-                ui.output_ui("integration_notes_ui"),
-            ),
-            _section(
                 f"Detection threshold ({study.outcome})",
-                ui.layout_columns(
-                    ui.input_slider("pod_threshold", None, min=round(o_lo, o_dec), max=round(o_hi, o_dec),
-                                    value=round(thresh, o_dec), step=o_step, ticks=False),
-                    ui.div(ui.tags.label("Value", class_="small text-muted mb-0"),
-                           ui.input_numeric("pod_threshold_num", None, value=round(thresh, o_dec),
-                                            min=round(o_lo, o_dec), max=round(o_hi, o_dec), step=10 ** -o_dec)),
-                    col_widths=[8, 4], gap="8px", class_="mb-0 align-items-end"
-                ),
+                ui.input_slider("pod_threshold", None, min=round(o_lo, o_dec), max=round(o_hi, o_dec),
+                                value=round(thresh, o_dec), step=o_step, ticks=False, width="100%"),
+                ui.div(ui.span("Value", class_="small text-muted"),
+                       ui.input_numeric("pod_threshold_num", None, value=round(thresh, o_dec),
+                                        min=round(o_lo, o_dec), max=round(o_hi, o_dec), step=10 ** -o_dec),
+                       class_="dq-inline-field"),
             ),
             ui.output_ui("explorer_status_ui"),
             ui.input_task_button("btn_update_pod", "Update PoD", class_="btn-primary w-100",
@@ -215,7 +234,7 @@ def register(input, output, session, state: AppState):
                 except ValueError as e:
                     text = f"{e} Uniform will be used instead, {text}."
             notes.append(ui.div(ui.tags.strong(f"{col}: "), text, class_="small text-muted mb-1"))
-        return ui.div(*notes, class_="mt-2 p-2 bg-light border-start border-primary border-3 rounded-end")
+        return ui.div(*notes, class_="mt-3 p-2 bg-light border-start border-primary border-3 rounded-end")
 
     def _dirty(config):
         return applied_structure() is None or state.structure(config) != applied_structure()
@@ -342,7 +361,7 @@ def register(input, output, session, state: AppState):
             return
         if state.pod_running() or state.uq_running():
             return
-        progress.reset()
+        progress.reset(integrated=list(config["integrate"]))
         state.pod_running.set(True)
         pod_task.invoke(study, config, state.pod_kwargs(config))
 
@@ -367,12 +386,10 @@ def register(input, output, session, state: AppState):
             applied_structure.set(state.structure(config))
             state.bump_plots()
 
-    def _pod_panel():
-        reactive.invalidate_later(0.5)
-        config = explorer_config() or {"integrate": {}}
+    def _pod_steps():
         spectrum_done = progress.seen("--- Spectrum Generation Complete", "4. Threshold Spectrum already cached")
         reached = 2 if spectrum_done else 1 if progress.seen("4.") else 0
-        integrated = ", ".join(config["integrate"])
+        integrated = ", ".join(progress.info["integrated"])
         steps = [
             ("Computing the PoD curve",
              f"Monte Carlo integration over {integrated}" if integrated else "Nothing to integrate: a direct evaluation"),
@@ -380,11 +397,19 @@ def register(input, output, session, state: AppState):
              "So the threshold slider can move the PoD instantly"),
             ("PoD at the chosen threshold", ""),
         ]
-        return progress_panel(
-            "Computing the PoD", progress,
-            [(label, detail, st) for (label, detail), st in zip(steps, step_states(reached, 3), strict=True)],
-            note="Slices and the threshold update live again once this finishes."
-        )
+        return [(label, detail, st) for (label, detail), st in zip(steps, step_states(reached, 3), strict=True)]
+
+    def _pod_panel():
+        return progress_panel("pod-progress", "Computing the PoD", progress, _pod_steps(),
+                              note="Slices and the threshold update live again once this finishes.")
+
+    @reactive.effect
+    async def tick_pod_progress():
+        """Update the panel in place twice a second (redrawing it would restart its spinners)."""
+        if not state.pod_running():
+            return
+        reactive.invalidate_later(0.5)
+        await push_progress(session, "pod-progress", progress, _pod_steps())
 
     @reactive.effect
     def live_update():
