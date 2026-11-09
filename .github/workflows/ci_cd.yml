@@ -19,6 +19,10 @@ jobs:
   test:
     name: Tests (${{ matrix.os }}, Python ${{ matrix.python }})
     runs-on: ${{ matrix.os }}
+    # Healthy runs take ~3-6 min. A hang (e.g. a stuck process pool) should fail
+    # fast rather than run to GitHub's 6 h default; pytest-timeout (300 s per
+    # test, pyproject.toml) normally catches it first and names the test.
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -37,7 +41,8 @@ jobs:
           uv run python setup.py build_ext --inplace
 
       - name: Run tests
-        run: uv run --no-group docs pytest
+        # --durations: list the slowest tests, so creeping test time shows up in the log
+        run: uv run --no-group docs pytest --durations=15
 
   # Slow, machine-dependent memory test. Run on demand from the Actions tab.
   stress:

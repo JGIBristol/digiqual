@@ -125,6 +125,8 @@ def test_script_reproduces_the_app(name, tmp_path, monkeypatch):
     expected, got, text = _app_and_script(tmp_path, monkeypatch, _data(), csv_name="results.csv",
                                           inputs=inputs, outcome="Signal", **options)
     _assert_same(expected, got)
+    # Without the guard, n_jobs=-1 hangs under spawn/forkserver (Windows, macOS, Python 3.14+)
+    assert 'if __name__ == "__main__":' in text
     if name == "distribution-fallback":
         assert "estimate_nuisance_distribution" not in text and "integrated uniformly" in text
     if name == "two-plotted":

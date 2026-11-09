@@ -77,6 +77,9 @@ def analysis_script(config: dict, model_choice: str, settings: dict, used_dists:
         "",
         f"DATA_FILE = {settings.get('csv_name') or 'results.csv'!r}",
         "",
+    ]
+    header, lines = lines, []
+    lines += [
         "# 1. Data, with the column names cleaned as in the app",
         "df = read_results_csv(DATA_FILE)",
         "study = SimulationStudy()",
@@ -145,4 +148,13 @@ def analysis_script(config: dict, model_choice: str, settings: dict, used_dists:
     ]
     if one_plotted:
         lines.append("study.plot_pod_vs_threshold()")
-    return "\n".join(lines) + "\n"
+    # The guard is required for n_jobs != 1: on Windows and macOS (and Linux from
+    # Python 3.14) worker processes re-import this file, and without it each worker
+    # would rerun the whole analysis instead of its share of the bootstrap.
+    guard = [
+        "",
+        "# Keep this guard: parallel bootstrap workers (n_jobs != 1) re-import this file.",
+        'if __name__ == "__main__":',
+    ]
+    body = [f"    {line}" if line else "" for line in lines]
+    return "\n".join(header + guard + body) + "\n"

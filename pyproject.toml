@@ -50,7 +50,7 @@ skip = "*-win32 *-manylinux_i686 *-musllinux*"
 # Import the extension directly (`import digiqual` alone would pass even if it
 # were missing, since cpp_fallback silently falls back to NumPy), then run the
 # test suite against the built wheel.
-test-requires = ["pytest", "psutil"]
+test-requires = ["pytest", "pytest-timeout", "psutil"]
 test-command = "python -c \"import digiqual._digiqual_cpp\" && pytest {project}/tests -q"
 
 [tool.cibuildwheel.macos]
@@ -69,6 +69,7 @@ dev = [
     # Not a runtime dependency (wheels ship the compiled extension), but
     # `setup.py build_ext --inplace` (just test_matrix) runs in the project env.
     "pybind11>=2.12.0",
+    "pytest-timeout>=2.3",
 ]
 docs = [
     "quartodoc",
@@ -89,6 +90,9 @@ linux-gui = [
 # The memory stress test is slow and machine-dependent; run it explicitly with
 # `uv run pytest -m stress`.
 addopts = "-m 'not stress'"
+# Fail a hung test (e.g. a deadlocked worker pool) instead of stalling CI. The
+# slowest test takes ~15 s locally; CI runners can be several times slower.
+timeout = 300
 markers = [
     "stress: marks tests as stress tests (deselect with '-m \"not stress\"')",
 ]
