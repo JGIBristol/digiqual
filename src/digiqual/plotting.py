@@ -1,7 +1,19 @@
+"""Plots of the signal model, PoD curves and surfaces, and diagnostics. Each returns a Matplotlib figure or draws on a given Axes."""
+
 from typing import Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+__all__ = [
+    "plot_signal_model",
+    "plot_pod_curve",
+    "plot_pod_vs_threshold",
+    "plot_pod_surface",
+    "plot_signal_surface",
+    "plot_collinearity_matrix",
+    "plot_kriging_diagnostics",
+]
 
 
 def plot_signal_model(

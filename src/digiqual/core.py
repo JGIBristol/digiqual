@@ -1,3 +1,5 @@
+"""The `SimulationStudy` workflow class, and helpers for choosing its fitted model."""
+
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -19,6 +21,12 @@ from .defaults import (
 from .diagnostics import ValidationError, sample_sufficiency, validate_simulation
 from .executors import Executor
 from .plotting import plot_collinearity_matrix, plot_pod_curve, plot_signal_model
+
+__all__ = [
+    "SimulationStudy",
+    "model_key_args",
+    "model_override_args",
+]
 
 logger = logging.getLogger(__name__)
 

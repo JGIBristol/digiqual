@@ -1,3 +1,5 @@
+"""Data validation and sample-sufficiency diagnostics: input coverage, model fit, bootstrap stability and collinearity."""
+
 import logging
 from typing import Dict, List, Tuple
 
@@ -9,6 +11,15 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 from .defaults import MAX_ALLOWED_VIF, MAX_AVG_CV, MAX_GAP_RATIO, MAX_MAX_CV, MIN_R2_SCORE
+
+__all__ = [
+    "ValidationError",
+    "validate_simulation",
+    "sample_sufficiency",
+    "check_input_coverage",
+    "bootstrap_convergence_trace",
+    "relative_spread",
+]
 
 logger = logging.getLogger(__name__)
 

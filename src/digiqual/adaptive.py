@@ -1,3 +1,5 @@
+"""Adaptive refinement: targeted new samples where the diagnostics fail, and the automated simulate-diagnose-refine loop."""
+
 import logging
 import time
 from typing import Dict, List, Optional, Tuple, Union
@@ -15,6 +17,11 @@ from .defaults import MAX_ALLOWED_VIF, MAX_AVG_CV, MAX_GAP_RATIO, MAX_MAX_CV, MI
 from .diagnostics import ValidationError, sample_sufficiency, validate_simulation
 from .executors import CLIExecutor, Executor
 from .sampling import generate_lhs
+
+__all__ = [
+    "generate_targeted_samples",
+    "run_adaptive_search",
+]
 
 logger = logging.getLogger(__name__)
 

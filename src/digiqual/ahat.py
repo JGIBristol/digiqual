@@ -1,3 +1,5 @@
+"""The classical linear â-versus-a PoD method (Berens), as a baseline to compare with the generalised method."""
+
 import logging
 from typing import Any, Optional, Tuple
 
@@ -7,6 +9,13 @@ import scipy.stats as stats
 from sklearn.linear_model import LinearRegression
 
 from ._parallel import percentile_bounds, run_bootstrap
+
+__all__ = [
+    "fit_linear_a_hat_model",
+    "compute_linear_pod_curve",
+    "bootstrap_linear_pod_ci",
+    "plot_linear_signal_model",
+]
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,17 @@
+"""Kernel smoothing and PoD probabilities, using the compiled C++ extension when it is available and NumPy otherwise."""
+
 import numpy as np
 import scipy.stats as stats
 from scipy.spatial.distance import cdist
+
+__all__ = [
+    "HAS_CPP",
+    "predict_local_std_fast",
+    "predict_local_std_scaled",
+    "input_scale",
+    "compute_pod_probs_fast",
+    "set_cpp_threads",
+]
 
 try:
     from . import _digiqual_cpp

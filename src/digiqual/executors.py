@@ -1,3 +1,5 @@
+"""Solver adapters that run simulations for `SimulationStudy.optimise`: Python functions, command-line programs and MATLAB."""
+
 import logging
 import os
 import shlex
@@ -6,6 +8,13 @@ from abc import ABC, abstractmethod
 from typing import Callable
 
 import pandas as pd
+
+__all__ = [
+    "Executor",
+    "PythonExecutor",
+    "CLIExecutor",
+    "MatlabExecutor",
+]
 
 logger = logging.getLogger(__name__)
 

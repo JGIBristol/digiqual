@@ -5,6 +5,23 @@ The GUI reads these instead of hard-coding its own copies, so the two can't drif
 apart. Changing a value here changes the default everywhere.
 """
 
+__all__ = [
+    "MAX_GAP_RATIO",
+    "MIN_R2_SCORE",
+    "MAX_AVG_CV",
+    "MAX_MAX_CV",
+    "MAX_ALLOWED_VIF",
+    "MAX_POLY_DEGREE",
+    "N_CV_FOLDS",
+    "KRIGING_MAX_SAMPLES",
+    "DEFAULT_N_BOOT",
+    "CONFIDENCE_LEVELS",
+    "TARGET_PODS",
+    "MC_SAMPLES",
+    "BOOTSTRAP_MC_SAMPLES",
+    "N_THRESHOLD_POINTS",
+]
+
 # Diagnostic thresholds (see `SimulationStudy.diagnose` / `sample_sufficiency`)
 MAX_GAP_RATIO = 0.20
 """Input coverage: largest allowed gap, as a fraction of each input's range."""

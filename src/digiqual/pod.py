@@ -1,3 +1,5 @@
+"""Surrogate (mean) models, the variance and error model, PoD curves, bootstrap bounds, reliability indices and sensitivity analysis."""
+
 import logging
 import warnings
 from typing import Any
@@ -16,6 +18,31 @@ from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 from ._parallel import percentile_bounds, run_bootstrap
 from .defaults import BOOTSTRAP_MC_SAMPLES, KRIGING_MAX_SAMPLES, MAX_POLY_DEGREE, N_CV_FOLDS
+
+__all__ = [
+    "fit_all_robust_mean_models",
+    "select_cv_winner",
+    "build_polynomial_model",
+    "build_refit_model",
+    "ScaledGaussianProcessRegressor",
+    "build_kriging_candidate_kernels",
+    "build_kriging_gpr",
+    "build_fixed_kernel_gpr",
+    "compute_kriging_loo_residuals",
+    "compute_kriging_group_loo_means",
+    "polynomial_raw_coefficients",
+    "generate_latex_equation",
+    "plot_model_selection",
+    "optimise_bandwidth",
+    "fit_variance_model",
+    "predict_local_std",
+    "infer_best_distribution",
+    "compute_pod_curve",
+    "bootstrap_pod_ci",
+    "calculate_reliability_point",
+    "reliability_matrix",
+    "calculate_sobol_indices",
+]
 
 logger = logging.getLogger(__name__)
 
