@@ -26,10 +26,11 @@ src/digiqual/
 │   ├── start_page.py           ← the start page
 │   ├── stage_design.py         ← 1. Simulation Design (UI + server logic)
 │   ├── stage_data.py           ← 2. Data Diagnostics
-│   ├── stage_model.py          ← 3. Model Diagnostics (fits the candidate models on arrival)
+│   ├── stage_model.py          ← 3. Model Diagnostics (Run models: background fit with progress)
 │   ├── stage_explorer.py       ← 4. Model Explorer
 │   ├── stage_pod.py            ← 5. PoD Analysis
 │   ├── script_export.py        ← writes the analysis as a standalone Python script
+│   ├── background.py           ← runs slow steps in a worker thread; progress tracking and panel
 │   ├── launcher.py             ← starts the server and opens the window
 │   └── www/                    ← static files served by Shiny (app.css, logos, favicon, MathJax)
 ├── _digiqual_cpp.*.so / .pyd   ← compiled C++ extension (built by setup.py)
@@ -63,7 +64,8 @@ flowchart LR
 ```
 
 - New data or columns clear everything. Changing a diagnostic threshold only marks the diagnostics as out of date.
-- The candidate models are fitted once per dataset, when Model Diagnostics first opens. Choosing another model is part of the explorer settings: like a role change, it needs Update PoD and marks the bootstrap out of date.
+- The candidate models are fitted once per dataset, when the user presses Run models in Model Diagnostics.
+- The three slow steps (Run models, Update PoD, the bootstrap) run in a worker thread as `reactive.extended_task`s, so the page stays live. `background.TaskProgress` follows each one through its progress callback (`fit_model` and `pod` take one) and the library's log messages from that thread, and `background.progress_panel` draws it. While a task runs, `fit_running` / `pod_running` / `uq_running` in `AppState` are set, the stepper shows it, and the explorer's live updates pause so nothing else changes the study. Choosing another model is part of the explorer settings: like a role change, it needs Update PoD and marks the bootstrap out of date.
 - `explorer_config` (a `reactive.calc`) is the single source of the model, the plotted, integrated and sliced variables and the threshold. The explorer and the PoD Analysis tab both read it, and `AppState.pod_kwargs()` turns it into `study.pod()` arguments.
 - The bootstrap result keeps a copy of the settings it used. When they no longer match `explorer_config`, the PoD Analysis tab marks it as out of date instead of discarding it.
 

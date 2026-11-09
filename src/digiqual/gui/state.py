@@ -54,6 +54,8 @@ class AppState:
         self.candidates_ready = reactive.value(False)
         self.fit_error = reactive.value(None)
         self.fit_running = reactive.value(False)
+        self.pod_running = reactive.value(False)  # Update PoD in progress
+        self.uq_running = reactive.value(False)   # bootstrap in progress
         self.model_fit = reactive.value(None)
 
         # Model Explorer: exact slice values and threshold (sliders and number boxes

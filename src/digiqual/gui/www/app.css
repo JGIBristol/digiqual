@@ -266,7 +266,8 @@ h1, h2, h3, h4, h5, h6 {
 @keyframes dq-spin { to { transform: rotate(360deg); } }
 @keyframes dq-pulse { 50% { box-shadow: 0 0 0 5px rgba(0, 106, 188, 0.25); } }
 
-/* Model fitting progress panel */
+/* Model Diagnostics: the Run models card and the fitting progress panel */
+.dq-run-models { --dq-accent: var(--bs-primary); border-left: 5px solid var(--bs-primary); }
 .dq-fit-progress { border-left: 5px solid var(--bs-primary); }
 .dq-fit-step { padding: 4px 0; color: #605e5c; }
 .dq-fit-step svg { width: 1em; height: 1em; }
@@ -346,7 +347,21 @@ h1, h2, h3, h4, h5, h6 {
 .dq-accent-btn:hover { filter: brightness(0.9); }
 .dq-accent-btn svg { fill: currentColor; }
 
-.dq-stage-card { margin-bottom: 0; }
+.dq-workflow { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+.dq-stage-cards {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+    align-items: stretch;
+}
+.dq-stage-card {
+    margin-bottom: 0;
+    padding: 18px;
+    min-height: 170px;
+    height: auto;
+    overflow-wrap: break-word;
+    line-height: 1.4;
+}
 .dq-stage-card svg { width: 22px; height: 22px; fill: var(--dq-accent); }
 .dq-stage-card-number {
     width: 28px;
@@ -367,9 +382,13 @@ h1, h2, h3, h4, h5, h6 {
 .dq-link svg { fill: var(--dq-accent); }
 .dq-link:hover { color: var(--dq-accent); }
 
+/* Medium screens: workflow cards wrap onto more rows rather than squeeze */
+@media (max-width: 1199px) {
+    .dq-stage-cards { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+}
+
 /* Narrow screens: compact stepper (numbers and titles only) */
 @media (max-width: 991px) {
-    .dq-stage-cards { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important; }
     .dq-step { min-width: 120px; }
     .dq-step-summary { display: none; }
     .dq-stage { padding: 16px; }

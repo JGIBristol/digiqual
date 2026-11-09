@@ -426,3 +426,20 @@ def test_plot_pod_vs_threshold_wrapper(mock_subplots, study):
         mock_plot.assert_called_once()
         assert np.array_equal(mock_plot.call_args.kwargs["thresholds"], [2.0, 3.0, 4.0])
 
+
+
+def test_fit_model_reports_progress_of_candidate_models(study, two_input_df):
+    study.add_data(two_input_df, outcome_col="Signal")
+    calls = []
+    study.fit_model(progress_callback=lambda done, total, label: calls.append((done, total, label)))
+
+    total = calls[0][1]
+    assert [c[0] for c in calls] == sorted(c[0] for c in calls)  # never goes backwards
+    assert calls[0][:1] == (0,) and calls[-1][:2] == (total, total)
+    assert calls[0][2] == "Polynomial, degree 1"
+    assert any(label.startswith("Kriging") for _d, _t, label in calls)
+
+    # Later calls reuse the cached candidates, so there is nothing to report
+    calls.clear()
+    study.fit_model(model_override="polynomial", force_degree=2, progress_callback=lambda *a: calls.append(a))
+    assert calls == []

@@ -601,7 +601,8 @@ class SimulationStudy:
         self,
         model_override: str = "auto",
         force_degree: int | None = None,
-        bandwidth_ratio: float | None = None
+        bandwidth_ratio: float | None = None,
+        progress_callback: Any = None
     ) -> Dict[str, Any]:
         """
         Fits the surrogate (mean) model, the variance model and the error distribution.
@@ -615,6 +616,8 @@ class SimulationStudy:
             force_degree (int | None): Polynomial degree when model_override="polynomial".
             bandwidth_ratio (float | None): Variance smoother bandwidth; ``None`` picks it
                 by leave-one-out cross-validation.
+            progress_callback (callable | None): Called as ``(done, total, label)`` while
+                the candidate models are cross-validated (the slow first call only).
 
         Returns:
             Dict: The selected mean model, its LaTeX equation, the variance model
@@ -640,7 +643,7 @@ class SimulationStudy:
         # ---------------------------------------------------------
         if not self.models_cache:
             logger.info("1. Training all surrogate models (Cache Miss)...")
-            models, scores, winner = pod.fit_all_robust_mean_models(X, y)
+            models, scores, winner = pod.fit_all_robust_mean_models(X, y, progress_callback=progress_callback)
             self.models_cache = models
             self.cv_scores_cache = scores
             self.cv_winner_key = winner

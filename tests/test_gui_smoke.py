@@ -106,7 +106,7 @@ def test_stepper_statuses_through_the_workflow():
 
     assert stage_statuses(_snapshot(**data, diagnostics="passed", fitting=True))["model"] == ("running", "fitting models…")
     st = stage_statuses(_snapshot(**data, diagnostics="failed"))
-    assert st["data"][0] == "warning" and st["model"] == ("todo", "fitted on arrival")
+    assert st["data"][0] == "warning" and st["model"] == ("todo", "run the models")
     assert stage_statuses(_snapshot(**data, diagnostics="passed", diagnostics_stale=True))["data"][0] == "stale"
 
     fitted = dict(data, diagnostics="passed", model_name="Poly 1", cv_r2=0.83)
@@ -123,6 +123,8 @@ def test_stepper_statuses_through_the_workflow():
     st = stage_statuses(_snapshot(**applied, dirty=True))
     assert st["explorer"] == ("stale", "update needed") and st["pod"][0] == "locked"
 
+    assert stage_statuses(_snapshot(**applied, pod_running=True))["explorer"] == ("running", "computing PoD…")
+    assert stage_statuses(_snapshot(**applied, uq_running=True))["pod"] == ("running", "bootstrap running…")
     st = stage_statuses(_snapshot(**applied, uq_value="a90/95 = 7.244"))
     assert st["pod"] == ("done", "a90/95 = 7.244")
     assert stage_statuses(_snapshot(**applied, uq_value="a90/95 = 7.244", uq_stale=True))["pod"][0] == "stale"

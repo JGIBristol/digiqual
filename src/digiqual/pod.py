@@ -433,7 +433,8 @@ def fit_all_robust_mean_models(
     X: np.ndarray,
     y: np.ndarray,
     max_degree: int = MAX_POLY_DEGREE,
-    n_folds: int = N_CV_FOLDS
+    n_folds: int = N_CV_FOLDS,
+    progress_callback: Any = None
 ) -> tuple[dict[tuple[str, Any], Any], dict[tuple[str, Any], float], tuple[str, Any]]:
     """
     Fits all polynomial models (and optionally Kriging) and returns them for caching.
@@ -466,6 +467,9 @@ def fit_all_robust_mean_models(
         y (np.ndarray): 1D array of outcome values (e.g., signal response).
         max_degree (int, optional): The maximum polynomial degree to test. Defaults to 10.
         n_folds (int, optional): Number of folds for Cross Validation. Defaults to 10.
+        progress_callback (callable, optional): Called as ``(done, total, label)``
+            before each candidate is evaluated and once at the end, where ``label``
+            names the candidate (e.g. ``"Polynomial, degree 3"``).
 
     Returns:
         tuple[dict, dict, tuple]:
@@ -504,8 +508,18 @@ def fit_all_robust_mean_models(
         # Standard error of the CV estimate, as computed in [M25-code]
         cv_se[key] = float(np.std(fold_mse, ddof=1) / np.sqrt(len(fold_mse))) if len(fold_mse) > 1 else float('nan')
 
+    # Progress: one unit per polynomial, per Kriging kernel and for the Kriging CV
+    use_kriging = len(y) <= KRIGING_MAX_SAMPLES
+    candidate_kernels = build_kriging_candidate_kernels(X_2d.shape[1]) if use_kriging else {}
+    total = max_degree + (len(candidate_kernels) + 1 if use_kriging else 0)
+
+    def _progress(done, label):
+        if progress_callback is not None:
+            progress_callback(done, total, label)
+
     # 1. Evaluate & Fit Polynomials ([M25] Sec. 2c; [digiqual] Ridge on standardised features instead of OLS)
     for d in range(1, max_degree + 1):
+        _progress(d - 1, f"Polynomial, degree {d}")
         model = build_polynomial_model(d)
         _record_cv(('Polynomial', d), cross_val_score(model, X_2d, y, cv=cv, scoring='neg_mean_squared_error'))
 
@@ -515,9 +529,7 @@ def fit_all_robust_mean_models(
         fitted_models[('Polynomial', d)] = model
 
     # 2. Kriging. [digiqual] skipped above 1000 samples: every fit is O(N^3).
-    n_samples = len(y)
-    if n_samples <= KRIGING_MAX_SAMPLES:
-        candidate_kernels = build_kriging_candidate_kernels(X_2d.shape[1])
+    if use_kriging:
         var_y = float(np.var(y)) if np.var(y) > 0 else 1.0
 
         fitted_candidates = {}
@@ -527,7 +539,8 @@ def fit_all_robust_mean_models(
             warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
             # 2a. Pick the correlation family by LOO MSE ([M26] Sec. 2.2.2, Eq. 10-14)
-            for kname, kernel in candidate_kernels.items():
+            for i, (kname, kernel) in enumerate(candidate_kernels.items()):
+                _progress(max_degree + i, f"Kriging, {kname} kernel")
                 try:
                     gpr_cand = build_kriging_gpr(kernel).fit(X_2d, y)
                     loo_means, _, _, _ = compute_kriging_loo_residuals(gpr_cand, X_2d, y)
@@ -540,6 +553,7 @@ def fit_all_robust_mean_models(
 
             # 2b. k-fold CV of the chosen kernel, on equal terms with the polynomials ([M25] Fig. 5)
             if best_kernel_name is not None:
+                _progress(total - 1, f"Kriging, {n_folds}-fold cross-validation")
                 try:
                     _record_cv(('Kriging', None), cross_val_score(
                         build_kriging_gpr(candidate_kernels[best_kernel_name], n_restarts=KRIGING_RESTARTS_CV),
@@ -567,7 +581,8 @@ def fit_all_robust_mean_models(
             }
             fitted_models[('Kriging', None)] = best_kriging_gpr
     else:
-        logger.warning(f"Skipping Kriging evaluation to prevent timeout (Dataset N={n_samples} > {KRIGING_MAX_SAMPLES}).")
+        logger.warning(f"Skipping Kriging evaluation to prevent timeout (Dataset N={len(y)} > {KRIGING_MAX_SAMPLES}).")
+    _progress(total, "Done")
 
     # 3. Overall winner by the one-standard-error rule ([M25] Sec. 4b(i))
     cv_winner_key = select_cv_winner(cv_scores, cv_se)

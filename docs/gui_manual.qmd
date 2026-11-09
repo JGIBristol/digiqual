@@ -56,9 +56,15 @@ The **Reset** button in the header clears everything and starts again.
 
 **Purpose:** Choose the surrogate model of the signal response and check how well it fits.
 
-The first time you open this stage for a dataset, the app fits every candidate model: Polynomials (degrees 1–10) and Kriging, compared by 10-fold cross-validation. This takes a few seconds to a minute, depending on the data; there is no button to press. The models are always trained on **all** input variables, so nothing here depends on which variables you later plot, integrate over or slice.
+**Run models.** When you first arrive, the stage explains what fitting involves and offers a large **Run models** button. Pressing it fits every candidate model once for the dataset:
 
-**Sidebar.** The **Model** dropdown starts at "Auto", which picks the simplest model within one standard error of the best ([how the choice is made](generalised_pod.qmd#sec-model-selection)). Pick any other candidate instead; it takes a moment because all candidates are already fitted. Below it are the model's cross-validated $R^2$ (green if it passes the threshold from Data Diagnostics) and the **parameter sensitivity**: total-order Sobol indices, including interactions.
+1. **Cross-validation:** Polynomials (degrees 1–10) and Kriging are each scored by 10-fold cross-validation (Kriging is skipped above 1000 runs).
+2. **Scatter model:** how the spread of the signal around the model changes across the inputs, and which distribution describes it.
+3. **Sensitivity:** total-order Sobol indices.
+
+This takes from a few seconds to a minute, depending on the data. The fit runs in the background: a progress panel shows each step, the candidate being scored (e.g. *Polynomial, degree 4 (4 of 15)*) and the elapsed time. The stepper shows *fitting models…*, and you can look at other stages meanwhile. When it finishes, the page switches to the model views below; you never need to run it again for this dataset. The models are always trained on **all** input variables, so nothing here depends on which variables you later plot, integrate over or slice.
+
+**Sidebar.** The **Model** dropdown starts at "Auto", which picks the simplest model within one standard error of the best ([how the choice is made](generalised_pod.qmd#sec-model-selection)). Pick any other candidate instead; it takes a moment, because all candidates are already fitted. Below it are the model's cross-validated $R^2$ (green if it passes the threshold from Data Diagnostics) and the **parameter sensitivity**: total-order Sobol indices, including interactions.
 
 **Views:**
 
@@ -83,7 +89,7 @@ The sidebar shows the chosen model (with a link back to change it), then every i
 
 The roles start with the most influential input (highest Sobol index) plotted and the rest sliced at their medians. Exact values are shown and used to 3 decimal places (more only for variables with a very small range). Problems such as no plotted variable or an empty integration range are shown above the **Update PoD** button.
 
-1. **Update PoD:** After changing the model, which variables are plotted or integrated, or a distribution or integration range, press **Update PoD**. It computes the PoD and a 100-threshold spectrum ([caching details](caching.qmd)).
+1. **Update PoD:** After changing the model, which variables are plotted or integrated, or a distribution or integration range, press **Update PoD**. It computes the PoD and a 100-threshold spectrum ([caching details](caching.qmd)). This runs in the background: a progress panel shows each step in place of the plots, and the stepper shows *computing PoD…*.
 2. **Slices and threshold (live):** Moving a slice or the **Detection Threshold** (slider or exact value) updates the plots immediately. The slider is for quick moves; type a value for an exact one. Integration ranges are limited to the observed data, because the model can't be trusted outside it.
 3. **Plots:** the signal model (left) and the PoD curve or surface (right).
 
@@ -92,7 +98,7 @@ The roles start with the most influential input (highest Sobol index) plotted an
 **Purpose:** Add bootstrap confidence bounds to the PoD from the Model Explorer, read off reliability indices and export the results.
 
 1. **Analysis setup:** The sidebar summarises the settings the analysis uses (model, plotted, integrated and sliced variables, threshold), with a link back to edit them in the Model Explorer.
-2. **Run Bootstrap:** Set the number of resampling iterations (typically 1000) and optionally enable parallel compute, which uses all but two of your CPU cores. The data is resampled and the chosen model's shape refitted many times to build the bounds ([bootstrap details](generalised_pod.qmd#sec-bootstrap)); the bounds reflect parameter uncertainty assuming that shape is correct.
+2. **Run Bootstrap:** Set the number of resampling iterations (typically 1000) and optionally enable parallel compute, which uses all but two of your CPU cores. The data is resampled and the chosen model's shape refitted many times to build the bounds ([bootstrap details](generalised_pod.qmd#sec-bootstrap)); the bounds reflect parameter uncertainty assuming that shape is correct. The bootstrap runs in the background: a progress panel shows the iterations completed and the elapsed time, the stepper shows *bootstrap running…*, and you can look at other stages meanwhile.
 3. **Reliability targets:** Choose a **Target PoD** (50%, 90%, 95%, 99%) and a **Confidence Level** (50%, 90%, 95%, 99%) to annotate the curve with the matching sizing point (e.g., `a90/95`). Changing them does not rerun the bootstrap.
 4. **Results:** the PoD curve (or surface) with confidence bounds; for a single plotted variable, PoD against the detection threshold and the **Reliability Index Matrix** (aX/Y for every combination of Target PoD and Confidence Level); and the selected metric.
 5. **Out-of-date results:** If you change the model or explorer settings after running the bootstrap, the results are kept but marked as out of date (also in the stepper) until you run it again.

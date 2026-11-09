@@ -1,24 +1,23 @@
 """Model Diagnostics stage: choose the surrogate model and check how well it fits.
 
-All candidate models (polynomials of degree 1-10 and Kriging) are cross-validated the
-first time this stage opens for a dataset; there is no fit button. Choosing a model
-afterwards only picks one of them (plus its variance model), so it is quick. Nothing
+All candidate models (polynomials of degree 1-10 and Kriging) are cross-validated once
+per dataset, when the user presses Run models; this runs in a worker thread so the page
+can show its progress. Choosing a model afterwards only picks one of them (plus its
+variance model), so it is quick. Nothing
 here depends on which variables are later plotted, integrated or sliced.
 """
-
-import asyncio
-import logging
-import threading
-import time
 
 import numpy as np
 from faicons import icon_svg
 from shiny import reactive, render, ui
 
+from digiqual.defaults import KRIGING_MAX_SAMPLES
+
+from .background import TaskProgress, progress_panel, step_states
 from .components import (
     diagnostic_failures,
     failure_list,
-    format_duration,
+    icon_tile,
     metrics_table,
     nav_button,
     notice,
@@ -71,42 +70,27 @@ def _summarise(study, result, choice) -> dict:
             "model_name": _model_name(model), "short_name": _short_name(model)}
 
 
-_library_logger = logging.getLogger("digiqual")
+def _fit_steps(progress: TaskProgress) -> list[tuple[str, str, str]]:
+    """The three steps of `SimulationStudy.fit_model`, from its progress and log messages."""
+    reached = 2 if progress.seen("-> Calculating Total-Order Sobol") else 1 if progress.seen("2.") else 0
+    done, total, label = progress.count or (0, 1, "Starting")
+    details = (f"{label} ({done + 1} of {total})" if done < total else "All candidates scored",
+               "How the scatter changes across the inputs, and its distribution",
+               "How much each input drives the signal")
+    labels = ("Cross-validating the candidate models", "Fitting the scatter (variance) model",
+              "Computing parameter sensitivity (Sobol indices)")
+    return list(zip(labels, details, step_states(reached, 3), strict=True))
 
-# Steps of `SimulationStudy.fit_model`, recognised by the start of its log messages
-FIT_STEPS = (
-    (("1. Training all surrogate models", "1. Loading surrogate models"),
-     "Cross-validating polynomials (degree 1-10) and Kriging"),
-    (("2. Fitting Variance Model", "2. Loading Variance Model"), "Fitting the scatter (variance) model"),
-    (("-> Calculating Total-Order Sobol",), "Computing parameter sensitivity (Sobol indices)"),
-)
 
-
-class _StepCapture(logging.Handler):
-    """Collects the library's log messages from the fitting thread, to show its progress."""
-
-    def __init__(self):
-        super().__init__()
-        self.thread = None
-        self.reset(first=True, estimate=0.0)
-
-    def reset(self, first: bool, estimate: float):
-        self.messages: list[str] = []
-        self.first, self.estimate, self.started = first, estimate, time.monotonic()
-
-    def emit(self, record):
-        if record.thread == self.thread:
-            self.messages.append(record.getMessage().strip())
-
-    def steps(self) -> list[tuple[str, str]]:
-        """[(label, 'done' | 'active' | 'todo')] for the fit's steps so far."""
-        reached = -1
-        for i, (prefixes, _label) in enumerate(FIT_STEPS):
-            if any(m.startswith(prefixes) for m in list(self.messages)):
-                reached = i
-        reached = max(reached, 0)
-        return [(label, "done" if i < reached else "active" if i == reached else "todo")
-                for i, (_prefixes, label) in enumerate(FIT_STEPS)]
+def _fit_fraction(progress: TaskProgress, steps) -> float:
+    """Rough overall progress: cross-validation is most of the work."""
+    states = [state for _l, _d, state in steps]
+    if states[2] == "active":
+        return 0.95
+    if states[1] == "active":
+        return 0.9
+    done, total, _label = progress.count or (0, 1, "")
+    return 0.85 * done / max(total, 1)
 
 
 def model_choices(study) -> dict:
@@ -128,8 +112,8 @@ panel = stage_page(
         ui.output_ui("model_summary_ui"),
     ],
     ui.output_ui("model_warnings_ui"),
-    ui.output_ui("fit_progress_ui"),
     ui.output_ui("fit_caution_ui"),
+    ui.output_ui("run_models_ui"),
     ui.output_ui("fit_results_ui"),
 )
 
@@ -138,28 +122,26 @@ def register(input, output, session, state: AppState):
     current_study = state.current_study
     model_fit = state.model_fit
 
-    # The fit runs in a worker thread (an extended task), so the page stays live and can
-    # show progress. The library's log messages from that thread mark the steps.
-    capture = _StepCapture()
+    # The fit runs in a worker thread (an extended task), so the page stays live and
+    # shows its progress.
+    progress = TaskProgress()
+    first_fit = reactive.value(True)  # the slow fit of all candidates, or a quick model change
 
+    @ui.bind_task_button(button_id="btn_run_models")
     @reactive.extended_task
     async def fit_task(study, choice, override, degree):
-        def run():
-            capture.thread = threading.get_ident()
-            return study.fit_model(model_override=override, force_degree=degree)
-        _library_logger.addHandler(capture)
-        try:
-            return study, choice, await asyncio.to_thread(run)
-        finally:
-            _library_logger.removeHandler(capture)
+        result = await progress.run(study.fit_model, model_override=override, force_degree=degree,
+                                    progress_callback=progress.on_count)
+        return study, choice, result
 
     def start_fit(choice: str):
         study = current_study()
-        if study is None:
+        if study is None or state.fit_running():
             return
         override, degree = _parse_choice(choice)
-        capture.reset(first=not state.candidates_ready(),
-                      estimate=study.estimate_compute_time(model_type=override, n_boot=0, n_nuisances=0, n_jobs=1))
+        progress.reset()
+        first_fit.set(not state.candidates_ready())
+        state.fit_error.set(None)
         state.fit_running.set(True)
         fit_task.invoke(study, choice, override, degree)
 
@@ -181,18 +163,12 @@ def register(input, output, session, state: AppState):
             if study is not current_study():
                 return  # the data or columns changed while fitting
             model_fit.set(_summarise(study, result, choice))
-            state.fit_error.set(None)
             state.candidates_ready.set(True)
 
     @reactive.effect
-    def auto_fit():
-        """Fit the candidate models the first time this stage is opened for a dataset."""
-        if input.stage() != "model" or current_study() is None or state.diagnostic_table() is None:
-            return
-        with reactive.isolate():
-            if state.candidates_ready() or state.fit_error() is not None or state.fit_running():
-                return
-            start_fit("auto")
+    @reactive.event(input.btn_run_models)
+    def run_models():
+        start_fit("auto")
 
     @reactive.effect
     @reactive.event(input.model_choice, ignore_init=True)
@@ -203,36 +179,52 @@ def register(input, output, session, state: AppState):
         start_fit(input.model_choice())
 
     @render.ui
-    def fit_progress_ui():
-        """A progress panel while fitting: the steps, elapsed time and an estimate."""
-        if not state.fit_running():
+    def run_models_ui():
+        """Before the first fit: what Run models does. While fitting: its progress."""
+        study = current_study()
+        if study is None or state.diagnostic_table() is None and not state.candidates_ready():
             return ui.div()
-        reactive.invalidate_later(0.5)
-        steps = capture.steps()
-        elapsed = time.monotonic() - capture.started
-        pct = min(95, int(100 * elapsed / max(capture.estimate, 1.0)))
-        title = ("Fitting the candidate models" if capture.first
-                 else "Fitting the chosen model's variance model")
-        rows = []
-        for label, state_ in steps:
-            icon = {"done": "circle-check", "active": "spinner", "todo": "circle"}[state_]
-            rows.append(ui.div(icon_svg(icon, margin_left="0", margin_right="0.5em"), label,
-                               class_=f"dq-fit-step is-{state_}"))
+        if state.fit_running():
+            return _progress_panel()
+        if state.candidates_ready():
+            return ui.div()
+        n = len(study.clean_data) if not study.clean_data.empty else len(study.data)
+        kriging = n <= KRIGING_MAX_SAMPLES
         return ui.div(
             ui.div(
-                ui.div(class_="spinner-border text-primary me-3", role="status"),
-                ui.div(ui.h5(title, class_="mb-0"),
-                       ui.span(f"{int(elapsed)} s elapsed · estimated {format_duration(capture.estimate)}",
-                               class_="small text-muted")),
-                class_="d-flex align-items-center mb-3"
+                icon_tile("gears"),
+                ui.div(
+                    ui.h4("Fit the candidate models", class_="mb-1"),
+                    ui.p(f"Trained on all {len(study.inputs)} inputs and {n} runs. This is done once per "
+                         "dataset: afterwards you can switch between models instantly.", class_="text-muted mb-0"),
+                ),
+                class_="d-flex gap-3 align-items-start mb-3"
             ),
-            ui.div(ui.div(class_="progress-bar progress-bar-striped progress-bar-animated",
-                          style=f"width: {pct}%"), class_="progress mb-3", style="height: 8px;"),
-            *rows,
-            ui.p("This runs once per dataset; choosing another model afterwards is quick. You can look "
-                 "at other stages meanwhile.", class_="small text-muted mt-3 mb-0"),
-            class_="dq-fit-progress card p-4 mb-3"
+            ui.tags.ol(
+                ui.tags.li(ui.tags.strong("Cross-validation: "),
+                           "polynomials of degree 1 to 10" + (" and Kriging (a Gaussian process)" if kriging else "")
+                           + " are each scored by 10-fold cross-validation, and the simplest model within one "
+                           "standard error of the best is picked."
+                           + ("" if kriging else f" Kriging is skipped above {KRIGING_MAX_SAMPLES} runs.")),
+                ui.tags.li(ui.tags.strong("Scatter model: "),
+                           "how the spread of the signal around the model changes across the inputs, "
+                           "and which distribution describes it."),
+                ui.tags.li(ui.tags.strong("Sensitivity: "), "how much each input drives the signal (Sobol indices)."),
+                class_="text-muted mb-4"
+            ),
+            ui.input_task_button("btn_run_models", "Run models", icon=icon_svg("play"),
+                                 class_="btn-primary btn-lg px-5"),
+            ui.p("Usually takes from a few seconds to a minute; Kriging makes larger datasets slower.",
+                 class_="small text-muted mt-2 mb-0"),
+            class_="dq-run-models card p-4 mb-3",
         )
+
+    def _progress_panel():
+        reactive.invalidate_later(0.5)
+        steps = _fit_steps(progress)
+        if first_fit():
+            return progress_panel("Fitting the candidate models", progress, steps, _fit_fraction(progress, steps))
+        return progress_panel("Fitting the chosen model", progress, steps[1:])
 
     @reactive.effect
     @reactive.event(input.btn_retry_fit)
@@ -245,7 +237,7 @@ def register(input, output, session, state: AppState):
         study = current_study()
         if study is None or not state.candidates_ready():
             text = ("Fitting the candidate models..." if state.fit_running()
-                    else "The candidate models are fitted when you arrive here.")
+                    else "Run the models to choose between them here.")
             return ui.p(text, class_="small text-muted")
         with reactive.isolate():
             choice = model_fit()["choice"] if model_fit() else "auto"
@@ -278,8 +270,7 @@ def register(input, output, session, state: AppState):
             return notice("Upload data and choose the input and outcome columns first.",
                           action=nav_button("data"))
         if state.diagnostic_table() is None and not state.candidates_ready():
-            return notice("Run the data diagnostics first. The candidate models are fitted when you come back.",
-                          action=nav_button("data"))
+            return notice("Run the data diagnostics first.", action=nav_button("data"))
         if state.fit_error() is not None:
             return notice(f"Fitting the model failed: {state.fit_error()}", kind="danger", title="Model fit failed",
                           action=ui.input_action_button("btn_retry_fit", "Try again",

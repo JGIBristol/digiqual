@@ -5,8 +5,6 @@ and sliced, and the threshold); this stage only adds the bootstrap on top. The b
 result keeps a copy of everything it used, so the exports describe what was actually run.
 """
 
-import asyncio
-
 import numpy as np
 import pandas as pd
 from faicons import icon_svg
@@ -15,11 +13,11 @@ from shiny import reactive, render, ui
 from digiqual.defaults import CONFIDENCE_LEVELS, DEFAULT_N_BOOT, N_THRESHOLD_POINTS, TARGET_PODS
 from digiqual.pod import reliability_matrix
 
+from .background import TaskProgress, progress_panel
 from .components import (
     _goto_js,
     config_errors,
     curve_export_df,
-    format_duration,
     metrics_table,
     nav_button,
     notice,
@@ -68,6 +66,8 @@ def register(input, output, session, state: AppState):
 
     @render.ui
     def uq_warnings_ui():
+        if state.uq_running():
+            return _uq_panel()
         if state.applied_structure() is None:
             return notice("Set up the PoD in the Model Explorer (what to plot, integrate over and slice) "
                           "and press Update PoD first.", action=nav_button("explorer"))
@@ -93,62 +93,90 @@ def register(input, output, session, state: AppState):
                            onclick=_goto_js("explorer")),
         )
 
+    # The bootstrap runs in a worker thread (an extended task), so the page stays live
+    # and shows its progress; the bootstrap's own workers still use the chosen cores.
+    progress = TaskProgress()
+
+    @ui.bind_task_button(button_id="btn_run_uq")
+    @reactive.extended_task
+    async def uq_task(study, config, kwargs, n_boot, n_jobs, record):
+        def work():
+            spectrum = None
+            if len(config["plot"]) == 1:
+                # For the PoD-vs-threshold plot; a cache hit unless the slice moved
+                spectrum = study.compute_pod_spectrum(n_threshold_points=N_THRESHOLD_POINTS, **kwargs)
+            results = study.pod(threshold=config["threshold"], n_boot=n_boot, n_jobs=n_jobs,
+                                progress_callback=progress.on_count, **kwargs)
+            return spectrum, results
+        spectrum, results = await progress.run(work)
+        return study, {**record, "results": results, "spectrum": spectrum}
+
     @reactive.effect
     @reactive.event(input.btn_run_uq)
-    async def compute_uq():
+    def compute_uq():
         study = current_study()
         config = ready_config()
         if study is None or config is None:
             ui.notification_show("Update the PoD in the Model Explorer first.", type="warning")
             return
+        if state.uq_running() or state.pod_running():
+            return
 
-        kwargs = state.pod_kwargs(config)
         n_boot = int(input.pod_n_boot() or DEFAULT_N_BOOT)
         n_jobs = -1 if input.pod_parallel() else 1
-        from digiqual._parallel import resolve_n_jobs
-        est = study.estimate_compute_time(model_type=kwargs["model_override"], n_boot=n_boot,
-                                          n_nuisances=len(config["integrate"]), n_jobs=n_jobs)
-        ui.notification_show(f"Running bootstrap on {resolve_n_jobs(n_jobs)} core(s). "
-                             f"Estimated time: {format_duration(est)}...", id="uq_toast", duration=None, type="message")
-        await asyncio.sleep(0.1)
+        # Keep everything the run used, so the exports describe it even if settings change later
+        record = {
+            "config": config,
+            "fit": {k: model_fit()[k] for k in ("metrics", "equation", "model_name", "choice")},
+            "settings": {
+                "n_boot": n_boot, "n_jobs": n_jobs, "target": int(input.pod_target_val()),
+                "conf": int(input.pod_conf_val()), "csv_name": state.uploaded_name(),
+                "inputs": list(study.inputs), "outcome": study.outcome,
+                "thresholds": {k: read_input(input, k) for k in
+                               ("ui_max_gap", "ui_min_r2", "ui_avg_cv", "ui_max_cv", "ui_max_vif")},
+            },
+        }
+        progress.reset()
+        state.uq_running.set(True)
+        uq_task.invoke(study, config, state.pod_kwargs(config), n_boot, n_jobs, record)
 
-        try:
-            spectrum = None
-            if len(config["plot"]) == 1:
-                # For the PoD-vs-threshold plot; a cache hit unless the slice moved
-                spectrum = study.compute_pod_spectrum(n_threshold_points=N_THRESHOLD_POINTS, **kwargs)
-
-            with ui.Progress(min=0, max=n_boot) as p:
-                p.set(message="Bootstrapping confidence bounds...", detail=f"0/{n_boot} iterations (0%)")
-
-                def progress(current, total):
-                    p.set(value=current, detail=f"{current}/{total} iterations ({int(current / total * 100)}%)")
-
-                results = study.pod(threshold=config["threshold"], n_boot=n_boot, n_jobs=n_jobs,
-                                    progress_callback=progress, **kwargs)
-
-            # Keep everything the run used, so the exports describe it even if settings change later
-            uq_result.set({
-                "config": config, "results": results, "spectrum": spectrum,
-                "fit": {k: model_fit()[k] for k in ("metrics", "equation", "model_name", "choice")},
-                "settings": {
-                    "n_boot": n_boot, "n_jobs": n_jobs, "target": int(input.pod_target_val()),
-                    "conf": int(input.pod_conf_val()), "csv_name": state.uploaded_name(),
-                    "inputs": list(study.inputs), "outcome": study.outcome,
-                    "thresholds": {k: read_input(input, k) for k in
-                                   ("ui_max_gap", "ui_min_r2", "ui_avg_cv", "ui_max_cv", "ui_max_vif")},
-                },
-            })
+    @reactive.effect
+    def finish_uq():
+        status = uq_task.status()
+        if status not in ("success", "error"):
+            return
+        with reactive.isolate():
+            state.uq_running.set(False)
+            if status == "error":
+                try:
+                    uq_task.result()
+                except Exception as e:
+                    logger.exception("UQ failed")
+                    ui.notification_show(f"Bootstrap failed: {str(e) or type(e).__name__}", type="error")
+                return
+            study, result = uq_task.result()
+            if study is not current_study():
+                return  # the data changed meanwhile
+            uq_result.set(result)
             # The explorer shows these results (with bounds) until a setting changes
             study.visualise(show=False)
             state.bump_plots()
-            ui.notification_show("Bootstrap complete.", type="message")
 
-        except Exception as e:
-            logger.exception("UQ failed")
-            ui.notification_show(f"Bootstrap failed: {str(e) or type(e).__name__}", type="error")
-        finally:
-            ui.notification_remove("uq_toast")
+    def _uq_panel():
+        reactive.invalidate_later(0.5)
+        config = explorer_config() or {"plot": []}
+        from digiqual._parallel import resolve_n_jobs
+        cores = resolve_n_jobs(-1 if input.pod_parallel() else 1)
+        done, total, _label = progress.count or (0, int(input.pod_n_boot() or DEFAULT_N_BOOT), "")
+        bootstrapping = progress.seen("4. Running Bootstrap")
+        steps = []
+        if len(config["plot"]) == 1:
+            steps.append(("Threshold spectrum, for the PoD vs threshold plot", "", "done" if bootstrapping else "active"))
+        steps.append(("Bootstrap: refitting the model to resampled data",
+                      f"{done} of {total} iterations, on {cores} core{'s' if cores > 1 else ''}",
+                      "todo" if not bootstrapping else "done" if done >= total else "active"))
+        steps.append(("Confidence bounds and reliability indices", "", "active" if done >= total else "todo"))
+        return progress_panel("Running the bootstrap", progress, steps, done / max(total, 1) if bootstrapping else 0.0)
 
     def _targets():
         return int(input.pod_target_val()), int(input.pod_conf_val())
@@ -176,7 +204,7 @@ def register(input, output, session, state: AppState):
     @render.ui
     def uq_results_ui():
         uq = uq_result()
-        if uq is None:
+        if uq is None or state.uq_running():
             return ui.div()
         is_multi_dim = len(uq["results"]["poi_cols"]) > 1
         stale = notice("These results are for the earlier settings. The model or explorer settings have changed "

@@ -27,7 +27,7 @@ def _stage_card(stage):
                class_="d-flex align-items-center justify-content-between mb-2"),
         ui.div(stage.title, class_="fw-semibold mb-1"),
         ui.div(stage.purpose, class_="small text-muted"),
-        class_="dq-stage-card card p-3 h-100",
+        class_="dq-stage-card card",
         style=accent_style(stage.colour),
     )
 
@@ -45,13 +45,11 @@ panel = ui.nav_panel(
                    "chart-line"),
             col_widths=[-2, 4, 4, -2], gap="1.5rem", class_="dq-entries"
         ),
-        ui.layout_columns(
-            ui.div(
-                ui.h5("The workflow", class_="text-primary mt-2 mb-2"),
-                ui.layout_column_wrap(*[_stage_card(s) for s in STAGES], width=1 / 5, gap="12px",
-                                      class_="dq-stage-cards mb-5"),
-            ),
-            col_widths=[-1, 10, -1]
+        ui.div(
+            ui.h5("The workflow", class_="text-primary mt-2 mb-2"),
+            # A plain CSS grid (see app.css): cards grow to fit their text and wrap on narrow screens
+            ui.div(*[_stage_card(s) for s in STAGES], class_="dq-stage-cards mb-5"),
+            class_="dq-workflow"
         ),
         class_="dq-start"
     ),

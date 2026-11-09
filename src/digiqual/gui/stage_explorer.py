@@ -7,7 +7,6 @@ button (Monte Carlo integration and the threshold spectrum). Slice values and th
 detection threshold update the plots live.
 """
 
-import asyncio
 
 from faicons import icon_svg
 from shiny import reactive, render, ui
@@ -15,11 +14,11 @@ from shiny import reactive, render, ui
 from digiqual.defaults import N_THRESHOLD_POINTS
 from digiqual.integration import NUISANCE_DISTRIBUTIONS, estimate_nuisance_distribution
 
+from .background import TaskProgress, progress_panel, step_states
 from .components import (
     _goto_js,
     config_errors,
     fmt_value,
-    format_duration,
     nav_button,
     notice,
     slider_precision,
@@ -223,6 +222,9 @@ def register(input, output, session, state: AppState):
 
     @render.ui
     def explorer_status_ui():
+        if state.pod_running():
+            return ui.p(ui.span(icon_svg("spinner"), class_="me-1"), "Computing the PoD...",
+                        class_="small text-primary fw-semibold mb-2")
         config = explorer_config()
         errors = config_errors(config)
         if errors:
@@ -241,6 +243,8 @@ def register(input, output, session, state: AppState):
         study = current_study()
         if study is None or model_fit() is None:
             return ui.div()
+        if state.pod_running():
+            return _pod_panel()
         if applied_structure() is None:
             return notice("Choose what to plot, integrate over and slice in the sidebar, then press Update PoD.")
         is_multi_dim = len(applied_structure()["plot"]) > 1
@@ -313,41 +317,82 @@ def register(input, output, session, state: AppState):
             _sync("pod_threshold", "pod_threshold_num", threshold.get, threshold.set, r[study.outcome])
 
     # ── PoD computation ─────────────────────────────────────────────────────
+    # Update PoD runs in a worker thread (an extended task), so the page stays live and
+    # shows its progress. The plots are drawn on the main thread once it finishes.
+    progress = TaskProgress()
+
+    @ui.bind_task_button(button_id="btn_update_pod")
+    @reactive.extended_task
+    async def pod_task(study, config, kwargs):
+        def work():
+            # Spectrum first (it runs pod() at the median threshold), then the chosen threshold
+            study.compute_pod_spectrum(n_threshold_points=N_THRESHOLD_POINTS, **kwargs)
+            study.pod(threshold=config["threshold"], n_boot=0, **kwargs)
+        await progress.run(work)
+        return study, config
+
     @reactive.effect
     @reactive.event(input.btn_update_pod)
-    async def update_pod():
+    def update_pod():
         study = current_study()
         config = explorer_config()
         errors = config_errors(config)
         if study is None or errors:
             ui.notification_show(" ".join(errors) or "Fit a model first.", type="error")
             return
+        if state.pod_running() or state.uq_running():
+            return
+        progress.reset()
+        state.pod_running.set(True)
+        pod_task.invoke(study, config, state.pod_kwargs(config))
 
-        kwargs = state.pod_kwargs(config)
-        est = study.estimate_compute_time(model_type=kwargs["model_override"], n_boot=0,
-                                          n_nuisances=len(config["integrate"]), n_jobs=1)
-        ui.notification_show(f"Computing the PoD and threshold spectrum... Estimated time: {format_duration(est)}",
-                             id="pod_toast", duration=None, type="message")
-        await asyncio.sleep(0.1)
-        try:
-            # Spectrum first (it runs pod() at the median threshold), then the chosen threshold
-            study.compute_pod_spectrum(n_threshold_points=N_THRESHOLD_POINTS, **kwargs)
-            study.pod(threshold=config["threshold"], n_boot=0, **kwargs)
+    @reactive.effect
+    def finish_pod():
+        status = pod_task.status()
+        if status not in ("success", "error"):
+            return
+        with reactive.isolate():
+            state.pod_running.set(False)
+            if status == "error":
+                try:
+                    pod_task.result()
+                except Exception as e:
+                    logger.exception("PoD update failed")
+                    ui.notification_show(f"PoD failed: {str(e) or type(e).__name__}", type="error")
+                return
+            study, config = pod_task.result()
+            if study is not current_study():
+                return  # the data changed meanwhile
             study.visualise(show=False)
             applied_structure.set(state.structure(config))
             state.bump_plots()
-        except Exception as e:
-            logger.exception("PoD update failed")
-            ui.notification_show(f"PoD failed: {str(e) or type(e).__name__}", type="error")
-        finally:
-            ui.notification_remove("pod_toast")
+
+    def _pod_panel():
+        reactive.invalidate_later(0.5)
+        config = explorer_config() or {"integrate": {}}
+        spectrum_done = progress.seen("--- Spectrum Generation Complete", "4. Threshold Spectrum already cached")
+        reached = 2 if spectrum_done else 1 if progress.seen("4.") else 0
+        integrated = ", ".join(config["integrate"])
+        steps = [
+            ("Computing the PoD curve",
+             f"Monte Carlo integration over {integrated}" if integrated else "Nothing to integrate: a direct evaluation"),
+            (f"Computing the threshold spectrum ({N_THRESHOLD_POINTS} thresholds)",
+             "So the threshold slider can move the PoD instantly"),
+            ("PoD at the chosen threshold", ""),
+        ]
+        return progress_panel(
+            "Computing the PoD", progress,
+            [(label, detail, st) for (label, detail), st in zip(steps, step_states(reached, 3), strict=True)],
+            note="Slices and the threshold update live again once this finishes."
+        )
 
     @reactive.effect
     def live_update():
         """Slice and threshold changes: recompute from the caches without the button."""
         config = explorer_config()
-        if config is None or applied_structure() is None or _dirty(config) or config_errors(config):
-            return
+        if (config is None or applied_structure() is None or _dirty(config) or config_errors(config)
+                or state.pod_running() or state.uq_running()):
+            return  # (a running task changes the study; this runs again when it finishes)
         with reactive.isolate():
             study = current_study()
             res = study.pod_results if study else None
