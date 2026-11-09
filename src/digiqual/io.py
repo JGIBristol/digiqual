@@ -52,6 +52,18 @@ def clean_columns(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str], int]:
 
 
 def read_results_csv(path) -> pd.DataFrame:
-    """Reads a results CSV and cleans it exactly as the DigiQual app does (see `clean_columns`)."""
+    """Reads a results CSV and cleans it exactly as the DigiQual app does (see `clean_columns`).
+
+    Args:
+        path (str | os.PathLike): Path to the CSV file (anything `pd.read_csv` accepts).
+
+    Returns:
+        pd.DataFrame: The cleaned, numeric-only table.
+
+    Examples:
+        ```python
+        df = read_results_csv("results.csv")
+        ```
+    """
     df, _text_cols, _n_bad = clean_columns(pd.read_csv(path))
     return df

@@ -416,13 +416,13 @@ plt.show()
 
 | Function | Purpose |
 |:---|:---|
-| [`pod.fit_all_robust_mean_models`](../api_reference/pod.fit_all_robust_mean_models.qmd) | Fits the polynomial pool and the Kriging candidate, scores them, and picks the winner. |
-| [`pod.select_cv_winner`](../api_reference/pod.select_cv_winner.qmd) | One-standard-error rule. |
-| [`pod.build_kriging_candidate_kernels`](../api_reference/pod.build_kriging_candidate_kernels.qmd) | The four candidate kernels, $\sigma^2 R + \tau^2\delta$. |
-| [`pod.ScaledGaussianProcessRegressor`](../api_reference/pod.ScaledGaussianProcessRegressor.qmd) | GP with UQLab-style input standardisation. |
-| [`pod.build_kriging_gpr`](../api_reference/pod.build_kriging_gpr.qmd) | An unfitted Kriging model with the production settings. |
-| [`pod.build_fixed_kernel_gpr`](../api_reference/pod.build_fixed_kernel_gpr.qmd) | A Kriging model with frozen hyperparameters and scaling, for bootstrap refits. |
-| [`pod.compute_kriging_loo_residuals`](../api_reference/pod.compute_kriging_loo_residuals.qmd) | LOO means, variances, standardised residuals and $\gamma$ ([M26]{.src .src-m26} Eq. 10–19). |
-| [`pod.compute_kriging_group_loo_means`](../api_reference/pod.compute_kriging_group_loo_means.qmd) | Leave-one-group-out means, for resamples with duplicates. |
-| [`pod.fit_variance_model`](../api_reference/pod.fit_variance_model.qmd) | Residuals (LOO for Kriging) and bandwidth for the variance model. |
-| [`plotting.plot_kriging_diagnostics`](../api_reference/plotting.plot_kriging_diagnostics.qmd) | LOO residual histogram and outlier scatter ([M26]{.src .src-m26} Fig. 10). |
+| [`pod.fit_all_robust_mean_models`](../api_reference/digiqual.pod.fit_all_robust_mean_models.qmd) | Fits the polynomial pool and the Kriging candidate, scores them, and picks the winner. |
+| [`pod.select_cv_winner`](../api_reference/digiqual.pod.select_cv_winner.qmd) | One-standard-error rule. |
+| [`pod.build_kriging_candidate_kernels`](../api_reference/digiqual.pod.build_kriging_candidate_kernels.qmd) | The four candidate kernels, $\sigma^2 R + \tau^2\delta$. |
+| [`pod.ScaledGaussianProcessRegressor`](../api_reference/digiqual.pod.ScaledGaussianProcessRegressor.qmd) | GP with UQLab-style input standardisation. |
+| [`pod.build_kriging_gpr`](../api_reference/digiqual.pod.build_kriging_gpr.qmd) | An unfitted Kriging model with the production settings. |
+| [`pod.build_fixed_kernel_gpr`](../api_reference/digiqual.pod.build_fixed_kernel_gpr.qmd) | A Kriging model with frozen hyperparameters and scaling, for bootstrap refits. |
+| [`pod.compute_kriging_loo_residuals`](../api_reference/digiqual.pod.compute_kriging_loo_residuals.qmd) | LOO means, variances, standardised residuals and $\gamma$ ([M26]{.src .src-m26} Eq. 10–19). |
+| [`pod.compute_kriging_group_loo_means`](../api_reference/digiqual.pod.compute_kriging_group_loo_means.qmd) | Leave-one-group-out means, for resamples with duplicates. |
+| [`pod.fit_variance_model`](../api_reference/digiqual.pod.fit_variance_model.qmd) | Residuals (LOO for Kriging) and bandwidth for the variance model. |
+| [`plotting.plot_kriging_diagnostics`](../api_reference/digiqual.plotting.plot_kriging_diagnostics.qmd) | LOO residual histogram and outlier scatter ([M26]{.src .src-m26} Fig. 10). |

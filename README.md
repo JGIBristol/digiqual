@@ -124,6 +124,8 @@ To preview the documentation site locally:
 just preview
 ```
 
+The [API Reference](https://jgibristol.github.io/digiqual/api_reference/) is generated from the code by quartodoc: every module documents the objects in its `__all__`, using their Google-style docstrings. To document a new public function, add it to its module's `__all__` and give it a docstring with `Args:` and `Returns:` sections; nothing in `_quarto.yml` needs changing. `tests/test_docstrings.py` fails if a public function is missing from `__all__` or its docstring leaves out an argument or the return value. (Name internal helpers with a leading `_` to keep them out of the docs.)
+
 4.  Work on the App
 
 The GUI is the `digiqual.gui` subpackage (`src/digiqual/gui/`); `app/` only holds the Briefcase configuration for the Windows/macOS installers. Run it with `just app` (desktop window) or `just app_dev` (in the browser, without the desktop launcher; restart it to pick up code changes). See [Desktop App Architecture](https://jgibristol.github.io/digiqual/docs/app_architecture.html) for how it fits together and how the installers are built.

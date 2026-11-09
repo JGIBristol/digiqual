@@ -1,4 +1,4 @@
-"""Plots of the signal model, PoD curves and surfaces, and diagnostics. Each returns a Matplotlib figure or draws on a given Axes."""
+"""Plots of the signal model, PoD curves and surfaces, and diagnostics. Each draws on the Matplotlib Axes it is given (or a new one) and returns it."""
 
 from typing import Optional, Tuple, Union
 
@@ -33,14 +33,18 @@ def plot_signal_model(
     Equivalent to Figure 6/12 in the Generalized Method paper.
 
     Args:
-        X: The raw PoI.
-        y: The raw signal responses.
-        X_eval: The grid of points used for the curves.
-        mean_curve: The predicted mean response at X_eval.
-        threshold: The detection threshold (horizontal line).
-        local_std: (Optional) The predicted standard deviation at X_eval. If provided, adds 95% prediction bounds to show noise structure.
-        poi_name: The label to use for the Parameter of Interest on the x-axis.
-        ax: (Optional) Matplotlib axes to plot on. Creates new if None.
+        X (np.ndarray): The raw parameter of interest values.
+        y (np.ndarray): The raw signal responses.
+        X_eval (np.ndarray): The grid of points used for the curves.
+        mean_curve (np.ndarray): The predicted mean response at ``X_eval``.
+        threshold (float): The detection threshold (horizontal line).
+        local_std (np.ndarray, optional): The predicted standard deviation at ``X_eval``.
+            If given, adds ±2σ (about 95%) prediction bounds. Defaults to None.
+        poi_name (str, optional): x-axis label. Defaults to "Parameter of Interest".
+        ax (plt.Axes, optional): Axes to draw on. Defaults to None (a new figure is created).
+
+    Returns:
+        plt.Axes: The axes drawn on (the given ``ax``, or a new one on a new figure).
 
     Examples:
         ```python
@@ -105,6 +109,21 @@ def plot_pod_curve(
 
     Visualizes the PoD curve with Bootstrap Confidence Intervals.
     Equivalent to Figure 11 in the Generalized Method paper.
+
+    Args:
+        X_eval (np.ndarray): The grid of parameter values the curve is evaluated at.
+        pod_curve (np.ndarray): The PoD estimate at each point of ``X_eval``.
+        ci_lower (np.ndarray, optional): Lower confidence bound at ``X_eval``. Defaults to None.
+        ci_upper (np.ndarray, optional): Upper confidence bound at ``X_eval``. The band is
+            shaded only when both bounds are given. Defaults to None.
+        target_pod (float, optional): Target PoD for the reliability point (e.g. a90/95),
+            marked where ``ci_lower`` reaches it. Defaults to 0.90.
+        confidence_level (float, optional): Confidence level in percent, used in labels. Defaults to 95.
+        poi_name (str, optional): x-axis label. Defaults to "Parameter of Interest".
+        ax (plt.Axes, optional): Axes to draw on. Defaults to None (a new figure is created).
+
+    Returns:
+        plt.Axes: The axes drawn on (the given ``ax``, or a new one on a new figure).
     """
     if ax is None:
         fig, ax = plt.subplots()
@@ -155,6 +174,19 @@ def plot_pod_vs_threshold(
     """
     Plots Probability of Detection (y-axis) vs. Detection Threshold (x-axis)
     for a selection of representative defect sizes (flaw sizes).
+
+    One line is drawn for each of five sizes at the 10th, 30th, 50th, 70th and 90th
+    percentile positions of ``X_eval``.
+
+    Args:
+        X_eval (np.ndarray): The grid of defect sizes, shape ``(n_points,)``.
+        thresholds (np.ndarray): The detection thresholds, shape ``(n_thresholds,)``.
+        pod_matrix (np.ndarray): Mean PoD, shape ``(n_points, n_thresholds)``.
+        poi_name (str, optional): Label for the defect size in the legend. Defaults to "Parameter of Interest".
+        ax (plt.Axes, optional): Axes to draw on. Defaults to None (a new figure is created).
+
+    Returns:
+        plt.Axes: The axes drawn on (the given ``ax``, or a new one on a new figure).
     """
     if ax is None:
         fig, ax = plt.subplots(figsize=(8, 6))
@@ -191,6 +223,19 @@ def plot_pod_surface(
     """
     Plots a 2D heatmap / contour for multi-dimensional PoD (2 Parameters of Interest).
     Draws the mean a90 contour by default, or the true a90/95 contour if ci_lower is provided.
+
+    Args:
+        poi_grids (list): Two 1-D grids, one per parameter of interest.
+        pod_curve (np.ndarray): Mean PoD on the grid, flattened with length
+            ``len(poi_grids[0]) * len(poi_grids[1])`` (first parameter varying slowest).
+        poi_names (list): Names of the two parameters, used as axis labels.
+        ci_lower (np.ndarray, optional): Lower confidence bound, same layout as ``pod_curve``.
+            If given, the 0.90 contour is drawn on it instead of the mean. Defaults to None.
+        ax (plt.Axes, optional): Axes to draw on; a colour bar is added to its figure.
+            Defaults to None (a new figure is created).
+
+    Returns:
+        plt.Axes: The axes drawn on (the given ``ax``, or a new one on a new figure).
     """
     if ax is None:
         fig, ax = plt.subplots(figsize=(8,6))
@@ -238,6 +283,21 @@ def plot_signal_surface(
     Result Plot 1 (Multi-Dimensional): Signal vs Parameters of Interest.
 
     Visualizes the fitted mean surface and the detection threshold plane.
+
+    Args:
+        poi_grids (list): Two 1-D grids, one per parameter of interest.
+        mean_curve (np.ndarray): Mean response on the grid, flattened with length
+            ``len(poi_grids[0]) * len(poi_grids[1])`` (first parameter varying slowest).
+        X_raw (np.ndarray): The raw input values (currently not drawn).
+        y_raw (np.ndarray): The raw signal responses (currently not drawn).
+        threshold (float): The detection threshold, drawn as a horizontal plane.
+        poi_names (list): Names of the two parameters, used as axis labels.
+        outcome_name (str, optional): z-axis label and title. Defaults to "Signal Response".
+        ax (optional): A 3-D Matplotlib axes to draw on. Defaults to None (a new figure
+            with a 3-D axes is created).
+
+    Returns:
+        plt.Axes: The 3-D axes drawn on (the given ``ax``, or a new one).
     """
     import matplotlib.pyplot as plt
 
@@ -274,6 +334,18 @@ def plot_collinearity_matrix(
 ) -> plt.Axes:
     """
     Plots a Pearson correlation matrix heatmap of the input variables to visualize collinearity.
+
+    The diagonal is masked (shown in green) so it does not affect the colour scale,
+    and every cell is annotated with its coefficient.
+
+    Args:
+        df (pd.DataFrame): The data containing the input columns.
+        input_cols (list): Names of the input columns to correlate.
+        ax (plt.Axes, optional): Axes to draw on; a colour bar is added to its figure.
+            Defaults to None (a new figure is created).
+
+    Returns:
+        plt.Axes: The axes drawn on (the given ``ax``, or a new one on a new figure).
     """
     import matplotlib.pyplot as plt
 

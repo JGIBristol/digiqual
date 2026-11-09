@@ -99,15 +99,48 @@ class ScaledGaussianProcessRegressor(GaussianProcessRegressor):
     """
 
     def freeze_scaling(self, x_mean: np.ndarray, x_std: np.ndarray) -> "ScaledGaussianProcessRegressor":
-        """Fixes the input scaling so that ``fit`` reuses it instead of recomputing it."""
+        """
+        Fixes the input scaling so that ``fit`` reuses it instead of recomputing it.
+
+        Args:
+            x_mean (np.ndarray): Per-input mean to subtract, shape ``(n_features,)``.
+            x_std (np.ndarray): Per-input standard deviation to divide by, shape
+                ``(n_features,)``.
+
+        Returns:
+            ScaledGaussianProcessRegressor: ``self``, for chaining.
+        """
         self._frozen_scaling = (np.asarray(x_mean, dtype=float), np.asarray(x_std, dtype=float))
         return self
 
     def transform_X(self, X: np.ndarray) -> np.ndarray:
-        """Maps physical inputs to the standardised inputs the kernel operates on."""
+        """
+        Maps physical inputs to the standardised inputs the kernel operates on.
+
+        Args:
+            X (np.ndarray): Inputs in physical units, shape ``(n_points, n_features)``.
+
+        Returns:
+            np.ndarray: Standardised inputs, shape ``(n_points, n_features)``.
+        """
         return (np.atleast_2d(X) - self.x_mean_) / self.x_std_
 
     def fit(self, X, y):
+        """
+        Fits the GP on standardised inputs.
+
+        Unlike `GaussianProcessRegressor.fit`, the inputs are first standardised
+        with their sample mean and standard deviation (or the frozen scaling, see
+        `freeze_scaling`). A constant input is given a standard deviation of 1.
+
+        Args:
+            X (array-like): Training inputs in physical units, shape
+                ``(n_samples, n_features)``.
+            y (array-like): Training targets, shape ``(n_samples,)``.
+
+        Returns:
+            ScaledGaussianProcessRegressor: The fitted model (``self``).
+        """
         X = np.atleast_2d(np.asarray(X, dtype=float))
         frozen = getattr(self, "_frozen_scaling", None)
         if frozen is not None:
@@ -120,9 +153,43 @@ class ScaledGaussianProcessRegressor(GaussianProcessRegressor):
         return super().fit(self.transform_X(X), y)
 
     def predict(self, X, return_std=False, return_cov=False):
+        """
+        Predicts with the GP, taking inputs in physical units.
+
+        Same as `GaussianProcessRegressor.predict`, except that ``X`` is
+        standardised with the fitted scaling first.
+
+        Args:
+            X (array-like): Query inputs in physical units, shape
+                ``(n_points, n_features)``.
+            return_std (bool): Also return the predictive standard deviation.
+                Defaults to False.
+            return_cov (bool): Also return the predictive covariance. Defaults
+                to False.
+
+        Returns:
+            np.ndarray | tuple: The predictive mean, shape ``(n_points,)``, plus
+                the standard deviation or covariance if requested.
+        """
         return super().predict(self.transform_X(X), return_std=return_std, return_cov=return_cov)
 
     def sample_y(self, X, n_samples=1, random_state=0):
+        """
+        Draws samples from the GP posterior, taking inputs in physical units.
+
+        Same as `GaussianProcessRegressor.sample_y`, except that ``X`` is
+        standardised with the fitted scaling first.
+
+        Args:
+            X (array-like): Query inputs in physical units, shape
+                ``(n_points, n_features)``.
+            n_samples (int): Number of sample functions to draw. Defaults to 1.
+            random_state (int | np.random.RandomState | None): Seed or random
+                state for the draws. Defaults to 0.
+
+        Returns:
+            np.ndarray: Samples, shape ``(n_points, n_samples)``.
+        """
         return super().sample_y(self.transform_X(X), n_samples=n_samples, random_state=random_state)
 
 
@@ -193,6 +260,15 @@ def build_kriging_gpr(kernel: Any, n_restarts: int = KRIGING_RESTARTS_FULL) -> S
     the sample mean rather than a GLS-estimated constant as in [M26] Eq. 6],
     hyperparameters by maximum likelihood [M26] Sec. 2.1.2, and multi-start
     L-BFGS-B [digiqual].
+
+    Args:
+        kernel (Any): The scikit-learn kernel (for example from
+            `build_kriging_candidate_kernels`).
+        n_restarts (int): Number of extra optimiser restarts from random
+            starting points. Defaults to ``KRIGING_RESTARTS_FULL``.
+
+    Returns:
+        ScaledGaussianProcessRegressor: The unfitted model (``random_state=42``).
     """
     return ScaledGaussianProcessRegressor(
         kernel=kernel,
@@ -667,6 +743,16 @@ def generate_latex_equation(model: Any, feature_names: list, outcome_name: str =
     Coefficients are expressed in the original input units (see
     `polynomial_raw_coefficients`), so the equation reproduces ``model.predict``
     up to the 4 significant figures shown.
+
+    Args:
+        model (Any): A fitted mean model. Only Polynomial models (``model_type_ ==
+            'Polynomial'``) produce an equation.
+        feature_names (list): Names of the input variables, in column order.
+        outcome_name (str): Name of the response for the left-hand side.
+            Defaults to ``"y"``.
+
+    Returns:
+        str: The LaTeX equation, or an explanatory message for Kriging models.
     """
     import re
 
@@ -717,6 +803,9 @@ def plot_model_selection(
             If ``None``, falls back to the bar with the lowest MSE.
         cv_se (dict | None): Standard error of each CV score (the models'
             ``cv_se_`` attribute). Optional.
+
+    Returns:
+        matplotlib.figure.Figure: The figure with the bar chart and MSE table.
     """
     import matplotlib.patches as mpatches
     import matplotlib.pyplot as plt
@@ -1060,6 +1149,19 @@ def predict_local_std(
     deviation in ``X``, so one bandwidth (in standard deviations) treats all inputs
     alike regardless of their units. [M25] used a single input, where this only
     rescales the bandwidth.
+
+    Args:
+        X (np.ndarray): Training inputs, shape ``(n_samples,)`` or
+            ``(n_samples, n_features)``.
+        residuals (np.ndarray): Mean-model residuals at ``X``, shape ``(n_samples,)``.
+        X_eval (np.ndarray): Points at which to estimate the standard deviation,
+            with the same number of features as ``X``.
+        bandwidth (float): Gaussian kernel bandwidth, in standard deviations of
+            the (scaled) inputs.
+
+    Returns:
+        np.ndarray: Local standard deviation at each point of ``X_eval``, shape
+            ``(n_eval,)``.
     """
     from .cpp_fallback import predict_local_std_scaled
     return predict_local_std_scaled(X, residuals, X_eval, bandwidth)
@@ -1231,7 +1333,18 @@ def compute_pod_curve(
 
 
 def build_polynomial_model(degree: int):
-    """The polynomial mean model used throughout: features -> standardise -> Ridge(0.1)."""
+    """
+    Builds the unfitted polynomial mean model used throughout.
+
+    The pipeline is polynomial features, then standardisation, then Ridge
+    regression with ``alpha=0.1``.
+
+    Args:
+        degree (int): Polynomial degree.
+
+    Returns:
+        sklearn.pipeline.Pipeline: The unfitted pipeline.
+    """
     return make_pipeline(
         PolynomialFeatures(degree=degree),
         StandardScaler(),
@@ -1249,7 +1362,13 @@ def build_refit_model(model_type: str, model_params: Any):
 
     Args:
         model_type (str): ``'Polynomial'`` or ``'Kriging'``.
-        model_params: The model's ``model_params_`` (degree, or the Kriging dict).
+        model_params (Any): The model's ``model_params_`` (degree, or the Kriging dict).
+
+    Returns:
+        Any: An unfitted Polynomial pipeline or `ScaledGaussianProcessRegressor`.
+
+    Raises:
+        ValueError: If ``model_type`` is not ``'Polynomial'`` or ``'Kriging'``.
     """
     if model_type == 'Polynomial':
         return build_polynomial_model(model_params)
@@ -1341,8 +1460,39 @@ def bootstrap_pod_ci(
     are leave-one-out residuals, matching `fit_variance_model`.
 
     Args:
+        X (np.ndarray): Training inputs, shape ``(n_samples,)`` or
+            ``(n_samples, n_features)``.
+        y (np.ndarray): Training responses, shape ``(n_samples,)``.
+        X_eval (np.ndarray): Points at which the PoD curve is evaluated, shape
+            ``(n_points,)`` or ``(n_points, n_poi)``.
+        threshold (float): Detection threshold on the response.
+        model_type (str): ``'Polynomial'`` or ``'Kriging'``.
         model_params (Any): The polynomial degree, or for Kriging the model's
             ``model_params_`` dict (``kernel``, ``x_mean``, ``x_std``).
+        bandwidth (float): Kernel-smoothing bandwidth for the variance model.
+        dist_info (tuple[str, tuple]): Residual distribution as
+            ``(scipy.stats name, parameters)``; refitted on each resample.
+        n_boot (int): Number of bootstrap resamples. Defaults to 1000.
+        nuisance_ranges (dict | None): ``{name: (min, max)}`` for nuisance inputs
+            that are integrated out. Defaults to None.
+        n_jobs (int | None): Number of parallel workers. Defaults to None.
+        feature_names (list | None): Names of all inputs, in column order.
+            Defaults to None.
+        poi_names (list | None): Names of the parameters of interest. Defaults
+            to None.
+        confidence_levels (list | None): Confidence levels in percent (for
+            example ``[90, 95]``). Defaults to None (95% only).
+        nuisance_dists (dict | None): Distributions of the nuisance inputs.
+            Defaults to None (uniform over ``nuisance_ranges``).
+        progress_callback (Any): Optional callable for progress updates.
+            Defaults to None.
+        n_mc_samples (int): Monte Carlo samples per PoD evaluation in each
+            resample. Defaults to ``BOOTSTRAP_MC_SAMPLES``.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray] | dict: ``(lower, upper)`` 95% percentile
+            bounds, each shape ``(n_points,)``, if ``confidence_levels`` is None;
+            otherwise a dict ``{level: (lower, upper)}`` for each level.
     """
     n_samples = len(y)
     X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X)
@@ -1459,7 +1609,22 @@ def reliability_matrix(
 def calculate_sobol_indices(mean_model: Any, feature_names: list, data_df, n_samples: int = 1024) -> dict | None:
     """
     Calculates the Total-Order Sobol sensitivity index for the fitted mean model.
-    Optimized for speed by disabling second-order interaction matrices.
+
+    Inputs are sampled uniformly between their minimum and maximum in
+    ``data_df`` with Saltelli sampling (SALib). Second-order indices are not
+    computed, for speed. Indices are clamped to ``[0, 1]``. A constant input
+    cannot vary, so it is held fixed and given an index of 0.
+
+    Args:
+        mean_model (Any): Fitted model with a ``predict`` method.
+        feature_names (list): Names of the inputs, in the model's column order.
+        data_df (pandas.DataFrame): Data used to set each input's range.
+        n_samples (int): Base sample size for Saltelli sampling (ideally a power
+            of 2). Defaults to 1024.
+
+    Returns:
+        dict | None: ``{feature name: total-order index}``, or None if SALib is
+            not installed.
     """
     try:
         from SALib.analyze import sobol as salib_analyze

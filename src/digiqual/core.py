@@ -34,7 +34,20 @@ logger = logging.getLogger(__name__)
 def model_key_args(model_key: Tuple[str, Any]) -> Tuple[str, int | None]:
     """The `model_override` and `force_degree` arguments that select a fitted model by its key.
 
-    Keys are those of `models_cache`, e.g. ``('Polynomial', 3)`` or ``('Kriging', None)``.
+    Args:
+        model_key (tuple): A key of `models_cache`, e.g. ``('Polynomial', 3)`` or
+            ``('Kriging', None)``.
+
+    Returns:
+        tuple: ``(model_override, force_degree)``, e.g. ``('polynomial', 3)`` or
+        ``('kriging', None)``.
+
+    Examples:
+        ```python
+        override, degree = model_key_args(("Polynomial", 3))
+        study.pod(poi_col="Length", threshold=4.0,
+                  model_override=override, force_degree=degree)
+        ```
     """
     if model_key[0] == "Polynomial":
         return "polynomial", model_key[1]
@@ -45,6 +58,13 @@ def model_override_args(mean_model) -> Tuple[str, int | None]:
     """The `model_override` and `force_degree` arguments that select `mean_model` again.
 
     Used to keep the same fitted model when re-running `pod()` with new settings.
+
+    Args:
+        mean_model: A fitted mean model (with ``model_type_`` and ``model_params_``
+            attributes), such as ``study.pod_results["mean_model"]``.
+
+    Returns:
+        tuple: ``(model_override, force_degree)`` as for `model_key_args`.
     """
     if mean_model.model_type_ == "Polynomial":
         return model_key_args(("Polynomial", mean_model.model_params_))
@@ -392,15 +412,32 @@ class SimulationStudy:
         Args:
             executor (Executor | str): The solver adapter to use (e.g., PythonExecutor, MatlabExecutor).
                                         Accepts a legacy command string for backward compatibility.
-            ranges (Dict): Input bounds, e.g. {"Length": (0, 10)}.
-            n_start (int): Initial sample size (only if data is empty).
-            n_step (int): Batch size for refinement.
-            max_iter (int): Max refinement loops.
-            max_hours (float, optional): Physical time limit in hours to safely stop the loop.
+            ranges (Dict): Input bounds, e.g. {"Length": (0, 10)}. The keys must match
+                the study's input columns.
+            outcome_col (str, optional): Name of the outcome column. Required when the
+                study has no data yet (cold start), in which case the inputs are taken
+                from the keys of `ranges`; ignored otherwise. Defaults to None.
+            n_start (int): Initial sample size (only if data is empty). Defaults to 20.
+            n_step (int): Batch size for refinement. Defaults to 10.
+            max_iter (int): Max refinement loops. Defaults to 5.
+            max_hours (float, optional): Wall-clock time limit in hours after which the
+                loop stops. Defaults to None (no limit).
+            max_gap_ratio (float): Largest allowed coverage gap, as a fraction of each input's range.
+            min_r2_score (float): Minimum cross-validated R² for the model-fit check.
+            max_avg_cv (float): Maximum average bootstrap spread (relative to the response std).
+            max_max_cv (float): Maximum bootstrap spread at any probe point.
             output_csv (str, optional): Path to write the output CSV results incrementally.
             max_allowed_vif (float): Collinearity (VIF) threshold. Collinearity cannot be
                 fixed by sampling, so a failure stops the loop with a warning.
             seed (int, optional): Seed for reproducible designs and refinements.
+
+        Returns:
+            None: `data` (and the cleaned data) are replaced with all inputs and
+            outcomes collected by the loop, existing rows included.
+
+        Raises:
+            ValueError: If `outcome_col` is missing on a cold start, or the keys of
+                `ranges` do not match the study's inputs.
 
         Examples:
             ```python
@@ -606,8 +643,21 @@ class SimulationStudy:
 #### Time Heuristic ####
     def estimate_compute_time(self, model_type: str, n_boot: int, n_nuisances: int, n_jobs: int) -> float:
         """
-        Physics-aware heuristic to estimate PoD computation time in seconds.
-        Accounts for initial cache-building (CV), Kriging complexity, and MC Integration.
+        Estimates how long a PoD calculation will take, in seconds.
+
+        A rough heuristic based on the number of samples. It accounts for the first
+        model-selection pass (cross-validation, done when nothing is cached yet),
+        the cost of Kriging, Monte Carlo integration over nuisance inputs and
+        bootstrap parallelism. Intended for progress estimates, not precise timing.
+
+        Args:
+            model_type (str): ``"polynomial"`` or ``"kriging"`` (case-insensitive).
+            n_boot (int): Number of bootstrap iterations; 0 for a single fit.
+            n_nuisances (int): Number of nuisance inputs integrated out.
+            n_jobs (int): Parallel workers for the bootstrap (as in `pod()`).
+
+        Returns:
+            float: Estimated time in seconds (0.0 if there is no data).
         """
         n_samples = len(self.clean_data) if not self.clean_data.empty else len(self.data)
         if n_samples == 0:
@@ -1335,6 +1385,38 @@ class SimulationStudy:
     ) -> Dict[str, Any]:
         """
         Runs the classical linear a-hat vs a PoD analysis with bootstrapped bounds.
+
+        Fits a straight line to the outcome against `poi_col` (optionally on log
+        axes) with Gaussian residuals, computes the PoD curve on 100 points across
+        the observed range and bootstraps confidence bounds. Uses the cleaned data
+        and the study's outcome column. Results are stored in `linear_pod_results`.
+
+        Args:
+            poi_col (str): The parameter of interest (e.g. defect size).
+            threshold (float): Detection threshold on the outcome, in its original units.
+            xlog (bool): Fit against log(`poi_col`). Defaults to False.
+            ylog (bool): Fit log(outcome). Defaults to False.
+            n_boot (int): Bootstrap iterations for the confidence bounds; 0 skips
+                them (bounds then equal the PoD curve and a90/95 is NaN). Defaults to 1000.
+            n_jobs (int, optional): Parallel workers for the bootstrap. Defaults to None.
+            progress_callback (callable, optional): Called with bootstrap progress.
+                Defaults to None.
+
+        Returns:
+            Dict[str, Any]: The results, also stored in `linear_pod_results`. Keys
+            include ``"model"``, ``"tau"`` (residual std), ``"X_eval"``,
+            ``"curves"`` (``mean_response``, ``pod``, ``ci_lower``, ``ci_upper``),
+            ``"ci_bounds"`` (per confidence level), ``"a90_95"`` and
+            ``"reliability_table"`` (keyed by ``(target PoD %, confidence %)``).
+
+        Raises:
+            ValueError: If there is no valid data or `poi_col` is not a column.
+
+        Examples:
+            ```python
+            res = study.linear_pod(poi_col="Length", threshold=4.0, n_boot=500)
+            print(res["a90_95"])
+            ```
         """
         if self.clean_data.empty:
             self._validate()
@@ -1426,6 +1508,29 @@ class SimulationStudy:
         target_pod: float = 0.90,
         confidence_level: float = 95
     ) -> None:
+        """
+        Plots the results of `linear_pod()`: the signal model and the PoD curve.
+
+        The figures' axes are stored in `linear_plots` under ``"signal_model"`` and
+        ``"pod_curve"``. Logs a message and does nothing if `linear_pod()` has not run.
+
+        Args:
+            show (bool): If True, calls plt.show(). Defaults to True.
+            save_path (str, optional): Prefix for saved figures; writes
+                ``{save_path}_linear_signal.png`` and ``{save_path}_linear_pod.png``.
+                Defaults to None.
+            target_pod (float): PoD level marked on the curve, as a fraction. Defaults to 0.90.
+            confidence_level (float): Confidence level (%) of the bounds to draw. Defaults to 95.
+
+        Raises:
+            ValueError: If no bounds were bootstrapped at `confidence_level`.
+
+        Examples:
+            ```python
+            study.linear_pod(poi_col="Length", threshold=4.0)
+            study.visualise_linear(show=False, save_path="linear")
+            ```
+        """
         if not self.linear_pod_results:
             logger.info("No linear PoD results found. Please run .linear_pod() first.")
             return
@@ -1489,6 +1594,10 @@ class SimulationStudy:
             save_path (str, optional): Saves the figure to this path.
             ax (matplotlib.axes.Axes, optional): Axes to draw on; a new figure is
                 created if omitted.
+
+        Returns:
+            matplotlib.figure.Figure | None: The figure, or None if there is no matching
+            spectrum or more than one parameter of interest.
         """
         spectrum_key = (self.pod_results or {}).get("spectrum_key")
         spec = self.threshold_spectrum_cache.get(spectrum_key) if spectrum_key is not None else None

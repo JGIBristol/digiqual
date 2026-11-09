@@ -169,6 +169,25 @@ def bootstrap_linear_pod_ci(
     """
     Estimates Confidence Bounds for the classical linear PoD curve via Bootstrapping.
     Maintains the strict assumptions of constant variance and normally distributed errors.
+
+    Args:
+        X (np.ndarray): The parameter of interest values.
+        y (np.ndarray): The signal responses.
+        X_eval (np.ndarray): The grid of points the PoD curve is evaluated at.
+        threshold (float): The detection threshold.
+        xlog (bool, optional): Fit against log(X). Defaults to False.
+        ylog (bool, optional): Fit log(y). Defaults to False.
+        n_boot (int, optional): Number of bootstrap iterations. Defaults to 1000.
+        n_jobs (int | None, optional): Worker processes; ``None`` or 1 runs sequentially,
+            -1 uses all cores but two. Defaults to None.
+        confidence_levels (list | None, optional): Confidence levels in percent (e.g.
+            ``[90, 95]``). Defaults to None (95% bounds only).
+        progress_callback (callable, optional): Called as ``callback(completed, total)``
+            after each chunk of iterations. Defaults to None.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray] | dict: ``(lower, upper)`` 95% bounds at ``X_eval``
+        if ``confidence_levels`` is None, otherwise ``{level: (lower, upper)}``.
     """
     pod_matrix = run_bootstrap(
         _single_linear_bootstrap_step,

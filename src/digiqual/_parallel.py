@@ -14,6 +14,12 @@ def resolve_n_jobs(n_jobs: int | None) -> int:
 
     This single rule is used by the bootstrap itself, by the progress messages and
     by `SimulationStudy.estimate_compute_time`, so they always agree.
+
+    Args:
+        n_jobs (int | None): The requested number of jobs.
+
+    Returns:
+        int: Number of worker processes to use (at least 1).
     """
     total_cores = os.cpu_count() or 1
     if n_jobs is None or n_jobs == 1:
@@ -59,6 +65,18 @@ def run_bootstrap(
     Work runs in chunks so progress can be reported (and memory released) between
     them. With several workers, one process pool is created and reused for every
     chunk rather than respawned each time.
+
+    Args:
+        step (callable): Function for one iteration, called as described above.
+        args (tuple): Positional arguments passed to ``step``.
+        n_boot (int): Number of iterations.
+        n_jobs (int | None): Requested jobs, resolved by `resolve_n_jobs`.
+        n_points (int): Length of the array each ``step`` returns.
+        label (str, optional): Name used in log messages. Defaults to "Bootstrap".
+        progress_callback (callable, optional): Called as ``callback(completed, n_boot)``
+            after each chunk; exceptions it raises are logged and ignored. Defaults to None.
+        chunk_size (int, optional): Iterations per chunk. Defaults to 50.
+        step_kwargs (dict | None, optional): Extra keyword arguments for ``step``. Defaults to None.
 
     Returns:
         np.ndarray: Array of shape ``(n_boot, n_points)``.
@@ -113,8 +131,13 @@ def percentile_bounds(pod_matrix, confidence_levels=None):
     """
     Two-sided percentile bounds of bootstrap PoD curves.
 
-    Returns ``(lower_95, upper_95)`` if ``confidence_levels`` is None, otherwise a
-    dict ``{level: (lower, upper)}`` with the central ``level`` % interval for each.
+    Args:
+        pod_matrix (np.ndarray): Bootstrap PoD curves, shape ``(n_boot, n_points)``.
+        confidence_levels (list, optional): Confidence levels in percent. Defaults to None.
+
+    Returns:
+        tuple | dict: ``(lower_95, upper_95)`` if ``confidence_levels`` is None, otherwise
+        ``{level: (lower, upper)}`` with the central ``level`` % interval for each.
     """
     import numpy as np
 

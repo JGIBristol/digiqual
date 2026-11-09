@@ -220,6 +220,14 @@ def relative_spread(predictions: np.ndarray, y: np.ndarray) -> np.ndarray:
     observed response, rather than by the size of the mean prediction, makes the
     measure independent of where the response's zero is: a signal in dB that sits
     near 0, or one with a large constant offset, is judged on the same footing.
+
+    Args:
+        predictions (np.ndarray): Bootstrap predictions, shape ``(n_boot, n_probes)``.
+        y (np.ndarray): The observed responses. If their standard deviation is zero,
+            1 is used instead.
+
+    Returns:
+        np.ndarray: Relative spread at each probe point, shape ``(n_probes,)``.
     """
     predictions = np.asarray(predictions, dtype=float)
     y_scale = float(np.std(y))
