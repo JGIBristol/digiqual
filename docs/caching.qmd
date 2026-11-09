@@ -20,21 +20,23 @@ The state of the caches is managed inside `core.py`. Whenever the physical datas
 
 ### Layer 1: The Mean Model Cache (`models_cache`) {#sec-layer-models}
 **What it does:** Caches the fundamental physics regressions.
-**Trigger:** Clicking **Step 1: Fit Physics Model** on the *Model Fit* tab (or the first `study.pod()` call).
+**Trigger:** Pressing **Run models** in *Model Diagnostics* (`study.fit_model()`), or the first `study.pod()` call.
 
-Instead of only fitting the single "best" model, the engine evaluates *all* polynomial degrees (1-10) and the Kriging (Gaussian Process) model via cross-validation, and then fits every one of them to the full dataset. The CV scores, their standard errors (`cv_se_`) and the automatic choice made by the one-standard-error rule are cached with them ([how the choice is made](generalised_pod.qmd#sec-model-selection)).
+Instead of only fitting the single "best" model, the engine evaluates *all* polynomial degrees (1-10) and the Kriging (Gaussian Process) model via cross-validation, and then fits every one of them to the full dataset. For Kriging, several candidate kernels are first fitted and scored by leave-one-out error, and only the best is cross-validated ([details](kriging_metamodeling.qmd)); Kriging is skipped above 1000 runs, because each fit is $O(N^3)$. The CV scores (`cv_scores_cache`), their standard errors (`cv_se_`) and the automatic choice made by the one-standard-error rule (`cv_winner_key`) are cached with them ([how the choice is made](generalised_pod.qmd#sec-model-selection)).
 
 * **Cache Key:** `('Polynomial', 3)` or `('Kriging', None)`
 * **Stored Data:** The fitted `scikit-learn` pipeline.
-* **Benefit:** If a user looks at the CV bar chart and decides to manually override the "Auto (Best Fit)" selection from Polynomial Degree 3 to Degree 4, the app retrieves the pre-trained Degree 4 model instantly without running regression again.
+* **Benefit:** If a user looks at the CV bar chart and switches the Model dropdown from "Auto" (say Polynomial Degree 3) to Degree 4, the app retrieves the pre-trained Degree 4 model instantly without running regression again.
 
 ### Layer 2: The Variance Model Cache (`variance_cache`) {#sec-layer-variance}
 **What it does:** Caches the heteroscedastic noise profile and parameter sensitivity results.
-**Trigger:** Resolving a specific mean model.
+**Trigger:** `study.fit_model()` for a specific mean model: pressing **Run models** (the automatic choice), choosing another model in *Model Diagnostics*, or any `pod()` call, which calls `fit_model()` itself.
+
+In the app, a model change is therefore a Layer-1 hit but can be a Layer-2 miss. It runs in the background with a *Fitting the chosen model* progress panel, and is quick if that model was used before. `fit_model()` stores its result in `study.model_results`.
 
 Once a mean model is selected, the engine must estimate how the noise (variance) changes across the surface. It uses Leave-One-Out Cross-Validation (LOO-CV) to find the optimal smoothing bandwidth for the residuals, and tests candidate statistical distributions to find the best fit. In addition, the engine computes the Total-Order Sobol Sensitivity Indices to quantify parameter importance.
 
-* **Cache Key:** The Mean Model key plus the bandwidth setting (e.g., `(('Polynomial', 3), None)`, where `None` means the bandwidth was chosen automatically). Layers 3 and 4 build on this key, so changing `bandwidth_ratio` never reuses a stale variance model.
+* **Cache Key:** the `variance_key`: the Mean Model key plus the bandwidth setting (e.g., `(('Polynomial', 3), None)`, where `None` means the bandwidth was chosen automatically). Layers 3 and 4 build on this key, so changing `bandwidth_ratio` never reuses a stale variance model.
 * **Stored Data:** `residuals`, `bandwidth`, `dist_info` (name and parameters), and `sobol_indices`.
 * **Benefit:** Bandwidth optimization and Sobol sensitivity computations are slow. By caching them, the system never has to recalculate the noise profile or parameter sensitivities for a model it has already analyzed.
 
@@ -44,19 +46,22 @@ Once a mean model is selected, the engine must estimate how the noise (variance)
 
 This layer stores the output of the `integration.py` engine. It locks in the specific grid coordinates (`X_eval`) and either performs heavy Monte Carlo integration (if there are active nuisance parameters) or fast vectorization (if all other variables are locked as constant slices).
 
-* **Cache Key:** `(selected_key, threshold, poi_cols, nuisance_cols, slice_values)`
+* **Cache Key:** `(variance_key, threshold, poi_cols, nuisance_cols, slice_values, nuisance_dists, nuisance_bounds)`
 * **Stored Data:** The final `pod_curve` (1D array), `mean_curve`, and the mathematical grids used.
 * **Benefit:** If a user navigates away from a specific slice and then comes back to it, the fully integrated curve is loaded instantly.
 
 ### Layer 4: Threshold Spectrum Cache (`threshold_spectrum_cache`) {#sec-layer-spectrum}
 **What it does:** The "Crown Jewel" that enables real-time threshold scrubbing.
-**Trigger:** Runs silently in the background immediately after Layer 1 & 2 are complete.
+**Trigger:** Pressing **Update PoD** in the *Model Explorer* (`study.compute_pod_spectrum()`), and after each slice change when nothing is integrated.
 
 The `integration.py` engine is fully vectorized to handle multiple thresholds simultaneously. Instead of calculating one PoD curve, Layer 4 calculates **100 PoD curves** across the entire minimum-to-maximum range of the signal data in a single array operation.
 
-* **Cache Key:** strictly *excludes* the threshold: `(selected_key, poi_cols, nuisance_cols, slice_values)`
+* **Cache Key:** strictly *excludes* the threshold: `(variance_key, poi_cols, nuisance_cols, slice_values, nuisance_dists, nuisance_bounds)`
 * **Stored Data:** A massive 2D matrix (`pod_matrix`) where rows are X-axis grid points and columns are the 100 different thresholds.
-* **Benefit:** When the user drags the "Detection Threshold" slider on the *PoD Explorer* tab, the app intercepts the slider value, performs a 1D linear interpolation across the pre-calculated `pod_matrix`, and returns the shifted S-Curve in less than a millisecond.
+* **Benefit:** When the user drags the "Detection Threshold" slider in the *Model Explorer*, `pod()` performs a 1D linear interpolation across the pre-calculated `pod_matrix` and returns the shifted S-Curve in less than a millisecond.
+* **Limits:** The spectrum covers the observed signal range only. For a threshold outside it, `pod()` ignores the spectrum and computes the PoD directly (Layer 3), since interpolation would just repeat the end values. The spectrum is also never used when `n_boot > 0`.
+
+`compute_pod_spectrum()` builds the spectrum by calling `pod()` at the median signal, but it keeps any existing `study.pod_results` and `study.model_results`: building the cache doesn't replace the results you are looking at.
 
 ---
 
@@ -65,19 +70,19 @@ The `integration.py` engine is fully vectorized to handle multiple thresholds si
 Let's trace exactly what happens in the engine when a user interacts with the application.
 
 ### Step 1: The Initial Fit {#sec-journey-fit}
-The user uploads 500 simulations of an ultrasonic inspection with `Length`, `Angle`, and `Roughness`. They select `Length` as the Parameter of Interest, and click **Step 1: Fit Physics Model**.
+The user uploads 500 simulations of an ultrasonic inspection with `Length`, `Angle`, and `Roughness`. They press **Run models** in *Model Diagnostics*, which fits the candidate models. Then, in the *Model Explorer*, they plot `Length`, slice `Angle` and `Roughness` at their medians and press **Update PoD**.
 
-1. **Layer 1 Miss:** The engine trains 10 polynomials and 1 Kriging model. It caches all 11 models. It selects "Polynomial (Degree 2)" as the winner.
+1. **Layer 1 Miss (Run models):** The engine trains 10 polynomials and 1 Kriging model. It caches all 11 models. It selects "Polynomial (Degree 2)" as the winner.
 2. **Layer 2 Miss:** It optimizes the bandwidth and fits a Normal distribution for Poly 2. It caches the variance parameters.
-3. **Layer 3 Miss:** It evaluates the curve using the median threshold (e.g., 15.0 dB) and median slices for Angle and Roughness. It caches this base curve.
-4. **Layer 4 Miss (Background):** The UI says "Generating Instant Threshold Spectrum...". The engine pulls `X_train` and the `bandwidth` from Layer 2, generates a vector of 100 thresholds (from 0 dB to 50 dB), and runs the fast-path vectorized math. The 100-curve matrix is cached.
+3. **Layer 3 Miss (Update PoD):** It evaluates the curve using the median threshold (e.g., 15.0 dB) and median slices for Angle and Roughness. It caches this base curve.
+4. **Layer 4 Miss (Update PoD):** The engine pulls `X_train` and the `bandwidth` from Layer 2, generates a vector of 100 thresholds (from 0 dB to 50 dB), and runs the fast-path vectorized math. The 100-curve matrix is cached.
 
 *Total Compute Time: ~2.5 seconds.*
 
 ### Step 2: The Real-Time Slider {#sec-journey-slider}
-The user moves to the *PoD Explorer* tab and rapidly drags the **Detection Threshold** slider from `15.0 dB` to `22.5 dB`.
+The user rapidly drags the **Detection Threshold** slider from `15.0 dB` to `22.5 dB` (inside the observed signal range).
 
-1. The `realtime_threshold_update` function fires in `digiqual/gui/app.py`.
+1. The `live_update` effect fires in `digiqual/gui/stage_explorer.py`.
 2. It calls `study.pod(threshold=22.5, n_boot=0)`.
 3. **Layer 1 Hit:** Poly 2 loaded instantly.
 4. **Layer 2 Hit:** Bandwidth loaded instantly.
@@ -89,7 +94,7 @@ The user moves to the *PoD Explorer* tab and rapidly drags the **Detection Thres
 ### Step 3: Changing a Slice {#sec-journey-slice}
 The user moves the **Angle Slice Slider** from 0 degrees to 45 degrees.
 
-1. The `realtime_slice_update` function fires.
+1. The same `live_update` effect fires.
 2. **Layer 1 & 2 Hit:** Poly 2 physics loaded instantly.
 3. **Layer 4 Miss:** The cache key requires an exact match on `slice_values`. Because Angle changed, the old matrix doesn't apply.
 4. The engine falls back to `integration.py`. Because `Angle` is a constant slice (no Monte Carlo required), it takes the Fast Path.
@@ -98,12 +103,12 @@ The user moves the **Angle Slice Slider** from 0 degrees to 45 degrees.
 *Total Compute Time: ~0.05 seconds.*
 
 ### Step 4: Uncertainty Quantification (Bypassing the Cache) {#sec-journey-uq}
-The user is happy with a threshold of `22.5 dB` and clicks **Run Uncertainty Quantification** on the *UQ Analysis* tab.
+The user is happy with a threshold of `22.5 dB` and clicks **Run Bootstrap** in the *PoD Analysis* stage.
 
-1. The function calls `study.pod(threshold=22.5, n_boot=1000)`.
-2. The engine recognizes `n_boot > 0`.
-3. It completely bypasses the Layer 4 slider approximation.
-4. It calls `bootstrap_pod_ci()`, firing up parallel CPU cores to resample the data 1,000 times, refitting the models and running strict Layer 3 math on every iteration to build robust Confidence Bounds for a range of levels (50%, 90%, 95%, 99%) simultaneously. These bounds are stored in a `ci_bounds` dictionary and a full `reliability_table` matrix.
+1. With one plotted variable, the bootstrap task first calls `study.compute_pod_spectrum()` for the PoD-vs-threshold plot. This is a Layer 4 hit unless the slice has moved since Update PoD.
+2. It then calls `study.pod(threshold=22.5, n_boot=1000, n_jobs=...)`, with `n_jobs=-1` (all cores but two) when *Parallel compute* is ticked, and `1` otherwise.
+3. The engine recognizes `n_boot > 0` and completely bypasses the Layer 4 slider approximation.
+4. It calls `bootstrap_pod_ci()`, using the chosen CPU cores to resample the data 1,000 times, refitting the models and running strict Layer 3 math on every iteration to build robust Confidence Bounds for a range of levels (50%, 90%, 95%, 99%) simultaneously. These bounds are stored in a `ci_bounds` dictionary and a full `reliability_table` matrix.
 
 *Total Compute Time: ~6.0 seconds.*
 

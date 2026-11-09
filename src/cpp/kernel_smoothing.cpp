@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 #include <thread>
+#include "threads.hpp"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -88,7 +89,9 @@ void predict_local_std_cpp(
             }
         }
 
-        if (weight_sum <= 1e-12) {
+        // Only guard an exactly-zero sum (as the NumPy fallback does): tiny but
+        // non-zero sums, far from the training data, still give the right ratio
+        if (weight_sum == 0.0) {
             weight_sum = 1e-10;
         }
 
@@ -96,13 +99,12 @@ void predict_local_std_cpp(
     };
 
 #ifdef _OPENMP
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static) num_threads(digiqual_max_threads())
     for (size_t i = 0; i < N_eval; ++i) {
         compute_i(i);
     }
 #else
-    unsigned int num_threads = std::thread::hardware_concurrency();
-    if (num_threads == 0) num_threads = 4;
+    unsigned int num_threads = digiqual_max_threads();
     num_threads = std::min(num_threads, static_cast<unsigned int>(N_eval));
 
     if (num_threads <= 1 || N_eval < 64) {

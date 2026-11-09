@@ -54,3 +54,6 @@ wheelhouse/
 /.quarto/
 
 **/*.quarto_ipynb
+
+# Downloaded by `just fetch_mathjax` / the app build, not committed
+/src/digiqual/gui/www/mathjax-tex-svg.js

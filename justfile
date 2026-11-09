@@ -47,11 +47,16 @@ test_matrix:
 
 # Run the app in "Browser Mode" (Best for coding/debugging)
 app_dev:
-    uv run shiny run src/digiqual/gui/app.py
+    uv run shiny run digiqual.gui.app:app
 
 # Run the app in "Desktop Mode" (Best for testing the desktop window look)
 app:
     uv run python -m digiqual.gui
+
+# Downloads MathJax into the app's www/ so equations render offline (not in git;
+# without it the app loads MathJax from the CDN). The desktop build does this too.
+fetch_mathjax:
+    curl -fsSL -o src/digiqual/gui/www/mathjax-tex-svg.js https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js
 
 # --- VERSIONING ---
 
@@ -80,7 +85,7 @@ build_package: clean
 # Builds the desktop app locally with Briefcase (needs briefcase installed:
 # `uv tool install briefcase`). Uses a wheel built from this checkout so the
 # bundle matches the working tree, then runs the packaged self-test.
-build_app_local: clean
+build_app_local: clean fetch_mathjax
     #!/usr/bin/env bash
     set -euo pipefail
     uv build --wheel --python 3.12 --out-dir wheelhouse

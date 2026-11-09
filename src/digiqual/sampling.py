@@ -1,8 +1,15 @@
+"""Space-filling experimental designs (Latin Hypercube sampling) for planning simulation runs."""
+
 import logging
 from typing import Dict, Optional, Tuple, Union
 
 import pandas as pd
 from scipy.stats import qmc
+
+__all__ = [
+    "generate_lhs",
+    "reorder_max_min",
+]
 
 logger = logging.getLogger(__name__)
 

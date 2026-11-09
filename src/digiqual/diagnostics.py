@@ -1,3 +1,5 @@
+"""Data validation and sample-sufficiency diagnostics: input coverage, model fit, bootstrap stability and collinearity."""
+
 import logging
 from typing import Dict, List, Tuple
 
@@ -9,6 +11,15 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 from .defaults import MAX_ALLOWED_VIF, MAX_AVG_CV, MAX_GAP_RATIO, MAX_MAX_CV, MIN_R2_SCORE
+
+__all__ = [
+    "ValidationError",
+    "validate_simulation",
+    "sample_sufficiency",
+    "check_input_coverage",
+    "bootstrap_convergence_trace",
+    "relative_spread",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +82,8 @@ def validate_simulation(
     # Force everything to be a number. Text becomes NaN.
     subset_numeric = subset.apply(pd.to_numeric, errors='coerce')
 
-    # A row is only valid if EVERY required column has a real number in it
-    mask_valid = subset_numeric.notna().all(axis=1)
+    # A row is only valid if EVERY required column has a real, finite number in it
+    mask_valid = pd.Series(np.isfinite(subset_numeric.to_numpy(dtype=float)).all(axis=1), index=subset_numeric.index)
 
     df_clean = subset_numeric.loc[mask_valid].copy()
     df_removed = df.loc[~mask_valid].copy()
@@ -95,7 +106,11 @@ def _check_input_coverage(df: pd.DataFrame, input_cols: List[str], max_gap_ratio
     """
     results = {}
     for col in input_cols:
-        sorted_vals = np.sort(df[col].values)
+        vals = pd.to_numeric(df[col], errors="coerce").to_numpy(dtype=float)
+        sorted_vals = np.sort(vals[np.isfinite(vals)])
+        if len(sorted_vals) < 2:
+            results[col] = {"min": np.nan, "max": np.nan, "max_gap_ratio": np.nan, "sufficient_coverage": False}
+            continue
         gaps = np.diff(sorted_vals)
         data_range = sorted_vals[-1] - sorted_vals[0]
 
@@ -116,8 +131,15 @@ def check_input_coverage(df: pd.DataFrame, input_cols: List[str], max_gap_ratio:
     """
     Largest gap between neighbouring sorted values of each input, as a fraction of its range.
 
-    Public wrapper of the Input Coverage diagnostic, returning per-input details
-    (``max_gap_ratio``, ``sufficient_coverage``, the gap location, min and max).
+    Public wrapper of the Input Coverage diagnostic. Missing and infinite values are ignored.
+
+    Args:
+        df (pd.DataFrame): The data.
+        input_cols (List[str]): The input columns to check.
+        max_gap_ratio (float): Largest allowed gap, as a fraction of the input's range.
+
+    Returns:
+        Dict: ``{col: {"min", "max", "max_gap_ratio", "sufficient_coverage"}}``.
     """
     return _check_input_coverage(df, input_cols, max_gap_ratio)
 
@@ -198,6 +220,14 @@ def relative_spread(predictions: np.ndarray, y: np.ndarray) -> np.ndarray:
     observed response, rather than by the size of the mean prediction, makes the
     measure independent of where the response's zero is: a signal in dB that sits
     near 0, or one with a large constant offset, is judged on the same footing.
+
+    Args:
+        predictions (np.ndarray): Bootstrap predictions, shape ``(n_boot, n_probes)``.
+        y (np.ndarray): The observed responses. If their standard deviation is zero,
+            1 is used instead.
+
+    Returns:
+        np.ndarray: Relative spread at each probe point, shape ``(n_probes,)``.
     """
     predictions = np.asarray(predictions, dtype=float)
     y_scale = float(np.std(y))

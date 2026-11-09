@@ -1,13 +1,35 @@
+"""Kernel smoothing and PoD probabilities, using the compiled C++ extension when it is available and NumPy otherwise."""
+
 import numpy as np
 import scipy.stats as stats
 from scipy.spatial.distance import cdist
 
+__all__ = [
+    "HAS_CPP",
+    "predict_local_std_fast",
+    "predict_local_std_scaled",
+    "input_scale",
+    "compute_pod_probs_fast",
+    "set_cpp_threads",
+]
+
 try:
     from . import _digiqual_cpp
-    HAS_CPP = True
 except ImportError:
-    HAS_CPP = False
     _digiqual_cpp = None
+
+HAS_CPP: bool = _digiqual_cpp is not None
+"""True when the compiled C++ extension is available."""
+
+def set_cpp_threads(n: int) -> None:
+    """Limits the threads each C++ kernel call starts. Does nothing without the C++ extension.
+
+    Args:
+        n (int): Maximum threads per kernel call; 0 means one per core.
+    """
+    if HAS_CPP and hasattr(_digiqual_cpp, "set_num_threads"):
+        _digiqual_cpp.set_num_threads(int(n))
+
 
 def predict_local_std_fast(
     X: np.ndarray,
@@ -20,6 +42,20 @@ def predict_local_std_fast(
     High-performance Nadaraya-Watson kernel smoothing for local standard deviation.
 
     Uses C++ multi-threading if compiled, or vectorized NumPy array operations if not.
+
+    Args:
+        X (np.ndarray): Training inputs, shape ``(n,)`` or ``(n, d)``.
+        residuals (np.ndarray): Residual at each training point, length ``n``.
+        X_eval (np.ndarray): Evaluation points, shape ``(m,)`` or ``(m, d)``.
+        bandwidth (float): Gaussian kernel bandwidth in the units of ``X``; must be positive.
+        out (np.ndarray, optional): Array of length ``m`` to write the result into. Defaults to None.
+
+    Returns:
+        np.ndarray: Local standard deviation at each evaluation point, length ``m``
+        (``out`` itself if given).
+
+    Raises:
+        ValueError: If ``bandwidth`` is not positive or residuals do not match ``X``.
     """
     X_source = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X, dtype=np.float64)
     X_target = np.atleast_2d(X_eval).T if np.asarray(X_eval).ndim == 1 else np.asarray(X_eval, dtype=np.float64)
@@ -39,7 +75,9 @@ def predict_local_std_fast(
             try:
                 return _digiqual_cpp.predict_local_std(X_source, res, X_target, float(bandwidth), out)
             except TypeError:
-                pass
+                # `out` isn't a C-contiguous float64 array: compute, then copy into it
+                np.copyto(out, _digiqual_cpp.predict_local_std(X_source, res, X_target, float(bandwidth)))
+                return out
         return _digiqual_cpp.predict_local_std(X_source, res, X_target, float(bandwidth))
 
     # Vectorized Python Fallback (batch cdist across all evaluation points)
@@ -58,7 +96,14 @@ def predict_local_std_fast(
     return result
 
 def input_scale(X: np.ndarray) -> np.ndarray:
-    """Per-input standard deviation of the training inputs (constant inputs get 1)."""
+    """Per-input standard deviation of the training inputs (constant inputs get 1).
+
+    Args:
+        X (np.ndarray): Training inputs, shape ``(n,)`` or ``(n, d)``.
+
+    Returns:
+        np.ndarray: Scale of each input, shape ``(d,)``.
+    """
     X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X, dtype=np.float64)
     std = X_2d.std(axis=0)
     return np.where(std > 0, std, 1.0)
@@ -79,6 +124,20 @@ def predict_local_std_scaled(
     deviations and an input recorded in small units (e.g. metres) carries the same
     weight as one in large units (e.g. degrees). This mirrors the input scaling of
     the Kriging surrogate. The raw kernel is `predict_local_std_fast`.
+
+    Args:
+        X (np.ndarray): Training inputs, shape ``(n,)`` or ``(n, d)``.
+        residuals (np.ndarray): Residual at each training point, length ``n``.
+        X_eval (np.ndarray): Evaluation points, shape ``(m,)`` or ``(m, d)``.
+        bandwidth (float): Gaussian kernel bandwidth, in standard deviations; must be positive.
+        out (np.ndarray, optional): Array of length ``m`` to write the result into. Defaults to None.
+
+    Returns:
+        np.ndarray: Local standard deviation at each evaluation point, length ``m``
+        (``out`` itself if given).
+
+    Raises:
+        ValueError: If ``bandwidth`` is not positive or residuals do not match ``X``.
     """
     scale = input_scale(X)
     X_2d = np.atleast_2d(X).T if np.asarray(X).ndim == 1 else np.asarray(X, dtype=np.float64)
@@ -97,6 +156,22 @@ def compute_pod_probs_fast(
     High-performance PoD survival CDF calculation.
 
     Uses C++ fast analytical CDF evaluation if compiled, or vectorized SciPy distribution call if not.
+    Computes ``1 - F((threshold - mean) / sigma)`` for the residual distribution ``F``.
+
+    Args:
+        mean_resp (np.ndarray): Mean response at each point.
+        sigma_resp (np.ndarray): Response standard deviation at each point (floored at 1e-10
+            on the NumPy path).
+        threshold (float): The detection threshold.
+        dist_info (tuple): ``(dist_name, dist_params)``: a ``scipy.stats`` distribution name
+            and its parameter tuple ending in ``(loc, scale)``.
+        out (np.ndarray, optional): Array to write the result into. Defaults to None.
+
+    Returns:
+        np.ndarray: PoD at each point (``out`` itself if given).
+
+    Raises:
+        ValueError: If the distribution scale is not positive.
     """
     dist_name, dist_params = dist_info
     mean_arr = np.asarray(mean_resp, dtype=np.float64)
@@ -112,7 +187,10 @@ def compute_pod_probs_fast(
             try:
                 return _digiqual_cpp.compute_pod_probs(mean_arr, sigma_arr, float(threshold), dist_name, dist_params, out)
             except TypeError:
-                pass
+                # `out` isn't a C-contiguous float64 array: compute, then copy into it
+                np.copyto(out, _digiqual_cpp.compute_pod_probs(mean_arr, sigma_arr, float(threshold),
+                                                               dist_name, dist_params))
+                return out
         return _digiqual_cpp.compute_pod_probs(mean_arr, sigma_arr, float(threshold), dist_name, dist_params)
 
     sig = np.maximum(sigma_arr, 1e-10)

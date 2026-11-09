@@ -5,6 +5,7 @@
 #include <cmath>
 #include <algorithm>
 #include <thread>
+#include "threads.hpp"
 
 #ifndef M_SQRT1_2
 #define M_SQRT1_2 0.70710678118654752440
@@ -49,7 +50,7 @@ void compute_pod_probs_cpp(
     }
 
 #ifdef _OPENMP
-    #pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static) num_threads(digiqual_max_threads())
     for (size_t i = 0; i < N_points; ++i) {
         double sig = std::max(sigma_resp[i], 1e-10);
         double z = (threshold - mean_resp[i]) / sig;
@@ -57,8 +58,7 @@ void compute_pod_probs_cpp(
         out[i] = std::clamp(calc_prob(z_std, dist_name), 0.0, 1.0);
     }
 #else
-    unsigned int num_threads = std::thread::hardware_concurrency();
-    if (num_threads == 0) num_threads = 4;
+    unsigned int num_threads = digiqual_max_threads();
     num_threads = std::min(num_threads, static_cast<unsigned int>(N_points));
 
     if (num_threads <= 1 || N_points < 64) {

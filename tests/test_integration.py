@@ -28,10 +28,10 @@ def mock_model():
 
 # --- 1. Fast Path Tests (Vectorized, No Active Nuisances) ---
 
-@patch("digiqual.pod.predict_local_std") # <-- FIXED MOCK PATH
+@patch("digiqual.cpp_fallback.predict_local_std_scaled")
 def test_fast_path_single_threshold(mock_std, mock_model, dummy_data):
     X_train, residuals, dist_info, bandwidth, poi_grid, feature_names, poi_names = dummy_data
-    mock_std.return_value = np.ones(len(poi_grid))
+    mock_std.side_effect = lambda X, res, X_eval, bw, **kw: np.ones(len(X_eval))
 
     nuisance_ranges = {"Angle": (45.0, 45.0)}
     threshold = 50.0
@@ -48,10 +48,10 @@ def test_fast_path_single_threshold(mock_std, mock_model, dummy_data):
     assert np.all((pod >= 0.0) & (pod <= 1.0))
     mock_model.predict.assert_called_once()
 
-@patch("digiqual.pod.predict_local_std") # <-- FIXED MOCK PATH
+@patch("digiqual.cpp_fallback.predict_local_std_scaled")
 def test_fast_path_vector_thresholds(mock_std, mock_model, dummy_data):
     X_train, residuals, dist_info, bandwidth, poi_grid, feature_names, poi_names = dummy_data
-    mock_std.return_value = np.ones(len(poi_grid))
+    mock_std.side_effect = lambda X, res, X_eval, bw, **kw: np.ones(len(X_eval))
 
     nuisance_ranges = {"Angle": (45.0, 45.0)}
     thresholds = np.array([40.0, 50.0, 60.0])
@@ -69,13 +69,11 @@ def test_fast_path_vector_thresholds(mock_std, mock_model, dummy_data):
 
 # --- 2. Slow Path Tests (Monte Carlo Integration) ---
 
-@patch("digiqual.pod.predict_local_std")
+@patch("digiqual.cpp_fallback.predict_local_std_scaled")
 def test_slow_path_single_threshold(mock_std, mock_model, dummy_data):
     X_train, residuals, dist_info, bandwidth, poi_grid, feature_names, poi_names = dummy_data
     n_mc_samples = 100
-
-    # FIXED: Return a flat 1D array of shape (100,) instead of (100, 1)
-    mock_std.return_value = np.ones(n_mc_samples)
+    mock_std.side_effect = lambda X, res, X_eval, bw, **kw: np.ones(len(X_eval))
 
     nuisance_ranges = {"Angle": (30.0, 60.0)}
     threshold = 50.0
@@ -91,13 +89,11 @@ def test_slow_path_single_threshold(mock_std, mock_model, dummy_data):
     assert np.all((pod >= 0.0) & (pod <= 1.0))
     assert mock_model.predict.call_count >= 1
 
-@patch("digiqual.pod.predict_local_std")
+@patch("digiqual.cpp_fallback.predict_local_std_scaled")
 def test_slow_path_vector_thresholds(mock_std, mock_model, dummy_data):
     X_train, residuals, dist_info, bandwidth, poi_grid, feature_names, poi_names = dummy_data
     n_mc_samples = 50
-
-    # FIXED: Return a flat 1D array of shape (50,) instead of (50, 1)
-    mock_std.return_value = np.ones(n_mc_samples)
+    mock_std.side_effect = lambda X, res, X_eval, bw, **kw: np.ones(len(X_eval))
 
     nuisance_ranges = {"Angle": (30.0, 60.0)}
     thresholds = np.array([40.0, 50.0, 60.0])
@@ -113,10 +109,10 @@ def test_slow_path_vector_thresholds(mock_std, mock_model, dummy_data):
 
 # --- 3. Edge Cases ---
 
-@patch("digiqual.pod.predict_local_std") # <-- FIXED MOCK PATH
+@patch("digiqual.cpp_fallback.predict_local_std_scaled")
 def test_fallback_column_indexing(mock_std, mock_model, dummy_data):
     X_train, residuals, dist_info, bandwidth, poi_grid, _, _ = dummy_data
-    mock_std.return_value = np.ones(len(poi_grid))
+    mock_std.side_effect = lambda X, res, X_eval, bw, **kw: np.ones(len(X_eval))
 
     nuisance_ranges = {"Angle": (45.0, 45.0)}
     threshold = 50.0

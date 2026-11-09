@@ -26,6 +26,7 @@ from . import (  # noqa: E402
     diagnostics,
     executors,
     integration,
+    io,
     plotting,
     pod,
     sampling,
@@ -61,6 +62,7 @@ __all__ = [
     "sampling",
     "plotting",
     "integration",
+    "io",
     "executors",
     "ahat"
 ]

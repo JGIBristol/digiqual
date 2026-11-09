@@ -94,88 +94,47 @@ format:
     backgroundcolor: "#f9fafb"
 
 # --- 2. QUARTODOC CONFIG ---
+# The API reference is generated from the code: each module below is documented
+# with every object in its `__all__`, using the objects' (Google-style) docstrings.
+# A new public function therefore appears automatically once it is added to its
+# module's `__all__`; tests/test_docstrings.py fails until it is (and until its
+# docstring documents every argument and the return value).
+# Build with `just build_website` / `just preview` (they run `quartodoc build`).
 quartodoc:
   package: digiqual
   dir: api_reference
   parser: google
-  title: "All Functions"
+  title: "API Reference"
 
-  # Global Options
   options:
-    dynamic: true
     signature_name: short
+    children: separate   # one page per function/class, linked from its module's page
 
-  # --- 3. PAGE GENERATION ---
-  # This builds the content for "api_reference/index.qmd"
   sections:
-    # SECTION A: THE STANDARD USER
     - title: "Standard Workflow"
-      desc: "The core class for managing reliability studies."
+      desc: "The `SimulationStudy` class runs the whole analysis: diagnostics, refinement, model fitting, PoD and plots. Most users only need this and `dq_ui`."
       contents:
-        - name: core.SimulationStudy
-          children: separate
-
-    # SECTION B: THE DESKTOP APP
-    - title: "Graphical User Interface"
-      desc: "Launch the standalone DigiQual dashboard locally."
-      contents:
+        - core.SimulationStudy
         - dq_ui
 
-    # SECTION C: THE POWER USER
     - title: "Functional API"
-      desc: "Standalone tools for Sampling, Diagnostics, PoD, and Plotting."
+      desc: "The building blocks `SimulationStudy` uses, for custom workflows. Each module lists its functions."
       contents:
-        # -- Sampling --
-        - sampling.generate_lhs
+        - name: core
+          exclude: [SimulationStudy]
+        - io
+        - sampling
+        - diagnostics
+        - adaptive
+        - pod
+        - integration
+        - ahat
+        - plotting
+        - executors
 
-        # -- Diagnostics --
-        - diagnostics.validate_simulation
-        - diagnostics.sample_sufficiency
-        - diagnostics.ValidationError
-
-        # -- Adaptive --
-        - adaptive.run_adaptive_search
-        - adaptive.generate_targeted_samples
-
-        # -- PoD Analysis --
-        - pod.fit_all_robust_mean_models
-        - pod.select_cv_winner
-        - pod.generate_latex_equation
-        - pod.optimise_bandwidth
-        - pod.fit_variance_model
-        - pod.infer_best_distribution
-        - pod.plot_model_selection
-        - pod.predict_local_std
-        - pod.ScaledGaussianProcessRegressor
-        - pod.build_kriging_candidate_kernels
-        - pod.build_kriging_gpr
-        - pod.build_fixed_kernel_gpr
-        - pod.compute_kriging_loo_residuals
-        - pod.compute_kriging_group_loo_means
-        - pod.compute_pod_curve
-        - pod.bootstrap_pod_ci
-        - pod.calculate_reliability_point
-        - pod.calculate_sobol_indices
-
-        # -- Integration --
-        - integration.compute_multi_dim_pod
-
-        # -- Classical Linear PoD --
-        - ahat.fit_linear_a_hat_model
-        - ahat.compute_linear_pod_curve
-        - ahat.bootstrap_linear_pod_ci
-        - ahat.plot_linear_signal_model
-
-        # -- Plotting --
-        - plotting.plot_signal_model
-        - plotting.plot_pod_curve
-        - plotting.plot_pod_surface
-        - plotting.plot_signal_surface
-        - plotting.plot_collinearity_matrix
-        - plotting.plot_kriging_diagnostics
-
-        # -- Optimise/Executor --
-        - executors.Executor
-        - executors.PythonExecutor
-        - executors.CLIExecutor
-        - executors.MatlabExecutor
+    - title: "Settings and Acceleration"
+      desc: "Default thresholds and levels shared by the library and the app, and the C++ kernels with their NumPy fallback."
+      contents:
+        - name: defaults
+          children: embedded
+        - cpp_fallback

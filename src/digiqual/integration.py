@@ -1,3 +1,5 @@
+"""Monte Carlo integration over nuisance parameters, and fitted distributions for them."""
+
 import warnings
 from typing import Any, Dict, Tuple, Union
 
@@ -5,7 +7,16 @@ import numpy as np
 import scipy.stats as stats
 from scipy.stats import qmc
 
+from .defaults import MC_SAMPLES
+
+__all__ = [
+    "NUISANCE_DISTRIBUTIONS",
+    "estimate_nuisance_distribution",
+    "compute_multi_dim_pod",
+]
+
 NUISANCE_DISTRIBUTIONS = ("Uniform", "Normal", "Lognormal", "Weibull")
+"""Distributions `estimate_nuisance_distribution` can fit to a nuisance parameter's values."""
 
 
 def estimate_nuisance_distribution(values, kind: str) -> Tuple[str, Tuple] | None:
@@ -57,7 +68,7 @@ def compute_multi_dim_pod(
     bandwidth: float,
     dist_info: Tuple[str, Tuple],
     thresholds: Union[float, np.ndarray, list],
-    n_mc_samples: int = 3000,
+    n_mc_samples: int = MC_SAMPLES,
     feature_names: list = None,
     poi_names: list = None,
     nuisance_dists: Dict[str, Tuple[str, Tuple]] = None
@@ -165,7 +176,7 @@ def compute_multi_dim_pod(
             if min_val == max_val:
                 # Constant slice
                 nuisance_samples[:, i] = min_val
-            elif nuisance_dists and name in nuisance_dists:
+            elif nuisance_dists and nuisance_dists.get(name) is not None:
                 custom_dist_name, custom_dist_params = nuisance_dists[name]
                 custom_dist_obj = getattr(stats, custom_dist_name)
                 if not isinstance(custom_dist_params, (tuple, list)):

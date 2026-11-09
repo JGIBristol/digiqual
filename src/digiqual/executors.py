@@ -1,3 +1,5 @@
+"""Solver adapters that run simulations for `SimulationStudy.optimise`: Python functions, command-line programs and MATLAB."""
+
 import logging
 import os
 import shlex
@@ -7,18 +9,23 @@ from typing import Callable
 
 import pandas as pd
 
+__all__ = [
+    "Executor",
+    "PythonExecutor",
+    "CLIExecutor",
+    "MatlabExecutor",
+]
+
 logger = logging.getLogger(__name__)
 
 class Executor(ABC):
     """
-    THE BLUEPRINT:
-    This is an Abstract Base Class (ABC). It does not actually run any simulations itself.
-    Instead, it acts as a strict rulebook for any future executors we build.
+    Abstract base class for solver adapters.
 
-    The rule is: Any class that inherits from 'Executor' MUST have a method called 'run',
-    it MUST accept a Pandas DataFrame as input, and it MUST return a Pandas DataFrame.
-    This guarantees that DigiQual's main loop can talk to ANY solver blindly,
-    knowing that '.run()' will always work.
+    An executor takes a DataFrame of input samples, runs the simulation for each
+    row and returns the inputs together with the outcome column(s). Every subclass
+    must implement `run`; `SimulationStudy.optimise` relies only on that method,
+    so any solver can be plugged in.
     """
 
     @abstractmethod
@@ -39,34 +46,43 @@ class Executor(ABC):
 
 class PythonExecutor(Executor):
     """
-    THE IN-MEMORY TRANSLATOR:
-    This executor is for lightweight analytical models or surrogate models written in Python.
-    Because it runs entirely inside DigiQual's current memory space, it is incredibly fast.
-    However, it should NOT be used for heavy FEA/CFD libraries, as those can cause memory leaks
-    if run thousands of times in a single loop.
+    Runs a Python function in the current process, one sample at a time.
 
-    Example Usage:
+    Fast and simple, so suited to analytical or surrogate models. For heavy FEA/CFD
+    libraries prefer `CLIExecutor`, which runs each batch in a separate process so
+    memory is released between batches.
+
+    Args:
+        solver_func (Callable): Function taking one row of inputs (a `pd.Series`)
+            and returning a number.
+        outcome_col (str): Name of the outcome column to add (e.g. ``'Max_Stress'``).
+
+    Examples:
+        ```python
         def my_math_model(row):
             return row['Length'] * 2 + row['Angle']
 
         executor = PythonExecutor(solver_func=my_math_model, outcome_col='Signal')
+        ```
     """
 
     def __init__(self, solver_func: Callable, outcome_col: str):
-        """
-        Sets up the translator with the user's specific rules.
-
-        Args:
-            solver_func (Callable): A user-defined Python function. This function must be designed
-                                    to accept a single row of data (a Pandas Series) and return a number.
-            outcome_col (str): What we should name the final result column (e.g., 'Max_Stress').
-        """
+        """Stores the solver function and outcome column name."""
         self.solver_func = solver_func
         self.outcome_col = outcome_col
 
     def run(self, samples: pd.DataFrame) -> pd.DataFrame:
         """
-        The actual translation process for pure Python models.
+        Applies `solver_func` to each row of `samples`.
+
+        A row whose call raises gets NaN as its outcome (and a warning is logged),
+        so only that point counts as a failed run; the rest of the batch is kept.
+
+        Args:
+            samples (pd.DataFrame): Input samples, one row per simulation.
+
+        Returns:
+            pd.DataFrame: A copy of `samples` with the outcome column added.
         """
         logger.info(f"   -> Executing Python model for {len(samples)} points...")
 
@@ -106,36 +122,66 @@ class PythonExecutor(Executor):
 
 class CLIExecutor(Executor):
     """
-    THE HEAVY-DUTY TRANSLATOR (Process Isolation):
-    This executor acts like a human sitting at a computer terminal. It takes the DigiQual DataFrame,
-    saves it as a CSV file, opens a brand new, isolated terminal command to run your heavy software
-    (like Ansys or a heavy Python FEA script), waits for it to finish, and reads the resulting CSV.
+    Runs an external program in a separate process, passing data through CSV files.
 
-    Because the OS opens and closes a separate process for the solver, 100% of the memory used
-    by the solver is cleared when it finishes. This prevents memory leaks.
+    Each batch is written to `input_path`, the command is run and its results are
+    read back from `output_path`. Because the solver runs in its own process, all
+    its memory is released when it exits, which avoids leaks with heavy software
+    (e.g. Abaqus, Ansys or a large Python FEA script).
 
-    Example Usage:
-        cmd = "python run_abaqus.py {input} {output}"
-        executor = CLIExecutor(command_template=cmd)
+    Paths are substituted for ``{input}`` and ``{output}`` in the template. On
+    POSIX the template is split into arguments first (no shell is used), so paths
+    containing spaces stay single arguments. On Windows the command is passed as
+    one string, so backslashes are kept but you should quote ``"{input}"`` and
+    ``"{output}"`` in the template if the paths may contain spaces.
+
+    Args:
+        command_template (str): The command as you would type it in a terminal, with
+            ``{input}`` and ``{output}`` where the file paths go.
+        input_path (str): CSV file written for the solver to read. Defaults to
+            ``"temp_in.csv"``.
+        output_path (str): CSV file the solver must write. Defaults to ``"temp_out.csv"``.
+
+    Examples:
+        ```python
+        executor = CLIExecutor(command_template="python run_abaqus.py {input} {output}")
+        ```
     """
 
     def __init__(self, command_template: str, input_path: str = "temp_in.csv", output_path: str = "temp_out.csv"):
-        """
-        Sets up the terminal command and the temporary file names we will use to pass data.
-
-        Args:
-            command_template (str): The exact command you would type into a terminal, but with
-                                    {input} and {output} where the file paths should go.
-            input_path (str): The name of the file we will create to send data TO the solver.
-            output_path (str): The name of the file we expect the solver to create to send data BACK.
-        """
+        """Stores the command template and file paths."""
         self.command_template = command_template
         self.input_path = input_path
         self.output_path = output_path
 
+    def _command(self) -> list[str] | str:
+        """The command to run, with the file paths filled in as whole arguments.
+
+        On POSIX the template is split into arguments first and the paths substituted
+        inside them, so paths with spaces stay one argument. On Windows the command
+        line is passed to Windows as a string, so backslashes in the template are kept;
+        put quotes around ``{input}``/``{output}`` there if the paths contain spaces.
+        """
+        if os.name == "nt":
+            return self.command_template.format(input=self.input_path, output=self.output_path)
+        return [token.format(input=self.input_path, output=self.output_path)
+                for token in shlex.split(self.command_template)]
+
     def run(self, samples: pd.DataFrame) -> pd.DataFrame:
         """
-        The translation process for heavy, external software.
+        Writes `samples` to CSV, runs the command and reads the results back.
+
+        Any output left from a previous batch is deleted first. If the output lacks
+        some input columns but has the same number of rows, the inputs are copied
+        back in. Failures (non-zero exit, command not found, no or unreadable output,
+        mismatched row count) are logged and give an empty DataFrame.
+
+        Args:
+            samples (pd.DataFrame): Input samples, one row per simulation.
+
+        Returns:
+            pd.DataFrame: The solver's results including the input columns, or an
+            empty DataFrame if the run failed.
         """
         # Step 1: Write inputs to CSV, and remove any output left over from a previous
         # batch so a solver that exits without writing can't be mistaken for success.
@@ -143,10 +189,9 @@ class CLIExecutor(Executor):
         if os.path.exists(self.output_path):
             os.remove(self.output_path)
 
-        # Step 2 & 3: Format and split the command
-        cmd = self.command_template.format(input=self.input_path, output=self.output_path)
-        logger.info(f"   -> Executing Isolated Process: {cmd}")
-        cmd_list = shlex.split(cmd)
+        # Step 2 & 3: Build the command
+        cmd_list = self._command()
+        logger.info(f"   -> Executing Isolated Process: {cmd_list}")
 
         try:
             # Step 4: Spawn the isolated process
@@ -155,7 +200,7 @@ class CLIExecutor(Executor):
             logger.warning(f"   -> Simulation FAILED (Exit Code {e.returncode}).")
             return pd.DataFrame()
         except FileNotFoundError:
-            logger.warning(f"   -> Simulation FAILED: command not found ({cmd_list[0]!r}). Check it is installed and on your PATH.")
+            logger.warning(f"   -> Simulation FAILED: command not found ({cmd_list if isinstance(cmd_list, str) else cmd_list[0]!r}). Check it is installed and on your PATH.")
             return pd.DataFrame()
 
         # Step 5: Check if output file exists
@@ -190,29 +235,28 @@ class CLIExecutor(Executor):
 
 class MatlabExecutor(CLIExecutor):
     """
-    THE MATLAB TRANSLATOR:
-    A specialized version of the CLIExecutor designed specifically for MATLAB.
-    It automatically handles the complex terminal syntax required to run MATLAB
-    in a headless "batch" mode (without opening the graphical interface).
+    A `CLIExecutor` that runs a MATLAB function in headless batch mode.
 
-    The user must provide a MATLAB wrapper function that accepts two string arguments:
-    the input CSV path and the output CSV path.
+    Builds the command ``matlab -batch "wrapper_name('<input>', '<output>')"
+    -nosplash -nodesktop``, so MATLAB must be on your PATH. The wrapper function
+    must take two string arguments, the input and output CSV paths, read the
+    inputs and write the results.
 
-    Example Usage:
-        # If the user has a file named 'matlab_wrapper.m'
+    Args:
+        wrapper_name (str): Name of the MATLAB function (e.g. ``'matlab_wrapper'``);
+            a trailing ``.m`` is removed.
+        input_path (str): CSV file written for MATLAB to read. Defaults to ``"temp_in.csv"``.
+        output_path (str): CSV file MATLAB must write. Defaults to ``"temp_out.csv"``.
+
+    Examples:
+        ```python
+        # With matlab_wrapper.m on the MATLAB path
         executor = MatlabExecutor(wrapper_name='matlab_wrapper')
+        ```
     """
 
     def __init__(self, wrapper_name: str, input_path: str = "temp_in.csv", output_path: str = "temp_out.csv"):
-        """
-        Initializes the MATLAB Executor by formatting the correct terminal command.
-
-        Args:
-            wrapper_name (str): The name of the top-level MATLAB function (e.g., 'matlab_wrapper').
-                                Do not include the '.m' extension.
-            input_path (str): Temporary file path to write inputs.
-            output_path (str): Temporary file path to read outputs.
-        """
+        """Builds the MATLAB batch command and passes it to `CLIExecutor`."""
         # Safely remove the '.m' extension if the user accidentally included it
         func_name = wrapper_name.removesuffix('.m')
 

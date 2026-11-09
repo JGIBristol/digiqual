@@ -75,9 +75,10 @@ The package includes a full statistical engine for calculating Probability of De
 
 -   **Relaxed Assumptions:** Moves beyond the rigid constraints of the classical $\hat{a}$-versus-$a$ method by handling non-linear signal responses and heteroscedastic noise.
 -   **Multi-Dimensional Active Marginalisation:** Resolves multidimensional physics by integrating out stochastic nuisance parameters (like roughness) via Monte Carlo methods, outputting high-fidelity 2D PoD surface heatmaps alongside standard 1D curves.
--   **Model Selection:** Compares polynomials (degree 1–10) and a Kriging (Gaussian Process) model by 10-fold cross-validation, and picks the simplest model within one standard error of the best.
+-   **Model Selection:** `fit_model()` compares polynomials (degree 1–10) and a Kriging (Gaussian Process) model by 10-fold cross-validation, and picks the simplest model within one standard error of the best.
 -   **Kriging Metamodelling:** Anisotropic Matérn/Gaussian kernels with a learned noise term, kernel choice by leave-one-out error and LOO residual diagnostics, following Malkiel et al. (2026).
 -   **Varying Scatter and Non-Gaussian Errors:** Models how the scatter changes across the inputs with a kernel smoother, and picks the error distribution (e.g. Normal, Gumbel, Logistic) by AIC.
+-   **Integration Control:** Nuisance parameters can follow Normal, Lognormal or Weibull distributions fitted to the data, and `nuisance_bounds` limits their integration range (clamped to the observed data).
 -   **Uncertainty Quantification:** Bootstrap resampling gives confidence bounds at several levels at once, and a full $a_{X/Y}$ reliability matrix (e.g. $a_{90/95}$).
 -   **Sensitivity Analysis:** Total-order Sobol indices show which inputs drive the signal.
 -   **Classical Comparison:** `linear_pod()` runs the classical $\hat{a}$-versus-$a$ analysis on the same data for side-by-side comparison.
@@ -89,7 +90,7 @@ The package includes a full statistical engine for calculating Probability of De
 
 ### 6. Desktop and Browser App
 
-The full workflow, from experimental design to UQ, is also available as a point-and-click app: a Windows/macOS desktop application, or `uvx digiqual` from a terminal.
+The full workflow is also available as a point-and-click app: a Windows/macOS desktop application, or `uvx digiqual` from a terminal. It guides you through five stages (simulation design, data diagnostics, model diagnostics, model explorer and PoD analysis), and exports each analysis as an Excel report and as a Python script that reproduces it with the library.
 
 
 
@@ -123,9 +124,11 @@ To preview the documentation site locally:
 just preview
 ```
 
+The [API Reference](https://jgibristol.github.io/digiqual/api_reference/) is generated from the code by quartodoc: every module documents the objects in its `__all__`, using their Google-style docstrings. To document a new public function, add it to its module's `__all__` and give it a docstring with `Args:` and `Returns:` sections; nothing in `_quarto.yml` needs changing. `tests/test_docstrings.py` fails if a public function is missing from `__all__` or its docstring leaves out an argument or the return value. (Name internal helpers with a leading `_` to keep them out of the docs.)
+
 4.  Work on the App
 
-The GUI is the `digiqual.gui` subpackage (`src/digiqual/gui/`); `app/` only holds the Briefcase configuration for the Windows/macOS installers. Run it with `just app` (desktop window) or `just app_dev` (browser, live reload). See [Desktop App Architecture](https://jgibristol.github.io/digiqual/docs/app_architecture.html) for how it fits together and how the installers are built.
+The GUI is the `digiqual.gui` subpackage (`src/digiqual/gui/`); `app/` only holds the Briefcase configuration for the Windows/macOS installers. Run it with `just app` (desktop window) or `just app_dev` (in the browser, without the desktop launcher; restart it to pick up code changes). See [Desktop App Architecture](https://jgibristol.github.io/digiqual/docs/app_architecture.html) for how it fits together and how the installers are built.
 
 ## References
 

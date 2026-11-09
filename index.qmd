@@ -43,7 +43,7 @@ Integrates with external physics solvers via specialised Executors for Python, M
 
 ::: {.g-col-12 .g-col-md-4}
 ### 🖥️ Full GUI Tool
-Specialised Graphical User Interface that contains the full suite of digiqual tools and downloadable reports.
+A guided five-stage app, from simulation design to PoD with confidence bounds, with an Excel report and a reproducible Python script of each analysis.
 :::
 
 :::
@@ -65,7 +65,7 @@ If you are completely new, head over to the **[Installation Guide](docs/install.
 :::
 
 ### Python GUI
-A browser-based graphical user interface (GUI) built with a modern design system, providing a visual workflow for design, diagnostics, and analysis.
+The same app ships with the Python package. It opens in its own desktop window (or your browser, if a window can't be opened) and guides you through five stages: simulation design, data diagnostics, model diagnostics, the model explorer and the PoD analysis. Results export as an Excel report and as a Python script that repeats the analysis.
 
 `uv` users can use the `uvx` shortcut to load the app directly:
 ```bash

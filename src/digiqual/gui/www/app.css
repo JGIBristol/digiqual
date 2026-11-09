@@ -160,64 +160,306 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
 }
 
-/* Container for Centered Configuration Inputs */
-.config-container {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    text-align: center !important;
-    gap: 1.5rem !important; /* Better spacing than HRs */
+/* --- 5. PAGE SHELL: header, stepper, stage template --- */
+/* Icons (faicons) are drawn with an inline fill: currentColor, so colour them with `color`. */
+.dq-page { padding: 0 !important; }
+
+.dq-top {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    background: var(--bs-body-bg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
-/* Ensure individual input containers are centered */
-.config-container .shiny-input-container {
-    width: 100% !important;
-    max-width: 400px !important; /* Constrain width for a tidy look */
-    margin-left: auto !important;
-    margin-right: auto !important;
-    margin-bottom: 0 !important;
+.dq-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bs-primary);
+    padding: 8px 24px;
 }
 
-/* Fix for Selectize labels and control alignment */
-.config-container .control-label {
-    margin-bottom: 8px !important;
-    width: 100% !important;
-}
-
-/* Align selectize itself (content stays left, container centered) */
-.config-container .selectize-control {
-    text-align: left !important;
-}
-
-/* --- 5. NAVIGATION (Top Bar) --- */
-.navbar {
-    background: #006abc !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+.dq-brand {
+    background: none;
+    border: none;
     color: #fff;
+    font-size: 1.25rem;
+    font-weight: 600;
+    padding: 0;
 }
 
-.navbar-brand {
+.dq-header-btn {
     color: #fff !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    padding: 4px 12px !important;
+}
+.dq-header-btn:hover { background: rgba(255, 255, 255, 0.25) !important; }
+
+/* Stepper: one item per stage, with a status and a summary of what was decided */
+.dq-stepper {
+    display: flex;
+    gap: 4px;
+    padding: 10px 24px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--bs-border-color);
+    background: #fff;
 }
 
-.navbar .nav-link {
-    color: rgba(255, 255, 255, 0.8) !important;
-    font-weight: 500;
-    padding: 10px 16px;
-    margin: 0 4px;
-    border-radius: 4px;
+.dq-step {
+    flex: 1 1 0;
+    min-width: 170px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    text-align: left;
+    background: transparent;
+    border: 1px solid transparent;
+    border-bottom: 3px solid #edebe9;
+    border-radius: 6px 6px 0 0;
+    padding: 6px 10px 8px;
+    cursor: pointer;
     transition: background-color 0.1s;
 }
+.dq-step:hover { background: #f3f2f1; }
 
-.navbar .nav-link:hover {
-    color: #ffffff !important;
-    background-color: rgba(255, 255, 255, 0.1);
+.dq-step-number {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+    background: #edebe9;
+    color: #323130;
 }
 
-.navbar .nav-link.active {
-    color: #ffffff !important;
+.dq-step-text { display: flex; flex-direction: column; min-width: 0; }
+.dq-step-title { font-weight: 600; color: #242424; white-space: nowrap; }
+.dq-step-summary {
+    font-size: 0.78rem;
+    color: #605e5c;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dq-step-summary svg { width: 0.85em; height: 0.85em; vertical-align: -0.1em; }
+
+.dq-step.is-done .dq-step-number { background: var(--bs-success); color: #fff; }
+.dq-step.is-done .dq-step-summary svg { color: var(--bs-success); }
+.dq-step.is-warning .dq-step-number { background: var(--bs-warning); color: #000; }
+.dq-step.is-warning .dq-step-summary svg { color: #b37f00; }
+.dq-step.is-stale .dq-step-number { background: #fff4ce; color: #8a6100; box-shadow: inset 0 0 0 2px var(--bs-warning); }
+.dq-step.is-stale .dq-step-summary { color: #8a6100; }
+.dq-step.is-stale .dq-step-summary svg { color: #8a6100; }
+.dq-step.is-locked { opacity: 0.55; }
+.dq-step.is-current { border-bottom-color: var(--bs-primary); background: #eff6fc; }
+.dq-step.is-current .dq-step-title { color: var(--bs-primary); }
+
+.dq-step.is-running .dq-step-number { background: var(--bs-primary); color: #fff; animation: dq-pulse 1.2s ease-in-out infinite; }
+.dq-step.is-running .dq-step-summary { color: var(--bs-primary); }
+.dq-step.is-running .dq-step-summary svg { color: var(--bs-primary); animation: dq-spin 1s linear infinite; }
+
+@keyframes dq-spin { to { transform: rotate(360deg); } }
+@keyframes dq-pulse { 50% { box-shadow: 0 0 0 5px rgba(0, 106, 188, 0.25); } }
+
+/* Model Explorer: the PoD setup table */
+.dq-role-row {
+    display: grid;
+    grid-template-columns: minmax(130px, 1fr) auto minmax(320px, 3fr);
+    gap: 20px;
+    align-items: center;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--bs-border-color);
+}
+.dq-role-row:last-child { border-bottom: none; }
+.dq-role-head {
+    padding-top: 0;
+    font-size: 0.78rem;
     font-weight: 600;
-    background-color: rgba(255, 255, 255, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #605e5c;
+}
+.dq-role-row .shiny-input-container { margin-bottom: 0 !important; width: auto; }
+.dq-role-row .irs { margin-top: -6px; }
+
+/* Plot / Integrate / Slice as a segmented control (still native radio buttons) */
+.dq-role .shiny-options-group { display: inline-flex; }
+.dq-role label.radio-inline { margin: 0; padding: 0; }
+.dq-role input[type="radio"] { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.dq-role input[type="radio"] + span {
+    display: inline-block;
+    padding: 5px 14px;
+    border: 1px solid #8a8886;
+    margin-left: -1px;
+    background: #fff;
+    font-size: 0.9rem;
+    cursor: pointer;
+    user-select: none;
+}
+.dq-role label.radio-inline:first-child span { border-radius: 4px 0 0 4px; margin-left: 0; }
+.dq-role label.radio-inline:last-child span { border-radius: 0 4px 4px 0; }
+.dq-role input[type="radio"] + span:hover { background: #f3f2f1; }
+.dq-role input[type="radio"]:checked + span {
+    background: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: #fff;
+    position: relative;
+    z-index: 1;
+}
+.dq-role input[type="radio"]:focus-visible + span { outline: 2px solid var(--bs-primary); outline-offset: 2px; }
+
+/* Each role's settings on one line */
+.dq-slice-controls, .dq-integrate-controls { display: flex; align-items: center; gap: 12px; }
+.dq-slice-controls > .shiny-input-container:first-child { flex: 1 1 auto; width: auto !important; }
+.dq-inline-field { display: flex; align-items: center; gap: 6px; }
+.dq-inline-field .form-control { width: 110px; }
+.dq-integrate-controls .form-select { width: 140px; }
+
+@media (max-width: 1199px) {
+    .dq-role-row { grid-template-columns: 1fr; gap: 8px; }
+    .dq-role-head { display: none; }
+}
+
+/* Model Diagnostics: the Run models card and the fitting progress panel */
+.dq-run-models { --dq-accent: var(--bs-primary); border-left: 5px solid var(--bs-primary); }
+.dq-fit-progress { border-left: 5px solid var(--bs-primary); }
+.dq-fit-step { padding: 4px 0; color: #605e5c; }
+.dq-fit-step .dq-icon-done, .dq-fit-step .dq-icon-active, .dq-fit-step .dq-icon-todo { display: none; }
+.dq-fit-step.is-done .dq-icon-done, .dq-fit-step.is-active .dq-icon-active,
+.dq-fit-step.is-todo .dq-icon-todo { display: inline; }
+.dq-fit-step:not(.is-active) .dq-step-detail { display: none; }
+.dq-fit-step .dq-icon-active svg { display: inline-block; transform-origin: 50% 50%; }
+.dq-fit-step svg { width: 1em; height: 1em; }
+.dq-fit-step.is-done { color: #242424; }
+.dq-fit-step.is-done svg { color: var(--bs-success); }
+.dq-fit-step.is-active { color: var(--bs-primary); font-weight: 600; }
+.dq-fit-step.is-active svg { color: var(--bs-primary); animation: dq-spin 1s linear infinite; }
+.dq-fit-step.is-todo svg { color: #c8c6c4; }
+
+/* Stage template: header, sidebar + results, Back / Next */
+.dq-stage { padding: 20px 24px 32px; max-width: 1600px; margin: 0 auto; }
+.dq-stage-header { margin-bottom: 16px; }
+.dq-stage-header h3 { display: flex; align-items: center; gap: 10px; }
+.dq-stage-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    background: var(--bs-primary);
+    color: #fff;
+}
+.dq-stage-body { border-radius: 8px; background: #fff; }
+/* Fixed sidebar widths, chosen per stage: no drag-to-resize handle */
+.dq-stage-body .bslib-sidebar-resize-handle { display: none !important; }
+.dq-stage-body > .main { background: var(--bs-body-bg); }
+.dq-stage-footer { border-top: 1px solid var(--bs-border-color); padding-top: 16px; }
+
+/* Start page: each card takes its stage's colour from --dq-accent */
+.dq-hero {
+    padding: 32px 16px 24px;
+    margin-bottom: 20px;
+    background:
+        radial-gradient(circle at 15% 20%, rgba(0, 106, 188, 0.14), transparent 45%),
+        radial-gradient(circle at 85% 30%, rgba(3, 131, 135, 0.12), transparent 40%),
+        radial-gradient(circle at 60% 90%, rgba(227, 161, 0, 0.12), transparent 45%),
+        #ffffff;
+    border-bottom: 1px solid var(--bs-border-color);
+}
+.dq-hero h1 { color: var(--bs-primary); font-size: 2.5rem; letter-spacing: -0.02em; }
+.dq-hero .lead { color: #605e5c; }
+.dq-colour-strip { display: inline-flex; gap: 6px; margin-top: 14px; }
+.dq-colour-strip span { width: 44px; height: 6px; border-radius: 3px; }
+
+.dq-entry, .dq-stage-card, .dq-info-card {
+    border-top: 5px solid var(--dq-accent) !important;
+}
+
+/* The two entry cards: always the same size; hovering only deepens the shadow */
+.dq-entries { align-items: stretch; }
+.dq-entry {
+    height: 100%;
+    min-height: 240px;
+    margin-bottom: 0;
+    transition: box-shadow 0.15s;
+}
+.dq-entry:hover {
+    box-shadow: 0 6.4px 14.4px 0 rgba(0,0,0,0.13), 0 1.2px 3.6px 0 rgba(0,0,0,0.11);
+}
+.dq-entry-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    background: color-mix(in srgb, var(--dq-accent) 14%, white);
+}
+.dq-entry-icon svg { width: 28px; height: 28px; color: var(--dq-accent); }
+
+.dq-accent-btn {
+    background: var(--dq-accent) !important;
+    border-color: var(--dq-accent) !important;
+    color: var(--dq-accent-text, #fff) !important;
+}
+.dq-accent-btn:hover { filter: brightness(0.9); }
+.dq-accent-btn svg { fill: currentColor; }
+
+.dq-workflow { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+.dq-stage-cards {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+    align-items: stretch;
+}
+.dq-stage-card {
+    margin-bottom: 0;
+    padding: 18px;
+    min-height: 170px;
+    height: auto;
+    overflow-wrap: break-word;
+    line-height: 1.4;
+}
+.dq-stage-card svg { width: 22px; height: 22px; color: var(--dq-accent); }
+.dq-stage-card-number {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: var(--dq-accent-text, #fff);
+    background: var(--dq-accent);
+}
+
+/* About page */
+.dq-info-card .dq-entry-icon { width: 48px; height: 48px; }
+.dq-info-card .dq-entry-icon svg { width: 24px; height: 24px; }
+.dq-link { color: #242424; text-decoration: none; }
+.dq-link svg { color: var(--dq-accent); }
+.dq-link:hover { color: var(--dq-accent); }
+
+/* Medium screens: workflow cards wrap onto more rows rather than squeeze */
+@media (max-width: 1199px) {
+    .dq-stage-cards { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+}
+
+/* Narrow screens: compact stepper (numbers and titles only) */
+@media (max-width: 991px) {
+    .dq-step { min-width: 120px; }
+    .dq-step-summary { display: none; }
+    .dq-stage { padding: 16px; }
+    .dq-header { padding: 8px 16px; }
 }
 
 /* --- 6. CUSTOM SCROLLBARS --- */

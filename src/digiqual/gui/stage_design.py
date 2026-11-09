@@ -1,75 +1,35 @@
-"""Experimental Design tab: build a Latin Hypercube sample from variable ranges."""
+"""Simulation Design stage: build a Latin Hypercube sample from variable ranges."""
 
 from faicons import icon_svg
 from shiny import reactive, render, ui
 
 from digiqual.sampling import generate_lhs
 
+from .components import notice, stage_page
 from .state import AppState
 
-panel = ui.nav_panel(
-    "Experimental Design",
-    ui.div(
-        ui.h3("Experimental Design", class_="mb-4 text-center"),
+panel = stage_page(
+    "design",
+    [
+        ui.tags.h6("Variables", class_="text-secondary small text-uppercase fw-bold mb-1"),
         ui.layout_columns(
-            # --- LEFT: VARIABLE INPUTS
-            ui.card(
-                ui.card_header("Experimental Design Variables"),
-                # Header Row
-                ui.div(
-                    ui.layout_columns(
-                        ui.tags.label("Variable Name", class_="fw-bold mb-0"),
-                        ui.tags.label("Min Value", class_="fw-bold mb-0"),
-                        ui.tags.label("Max Value", class_="fw-bold mb-0"),
-                        ui.div(), # Spacer for the delete button column
-                        col_widths=(4, 3, 3, 2),
-                        gap="5px",
-                        class_="mb-0" # Drops layout_columns default bottom margin
-                    ),
-                    class_="mb-0 px-1 text-center" # Removed border-bottom and pb-2
-                ),
-                # Container for Rows
-                ui.div(
-                    # mt-0 and pt-0 eliminate the space above the rows
-                    ui.div(id="variable_rows_container", class_="mt-0 pt-0"),
-                    ui.div(
-                        ui.input_action_button(
-                            "add_variable_btn", "Add Variable",
-                            icon=icon_svg("plus"), class_="btn-outline-secondary btn-sm"
-                        ),
-                        class_="mt-3 d-flex justify-content-start"
-                    ),
-                ),
-                class_="mb-0"
-            ),
-
-            # --- RIGHT: PREVIEW & SETTINGS ---
-            ui.div(
-                ui.card(
-                    ui.card_header("Framework Preview"),
-                    ui.output_data_frame("preview_experimental_design"),
-                    full_screen=True,
-                    class_="mb-3"
-                ),
-                ui.card(
-                    ui.card_header("Generation Settings"),
-                    ui.div(
-                        ui.input_numeric("num_rows", "Number of samples", value=100, min=1, width="180px"),
-                        class_="d-flex justify-content-center mb-3"
-                    ),
-                    ui.input_task_button(
-                        "generate_btn", "Generate Framework",
-                        class_="btn-primary w-100", icon=icon_svg("gears")
-                    ),
-                    ui.output_ui("download_btn_container", class_="mt-3"),
-                ),
-                class_="d-flex flex-column"
-            ),
-            col_widths=[-1,5,5,-1]
+            ui.tags.label("Name", class_="small text-muted mb-0"),
+            ui.tags.label("Min", class_="small text-muted mb-0"),
+            ui.tags.label("Max", class_="small text-muted mb-0"),
+            ui.div(),
+            col_widths=(4, 3, 3, 2), gap="5px", class_="mb-0"
         ),
-        class_="container-fluid py-3"
-    ),
-    icon=icon_svg("table")
+        ui.div(id="variable_rows_container", class_="mt-0 pt-0"),
+        ui.input_action_button(
+            "add_variable_btn", "Add Variable",
+            icon=icon_svg("plus"), class_="btn-outline-secondary btn-sm"
+        ),
+        ui.hr(),
+        ui.input_numeric("num_rows", "Number of runs", value=100, min=1),
+        ui.input_task_button("generate_btn", "Generate Design", class_="btn-primary w-100", icon=icon_svg("gears")),
+    ],
+    ui.output_ui("design_results_ui"),
+    sidebar_width=420,
 )
 
 
@@ -178,15 +138,29 @@ def register(input, output, session, state: AppState):
         try:
             df = generate_lhs(n=input.num_rows(), ranges=ranges)
             final_generated_df.set(df)
-            ui.notification_show("Success! Framework generated.", type="message")
+            ui.notification_show("Design generated.", type="message")
         except Exception as e:
             ui.notification_show(f"Generation Error: {str(e)}", type="error")
 
+    @render.ui
+    def design_results_ui():
+        if final_generated_df() is None:
+            return notice("Add your input variables and their ranges, then generate a design. "
+                          "This step is optional: skip to Data Diagnostics if you already have results.")
+        return ui.card(
+            ui.card_header("Design Preview"),
+            ui.output_data_frame("preview_design"),
+            ui.p("Rows are ordered so that any first k runs are already well spread: you can run them in "
+                 "order and stop early.", class_="small text-muted mt-2 mb-2"),
+            ui.output_ui("download_btn_container"),
+            full_screen=True,
+        )
+
     @render.data_frame
-    def preview_experimental_design():
+    def preview_design():
         df = final_generated_df()
         if df is not None:
-            return render.DataGrid(df, selection_mode="none", filters=False, height="250px")
+            return render.DataGrid(df, selection_mode="none", filters=False, height="400px")
         return None
 
     @render.ui

@@ -1,3 +1,5 @@
+"""Adaptive refinement: targeted new samples where the diagnostics fail, and the automated simulate-diagnose-refine loop."""
+
 import logging
 import time
 from typing import Dict, List, Optional, Tuple, Union
@@ -16,6 +18,11 @@ from .diagnostics import ValidationError, sample_sufficiency, validate_simulatio
 from .executors import CLIExecutor, Executor
 from .sampling import generate_lhs
 
+__all__ = [
+    "generate_targeted_samples",
+    "run_adaptive_search",
+]
+
 logger = logging.getLogger(__name__)
 
 # Diagnostics (sample_sufficiency) need at least this many valid rows.
@@ -32,6 +39,13 @@ def _filter_by_graveyard(
 ) -> pd.DataFrame:
     """Filters out candidates that fall within a normalized distance threshold of known failures."""
     if graveyard is None or graveyard.empty or candidates.empty:
+        return candidates
+
+    # Failed rows can hold text or missing inputs (that may be why they failed);
+    # only points with a full set of finite coordinates can be compared
+    graveyard = graveyard[input_cols].apply(pd.to_numeric, errors="coerce")
+    graveyard = graveyard[np.isfinite(graveyard.to_numpy(dtype=float)).all(axis=1)]
+    if graveyard.empty:
         return candidates
 
     # Combine to find the global min and max for fair 0-1 normalization
