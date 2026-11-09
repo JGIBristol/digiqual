@@ -222,6 +222,82 @@ def test_compute_pod_spectrum_respects_changed_n_threshold_points(study, clean_d
     )
     assert len(coarse_again["thresholds"]) == 10
 
+
+# --- Fitting separately from the PoD, and integration bounds ---
+
+@pytest.fixture
+def two_input_df():
+    """Signal depends on both inputs, so the nuisance range matters."""
+    rng = np.random.default_rng(0)
+    n = 60
+    length = rng.uniform(0, 10, n)
+    angle = rng.uniform(-45, 45, n)
+    return pd.DataFrame({
+        'Length': length,
+        'Angle': angle,
+        'Signal': length + 0.1 * angle + rng.normal(0, 0.3, n)
+    })
+
+
+def test_fit_model_does_not_need_roles_and_is_reused_by_pod(study, two_input_df):
+    study.add_data(two_input_df, outcome_col="Signal")
+    fit = study.fit_model(model_override="polynomial", force_degree=1)
+
+    assert fit["mean_model"].model_type_ == "Polynomial"
+    assert set(fit["sobol_indices"]) == {"Length", "Angle"}
+    assert study.model_results is fit
+
+    with patch("digiqual.pod.fit_all_robust_mean_models") as mock_fit, \
+         patch("digiqual.pod.fit_variance_model") as mock_var:
+        res = study.pod(poi_col="Length", threshold=5.0, n_boot=0,
+                        model_override="polynomial", force_degree=1)
+    mock_fit.assert_not_called()
+    mock_var.assert_not_called()
+    assert res["mean_model"] is fit["mean_model"]
+
+
+def test_model_override_args_round_trip(study, two_input_df):
+    from digiqual.core import model_override_args
+
+    study.add_data(two_input_df, outcome_col="Signal")
+    fit = study.fit_model(model_override="polynomial", force_degree=2)
+    assert model_override_args(fit["mean_model"]) == ("polynomial", 2)
+
+
+def test_nuisance_bounds_change_pod_and_cache_key(study, two_input_df):
+    study.add_data(two_input_df, outcome_col="Signal")
+    kwargs = dict(poi_col="Length", threshold=5.0, nuisance_col="Angle", n_boot=0,
+                  model_override="polynomial", force_degree=1)
+
+    full = study.pod(**kwargs)
+    full_pod = full["curves"]["pod"].copy()
+    assert full["nuisance_bounds"]["Angle"] == pytest.approx(
+        (two_input_df["Angle"].min(), two_input_df["Angle"].max()))
+
+    # Only large angles: the signal is higher, so the PoD can only go up
+    narrow = study.pod(**kwargs, nuisance_bounds={"Angle": (20.0, 45.0)})
+    assert narrow["nuisance_bounds"]["Angle"][0] == 20.0
+    assert narrow["l3_key"] != full["l3_key"]
+    assert narrow["spectrum_key"] != full["spectrum_key"]
+    assert narrow["curves"]["pod"].mean() > full_pod.mean()
+
+    # update_slice keeps the bounds
+    assert study.update_slice({})["nuisance_bounds"] == narrow["nuisance_bounds"]
+
+
+def test_nuisance_bounds_are_clamped_to_data(study, two_input_df):
+    study.add_data(two_input_df, outcome_col="Signal")
+    res = study.pod(poi_col="Length", threshold=5.0, nuisance_col="Angle", n_boot=0,
+                    model_override="polynomial", force_degree=1,
+                    nuisance_bounds={"Angle": (-1000.0, None)})
+    assert res["nuisance_bounds"]["Angle"] == pytest.approx(
+        (two_input_df["Angle"].min(), two_input_df["Angle"].max()))
+
+    with pytest.raises(ValueError, match="Integration range"):
+        study.pod(poi_col="Length", threshold=5.0, nuisance_col="Angle", n_boot=0,
+                  model_override="polynomial", force_degree=1,
+                  nuisance_bounds={"Angle": (100.0, 200.0)})
+
 # --- NEW: Time Heuristic & Linear PoD Tests ---
 
 def test_estimate_compute_time(study, clean_df):

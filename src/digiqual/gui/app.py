@@ -15,7 +15,7 @@ from pathlib import Path  # noqa: E402
 from faicons import icon_svg  # noqa: E402
 from shiny import App, reactive, ui  # noqa: E402
 
-from . import tab_design, tab_diagnostics, tab_explorer, tab_model_fit, tab_uq  # noqa: E402
+from . import tab_data_diagnostics, tab_design, tab_explorer, tab_pod_analysis  # noqa: E402
 from .state import AppState, logger, register_shared  # noqa: E402, F401
 from .ui_home import home_panel  # noqa: E402
 
@@ -42,10 +42,9 @@ app_css = (www_dir / "app.css").read_text(encoding="utf-8")
 app_ui = ui.page_navbar(
     home_panel,
     tab_design.panel,
-    tab_diagnostics.panel,
-    tab_model_fit.panel,
+    tab_data_diagnostics.panel,
     tab_explorer.panel,
-    tab_uq.panel,
+    tab_pod_analysis.panel,
     ui.nav_spacer(),
     ui.nav_control(
         ui.input_action_button(
@@ -78,15 +77,10 @@ app_ui = ui.page_navbar(
 def server(input, output, session):
     state = AppState(input)
 
-    # Registration order matches the original single-closure server, so effects
-    # that fire on the same event still run in the same order.
-    tab_design.register(input, output, session, state)
-    tab_diagnostics.register(input, output, session, state)
-    _register_reset_app(input, session)
     register_shared(input, output, session, state)
-    tab_model_fit.register(input, output, session, state)
-    tab_explorer.register(input, output, session, state)
-    tab_uq.register(input, output, session, state)
+    for tab in (tab_design, tab_data_diagnostics, tab_explorer, tab_pod_analysis):
+        tab.register(input, output, session, state)
+    _register_reset_app(input, session)
 
 
 def _register_reset_app(input, session):

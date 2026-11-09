@@ -1,19 +1,21 @@
-"""Simulation Diagnostics tab: upload results, run the sufficiency checks and inspect the data."""
+"""Data Diagnostics tab: upload results, run the sufficiency checks and inspect the data."""
 
 import numpy as np
 import pandas as pd
 from faicons import icon_svg
 from shiny import reactive, render, ui
 
-from digiqual import SimulationStudy
 from digiqual.defaults import MAX_ALLOWED_VIF, MAX_AVG_CV, MAX_GAP_RATIO, MAX_MAX_CV, MIN_R2_SCORE
 
+from .components import TAB, diagnostic_failures, failure_list, goto_button, largest_gap, register_goto
 from .state import AppState, logger
 
+TITLE = TAB["data"].title
+
 panel = ui.nav_panel(
-    "Simulation Diagnostics",
+    TITLE,
     ui.div(
-        ui.h3("Simulation Diagnostics", class_="mb-4 text-center"),
+        ui.h3(TITLE, class_="mb-4 text-center"),
         ui.layout_columns(
             # --- LEFT: CONFIGURATION ---
             ui.card(
@@ -76,7 +78,8 @@ panel = ui.nav_panel(
         ),
         class_="container-fluid py-3 overflow-auto h-100"
     ),
-    icon=icon_svg("check-double")
+    value="data",
+    icon=icon_svg(TAB["data"].icon)
 )
 
 
@@ -85,8 +88,10 @@ def register(input, output, session, state: AppState):
     validation_passed = state.validation_passed
     new_samples = state.new_samples
     diagnostic_table = state.diagnostic_table
-    study_instance = state.study_instance
+    diagnostics_stale = state.diagnostics_stale
     current_study = state.current_study
+
+    register_goto(input, "goto_explorer_from_data", "explorer")
 
     @reactive.effect
     def read_uploaded_csv():
@@ -202,110 +207,46 @@ def register(input, output, session, state: AppState):
     @render.ui
     def validation_status():
         """Shows result status or prompt to configure."""
-        selected_inputs = list(input.input_cols())
-        selected_outcome = input.outcome_col()
-        conflict = selected_outcome in selected_inputs
-
-        # 1. Missing selections or conflict
-        if uploaded_data() is None or not selected_inputs or conflict:
+        if current_study() is None:
             return ui.div(ui.p("Configure selections to run diagnostics.", class_="text-muted fst-italic"))
 
-        # 2. Ready, but the button hasn't been clicked yet!
+        # Ready, but the button hasn't been clicked yet
         if diagnostic_table() is None:
             return ui.div(ui.p("Ready to run diagnostics. Click the button above.", class_="text-primary fw-bold mt-3"))
 
-        # 3. Button was clicked, show actual results
+        stale = ui.p(
+            ui.span(icon_svg("rotate"), class_="me-1"),
+            "Thresholds changed since this run: run the diagnostics again to update.",
+            class_="small text-warning-emphasis fw-semibold mt-2 mb-0"
+        ) if diagnostics_stale() else ""
+        next_step = goto_button("goto_explorer_from_data", "explorer", "Continue to " + TAB["explorer"].title,
+                                primary=validation_passed())
+
         if validation_passed():
             return ui.div(
                 ui.h5(icon_svg("circle-check"), " Validation Passed"),
+                stale, next_step,
                 class_="alert alert-success mt-3"
             )
-        else:
-            diag = diagnostic_table()
-            warnings = []
-            if diag is not None and not diag.empty:
-                # 1. Input Coverage
-                coverage_rows = diag[diag["Test"] == "Input Coverage"]
-                if not coverage_rows.empty and not coverage_rows["Pass"].all():
-                    failed_vars = coverage_rows.loc[~coverage_rows["Pass"].astype(bool), "Variable"].tolist()
-                    warnings.append(
-                        ui.p(
-                            ui.span(icon_svg("triangle-exclamation"), class_="text-danger me-1"),
-                            ui.tags.strong("Input Coverage Gaps: "),
-                            f"Large gaps in parameter coverage detected for: {', '.join(failed_vars)}.",
-                            class_="small mb-1 text-danger"
-                        )
-                    )
 
-                # 2. Model Fit (CV)
-                fit_rows = diag[diag["Test"] == "Model Fit (CV)"]
-                if not fit_rows.empty and not fit_rows["Pass"].all():
-                    warnings.append(
-                        ui.p(
-                            ui.span(icon_svg("triangle-exclamation"), class_="text-danger me-1"),
-                            ui.tags.strong("Weak Model Fit: "),
-                            "The surrogate model R² score is below the required threshold. The relationship might be too noisy or non-linear for the current sample size.",
-                            class_="small mb-1 text-danger"
-                        )
-                    )
-
-                # 3. Bootstrap Convergence
-                boot_rows = diag[diag["Test"] == "Bootstrap Convergence"]
-                if not boot_rows.empty and not boot_rows["Pass"].all():
-                    warnings.append(
-                        ui.p(
-                            ui.span(icon_svg("triangle-exclamation"), class_="text-danger me-1"),
-                            ui.tags.strong("Bootstrap Instability: "),
-                            "Model predictions are highly sensitive to sample variance (insufficient convergence). Confidence intervals may be too wide.",
-                            class_="small mb-1 text-danger"
-                        )
-                    )
-
-                # 4. Collinearity Check
-                col_rows = diag[diag["Test"] == "Collinearity Check"]
-                if not col_rows.empty and not col_rows["Pass"].all():
-                    failed_vars = col_rows.loc[~col_rows["Pass"].astype(bool), "Variable"].tolist()
-                    warnings.append(
-                        ui.p(
-                            ui.span(icon_svg("triangle-exclamation"), class_="text-danger me-1"),
-                            ui.tags.strong("High Multicollinearity: "),
-                            f"Strong correlation detected among inputs for: {', '.join(failed_vars)}. This can make the surrogate model fit unstable and predictions unreliable.",
-                            class_="small mb-1 text-danger"
-                        )
-                    )
-
-            warning_content = ui.div(
-                *warnings,
-                ui.p("See the visualisations below and the Remediation options for next steps.", class_="small mb-0 text-muted mt-2")
-            ) if warnings else ui.p("See the visualisations below and the Remediation options for next steps.", class_="small mb-0")
-
-            return ui.div(
-                ui.h5(icon_svg("triangle-exclamation"), " Issues Detected"),
-                warning_content,
-                class_="alert alert-danger mt-3"
-            )
+        return ui.div(
+            ui.h5(icon_svg("triangle-exclamation"), " Issues Detected"),
+            failure_list(diagnostic_failures(diagnostic_table())),
+            ui.p("See the visualisations below and the Remediation options for next steps.", class_="small mb-0 text-muted mt-2"),
+            stale, next_step,
+            class_="alert alert-danger mt-3"
+        )
 
     @reactive.effect
     @reactive.event(input.btn_run_diagnostics)
     def run_validation_diagnostics():
-        df = uploaded_data()
         new_samples.set(None)
-
-        selected_inputs = list(input.input_cols())
-        selected_outcome = input.outcome_col()
-
-        # Guard: Stop if data is missing, selections are empty, OR there is a conflict
-        if df is None or not selected_inputs or not selected_outcome or (selected_outcome in selected_inputs):
-            validation_passed.set(False)
-            diagnostic_table.set(None)
+        study = current_study()
+        if study is None:
+            state.invalidate("diagnostics")
             return
 
         try:
-            study = SimulationStudy()
-            study.add_data(uploaded_data(), outcome_col=selected_outcome, input_cols=selected_inputs, overwrite=True)
-            study_instance.set(study)
-
-            # Pass the UI threshold values dynamically at runtime!
             diag_df = study.diagnose(
                 max_gap_ratio=input.ui_max_gap(),
                 min_r2_score=input.ui_min_r2(),
@@ -313,18 +254,17 @@ def register(input, output, session, state: AppState):
                 max_max_cv=input.ui_max_cv(),
                 max_allowed_vif=input.ui_max_vif()
             )
-
-            if diag_df is None:
-                diagnostic_table.set(None)
+            if diag_df is None or diag_df.empty:
+                state.invalidate("diagnostics")
+                ui.notification_show("Diagnostics could not run: no valid rows in the data.", type="error")
                 return
 
             diagnostic_table.set(diag_df)
-            all_passed = diag_df["Pass"].astype(bool).all()
-            validation_passed.set(all_passed)
+            validation_passed.set(bool(diag_df["Pass"].astype(bool).all()))
+            diagnostics_stale.set(False)
 
         except Exception as e:
-            validation_passed.set(False)
-            diagnostic_table.set(None)
+            state.invalidate("diagnostics")
             logger.exception("Diagnostics failed")
             ui.notification_show(f"Diagnostics failed: {e}", type="error", duration=10)
 
@@ -362,23 +302,13 @@ def register(input, output, session, state: AppState):
         """
         Only appears if diagnostics have been run AND they detected issues.
         """
-        # 1. Hide if no data or if diagnostics haven't run yet
-        if uploaded_data() is None or diagnostic_table() is None:
+        if current_study() is None or diagnostic_table() is None or validation_passed():
             return None
 
-        # 2. Hide if there is currently a selection conflict
-        conflict = input.outcome_col() in list(input.input_cols())
-        if conflict:
-            return None
-
-        # 3. Hide if validation actually passed
-        if validation_passed():
-            return None
-
-        diag = diagnostic_table()
-        has_coverage_issues = not diag[diag["Test"] == "Input Coverage"]["Pass"].all()
-        has_fit_issues = not diag[diag["Test"].isin(["Model Fit (CV)", "Bootstrap Convergence"])]["Pass"].all()
-        has_collinearity_issues = not diag[diag["Test"] == "Collinearity Check"]["Pass"].all()
+        failed = {test for test, _title, _msg in diagnostic_failures(diagnostic_table())}
+        has_coverage_issues = "Input Coverage" in failed
+        has_fit_issues = bool(failed & {"Model Fit (CV)", "Bootstrap Convergence"})
+        has_collinearity_issues = "Collinearity Check" in failed
 
         remediation_texts = []
         if has_coverage_issues:
@@ -458,18 +388,7 @@ def register(input, output, session, state: AppState):
             # Return an empty div so the UI stays clean until 'Run Diagnostics' is pressed
             return ui.div()
 
-        df = uploaded_data()
-
-        # Gather only the selected input and outcome columns
-        input_cols = list(input.input_cols())
-        outcome = input.outcome_col()
-
-        selected_cols = input_cols.copy()
-        if outcome and outcome not in selected_cols:
-            selected_cols.append(outcome)
-
-        if not selected_cols:
-             selected_cols = list(df.columns)
+        selected_cols = state.selected_columns()
 
         return ui.div(
             # ── Row 1: Summary Statistics ──────────────────────────────────────
@@ -547,24 +466,8 @@ def register(input, output, session, state: AppState):
         if df is None:
             return None
 
-        # Gather only the selected input and outcome columns
-        input_cols = list(input.input_cols())
-        outcome = input.outcome_col()
-
-        selected_cols = input_cols.copy()
-        if outcome and outcome not in selected_cols:
-            selected_cols.append(outcome)
-
-        # Fallback just in case
-        if not selected_cols:
-            selected_cols = list(df.columns)
-
         rows = []
-        # Iterate over selected_cols instead of df.columns
-        for col in selected_cols:
-            if col not in df.columns:
-                continue
-
+        for col in state.selected_columns():
             numeric = pd.to_numeric(df[col], errors="coerce").dropna()
             n_valid = len(numeric)
             rows.append({
@@ -586,12 +489,12 @@ def register(input, output, session, state: AppState):
     def viz_diagnostic_badge():
         """
         Shows pass/fail status for the currently selected variable,
-        sourced from the diagnostic_table reactive already computed in the Simulation Diagnostics tab.
+        taken from the diagnostics table.
         """
         diag = diagnostic_table()
         if diag is None or diag.empty:
             return ui.p(
-                "Run diagnostics in the Simulation Diagnostics tab to see variable status here.",
+                "Run the diagnostics to see this variable's status here.",
                 class_="text-muted small fst-italic"
             )
 
@@ -644,8 +547,7 @@ def register(input, output, session, state: AppState):
         outcome = input.outcome_col()
 
         # ── Find gap for this variable (from diagnostics if available) ─────────
-        gap_start = gap_end = None
-        coverage_failed = False
+        gap = None
         diag = diagnostic_table()
         if diag is not None and not diag.empty:
             fail_row = diag[
@@ -654,13 +556,7 @@ def register(input, output, session, state: AppState):
                 (~diag["Pass"].astype(bool))
             ]
             if not fail_row.empty:
-                coverage_failed = True
-                sorted_vals = np.sort(df[var].dropna().values)
-                if len(sorted_vals) > 1:
-                    diffs = np.diff(sorted_vals)
-                    idx = np.argmax(diffs)
-                    gap_start = sorted_vals[idx]
-                    gap_end = sorted_vals[idx + 1]
+                gap = largest_gap(df[var])
 
         fig, ax = plt.subplots(figsize=(8, 4))
         vals = df[var].dropna().values
@@ -684,7 +580,8 @@ def register(input, output, session, state: AppState):
                     logger.debug("KDE overlay skipped", exc_info=True)
 
             # Gap overlay
-            if coverage_failed and gap_start is not None:
+            if gap is not None:
+                gap_start, gap_end = gap
                 ax.axvspan(
                     gap_start, gap_end,
                     color="#d13438", alpha=0.15,
@@ -721,7 +618,8 @@ def register(input, output, session, state: AppState):
                         logger.debug("Trend overlay skipped", exc_info=True)
 
                 # Gap overlay on x-axis
-                if coverage_failed and gap_start is not None:
+                if gap is not None:
+                    gap_start, gap_end = gap
                     ax.axvspan(
                         gap_start, gap_end,
                         color="#d13438", alpha=0.12,
@@ -806,12 +704,10 @@ def register(input, output, session, state: AppState):
             ax.hist(vals, bins=20, color=bar_color, alpha=0.55, edgecolor="white")
 
             # Shade the largest gap when coverage fails
-            if not passed and len(vals) > 1:
-                sorted_vals = np.sort(vals)
-                diffs = np.diff(sorted_vals)
-                gap_idx = np.argmax(diffs)
+            gap = largest_gap(vals) if not passed else None
+            if gap is not None:
                 ax.axvspan(
-                    sorted_vals[gap_idx], sorted_vals[gap_idx + 1],
+                    *gap,
                     color="#ffb900", alpha=0.4,
                     label=f"Gap ratio: {res.get('max_gap_ratio', 0):.2f}"
                 )

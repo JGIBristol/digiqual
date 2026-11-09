@@ -1,20 +1,23 @@
-"""Experimental Design tab: build a Latin Hypercube sample from variable ranges."""
+"""Simulation Design tab: build a Latin Hypercube sample from variable ranges."""
 
 from faicons import icon_svg
 from shiny import reactive, render, ui
 
 from digiqual.sampling import generate_lhs
 
+from .components import TAB
 from .state import AppState
 
+TITLE = TAB["design"].title
+
 panel = ui.nav_panel(
-    "Experimental Design",
+    TITLE,
     ui.div(
-        ui.h3("Experimental Design", class_="mb-4 text-center"),
+        ui.h3(TITLE, class_="mb-4 text-center"),
         ui.layout_columns(
             # --- LEFT: VARIABLE INPUTS
             ui.card(
-                ui.card_header("Experimental Design Variables"),
+                ui.card_header("Design Variables"),
                 # Header Row
                 ui.div(
                     ui.layout_columns(
@@ -46,8 +49,8 @@ panel = ui.nav_panel(
             # --- RIGHT: PREVIEW & SETTINGS ---
             ui.div(
                 ui.card(
-                    ui.card_header("Framework Preview"),
-                    ui.output_data_frame("preview_experimental_design"),
+                    ui.card_header("Design Preview"),
+                    ui.output_data_frame("preview_design"),
                     full_screen=True,
                     class_="mb-3"
                 ),
@@ -58,7 +61,7 @@ panel = ui.nav_panel(
                         class_="d-flex justify-content-center mb-3"
                     ),
                     ui.input_task_button(
-                        "generate_btn", "Generate Framework",
+                        "generate_btn", "Generate Design",
                         class_="btn-primary w-100", icon=icon_svg("gears")
                     ),
                     ui.output_ui("download_btn_container", class_="mt-3"),
@@ -69,7 +72,8 @@ panel = ui.nav_panel(
         ),
         class_="container-fluid py-3"
     ),
-    icon=icon_svg("table")
+    value="design",
+    icon=icon_svg(TAB["design"].icon)
 )
 
 
@@ -178,12 +182,12 @@ def register(input, output, session, state: AppState):
         try:
             df = generate_lhs(n=input.num_rows(), ranges=ranges)
             final_generated_df.set(df)
-            ui.notification_show("Success! Framework generated.", type="message")
+            ui.notification_show("Design generated.", type="message")
         except Exception as e:
             ui.notification_show(f"Generation Error: {str(e)}", type="error")
 
     @render.data_frame
-    def preview_experimental_design():
+    def preview_design():
         df = final_generated_df()
         if df is not None:
             return render.DataGrid(df, selection_mode="none", filters=False, height="250px")

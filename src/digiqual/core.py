@@ -23,6 +23,16 @@ from .plotting import plot_collinearity_matrix, plot_pod_curve, plot_signal_mode
 logger = logging.getLogger(__name__)
 
 
+def model_override_args(mean_model) -> Tuple[str, int | None]:
+    """The `model_override` and `force_degree` arguments that select `mean_model` again.
+
+    Used to keep the same fitted model when re-running `pod()` with new settings.
+    """
+    if mean_model.model_type_ == "Polynomial":
+        return "polynomial", mean_model.model_params_
+    return "kriging", None
+
+
 class SimulationStudy:
     """
     A workflow manager for simulation reliability assessment.
@@ -72,6 +82,7 @@ class SimulationStudy:
         """Internal method to wipe all cached mathematical results and state."""
         # Generalized method storage
         self.sufficiency_results: pd.DataFrame = pd.DataFrame()
+        self.model_results: Dict[str, Any] = {}
         self.pod_results: Dict[str, Any] = {}
         self.plots: Dict[str, Any] = {}
 
@@ -428,9 +439,14 @@ class SimulationStudy:
         bandwidth_ratio: float | None = None,
         model_override: str = "auto",
         force_degree: int | None = None,
-        nuisance_dists: Dict[str, Tuple[str, Tuple]] = None
+        nuisance_dists: Dict[str, Tuple[str, Tuple]] = None,
+        nuisance_bounds: Dict[str, Tuple[float, float]] | None = None
     ) -> Dict[str, Any]:
-        """Pre-calculates a spectrum of PoD curves across a range of signal thresholds."""
+        """Pre-calculates a spectrum of PoD curves across a range of signal thresholds.
+
+        Takes the same settings as `pod()`. Afterwards `pod()` calls with these settings
+        and ``n_boot=0`` interpolate from the spectrum instead of integrating.
+        """
         # 1. Standardize column configurations
         if isinstance(poi_col, str):
             poi_cols = [poi_col]
@@ -452,7 +468,8 @@ class SimulationStudy:
             n_boot=0,
             model_override=model_override,
             force_degree=force_degree,
-            nuisance_dists=nuisance_dists
+            nuisance_dists=nuisance_dists,
+            nuisance_bounds=nuisance_bounds
         )
 
         # Reuse the exact cache keys pod() just used, so the two always agree
@@ -560,6 +577,169 @@ class SimulationStudy:
         return total_time
 
 
+#### Model Fitting ####
+    def _resolve_nuisance_bounds(
+        self, nuisance_cols: List[str], nuisance_bounds: Dict[str, Tuple[float, float]] | None
+    ) -> Dict[str, Tuple[float, float]]:
+        """Integration limits per nuisance: user limits clamped to the observed data range."""
+        nuisance_bounds = nuisance_bounds or {}
+        resolved = {}
+        for c in nuisance_cols:
+            data_lo, data_hi = float(self.clean_data[c].min()), float(self.clean_data[c].max())
+            lo, hi = nuisance_bounds.get(c, (data_lo, data_hi))
+            lo = data_lo if lo is None else max(float(lo), data_lo)
+            hi = data_hi if hi is None else min(float(hi), data_hi)
+            if lo >= hi:
+                raise ValueError(
+                    f"Integration range for '{c}' is empty after limiting it to the data range "
+                    f"[{data_lo:.4g}, {data_hi:.4g}]. Choose a lower limit below the upper limit."
+                )
+            resolved[c] = (lo, hi)
+        return resolved
+
+    def fit_model(
+        self,
+        model_override: str = "auto",
+        force_degree: int | None = None,
+        bandwidth_ratio: float | None = None
+    ) -> Dict[str, Any]:
+        """
+        Fits the surrogate (mean) model, the variance model and the error distribution.
+
+        The models are always trained on all input columns, so this step does not
+        depend on which parameters are later plotted, integrated or sliced in `pod()`.
+        Results are cached, so calling `pod()` afterwards reuses them.
+
+        Args:
+            model_override (str): One of "auto", "polynomial" or "kriging".
+            force_degree (int | None): Polynomial degree when model_override="polynomial".
+            bandwidth_ratio (float | None): Variance smoother bandwidth; ``None`` picks it
+                by leave-one-out cross-validation.
+
+        Returns:
+            Dict: The selected mean model, its LaTeX equation, the variance model
+            (residuals and bandwidth), error distribution and Sobol indices.
+
+        Examples:
+            ```python
+            fit = study.fit_model()
+            print(fit["equation"], fit["sobol_indices"])
+            ```
+        """
+        if self.clean_data.empty:
+            self._validate()
+            if self.clean_data.empty:
+                raise ValueError("Cannot fit a model: No valid data available.")
+
+        all_cols = self.inputs
+        X = self.clean_data[all_cols].values
+        y = self.clean_data[self.outcome].values
+
+        # ---------------------------------------------------------
+        # LAYER 1 CACHE: Mean Models
+        # ---------------------------------------------------------
+        if not self.models_cache:
+            logger.info("1. Training all surrogate models (Cache Miss)...")
+            models, scores, winner = pod.fit_all_robust_mean_models(X, y)
+            self.models_cache = models
+            self.cv_scores_cache = scores
+            self.cv_winner_key = winner
+        else:
+            logger.info("1. Loading surrogate models from cache (Cache Hit)...")
+
+        # Select the specific model requested by the user
+        if model_override == "polynomial" and force_degree is not None:
+            selected_key = ('Polynomial', force_degree)
+            if selected_key not in self.models_cache:
+                raise ValueError(f"Polynomial degree {force_degree} was requested, but it is not available in the cache.")
+
+        elif model_override == "polynomial":
+            # User wants Poly but didn't force a degree -> pick it with the same
+            # one-standard-error rule as "auto", restricted to the polynomials
+            poly_scores = {k: v for k, v in self.cv_scores_cache.items() if k[0] == 'Polynomial'}
+            cv_se = getattr(next(iter(self.models_cache.values())), 'cv_se_', None)
+            selected_key = pod.select_cv_winner(poly_scores, cv_se)
+
+        elif model_override == "kriging":
+            selected_key = ('Kriging', None)
+            if selected_key not in self.models_cache:
+                raise ValueError(
+                    "Kriging model was requested but is not available in the cache. "
+                    "This usually occurs if your dataset exceeds 1,000 samples, "
+                    "as Kriging evaluation is automatically skipped to prevent timeouts."
+                )
+        else:
+            selected_key = self.cv_winner_key
+
+        mean_model = self.models_cache[selected_key]
+
+        # Attach the CV data to the model so plotting functions can still read it
+        mean_model.cv_scores_ = self.cv_scores_cache
+        mean_model.cv_winner_ = self.cv_winner_key
+        mean_model.forced_model_ = (selected_key != self.cv_winner_key)
+
+        equation = pod.generate_latex_equation(mean_model, all_cols, self.outcome)
+
+        if mean_model.model_type_ == 'Polynomial':
+            logger.info(f"-> Selected Model: Polynomial (Degree {mean_model.model_params_})")
+        else:
+            best_kernel = getattr(mean_model, 'best_kernel_name_', 'Gaussian Process')
+            outlier_gamma = getattr(mean_model, 'outlier_scale_factor_', 1.0)
+            logger.info(f"-> Selected Model: Kriging ({best_kernel}) | LOO outlier factor gamma (diagnostic): {outlier_gamma:.3f}")
+
+        # ---------------------------------------------------------
+        # LAYER 2 CACHE: Variance Model, Distribution & Sobol
+        # ---------------------------------------------------------
+        variance_key = (selected_key, bandwidth_ratio)
+        if variance_key not in self.variance_cache:
+            logger.info("2. Fitting Variance Model & Inferring Distribution (Cache Miss)...")
+
+            residuals, bandwidth = pod.fit_variance_model(
+                X, y, mean_model,
+                auto_bandwidth=bandwidth_ratio is None,
+                bandwidth_ratio=bandwidth_ratio if bandwidth_ratio is not None else 0.1,
+            )
+            dist_name, dist_params = pod.infer_best_distribution(residuals, X, bandwidth)
+
+            logger.info("-> Calculating Total-Order Sobol Indices...")
+            from digiqual.pod import calculate_sobol_indices
+            sobol_indices = calculate_sobol_indices(
+                mean_model=mean_model,
+                feature_names=all_cols,
+                data_df=self.clean_data
+            )
+
+            self.variance_cache[variance_key] = {
+                "residuals": residuals,
+                "bandwidth": bandwidth,
+                "dist_info": (dist_name, dist_params),
+                "sobol_indices": sobol_indices
+            }
+        else:
+            logger.info("2. Loading Variance Model, Distribution & Sobol from cache (Cache Hit)...")
+            cached_var = self.variance_cache[variance_key]
+            residuals = cached_var["residuals"]
+            bandwidth = cached_var["bandwidth"]
+            dist_name, dist_params = cached_var["dist_info"]
+            sobol_indices = cached_var.get("sobol_indices", None)
+
+        logger.info(f"   -> Smoothing Bandwidth: {bandwidth:.4f} (input std devs)")
+        logger.info(f"   -> Selected Distribution: {dist_name}")
+
+        self.model_results = {
+            "model_key": selected_key,
+            "mean_model": mean_model,
+            "equation": equation,
+            "X": X,
+            "y": y,
+            "residuals": residuals,
+            "bandwidth": bandwidth,
+            "bandwidth_ratio": bandwidth_ratio,
+            "dist_info": (dist_name, dist_params),
+            "sobol_indices": sobol_indices,
+        }
+        return self.model_results
+
 #### PoD Analysis ####
     def pod(
         self,
@@ -573,7 +753,8 @@ class SimulationStudy:
         force_degree: int | None = None,
         n_jobs: int | None = None,
         nuisance_dists: Dict[str, Tuple[str, Tuple]] = None,
-        progress_callback: Any = None
+        progress_callback: Any = None,
+        nuisance_bounds: Dict[str, Tuple[float, float]] | None = None
     ) -> Dict[str, Any]:
         """
         Runs the generalized Probability of Detection (PoD) analysis.
@@ -594,6 +775,12 @@ class SimulationStudy:
             n_jobs (int | None): Number of worker processes for the bootstrap.
                 ``None`` or ``1`` (default) runs on a single core; ``-1`` uses all
                 cores except two, so the machine stays responsive; ``n`` uses ``n``.
+            nuisance_dists (dict | None): Non-uniform distributions for nuisance
+                parameters, as returned by `estimate_nuisance_distribution`.
+            progress_callback (callable | None): Called as ``(done, total)`` during the bootstrap.
+            nuisance_bounds (dict | None): ``{col: (low, high)}`` limits for the
+                integration over nuisance parameters. Defaults to the observed data
+                range; limits outside it are clamped to it.
 
         Returns:
             Dict: Dictionary containing models, curves, and fit statistics.
@@ -653,103 +840,16 @@ class SimulationStudy:
         if final_slice_values:
             logger.info(f"-> Slicing surface at: {final_slice_values}")
 
-        X = self.clean_data[all_cols].values
-        y = self.clean_data[self.outcome].values
-
-        # ---------------------------------------------------------
-        # 4. LAYER 1 CACHE: Mean Models
-        # ---------------------------------------------------------
-        if not self.models_cache:
-            logger.info("1. Training all surrogate models (Cache Miss)...")
-            # Fit everything and save to caches
-            models, scores, winner = pod.fit_all_robust_mean_models(X, y)
-            self.models_cache = models
-            self.cv_scores_cache = scores
-            self.cv_winner_key = winner
-        else:
-            logger.info("1. Loading surrogate models from cache (Cache Hit)...")
-
-        # Select the specific model requested by the user
-        if model_override == "polynomial" and force_degree is not None:
-            selected_key = ('Polynomial', force_degree)
-            if selected_key not in self.models_cache:
-                raise ValueError(f"Polynomial degree {force_degree} was requested, but it is not available in the cache.")
-
-        elif model_override == "polynomial":
-            # User wants Poly but didn't force a degree -> pick it with the same
-            # one-standard-error rule as "auto", restricted to the polynomials
-            poly_scores = {k: v for k, v in self.cv_scores_cache.items() if k[0] == 'Polynomial'}
-            cv_se = getattr(next(iter(self.models_cache.values())), 'cv_se_', None)
-            selected_key = pod.select_cv_winner(poly_scores, cv_se)
-
-        elif model_override == "kriging":
-            selected_key = ('Kriging', None)
-            if selected_key not in self.models_cache:
-                raise ValueError(
-                    "Kriging model was requested but is not available in the cache. "
-                    "This usually occurs if your dataset exceeds 1,000 samples, "
-                    "as Kriging evaluation is automatically skipped to prevent timeouts."
-                )
-        else:
-            selected_key = self.cv_winner_key
-
-        # Retrieve the selected model!
-        mean_model = self.models_cache[selected_key]
-
-        # Attach the CV data to the model so plotting functions can still read it
-        mean_model.cv_scores_ = self.cv_scores_cache
-        mean_model.cv_winner_ = self.cv_winner_key
-        mean_model.forced_model_ = (selected_key != self.cv_winner_key)
-
-        equation = pod.generate_latex_equation(mean_model, all_cols, self.outcome)
-
-        if mean_model.model_type_ == 'Polynomial':
-            logger.info(f"-> Selected Model: Polynomial (Degree {mean_model.model_params_})")
-        else:
-            best_kernel = getattr(mean_model, 'best_kernel_name_', 'Gaussian Process')
-            outlier_gamma = getattr(mean_model, 'outlier_scale_factor_', 1.0)
-            logger.info(f"-> Selected Model: Kriging ({best_kernel}) | LOO outlier factor gamma (diagnostic): {outlier_gamma:.3f}")
-
-        # ---------------------------------------------------------
-        # 5. LAYER 2 CACHE: Variance Model, Distribution & Sobol
-        # ---------------------------------------------------------
-        variance_key = (selected_key, bandwidth_ratio)
-        if variance_key not in self.variance_cache:
-            logger.info("2. Fitting Variance Model & Inferring Distribution (Cache Miss)...")
-
-            residuals, bandwidth = pod.fit_variance_model(
-                X, y, mean_model,
-                auto_bandwidth=bandwidth_ratio is None,
-                bandwidth_ratio=bandwidth_ratio if bandwidth_ratio is not None else 0.1,
-            )
-            dist_name, dist_params = pod.infer_best_distribution(residuals, X, bandwidth)
-
-            # Calculate Sobol Sensitivity Indices (Cache Miss)
-            logger.info("-> Calculating Total-Order Sobol Indices...")
-            from digiqual.pod import calculate_sobol_indices
-            sobol_indices = calculate_sobol_indices(
-                mean_model=mean_model,
-                feature_names=all_cols,
-                data_df=self.clean_data
-            )
-
-            # Save the heavy lifting to the cache
-            self.variance_cache[variance_key] = {
-                "residuals": residuals,
-                "bandwidth": bandwidth,
-                "dist_info": (dist_name, dist_params),
-                "sobol_indices": sobol_indices  # <--- Now safely cached!
-            }
-        else:
-            logger.info("2. Loading Variance Model, Distribution & Sobol from cache (Cache Hit)...")
-            cached_var = self.variance_cache[variance_key]
-            residuals = cached_var["residuals"]
-            bandwidth = cached_var["bandwidth"]
-            dist_name, dist_params = cached_var["dist_info"]
-            sobol_indices = cached_var.get("sobol_indices", None)  # <--- Instantly retrieved!
-
-        logger.info(f"   -> Smoothing Bandwidth: {bandwidth:.4f} (input std devs)")
-        logger.info(f"   -> Selected Distribution: {dist_name}")
+        # 4. LAYERS 1 & 2: Mean model, variance model, distribution and Sobol indices
+        fit = self.fit_model(model_override=model_override, force_degree=force_degree,
+                             bandwidth_ratio=bandwidth_ratio)
+        X, y = fit["X"], fit["y"]
+        mean_model = fit["mean_model"]
+        equation = fit["equation"]
+        residuals, bandwidth = fit["residuals"], fit["bandwidth"]
+        dist_name, dist_params = fit["dist_info"]
+        sobol_indices = fit["sobol_indices"]
+        variance_key = (fit["model_key"], bandwidth_ratio)
 
         # ---------------------------------------------------------
         # 6. LAYER 3 & 4 CACHE: Integration & Spectrum Interpolation
@@ -762,10 +862,14 @@ class SimulationStudy:
                 for k, v in nuisance_dists.items()
             )
 
+        # Integration limits for each nuisance: the observed range, optionally narrowed
+        integration_bounds = self._resolve_nuisance_bounds(nuisance_cols, nuisance_bounds)
+        bounds_key = tuple(integration_bounds.items())
+
         # Define keys for the different caching layers
         # Keyed on the variance key (model + bandwidth setting), since both feed the PoD
-        spectrum_key = (variance_key, tuple(poi_cols), tuple(nuisance_cols), frozenset(final_slice_values.items()), nuisance_dists_key)
-        l3_key = (variance_key, threshold, tuple(poi_cols), tuple(nuisance_cols), frozenset(final_slice_values.items()), nuisance_dists_key)
+        spectrum_key = (variance_key, tuple(poi_cols), tuple(nuisance_cols), frozenset(final_slice_values.items()), nuisance_dists_key, bounds_key)
+        l3_key = (variance_key, threshold, tuple(poi_cols), tuple(nuisance_cols), frozenset(final_slice_values.items()), nuisance_dists_key, bounds_key)
 
         # A) Setup Evaluation Grid & Nuisance Parameters (Lightweight Setup)
         poi_grids = []
@@ -780,7 +884,7 @@ class SimulationStudy:
             X_eval = np.vstack([m.flatten() for m in mesh]).T
 
         # Build nuisance ranges (including sliced parameters locked as single-value ranges)
-        nuisance_ranges = {c: (float(self.clean_data[c].min()), float(self.clean_data[c].max())) for c in nuisance_cols}
+        nuisance_ranges = dict(integration_bounds)
         for c, val in final_slice_values.items():
             nuisance_ranges[c] = (val, val)
 
@@ -894,6 +998,7 @@ class SimulationStudy:
             "threshold": threshold,
             "n_boot" : n_boot,
             "nuisance_dists": nuisance_dists,
+            "nuisance_bounds": integration_bounds,
             "bandwidth_ratio": bandwidth_ratio,
             "spectrum_key": spectrum_key,
             "l3_key": l3_key,
@@ -933,6 +1038,8 @@ class SimulationStudy:
         if not self.pod_results:
             return {}
 
+        override, degree = model_override_args(self.pod_results["mean_model"])
+
         # Just re-call .pod() with n_boot=0!
         # Because we built the Layer 1, 2, and 3 caches, this call will resolve in
         # microseconds if it's cached, or only run the lightweight Layer 3 if it's a new slice.
@@ -944,11 +1051,11 @@ class SimulationStudy:
             slice_values=slice_values,
             n_boot=0, # Never run bootstrap during a slider drag!
             nuisance_dists=self.pod_results.get("nuisance_dists"),
+            nuisance_bounds=self.pod_results.get("nuisance_bounds"),
             bandwidth_ratio=self.pod_results.get("bandwidth_ratio"),
-
             # Force it to use the exact same model we are currently looking at
-            model_override="polynomial" if self.pod_results["mean_model"].model_type_ == "Polynomial" else "kriging",
-            force_degree=self.pod_results["mean_model"].model_params_ if self.pod_results["mean_model"].model_type_ == "Polynomial" else None
+            model_override=override,
+            force_degree=degree
         )
 
 #### Visualise Results ####

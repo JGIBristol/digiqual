@@ -5,61 +5,75 @@ number-sections: true
 
 This manual provides a detailed breakdown of the functionality found inside the DigiQual Shiny application. For instructions on how to install or launch the app, see the [Launch the App](gui.qmd) guide.
 
-The DigiQual GUI is built with a modern "Fluent" design system and provides a visual alternative to the Python API. Alongside the Home dashboard it has five tabs, used left to right: **Experimental Design**, **Simulation Diagnostics**, **Model Fit**, **PoD Explorer** and **UQ Analysis**. They map directly onto the Python workflow in the [Quick Start](qs_class.qmd). The statistics behind each step are explained in [Generalised PoD](generalised_pod.qmd).
+The DigiQual GUI is built with a modern "Fluent" design system and provides a visual alternative to the Python API. Alongside the Home dashboard it has four tabs, used left to right: **Simulation Design**, **Data Diagnostics**, **Model Explorer** and **PoD Analysis**. Each tab ends with a button that takes you to the next one. They map directly onto the Python workflow in the [Quick Start](qs_class.qmd). The statistics behind each step are explained in [Generalised PoD](generalised_pod.qmd).
 
-## Experimental Design {#sec-tab-design}
+## Simulation Design {#sec-tab-design}
 
-**Purpose:** Generate a statistically sound framework of sampling points for your physics solvers to evaluate.
+**Purpose:** Generate a statistically sound set of sampling points for your physics solvers to evaluate.
 
-Instead of writing scripts to generate arrays, you can visually define your parameters and automatically export a completed Latin Hypercube Sample (LHS).
+Instead of writing scripts to generate arrays, you can visually define your parameters and export a Latin Hypercube Sample (LHS).
 
 1. **Add Variables:** Click "Add Variable" for each continuous parameter in your simulation (e.g., `Length`, `Angle`).
 2. **Define Bounds:** Set the minimum and maximum physical limits for each parameter. The LHS algorithm will ensure these bounds are evenly covered.
 3. **Specify Samples:** Enter the total number of initial simulation runs you plan to execute ($N$).
-4. **Generate Framework:** The tool builds a space-filling Latin Hypercube design. The rows are ordered so that any first $k$ of them are also well spread, so you can run the simulations in order and stop early ([how this works](optimisation.qmd#sec-diagnostics)).
+4. **Generate Design:** The tool builds a space-filling Latin Hypercube design. The rows are ordered so that any first $k$ of them are also well spread, so you can run the simulations in order and stop early ([how this works](optimisation.qmd#sec-diagnostics)).
 5. **Download CSV:** Save `generated_sample.csv`. You can now feed this CSV into your external solver tool (e.g., MATLAB, Abaqus, ANSYS) to calculate the actual signal responses.
 
-## Simulation Diagnostics {#sec-tab-diagnostics}
+## Data Diagnostics {#sec-tab-diagnostics}
 
 **Purpose:** Validate your dataset, detect input correlations, and identify regions where the physics solver failed to provide sufficient coverage or converged poorly.
 
 1. **Upload Data:** Upload the CSV containing your completed simulation results.
 2. **Configure Columns:** Select which variables are the inputs (e.g., Flaw Size, Angle) and which is the output (the Signal Response).
 3. **Run Diagnostics:** The engine runs the five diagnostic tests (input coverage, model fit, two bootstrap-stability checks and collinearity). What each test measures and its default threshold are listed in [Sampling & Diagnostics](optimisation.qmd#sec-diagnostics).
-4. **Configure Thresholds:** Adjust any of the test thresholds, including **Max Allowed VIF**, to define your own pass limits.
+4. **Configure Thresholds:** Adjust any of the test thresholds, including **Max Allowed VIF**, to define your own pass limits. Changing a threshold marks the results as out of date until you run the diagnostics again; it does not discard the fitted model.
 5. **Collinearity Analysis:** A dedicated card displays a correlation heatmap of your input variables, complete with VIF values and correlation coefficients, highlighting any strongly correlated variables that could destabilize model fitting.
 6. **Remediation:** If the data fails the coverage or model-fit/stability checks, the app offers an Active Learning "Remediation" tool. A collinearity failure is highlighted but can't be fixed by adding samples; remove or combine the correlated inputs instead. Enter the number of new samples you want, and it will generate a targeted CSV of new coordinates specifically designed to fill the detected gaps and stabilize the model.
 
-## Model Fit (Physics) {#sec-tab-model-fit}
+## Model Explorer {#sec-tab-explorer}
 
-**Purpose:** Determine the mathematical structure of your parameters rapidly without heavy computation.
+**Purpose:** Choose the surrogate model and how the multi-dimensional model is turned into a PoD, and explore it in real time.
 
-1. **Configure Parameters:** Select up to 2 Parameters of Interest (to plot) and up to 2 Nuisance parameters (to integrate out). Unassigned parameters will automatically be held as constant slices.
-2. **Nuisance Parameters Integration Profile:** For each selected Nuisance variable, you can configure its statistical distribution: **Uniform** (over the observed data limits), **Normal**, **Lognormal** or **Weibull**. The app fits the distribution to the uploaded data (Lognormal and Weibull need positive values) and previews its 95% range. Samples are always kept within the observed limits.
-3. **Select Model:** Choose "Auto (Best Fit)" to let 10-fold cross-validation compare Polynomials (degrees 1–10) and Kriging and pick the simplest model within one standard error of the best ([how the choice is made](generalised_pod.qmd#sec-model-selection)), or force a specific model type.
-4. **Fit Model:** Click the fit button. The engine fits the mean response, the varying scatter (noise) profile and the error distribution, and keeps them in memory so the next two tabs respond instantly.
-5. **Parameter Sensitivity (Sobol):** Once fit, a **Parameter Sensitivity (Total Effect)** card appears. This displays the total-order Sobol indices (as percentages) for each parameter, ranking them by their direct impact on the signal response (including their multi-dimensional interactions).
-6. **Diagnostics plots:** The tab shows the model-selection chart, the signal fit, and a two-panel fit check: actual vs predicted (pass/fail on the 10-fold cross-validated $R^2$) and a bootstrap convergence trace.
+The settings are in the sidebar on the left. The main area has two views: **PoD** (the signal model and the PoD curve or surface, side by side) and **Model fit** (how well the chosen model fits).
 
-## PoD Explorer (Reliability) {#sec-tab-explorer}
+### The model {#sec-explorer-model}
 
-**Purpose:** Real-time reliability evaluation using pre-calculated Threshold Spectrums.
+The first time you open the tab for a dataset, the app fits every candidate model: Polynomials (degrees 1–10) and Kriging, compared by 10-fold cross-validation. This takes a few seconds to a minute, depending on the data. The model is always trained on **all** input variables, so it doesn't depend on the roles below.
 
-Because the heavy computation was done in **Model Fit**, exploring the reliability surface here is virtually instantaneous (see [Caching Architecture](caching.qmd) for how).
+The **Model** dropdown starts at "Auto", which picks the simplest model within one standard error of the best ([how the choice is made](generalised_pod.qmd#sec-model-selection)). You can pick any other candidate instead; this only takes a moment because all candidates are already fitted.
 
-1. **Detection Threshold:** Dragging this slider interpolates across a pre-calculated 100-threshold spectrum matrix, shifting the PoD S-Curve left and right instantly.
-2. **Dynamic Slice Sliders:** Any parameters you did not assign in **Model Fit** appear here as sliders. Moving a slider isolates a new 2D slice of your multidimensional space. The engine takes a vectorized "Fast Path" to evaluate the new physics and updates the PoD curve in milliseconds without needing to refit the core model.
-3. **Side-by-Side View:** Watch the Signal Response model (left) shift up and down alongside the PoD Curve (right) to intuitively understand the relationship between physics and reliability.
+The **Model fit** view shows, for the chosen model:
 
-## UQ Analysis (Confidence) {#sec-tab-uq}
+- **Model Selection:** the cross-validation error of every candidate, marking the automatic choice and the one you picked.
+- **Fit Quality:** actual vs predicted (pass/fail on the 10-fold cross-validated $R^2$) and a bootstrap convergence trace, judged against the thresholds set in Data Diagnostics.
+- **Kriging Residuals:** for Kriging, the standardised leave-one-out residuals, to spot outliers or an over-smooth kernel.
+- **Parameter Sensitivity** (total-order Sobol indices, including interactions) and the **Fit Summary** (equation for polynomials, and fit statistics).
 
-**Purpose:** Construct rigorous Probability of Detection bounds via parallelised Bootstrapping, and inspect threshold sensitivity and multi-confidence level reliability matrices.
+If Data Diagnostics found issues, they are listed at the top of this view.
 
-Once you have used the PoD Explorer to find the exact threshold and parameter slice you care about, you move to this final tab to perform Uncertainty Quantification (UQ).
+### Variables and threshold {#sec-explorer-variables}
 
-1. **Bootstrap Configuration:** Define the number of resampling iterations (typically 1000). Enable Parallel Compute to use all but two of your CPU cores (keeping the computer responsive).
-2. **Run UQ:** The model chosen in **Model Fit** is locked, and the data is resampled and refitted many times to build the confidence bounds ([bootstrap details](generalised_pod.qmd#sec-bootstrap)).
-3. **Select Reliability Targets:** Select a specific **Target PoD** (50%, 90%, 95%, 99%) and a **Confidence Level** (50%, 90%, 95%, 99%) to annotate and display the exact reliability sizing point (e.g., `a90/95` or `a90/90`) on the curve.
-4. **Reliability Index Matrix (aX/Y):** When a single Parameter of Interest is analyzed, the app displays a complete matrix table showing the flaw sizing values required to reach standard combinations of Target Probability of Detection (rows) and Confidence Levels (columns).
-5. **Threshold Sensitivity Plot:** The app displays a curve plotting the Probability of Detection against the Detection Threshold for representative defect sizes, showing how changing the threshold affects reliability.
-6. **Export Results:** Download a comprehensive Excel workbook containing your configuration metrics, the model equation (plain text), the raw numerical curve data, and the newly added **Reliability Matrix** spreadsheet tab.
+Every input variable has a role:
+
+| Role | What it means | Controls |
+|---|---|---|
+| **Plot** | On the x-axis (1 variable: PoD curve) or one of two axes (2 variables: PoD surface) | None: the full data range is used |
+| **Integrate** | Averaged out by Monte Carlo integration (at most 2) | Distribution (**Uniform**, **Normal**, **Lognormal** or **Weibull**, fitted to the data) and the range (From, To) |
+| **Slice** | Held at a fixed value | A slider plus a box for an exact value |
+
+The roles start with the most influential input (highest Sobol index) plotted and the rest sliced at their medians. Exact values are shown and used to 3 decimal places (more only for variables with a very small range). Problems such as no plotted variable or an empty integration range are shown above the **Update PoD** button.
+
+1. **Update PoD:** After changing the model, which variables are plotted or integrated, or a distribution or integration range, press **Update PoD**. It computes the PoD and a 100-threshold spectrum ([caching details](caching.qmd)).
+2. **Slices and Threshold (live):** Moving a slice or the **Detection Threshold** (slider or exact value) updates the plots immediately. The slider is for quick moves; type a value for an exact one. Integration ranges are limited to the observed data, because the model can't be trusted outside it.
+
+## PoD Analysis {#sec-tab-pod}
+
+**Purpose:** Add bootstrap confidence bounds to the PoD from the Model Explorer, and report reliability indices.
+
+1. **Analysis Setup:** A summary of the explorer settings the analysis uses (plotted, integrated and sliced variables, threshold and the locked model), with a button to go back and edit them. The bootstrap refits the chosen model's shape to resampled data; the bounds reflect parameter uncertainty assuming that shape is correct.
+2. **Run Bootstrap:** Set the number of resampling iterations (typically 1000) and optionally enable parallel compute, which uses all but two of your CPU cores. The data is resampled and the model refitted many times to build the bounds ([bootstrap details](generalised_pod.qmd#sec-bootstrap)).
+3. **Select Reliability Targets:** Choose a **Target PoD** (50%, 90%, 95%, 99%) and a **Confidence Level** (50%, 90%, 95%, 99%) to annotate the curve with the matching sizing point (e.g., `a90/95`). Changing them does not rerun the bootstrap.
+4. **Reliability Index Matrix (aX/Y):** For a single plotted variable, a table of the flaw sizes reaching each combination of Target PoD (rows) and Confidence Level (columns).
+5. **Threshold Sensitivity Plot:** PoD against the detection threshold for representative defect sizes.
+6. **Out-of-date results:** If you change the explorer settings after running the bootstrap, the results are kept but marked as out of date until you run it again.
+7. **Export Results:** Download an Excel workbook with sheets for the model (statistics and equation), the analysis setup, the UQ metrics, the PoD curve data and the reliability matrix.

@@ -5,6 +5,25 @@ from shiny import ui
 
 from digiqual import __version__
 
+from .components import TABS
+
+
+def _module_cards():
+    """One entry per workflow tab, numbered in tab order."""
+    cards = []
+    for i, tab in enumerate(TABS, start=1):
+        if i > 1:
+            cards.append(ui.hr(class_="my-4"))
+        cards.append(ui.div(
+            ui.h5(ui.span(icon_svg(tab.icon), class_=f"text-{tab.colour} me-2"), f"{i}. {tab.title}",
+                  class_="fw-bold mb-2"),
+            ui.p(tab.lead, class_="fw-semibold mb-2"),
+            ui.tags.ul(*[ui.tags.li(b) for b in tab.bullets], class_="mb-0 ps-3 text-muted"),
+            class_=f"border-start border-3 border-{tab.colour} ps-3 mb-1"
+        ))
+    return cards
+
+
 home_panel = ui.nav_panel(
     "Home",
     # Scrolling wrapper
@@ -22,88 +41,7 @@ home_panel = ui.nav_panel(
             ui.div(
                 ui.h4("Workflow Modules", class_="mb-3 text-primary border-bottom pb-2"),
                 ui.card(
-                    ui.div(
-                        # Module 1: Design
-                        ui.div(
-                            ui.h5(
-                                ui.span(icon_svg("table"), class_="text-primary me-2"),
-                                "1. Experimental Design", class_="fw-bold mb-2"
-                            ),
-                            ui.p("Design efficient experimental frameworks using Latin Hypercube Sampling (LHS).", class_="fw-semibold mb-2"),
-                            ui.tags.ul(
-                                ui.tags.li("Space-filling parameter generation."),
-                                ui.tags.li("Automatic scaling to variable bounds."),
-                                class_="mb-0 ps-3 text-muted"
-                            ),
-                            class_="border-start border-3 border-primary ps-3 mb-3"
-                        ),
-                        ui.hr(class_="my-4"),
-
-                        # Module 2: Diagnostics & Visualisation
-                        ui.div(
-                            ui.h5(
-                                ui.span(icon_svg("check-double"), class_="text-warning me-2"),
-                                "2. Simulation Diagnostics", class_="fw-bold mb-2"
-                            ),
-                            ui.p("Validate dataset integrity, inspect coverage gaps, and visualise model fit.", class_="fw-semibold mb-2"),
-                            ui.tags.ul(
-                                ui.tags.li("Identify model instability or insufficient samples."),
-                                ui.tags.li("Per-variable distribution and gap inspection."),
-                                class_="mb-0 ps-3 text-muted"
-                            ),
-                            class_="border-start border-3 border-warning ps-3 mb-3"
-                        ),
-                        ui.hr(class_="my-4"),
-
-                        # Module 3: Analysis (Physics)
-                        ui.div(
-                            ui.h5(
-                                ui.span(icon_svg("chart-area"), class_="text-success me-2"),
-                                "3. Model Fit & Response", class_="fw-bold mb-2"
-                            ),
-                            ui.p("Determine the statistical structure and physics of your parameters rapidly.", class_="fw-semibold mb-2"),
-                            ui.tags.ul(
-                                ui.tags.li("Automated model selection via Cross-Validation (the simplest model within one standard error of the best)."),
-                                ui.tags.li("Extract mathematical equations and visualize the mean response surface."),
-                                ui.tags.li("Configure Uniform or Normal nuisance parameter distributions."),
-                                class_="mb-0 ps-3 text-muted"
-                            ),
-                            class_="border-start border-3 border-success ps-3 mb-3"
-                        ),
-                        ui.hr(class_="my-4"),
-
-                        # Module 4: Exploration (Reliability)
-                        ui.div(
-                            ui.h5(
-                                ui.span(icon_svg("magnifying-glass-chart"), class_="text-info me-2"),
-                                "4. PoD Explorer", class_="fw-bold mb-2"
-                            ),
-                            ui.p("Real-time reliability evaluation using pre-calculated Threshold Spectrums.", class_="fw-semibold mb-2"),
-                            ui.tags.ul(
-                                ui.tags.li("Instantly observe PoD changes across different detection thresholds."),
-                                ui.tags.li("Interactively slice constant parameters without model refitting."),
-                                class_="mb-0 ps-3 text-muted"
-                            ),
-                            class_="border-start border-3 border-info ps-3 mb-3"
-                        ),
-                        ui.hr(class_="my-4"),
-
-                        # Module 5: Uncertainty Quantification (Confidence)
-                        ui.div(
-                            ui.h5(
-                                ui.span(icon_svg("chart-line"), class_="text-danger me-2"),
-                                "5. Uncertainty Quantification", class_="fw-bold mb-2"
-                            ),
-                            ui.p("Lock the structural shape and construct rigorous Probability of Detection bounds.", class_="fw-semibold mb-2"),
-                            ui.tags.ul(
-                                ui.tags.li("Parallelized bootstrap resampling for confidence bounds at several levels (50% to 99%)."),
-                                ui.tags.li("Marginalize over custom (non-uniform) nuisance distributions using Monte Carlo integration."),
-                                class_="mb-0 ps-3 text-muted"
-                            ),
-                            class_="border-start border-3 border-danger ps-3 mb-1"
-                        ),
-                        class_="p-3"
-                    )
+                    ui.div(*_module_cards(), class_="p-3")
                 )
             ),
 

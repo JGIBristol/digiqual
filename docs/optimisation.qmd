@@ -25,11 +25,11 @@ flowchart TD
 
 ## Sampling & Diagnostics {#sec-diagnostics}
 
-The same sampling and diagnostic tools are used by `optimise`, by `study.diagnose()` / `study.refine()` in the [Quick Start](qs_class.qmd), and by the *Experimental Design* and *Simulation Diagnostics* tabs of the [app](gui_manual.qmd).
+The same sampling and diagnostic tools are used by `optimise`, by `study.diagnose()` / `study.refine()` in the [Quick Start](qs_class.qmd), and by the *Simulation Design* and *Data Diagnostics* tabs of the [app](gui_manual.qmd).
 
 ### Space-filling designs {#sec-lhs}
 
-`digiqual.sampling.generate_lhs(n, ranges)` (the app's *Experimental Design* tab) draws a Latin Hypercube Sample over the input ranges. It then reorders the points with a **greedy max-min distance algorithm**: each next point is the one furthest from all points chosen so far. As a result, any first $k$ rows of the design are themselves as space-filling as possible, so you can run the simulations in order and stop early, or run them in batches, and still have good coverage.
+`digiqual.sampling.generate_lhs(n, ranges)` (the app's *Simulation Design* tab) draws a Latin Hypercube Sample over the input ranges. It then reorders the points with a **greedy max-min distance algorithm**: each next point is the one furthest from all points chosen so far. As a result, any first $k$ rows of the design are themselves as space-filling as possible, so you can run the simulations in order and stop early, or run them in batches, and still have good coverage.
 
 ### Diagnostic tests {#sec-diagnostic-tests}
 
