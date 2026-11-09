@@ -42,7 +42,7 @@ class AppState:
 
         # Data Diagnostics
         self.uploaded_data = reactive.value(None)
-        self.uploaded_name = reactive.value(None)  # file name, for the exported script
+        self.uploaded_name = reactive.value(None)  # uploaded file name, kept with each bootstrap run
         self.study_instance = reactive.value(None)
         self.diagnostic_table = reactive.value(None)
         self.validation_passed = reactive.value(False)
@@ -214,8 +214,8 @@ def visualise(study):
 def analysis_kwargs(study, config: dict) -> dict:
     """`study.pod()` arguments for a Model Explorer config, locked to its fitted model.
 
-    The single translation from the app's settings to the library: the explorer, the
-    bootstrap and the tests of the exported script all use it.
+    The single translation from the app's settings to the library: the explorer and
+    the bootstrap both use it.
     """
     override, degree = model_key_args(config["model"])
     return dict(

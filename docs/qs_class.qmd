@@ -359,20 +359,6 @@ print("Columns:", list(clean.columns))
 print("Dropped text columns:", dropped, "| text cells made missing:", n_bad)
 ```
 
-## Reproducing an App Analysis {#sec-reproduce-app}
-
-After a bootstrap, the app's *PoD Analysis* stage can export the analysis as a Python script, `digiqual_analysis.py` ([GUI manual](gui_manual.qmd#sec-tab-pod)). It uses the calls on this page, with the app's settings filled in:
-
-1. `read_results_csv()` and `add_data()` with the chosen input and outcome columns;
-2. `diagnose()` with the app's diagnostic thresholds;
-3. `fit_model()` for the chosen model;
-4. `estimate_nuisance_distribution()` for any non-uniform integrated variable;
-5. `compute_pod_spectrum()` (one plotted variable) and `pod()` with the plotted, integrated and sliced variables, `nuisance_bounds`, the threshold and the bootstrap settings;
-6. `reliability_matrix()`, `visualise()` and `plot_pod_vs_threshold()`.
-
-All randomness in `digiqual` is seeded, so running the script next to the same CSV reproduces the app's numbers. It is a good starting point for scripting variations of an analysis made in the app.
-
-
 ## Appendix: Full Script {#sec-full-script}
 
 ```{python}

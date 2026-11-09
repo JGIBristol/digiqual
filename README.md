@@ -90,7 +90,7 @@ The package includes a full statistical engine for calculating Probability of De
 
 ### 6. Desktop and Browser App
 
-The full workflow is also available as a point-and-click app: a Windows/macOS desktop application, or `uvx digiqual` from a terminal. It guides you through five stages (simulation design, data diagnostics, model diagnostics, model explorer and PoD analysis), and exports each analysis as an Excel report and as a Python script that reproduces it with the library.
+The full workflow is also available as a point-and-click app: a Windows/macOS desktop application, or `uvx digiqual` from a terminal. It guides you through five stages (simulation design, data diagnostics, model diagnostics, model explorer and PoD analysis), and exports each analysis as an Excel report.
 
 
 

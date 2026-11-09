@@ -30,7 +30,6 @@ src/digiqual/
 │   ├── stage_model.py          ← 3. Model Diagnostics (Run models: background fit with progress)
 │   ├── stage_explorer.py       ← 4. Model Explorer
 │   ├── stage_pod.py            ← 5. PoD Analysis
-│   ├── script_export.py        ← writes the analysis as a standalone Python script
 │   ├── background.py           ← runs slow steps in a worker thread; progress tracking and panel
 │   ├── launcher.py             ← starts the server and opens the window (with its Help menu)
 │   └── www/                    ← static files served by Shiny: app.css, favicon.png, the funder
@@ -76,9 +75,7 @@ flowchart LR
 
 ### From app settings to library calls {#sec-analysis-kwargs}
 
-`state.analysis_kwargs(study, config)` is the single translation from an explorer config to `study.pod()` arguments: `poi_col`, `nuisance_col`, `slice_values`, `nuisance_dists`, `nuisance_bounds`, and `model_override` / `force_degree` from the config's model key (via `core.model_key_args`). `AppState.pod_kwargs()` is a thin wrapper around it. Two other module-level helpers go with it: `nuisance_dists_for()` fits the chosen distributions (one that can't be fitted is left out, so that variable is integrated uniformly) and `column_values()` gives a column's numeric values. Update PoD, the live updates and the bootstrap all use it, and so do the tests of the exported script, which check that the script reproduces the app's numbers.
-
-`script_export.analysis_script(config, model_choice, settings, used_dists)` writes that script from the bootstrap record. It turns the model key into `fit_model()` arguments with the same `core.model_key_args`, and only includes the distributions the run actually used.
+`state.analysis_kwargs(study, config)` is the single translation from an explorer config to `study.pod()` arguments: `poi_col`, `nuisance_col`, `slice_values`, `nuisance_dists`, `nuisance_bounds`, and `model_override` / `force_degree` from the config's model key (via `core.model_key_args`). `AppState.pod_kwargs()` is a thin wrapper around it. Two other module-level helpers go with it: `nuisance_dists_for()` fits the chosen distributions (one that can't be fitted is left out, so that variable is integrated uniformly) and `column_values()` gives a column's numeric values. Update PoD, the live updates and the bootstrap all use it.
 
 ### Background tasks {#sec-background}
 

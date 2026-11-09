@@ -25,7 +25,6 @@ from .components import (
     setup_rows,
     stage_page,
 )
-from .script_export import analysis_script
 from .state import AppState, logger, read_input, visualise
 
 MIN_N_BOOT = 10
@@ -280,12 +279,9 @@ def register(input, output, session, state: AppState):
                         ui.output_data_frame("uq_stats_table")),
                 ui.card(
                     ui.card_header("Export"),
-                    ui.download_button("download_excel_report", "Excel Report", class_="btn-success w-100 mb-2",
+                    ui.download_button("download_excel_report", "Excel Report", class_="btn-success w-100",
                                        icon=icon_svg("file-excel")),
-                    ui.download_button("download_script", "Python Script", class_="btn-outline-primary w-100",
-                                       icon=icon_svg("file-code")),
-                    ui.p("The report holds the model, setup, metrics, curve data and reliability matrix. "
-                         "The script repeats this analysis with the digiqual package.",
+                    ui.p("The report holds the model, setup, metrics, curve data and reliability matrix.",
                          class_="small text-muted mt-2 mb-0"),
                 ),
                 col_widths=[7, 5]
@@ -353,7 +349,7 @@ def register(input, output, session, state: AppState):
                 metrics_table(model_rows).to_excel(writer, sheet_name="Model", index=False)
                 metrics_table(setup_rows(uq["config"], fit["model_name"])).to_excel(
                     writer, sheet_name="Analysis Setup", index=False)
-                # The bootstrap's own target and confidence, as in the script export
+                # The bootstrap's own target and confidence, not the current selection
                 metrics = uq_metrics(uq["results"], uq["settings"]["target"], uq["settings"]["conf"])
                 metrics_table(metrics).to_excel(writer, sheet_name="UQ Metrics", index=False)
                 curve_export_df(uq["results"]).to_excel(writer, sheet_name="PoD Curve Data", index=False)
@@ -364,11 +360,3 @@ def register(input, output, session, state: AppState):
                     df_matrix = df_matrix.where(df_matrix.notna(), "Not Reached")
                     df_matrix.to_excel(writer, sheet_name="Reliability Matrix", index=False)
         yield output.getvalue()
-
-    @render.download(filename=lambda: "digiqual_analysis.py")
-    def download_script():
-        """A runnable Python script that repeats the bootstrapped analysis with the library."""
-        uq = uq_result()
-        if uq is not None:
-            yield analysis_script(uq["config"], uq["fit"]["choice"], uq["settings"],
-                                  used_dists=uq["results"].get("nuisance_dists"))
