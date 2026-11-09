@@ -99,3 +99,15 @@ h1.title {
 .src-m26      { background: #e3f4ea; color: #1e6b3d; border-color: #bfe3cd; }
 .src-uqlab    { background: #f1e8f8; color: #5b2e86; border-color: #dccaee; }
 .src-digiqual { background: #fdf0dc; color: #8a4b08; border-color: #f5d6a8; }
+
+// --- API REFERENCE TABLES ---
+// quartodoc's summary tables (api_reference/index.qmd and each module page)
+// split the columns evenly, so object names like `core.SimulationStudy` wrap.
+// Keep the name column on one line and let the description take the rest.
+// Matched by the link into the reference (#digiqual.…), so other tables are
+// unaffected.
+td:first-child:has(> a[href*="#digiqual."]) {
+  white-space: nowrap;
+  width: 1%;
+  padding-right: 1.5rem;
+}
