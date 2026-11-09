@@ -1,13 +1,10 @@
-"""Model Explorer tab: choose the model and each variable's role, and see the PoD.
+"""Model Explorer stage: choose each variable's role and explore the PoD live.
 
-The sidebar holds the settings: the model (candidates are fitted when the tab first
-opens, see `model_fit.py`), each input's role and the detection threshold. Every input
-is either plotted (1 or 2 of them), integrated over (with a distribution and range) or
-sliced at a fixed value. Changing the model, which variables are plotted or integrated,
-or the integration settings needs the Update PoD button (Monte Carlo integration and
-the threshold spectrum). Slice values and the threshold update the plots live.
-
-The main area has two views: the PoD (signal model and PoD plots) and the model fit.
+Every input is either plotted (1 or 2 of them), integrated over (with a distribution
+and range) or sliced at a fixed value. Changing the model (in Model Diagnostics), which
+variables are plotted or integrated, or the integration settings needs the Update PoD
+button (Monte Carlo integration and the threshold spectrum). Slice values and the
+detection threshold update the plots live.
 """
 
 import asyncio
@@ -18,31 +15,26 @@ from shiny import reactive, render, ui
 from digiqual.defaults import N_THRESHOLD_POINTS
 from digiqual.integration import NUISANCE_DISTRIBUTIONS, estimate_nuisance_distribution
 
-from . import model_fit as model_fit_view
 from .components import (
-    TAB,
+    _goto_js,
     config_errors,
     fmt_value,
     format_duration,
-    goto_button,
+    nav_button,
     notice,
-    register_goto,
     slider_precision,
+    stage_page,
 )
 from .state import AppState, logger, read_input
 
-TITLE = TAB["explorer"].title
 ROLES = {"plot": "Plot", "integrate": "Integrate", "slice": "Slice"}
 
-panel = ui.nav_panel(
-    TITLE,
-    ui.div(
-        ui.output_ui("explorer_warnings_ui"),
-        ui.output_ui("explorer_body_ui"),
-        class_="container-fluid py-3 overflow-auto h-100"
-    ),
-    value="explorer",
-    icon=icon_svg(TAB["explorer"].icon)
+panel = stage_page(
+    "explorer",
+    [ui.output_ui("explorer_sidebar_ui")],
+    ui.output_ui("explorer_warnings_ui"),
+    ui.output_ui("explorer_results_ui"),
+    sidebar_width=420,
 )
 
 
@@ -62,9 +54,6 @@ def register(input, output, session, state: AppState):
     applied_structure = state.applied_structure
     explorer_config = state.explorer_config
 
-    model_fit_view.register(input, output, session, state)
-    register_goto(input, "goto_data_from_explorer", "data")
-    register_goto(input, "goto_pod_from_explorer", "pod")
 
     @reactive.calc
     def ranges():
@@ -101,18 +90,10 @@ def register(input, output, session, state: AppState):
     # ── Layout ──────────────────────────────────────────────────────────────
     @render.ui
     def explorer_warnings_ui():
-        study = current_study()
-        if study is None:
-            return notice("Upload data and choose the input and outcome columns first.",
-                          action=goto_button("goto_data_from_explorer", "data"))
-        if state.diagnostic_table() is None and not state.candidates_ready():
-            return notice("Run the data diagnostics first; the models are fitted when you come back here.",
-                          action=goto_button("goto_data_from_explorer", "data"))
-        if state.fit_error() is not None:
-            return notice(f"Fitting the model failed: {state.fit_error()}", kind="danger", title="Model fit failed",
-                          action=ui.input_action_button("btn_retry_fit", "Try again", class_="btn-outline-danger btn-sm mt-2"))
-        if not state.candidates_ready():
-            return notice("Fitting the candidate models (cross-validation)...")
+        if current_study() is None:
+            return notice("Upload data and choose the input and outcome columns first.", action=nav_button("data"))
+        if model_fit() is None:
+            return notice("Choose a model in Model Diagnostics first.", action=nav_button("model"))
         return ui.div()
 
     def _variable_block(col, role, r):
@@ -161,24 +142,18 @@ def register(input, output, session, state: AppState):
         )
 
     @render.ui
-    def explorer_body_ui():
+    def explorer_sidebar_ui():
         study = current_study()
         if study is None or not state.candidates_ready():
-            return ui.div()
+            return ui.p("Available once a model is chosen.", class_="small text-muted")
         r = ranges()
         with reactive.isolate():
             roles = _default_roles(study)
-            choice = model_fit()["choice"] if model_fit() else "auto"
             thresh = threshold() if threshold() is not None else r[study.outcome][2]
         o_lo, o_hi, _o_med, o_step, o_dec = r[study.outcome]
 
-        sidebar = ui.sidebar(
-            _section(
-                "Model",
-                ui.input_select("model_choice", None, choices=model_fit_view.model_choices(study), selected=choice),
-                ui.p(f"Trained on all {len(study.inputs)} inputs. See the Model fit view for how it fits.",
-                     class_="small text-muted mb-0"),
-            ),
+        return ui.div(
+            ui.output_ui("explorer_model_ui"),
             _section(
                 "Variables",
                 ui.p("Plot 1 or 2, integrate over up to 2, slice the rest.", class_="small text-muted mb-2"),
@@ -199,15 +174,19 @@ def register(input, output, session, state: AppState):
             ui.output_ui("explorer_status_ui"),
             ui.input_task_button("btn_update_pod", "Update PoD", class_="btn-primary w-100",
                                  icon=icon_svg("arrows-rotate")),
-            width=420, open="always", bg="#ffffff",
         )
 
-        main = ui.navset_card_underline(
-            ui.nav_panel("PoD", ui.output_ui("explorer_results_ui"), icon=icon_svg("chart-line")),
-            ui.nav_panel("Model fit", model_fit_view.fit_view, icon=icon_svg("chart-area")),
-            id="explorer_view",
+    @render.ui
+    def explorer_model_ui():
+        fit = model_fit()
+        if fit is None:
+            return ui.div()
+        return ui.div(
+            ui.span("Model: ", class_="text-muted small"), ui.tags.strong(fit["model_name"], class_="small"),
+            ui.tags.button("change", type="button", class_="btn btn-link btn-sm p-0 ms-2 align-baseline",
+                           onclick=_goto_js("model")),
+            class_="pb-3 mb-3 border-bottom"
         )
-        return ui.layout_sidebar(sidebar, main, fillable=False, class_="mx-lg-4")
 
     @render.ui
     def integration_notes_ui():
@@ -252,7 +231,7 @@ def register(input, output, session, state: AppState):
         if _dirty(config):
             return ui.p(ui.span(icon_svg("circle-info"), class_="me-1"),
                         "Press Update PoD to compute the PoD for these settings." if applied_structure() is None
-                        else "Model, plot or integration settings changed: press Update PoD.",
+                        else "The model, plot or integration settings changed: press Update PoD.",
                         class_="small text-primary fw-semibold mb-2")
         return ui.p(ui.span(icon_svg("circle-check"), class_="me-1"),
                     "Up to date. Slices and threshold update live.", class_="small text-success mb-2")
@@ -260,25 +239,23 @@ def register(input, output, session, state: AppState):
     @render.ui
     def explorer_results_ui():
         study = current_study()
-        if study is None or applied_structure() is None:
-            return ui.p("Choose the settings on the left and press Update PoD.", class_="text-muted text-center p-5")
+        if study is None or model_fit() is None:
+            return ui.div()
+        if applied_structure() is None:
+            return notice("Choose what to plot, integrate over and slice in the sidebar, then press Update PoD.")
         is_multi_dim = len(applied_structure()["plot"]) > 1
-        return ui.div(
-            ui.layout_columns(
-                ui.card(
-                    ui.card_header(f"{study.outcome} Surface" if is_multi_dim else "Signal Model"),
-                    ui.output_plot("plot_signal_explorer", height="450px"),
-                    full_screen=True,
-                ),
-                ui.card(
-                    ui.card_header("PoD Surface Heatmap" if is_multi_dim else "PoD Curve"),
-                    ui.output_plot("plot_pod_explorer", height="450px"),
-                    full_screen=True,
-                ),
-                col_widths=[6, 6]
+        return ui.layout_columns(
+            ui.card(
+                ui.card_header(f"{study.outcome} Surface" if is_multi_dim else "Signal Model"),
+                ui.output_plot("plot_signal_explorer", height="480px"),
+                full_screen=True,
             ),
-            ui.div(goto_button("goto_pod_from_explorer", "pod", "Continue to " + TAB["pod"].title, primary=True),
-                   class_="text-center"),
+            ui.card(
+                ui.card_header("PoD Surface Heatmap" if is_multi_dim else "PoD Curve"),
+                ui.output_plot("plot_pod_explorer", height="480px"),
+                full_screen=True,
+            ),
+            col_widths=[6, 6]
         )
 
     @render.plot
@@ -359,7 +336,6 @@ def register(input, output, session, state: AppState):
             study.visualise(show=False)
             applied_structure.set(state.structure(config))
             state.bump_plots()
-            ui.update_navset("explorer_view", selected="PoD")
         except Exception as e:
             logger.exception("PoD update failed")
             ui.notification_show(f"PoD failed: {str(e) or type(e).__name__}", type="error")

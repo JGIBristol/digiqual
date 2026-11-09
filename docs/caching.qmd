@@ -20,7 +20,7 @@ The state of the caches is managed inside `core.py`. Whenever the physical datas
 
 ### Layer 1: The Mean Model Cache (`models_cache`) {#sec-layer-models}
 **What it does:** Caches the fundamental physics regressions.
-**Trigger:** Opening the *Model Explorer* for the first time for a dataset (`study.fit_model()`), or the first `study.pod()` call.
+**Trigger:** Arriving at *Model Diagnostics* for the first time for a dataset (`study.fit_model()`), or the first `study.pod()` call.
 
 Instead of only fitting the single "best" model, the engine evaluates *all* polynomial degrees (1-10) and the Kriging (Gaussian Process) model via cross-validation, and then fits every one of them to the full dataset. The CV scores, their standard errors (`cv_se_`) and the automatic choice made by the one-standard-error rule are cached with them ([how the choice is made](generalised_pod.qmd#sec-model-selection)).
 
@@ -65,9 +65,9 @@ The `integration.py` engine is fully vectorized to handle multiple thresholds si
 Let's trace exactly what happens in the engine when a user interacts with the application.
 
 ### Step 1: The Initial Fit {#sec-journey-fit}
-The user uploads 500 simulations of an ultrasonic inspection with `Length`, `Angle`, and `Roughness`. They open the *Model Explorer*, which fits the candidate models, then plot `Length`, slice `Angle` and `Roughness` at their medians and press **Update PoD**.
+The user uploads 500 simulations of an ultrasonic inspection with `Length`, `Angle`, and `Roughness`. They move on to *Model Diagnostics*, which fits the candidate models. Then, in the *Model Explorer*, they plot `Length`, slice `Angle` and `Roughness` at their medians and press **Update PoD**.
 
-1. **Layer 1 Miss (opening the Explorer):** The engine trains 10 polynomials and 1 Kriging model. It caches all 11 models. It selects "Polynomial (Degree 2)" as the winner.
+1. **Layer 1 Miss (arriving at Model Diagnostics):** The engine trains 10 polynomials and 1 Kriging model. It caches all 11 models. It selects "Polynomial (Degree 2)" as the winner.
 2. **Layer 2 Miss:** It optimizes the bandwidth and fits a Normal distribution for Poly 2. It caches the variance parameters.
 3. **Layer 3 Miss (Update PoD):** It evaluates the curve using the median threshold (e.g., 15.0 dB) and median slices for Angle and Roughness. It caches this base curve.
 4. **Layer 4 Miss (Update PoD):** The engine pulls `X_train` and the `bandwidth` from Layer 2, generates a vector of 100 thresholds (from 0 dB to 50 dB), and runs the fast-path vectorized math. The 100-curve matrix is cached.
@@ -77,7 +77,7 @@ The user uploads 500 simulations of an ultrasonic inspection with `Length`, `Ang
 ### Step 2: The Real-Time Slider {#sec-journey-slider}
 The user rapidly drags the **Detection Threshold** slider from `15.0 dB` to `22.5 dB`.
 
-1. The `live_update` effect fires in `digiqual/gui/tab_explorer.py`.
+1. The `live_update` effect fires in `digiqual/gui/stage_explorer.py`.
 2. It calls `study.pod(threshold=22.5, n_boot=0)`.
 3. **Layer 1 Hit:** Poly 2 loaded instantly.
 4. **Layer 2 Hit:** Bandwidth loaded instantly.

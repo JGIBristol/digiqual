@@ -42,6 +42,7 @@ class AppState:
 
         # Data Diagnostics
         self.uploaded_data = reactive.value(None)
+        self.uploaded_name = reactive.value(None)  # file name, for the exported script
         self.study_instance = reactive.value(None)
         self.diagnostic_table = reactive.value(None)
         self.validation_passed = reactive.value(False)
@@ -52,6 +53,7 @@ class AppState:
         # once per dataset; model_fit is `study.fit_model()` for the chosen one
         self.candidates_ready = reactive.value(False)
         self.fit_error = reactive.value(None)
+        self.fit_running = reactive.value(False)
         self.model_fit = reactive.value(None)
 
         # Model Explorer: exact slice values and threshold (sliders and number boxes

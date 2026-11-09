@@ -1,78 +1,133 @@
-"""Small UI builders and pure helpers shared by the app's tabs."""
+"""Small UI builders and pure helpers shared by the app's stages."""
 
+import json
 from typing import NamedTuple
 
 import numpy as np
 import pandas as pd
 from faicons import icon_svg
-from shiny import reactive, ui
+from shiny import ui
 
 
-class Tab(NamedTuple):
+class Stage(NamedTuple):
     value: str
+    number: int
     title: str
     icon: str
-    colour: str  # Bootstrap colour name used on the Home page
-    lead: str
-    bullets: tuple
+    purpose: str
+    colour: str  # accent colour on the start page (the app's Fluent palette)
 
 
-# The workflow tabs, left to right. Panels, the Home page and the "go to" buttons all
-# use this list, so a tab is only ever named in one place.
-TABS = (
-    Tab("design", "Simulation Design", "table", "primary",
-        "Plan the simulation runs with a space-filling Latin Hypercube design.",
-        ("Set the range of each input variable.",
-         "Download the design as a CSV to run in your solver.")),
-    Tab("data", "Data Diagnostics", "check-double", "warning",
-        "Check that the simulation results are sufficient before modelling them.",
-        ("Coverage, model-fit, bootstrap-stability and collinearity checks.",
-         "Generate targeted extra samples where the data falls short.")),
-    Tab("explorer", "Model Explorer", "magnifying-glass-chart", "info",
-        "Fit the surrogate model, then choose what to plot, integrate over and slice, and see the PoD instantly.",
-        ("Candidate models are fitted on opening; cross-validation picks the simplest model within one "
-         "standard error of the best, or choose one yourself.",
-         "Plot 1 or 2 variables; integrate over others with a chosen distribution and range.",
-         "Fix the rest at exact values and move the detection threshold live.")),
-    Tab("pod", "PoD Analysis", "chart-line", "danger",
-        "Add bootstrap confidence bounds to the PoD and report aX/Y values.",
-        ("Parallel bootstrap with bounds at 50% to 99% confidence.",
-         "Reliability matrix and a full Excel report.")),
+# The workflow stages, in order. The page, the stepper, the start page and every
+# navigation button use this list, so a stage is only ever named in one place.
+STAGES = (
+    Stage("design", 1, "Simulation Design", "table",
+          "Plan the simulation runs with a space-filling Latin Hypercube design.", "#006abc"),
+    Stage("data", 2, "Data Diagnostics", "check-double",
+          "Upload the simulation results and check they are sufficient to model.", "#e3a100"),
+    Stage("model", 3, "Model Diagnostics", "chart-area",
+          "Choose the surrogate model of the signal response and check how well it fits.", "#107c10"),
+    Stage("explorer", 4, "Model Explorer", "magnifying-glass-chart",
+          "Choose what to plot, integrate over and slice, and explore the PoD live.", "#038387"),
+    Stage("pod", 5, "PoD Analysis", "chart-line",
+          "Add bootstrap confidence bounds, read off aX/Y values and export the results.", "#d13438"),
 )
-TAB = {t.value: t for t in TABS}
+STAGE = {s.value: s for s in STAGES}
+
+# Navigation: buttons set this input from the browser; one effect switches stage
+GOTO_INPUT = "goto_stage"
 
 
-def notice(message, kind: str = "muted", title: str | None = None, action=None):
-    """A full-width message box. ``kind`` is 'muted', 'info', 'warning' or 'danger'."""
-    icons = {"info": "circle-info", "warning": "triangle-exclamation", "danger": "circle-xmark"}
-    if kind == "muted":
-        body = ui.div(ui.p(message, class_="mb-0"), action or "",
-                      class_="text-center p-4 text-muted bg-light rounded border")
-    else:
-        body = ui.div(
-            ui.h5(icon_svg(icons[kind]), f" {title}") if title else "",
-            ui.div(message, class_="mb-0 small") if not isinstance(message, str) else ui.p(message, class_="mb-0"),
-            action or "",
-            class_=f"alert alert-{kind} shadow-sm"
-        )
-    return ui.layout_columns(body, col_widths=[-1, 10, -1])
+def _goto_js(value: str) -> str:
+    return f"Shiny.setInputValue({json.dumps(GOTO_INPUT)}, {json.dumps(value)}, {{priority: 'event'}})"
 
 
-def goto_button(input_id: str, tab_value: str, label: str | None = None, primary: bool = False):
-    """Button that switches to another tab (wired up with `register_goto`)."""
-    tab = TAB[tab_value]
-    return ui.input_action_button(
-        input_id, label or f"Go to {tab.title}", icon=icon_svg(tab.icon),
-        class_=("btn-primary" if primary else "btn-outline-primary") + " btn-sm mt-2"
+def nav_button(value: str, label: str | None = None, primary: bool = False, icon: str | None = None,
+               class_: str = "btn-sm mt-2"):
+    """A button that goes to stage `value` ('start' for the start page)."""
+    stage = STAGE.get(value)
+    return ui.tags.button(
+        icon_svg(icon or (stage.icon if stage else "house")), " ",
+        label or f"Go to {stage.title if stage else 'Start'}",
+        type="button", onclick=_goto_js(value),
+        class_=f"btn {'btn-primary' if primary else 'btn-outline-primary'} {class_}",
     )
 
 
-def register_goto(input, input_id: str, tab_value: str):
-    """Switch the navbar to `tab_value` when the button `input_id` is clicked."""
-    @reactive.effect
-    @reactive.event(input[input_id])
-    def _goto():
-        ui.update_navset("navbar", selected=tab_value)
+def accent_style(colour: str) -> str:
+    """CSS variables for an accent colour, with dark text on light colours (e.g. amber)."""
+    r, g, b = (int(colour[i:i + 2], 16) / 255 for i in (1, 3, 5))
+    luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    return f"--dq-accent: {colour}; --dq-accent-text: {'#1b1a19' if luminance > 0.5 else '#ffffff'};"
+
+
+def hero(title: str, subtitle: str):
+    """The banner at the top of the start and About pages, with a strip of the stage colours."""
+    return ui.div(
+        ui.h1(title, class_="fw-bold mb-1"),
+        ui.p(subtitle, class_="lead mb-0"),
+        ui.div(*[ui.span(style=f"background: {s.colour};") for s in STAGES], class_="dq-colour-strip"),
+        class_="dq-hero text-center"
+    )
+
+
+def icon_tile(icon: str):
+    """An icon centred on a tile tinted with the surrounding --dq-accent colour."""
+    return ui.div(icon_svg(icon, margin_left="0", margin_right="0"), class_="dq-entry-icon")
+
+
+def stage_page(value: str, sidebar: list, *main, sidebar_width: int = 380):
+    """The page every stage uses: title, settings sidebar, results, and Back / Next."""
+    stage = STAGE[value]
+    i = STAGES.index(stage)
+    back = STAGES[i - 1].value if i > 0 else "start"
+    nxt = STAGES[i + 1] if i + 1 < len(STAGES) else None
+    footer = ui.div(
+        nav_button(back, "Back", icon="arrow-left", class_=""),
+        nav_button(nxt.value, f"Next: {nxt.title}", primary=True, icon="arrow-right", class_="")
+        if nxt else ui.span(),
+        class_="dq-stage-footer d-flex justify-content-between mt-3"
+    )
+    return ui.nav_panel(
+        stage.title,
+        ui.div(
+            ui.div(
+                ui.h3(ui.span(f"{stage.number}", class_="dq-stage-number"), stage.title, class_="mb-0"),
+                ui.p(stage.purpose, class_="text-muted mb-0"),
+                class_="dq-stage-header"
+            ),
+            ui.layout_sidebar(
+                ui.sidebar(*sidebar, width=sidebar_width, open="always", bg="#ffffff"),
+                *main,
+                fillable=False, class_="dq-stage-body"
+            ),
+            footer,
+            class_="dq-stage"
+        ),
+        value=value,
+    )
+
+
+def notice(message, kind: str = "muted", title: str | None = None, action=None):
+    """A message box. ``kind`` is 'muted', 'info', 'warning' or 'danger'."""
+    icons = {"info": "circle-info", "warning": "triangle-exclamation", "danger": "circle-xmark"}
+    if kind == "muted":
+        return ui.div(ui.p(message, class_="mb-0"), action or "",
+                      class_="text-center p-4 text-muted bg-light rounded border mb-3")
+    return ui.div(
+        ui.h5(icon_svg(icons[kind]), f" {title}") if title else "",
+        ui.div(message, class_="mb-0 small") if not isinstance(message, str) else ui.p(message, class_="mb-0"),
+        action or "",
+        class_=f"alert alert-{kind} shadow-sm"
+    )
+
+
+def view_tabs(id: str, *views):
+    """Result views of a stage, as (title, icon, content) tuples, in underline tabs."""
+    return ui.navset_card_underline(
+        *[ui.nav_panel(title, content, icon=icon_svg(icon), value=title) for title, icon, content in views],
+        id=id,
+    )
 
 
 def format_duration(seconds: float) -> str:

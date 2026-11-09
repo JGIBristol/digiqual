@@ -1,4 +1,4 @@
-"""Data Diagnostics tab: upload results, run the sufficiency checks and inspect the data."""
+"""Data Diagnostics stage: upload results, run the sufficiency checks and inspect the data."""
 
 import numpy as np
 import pandas as pd
@@ -6,80 +6,34 @@ from faicons import icon_svg
 from shiny import reactive, render, ui
 
 from digiqual.defaults import MAX_ALLOWED_VIF, MAX_AVG_CV, MAX_GAP_RATIO, MAX_MAX_CV, MIN_R2_SCORE
+from digiqual.io import clean_columns
 
-from .components import TAB, diagnostic_failures, failure_list, goto_button, largest_gap, register_goto
+from .components import diagnostic_failures, failure_list, largest_gap, notice, stage_page, view_tabs
 from .state import AppState, logger
 
-TITLE = TAB["data"].title
-
-panel = ui.nav_panel(
-    TITLE,
-    ui.div(
-        ui.h3(TITLE, class_="mb-4 text-center"),
-        ui.layout_columns(
-            # --- LEFT: CONFIGURATION ---
-            ui.card(
-                ui.card_header("Diagnostic Configuration"),
-                ui.div(
-                    ui.input_file("upload_csv", "Upload CSV file", accept=[".csv"], multiple=False),
-                    ui.input_selectize("input_cols", "Select Input Variables", choices=[], multiple=True),
-                    ui.input_selectize("outcome_col", "Select Outcome Variable", choices=[], multiple=False),
-
-                    ui.output_ui("selection_error_display"),
-
-                    ui.accordion(
-                        ui.accordion_panel(
-                            "Advanced Diagnostic Thresholds",
-                            ui.input_numeric("ui_max_gap", "Max Gap Ratio", value=MAX_GAP_RATIO, step=0.01),
-                            ui.input_numeric("ui_min_r2", "Min R² Score", value=MIN_R2_SCORE, step=0.01),
-                            ui.input_numeric("ui_avg_cv", "Max Allowed Avg CV", value=MAX_AVG_CV, step=0.01),
-                            ui.input_numeric("ui_max_cv", "Max Allowed Peak CV", value=MAX_MAX_CV, step=0.01),
-                            ui.input_numeric("ui_max_vif", "Max Allowed VIF", value=MAX_ALLOWED_VIF, step=0.1),
-                        ),
-                        open=False
-                    ),
-
-                    ui.input_task_button(
-                        "btn_run_diagnostics", "Run Diagnostics",
-                        class_="btn-primary w-100", icon=icon_svg("stethoscope")
-                    ),
-                    ui.output_ui("validation_status"),
-
-
-
-                    class_="config-container"
-                ),
-                class_="h-100 mb-0"
+panel = stage_page(
+    "data",
+    [
+        ui.input_file("upload_csv", "Simulation results (CSV)", accept=[".csv"], multiple=False),
+        ui.input_selectize("input_cols", "Input variables", choices=[], multiple=True),
+        ui.input_selectize("outcome_col", "Outcome (signal)", choices=[], multiple=False),
+        ui.output_ui("selection_error_display"),
+        ui.accordion(
+            ui.accordion_panel(
+                "Diagnostic thresholds",
+                ui.input_numeric("ui_max_gap", "Max Gap Ratio", value=MAX_GAP_RATIO, step=0.01),
+                ui.input_numeric("ui_min_r2", "Min R² Score", value=MIN_R2_SCORE, step=0.01),
+                ui.input_numeric("ui_avg_cv", "Max Allowed Avg CV", value=MAX_AVG_CV, step=0.01),
+                ui.input_numeric("ui_max_cv", "Max Allowed Peak CV", value=MAX_MAX_CV, step=0.01),
+                ui.input_numeric("ui_max_vif", "Max Allowed VIF", value=MAX_ALLOWED_VIF, step=0.1),
             ),
-
-            # --- RIGHT: PREVIEWS, REPORTS & REMEDIATION ---
-            ui.div(
-                ui.output_ui("dynamic_preview_card"),
-                ui.card(
-                    ui.card_header("Validation Report"),
-                    ui.output_data_frame("validation_results_table"),
-                    full_screen=True,
-                    class_="mb-0"
-                ),
-                ui.output_ui("remediation_ui"),
-                class_="d-flex flex-column gap-3 h-100"
-            ),
-            col_widths=[-1, 3, 7, -1]
+            open=False
         ),
-
-        # --- BOTTOM: VISUALISATION ---
-        # Wrapped in layout_columns to ensure perfectly matched left/right padding
-        ui.layout_columns(
-            ui.div(
-                ui.output_ui("viz_content"),
-                class_="mt-3"
-            ),
-            col_widths=[-1, 10, -1]
-        ),
-        class_="container-fluid py-3 overflow-auto h-100"
-    ),
-    value="data",
-    icon=icon_svg(TAB["data"].icon)
+        ui.input_task_button("btn_run_diagnostics", "Run Diagnostics", class_="btn-primary w-100",
+                             icon=icon_svg("stethoscope")),
+    ],
+    ui.output_ui("validation_status"),
+    ui.output_ui("viz_content"),
 )
 
 
@@ -91,8 +45,6 @@ def register(input, output, session, state: AppState):
     diagnostics_stale = state.diagnostics_stale
     current_study = state.current_study
 
-    register_goto(input, "goto_explorer_from_data", "explorer")
-
     @reactive.effect
     def read_uploaded_csv():
         file_info = input.upload_csv()
@@ -100,52 +52,21 @@ def register(input, output, session, state: AppState):
             uploaded_data.set(None)
             return
         try:
-            df = pd.read_csv(file_info[0]["datapath"])
-
-            # Header string check & cleaning
-            # 1. Strip leading/trailing spaces
-            df.columns = df.columns.str.strip()
-            # 2. Replace any internal spaces with underscores
-            df.columns = df.columns.str.replace(r'\s+', '_', regex=True)
-            # 3. Remove any remaining special characters
-            df.columns = df.columns.str.replace(r'[^a-zA-Z0-9_]', '', regex=True)
-
-            # 4. FIX: Detect and disambiguate duplicate column names
-            new_cols = []
-            seen = set()
-            for col in df.columns:
-                new_col = col
-                counter = 1
-                # If we've already seen this name, add a number until it's unique
-                while new_col in seen:
-                    new_col = f"{col}_{counter}"
-                    counter += 1
-
-                seen.add(new_col)
-                new_cols.append(new_col)
-
-            df.columns = new_cols
-
-            # 5. Keep only numeric columns. Text columns can't be used as inputs or
-            # outcomes; stray text cells in a numeric column become blanks, which
-            # validation later drops as invalid rows.
-            numeric = df.apply(pd.to_numeric, errors="coerce")
-            text_cols = [c for c in df.columns if numeric[c].isna().all() and df[c].notna().any()]
+            numeric, text_cols, n_bad_cells = clean_columns(pd.read_csv(file_info[0]["datapath"]))
             if text_cols:
                 ui.notification_show(
                     f"Ignored non-numeric column(s): {', '.join(text_cols)}.", type="warning", duration=8
                 )
-            n_bad_cells = int((numeric.isna() & df.notna()).drop(columns=text_cols).sum().sum())
             if n_bad_cells:
                 ui.notification_show(
                     f"{n_bad_cells} non-numeric value(s) were found and will be treated as missing.",
                     type="warning", duration=8
                 )
-            numeric = numeric.drop(columns=text_cols)
             if numeric.shape[1] < 2:
                 raise ValueError("the file needs at least two numeric columns (inputs and an outcome)")
 
             uploaded_data.set(numeric)
+            state.uploaded_name.set(file_info[0]["name"])
         except Exception as e:
             logger.exception("CSV upload failed")
             ui.notification_show(f"Could not read the CSV file: {e}", type="error", duration=10)
@@ -206,35 +127,34 @@ def register(input, output, session, state: AppState):
 
     @render.ui
     def validation_status():
-        """Shows result status or prompt to configure."""
+        """The result of the checks, with the remediation tools when they fail."""
+        if uploaded_data() is None:
+            return notice("Upload a CSV of simulation results: one row per run, one column per input "
+                          "variable and one for the measured signal.")
         if current_study() is None:
-            return ui.div(ui.p("Configure selections to run diagnostics.", class_="text-muted fst-italic"))
-
-        # Ready, but the button hasn't been clicked yet
+            return notice("Choose the input variables and the outcome in the sidebar.")
         if diagnostic_table() is None:
-            return ui.div(ui.p("Ready to run diagnostics. Click the button above.", class_="text-primary fw-bold mt-3"))
+            return notice("Ready: press Run Diagnostics to check the data is sufficient to model.", kind="info")
 
         stale = ui.p(
             ui.span(icon_svg("rotate"), class_="me-1"),
             "Thresholds changed since this run: run the diagnostics again to update.",
             class_="small text-warning-emphasis fw-semibold mt-2 mb-0"
         ) if diagnostics_stale() else ""
-        next_step = goto_button("goto_explorer_from_data", "explorer", "Continue to " + TAB["explorer"].title,
-                                primary=validation_passed())
 
         if validation_passed():
             return ui.div(
-                ui.h5(icon_svg("circle-check"), " Validation Passed"),
-                stale, next_step,
-                class_="alert alert-success mt-3"
+                ui.h5(icon_svg("circle-check"), " All checks passed"),
+                ui.p("The data is sufficient to model. Continue to Model Diagnostics.", class_="mb-0"),
+                stale,
+                class_="alert alert-success"
             )
-
         return ui.div(
-            ui.h5(icon_svg("triangle-exclamation"), " Issues Detected"),
+            ui.h5(icon_svg("triangle-exclamation"), " Issues detected"),
             failure_list(diagnostic_failures(diagnostic_table())),
-            ui.p("See the visualisations below and the Remediation options for next steps.", class_="small mb-0 text-muted mt-2"),
-            stale, next_step,
-            class_="alert alert-danger mt-3"
+            ui.output_ui("remediation_ui"),
+            stale,
+            class_="alert alert-danger"
         )
 
     @reactive.effect
@@ -271,17 +191,6 @@ def register(input, output, session, state: AppState):
 
     # --- OUTPUTS ---
 
-    @render.ui
-    def dynamic_preview_card():
-        df = uploaded_data()
-        if df is None:
-            return None
-
-        return ui.card(
-            ui.card_header("Uploaded Data Preview"),
-            ui.output_data_frame("preview_uploaded_table")
-        )
-
     @render.data_frame
     def preview_uploaded_table():
         df = uploaded_data()
@@ -299,57 +208,32 @@ def register(input, output, session, state: AppState):
 
     @render.ui
     def remediation_ui():
-        """
-        Only appears if diagnostics have been run AND they detected issues.
-        """
+        """What to do about the failed checks: targeted new samples, or decoupling inputs."""
         if current_study() is None or diagnostic_table() is None or validation_passed():
             return None
 
         failed = {test for test, _title, _msg in diagnostic_failures(diagnostic_table())}
-        has_coverage_issues = "Input Coverage" in failed
-        has_fit_issues = bool(failed & {"Model Fit (CV)", "Bootstrap Convergence"})
-        has_collinearity_issues = "Collinearity Check" in failed
-
-        remediation_texts = []
-        if has_coverage_issues:
-            remediation_texts.append("Your data has coverage issues (gaps in parameter space).")
-        if has_fit_issues:
-            remediation_texts.append("Your data has model fit or convergence issues (noisy or unstable predictions).")
-
-        # If there are coverage or fit issues, show the Refine tool
-        if has_coverage_issues or has_fit_issues:
-            refine_section = ui.div(
-                ui.p("Use the Refine tool below to generate targeted new samples to fix these issues:"),
+        parts = []
+        if failed & {"Input Coverage", "Model Fit (CV)", "Bootstrap Convergence"}:
+            parts.append(ui.div(
+                ui.p(ui.tags.strong("Fix it with more runs: "),
+                     "generate new samples targeted at the gaps and unstable regions, run them in your "
+                     "solver, and upload the combined results.", class_="small mb-2"),
                 ui.layout_columns(
-                    ui.input_numeric("n_new_samples", "Count", value=10, min=1),
-                    ui.input_task_button("btn_refine", "Generate New Samples", icon=icon_svg("wand-magic-sparkles"), class_="btn-warning"),
+                    ui.input_numeric("n_new_samples", "Samples per issue", value=10, min=1),
+                    ui.input_task_button("btn_refine", "Generate New Samples",
+                                         icon=icon_svg("wand-magic-sparkles"), class_="btn-warning w-100"),
+                    col_widths=[5, 7], gap="8px", class_="align-items-end"
                 ),
-                ui.output_ui("download_new_samples_ui")
-            )
-        else:
-            refine_section = ui.div()
-
-        collinearity_section = ui.div()
-        if has_collinearity_issues:
-            collinearity_section = ui.div(
-                ui.p(
-                    ui.span(icon_svg("triangle-exclamation"), class_="text-danger me-1"),
-                    ui.tags.strong("Collinearity Detected: "),
-                    "High multicollinearity (VIF > threshold) means your inputs are highly correlated. "
-                    "Surrogate model fitting can be unstable or misleading. "
-                    "Consider removing or decoupling highly correlated variables in your experimental design.",
-                    class_="small text-danger bg-light rounded p-2 border border-danger-subtle mt-2"
-                )
-            )
-
-        return ui.card(
-            ui.card_header("Remediation & Suggestions"),
-            ui.HTML("<br>".join(remediation_texts)) if remediation_texts else ui.div(),
-            refine_section,
-            collinearity_section,
-            class_="border-warning shadow-sm"
-        )
-
+                ui.output_ui("download_new_samples_ui"),
+            ))
+        if "Collinearity Check" in failed:
+            parts.append(ui.p(
+                ui.tags.strong("Correlated inputs: "),
+                "more runs won't fix this. Remove or decouple the highly correlated variables in your design.",
+                class_="small mb-0 mt-2"
+            ))
+        return ui.div(*parts, class_="bg-white text-body rounded border p-3 mt-3")
 
     @render.ui
     def download_new_samples_ui():
@@ -357,16 +241,8 @@ def register(input, output, session, state: AppState):
         if new_samples() is None:
             return None
 
-        return ui.div(
-            ui.hr(),
-            ui.p("Success! Download your targeted samples below:", class_="small"),
-            ui.download_button(
-                "download_new_samples",
-                "Download Refined CSV",
-                class_="btn-success w-100",
-                icon=icon_svg("download")
-            )
-        )
+        return ui.download_button("download_new_samples", f"Download {len(new_samples())} New Samples (CSV)",
+                                  class_="btn-success w-100 mt-2", icon=icon_svg("download"))
 
     @render.download(filename="remediation_samples.csv")
     def download_new_samples():
@@ -379,86 +255,45 @@ def register(input, output, session, state: AppState):
 
     @render.ui
     def viz_content():
-        """
-        Master render for the entire viz tab.
-        Hides completely until diagnostics have been run.
-        """
-        diag = diagnostic_table()
-        if diag is None or diag.empty:
-            # Return an empty div so the UI stays clean until 'Run Diagnostics' is pressed
+        """The data views: report, per-variable inspector, coverage and collinearity."""
+        if current_study() is None:
             return ui.div()
-
         selected_cols = state.selected_columns()
-
-        return ui.div(
-            # ── Row 1: Summary Statistics ──────────────────────────────────────
-            ui.card(
-                ui.card_header("Summary Statistics"),
-                ui.output_data_frame("viz_summary_table"),
-                full_screen=True,
-                class_="mb-3"
-            ),
-
-            # ── Row 2: Variable Inspector ──────────────────────────────────────
-            ui.layout_columns(
-                # Left: Controls
-                ui.card(
-                    ui.card_header("Inspector Controls"),
-                    ui.div(
-                        ui.input_select(
-                            "viz_variable", "Select Variable",
-                            choices=selected_cols, # Use the filtered list here!
-                            selected=selected_cols[0] if selected_cols else None,
-                        ),
-                        ui.input_select(
-                            "viz_plot_type", "Plot Type",
-                            choices=["Distribution", "vs Outcome"],
-                            selected="Distribution",
-                        ),
-                        ui.hr(),
-                        ui.output_ui("viz_diagnostic_badge"),
-                        class_="p-2"
-                    )
-                ),
-                # Right: Plot
-                ui.card(
-                    ui.card_header("Variable Plot"),
-                    ui.output_plot("viz_variable_plot", height="360px"),
-                    full_screen=True,
-                ),
-                col_widths=[3, 9],
-                class_="mb-3"
-            ),
-
-            # ── Row 3: Coverage Overview (all inputs, one panel each) ──────────
-            ui.card(
-                ui.card_header("Input Space Coverage Overview"),
-                ui.p(
-                    "Distribution of each input variable. "
-                    "Green title = coverage passed. "
-                    "Red title + orange shading = gap detected.",
-                    class_="small text-muted px-3 pt-2 mb-0"
-                ),
-                ui.output_plot("viz_coverage_overview", height="300px"),
-                full_screen=True,
-            ),
-
-            # ── Row 4: Collinearity Matrix ─────────────────────────────────────
-            ui.card(
-                ui.card_header("Collinearity Analysis"),
-                ui.p(
-                    "Pearson correlation coefficients between input variables. "
-                    "High collinearity (VIF > Max Allowed VIF) can make model fits unstable.",
-                    class_="small text-muted px-3 pt-2 mb-0 text-center"
-                ),
-                ui.div(
-                    ui.output_plot("viz_collinearity_matrix", width="500px", height="400px"),
-                    style="display: flex; justify-content: center; width: 100%;"
-                ),
-                full_screen=True,
-            ),
+        report = ui.div(
+            ui.card(ui.card_header("Diagnostic Results"), ui.output_data_frame("validation_results_table"))
+            if diagnostic_table() is not None else "",
+            ui.card(ui.card_header("Summary Statistics"), ui.output_data_frame("viz_summary_table")),
+            ui.card(ui.card_header("Data Preview (first rows)"), ui.output_data_frame("preview_uploaded_table")),
         )
-
+        inspector = ui.layout_columns(
+            ui.div(
+                ui.input_select("viz_variable", "Variable", choices=selected_cols,
+                                selected=selected_cols[0] if selected_cols else None),
+                ui.input_radio_buttons("viz_plot_type", "Plot", choices=["Distribution", "vs Outcome"],
+                                       selected="Distribution"),
+                ui.output_ui("viz_diagnostic_badge"),
+            ),
+            ui.output_plot("viz_variable_plot", height="380px"),
+            col_widths=[3, 9]
+        )
+        coverage = ui.div(
+            ui.p("Distribution of each input. Green title: coverage passed. Red title and orange shading: "
+                 "the largest gap, where coverage failed.", class_="small text-muted"),
+            ui.output_plot("viz_coverage_overview", height="320px"),
+        )
+        collinearity = ui.div(
+            ui.p("Pearson correlation between inputs. High collinearity (VIF above the threshold) can make "
+                 "model fits unstable.", class_="small text-muted text-center"),
+            ui.div(ui.output_plot("viz_collinearity_matrix", width="500px", height="400px"),
+                   style="display: flex; justify-content: center; width: 100%;"),
+        )
+        return view_tabs(
+            "data_view",
+            ("Report", "table-list", report),
+            ("Variables", "magnifying-glass", inspector),
+            ("Coverage", "chart-column", coverage),
+            ("Collinearity", "border-all", collinearity),
+        )
 
     @render.data_frame
     def viz_summary_table():

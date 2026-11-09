@@ -19,15 +19,17 @@ src/digiqual/
 ├── gui/                        ← the app (a normal subpackage of digiqual)
 │   ├── __init__.py
 │   ├── __main__.py             ← makes `python -m digiqual.gui` work
-│   ├── app.py                  ← assembles the Shiny app: page layout + server()
+│   ├── app.py                  ← the page shell (header, stepper, hidden navset of stages) + server()
+│   ├── components.py           ← STAGES (order and names), the stage page template, shared helpers
 │   ├── state.py                ← per-session shared state, invalidation and the explorer settings
-│   ├── components.py           ← tab list (TABS), shared UI builders and pure helpers
-│   ├── ui_home.py              ← the Home page
-│   ├── tab_design.py           ← Simulation Design tab (UI + server logic)
-│   ├── tab_data_diagnostics.py ← Data Diagnostics tab
-│   ├── tab_explorer.py         ← Model Explorer tab (sidebar settings, PoD view)
-│   ├── model_fit.py            ← model fitting and the Explorer's Model fit view
-│   ├── tab_pod_analysis.py     ← PoD Analysis tab
+│   ├── stepper.py              ← the workflow stepper: status rules (pure function) and rendering
+│   ├── start_page.py           ← the start page
+│   ├── stage_design.py         ← 1. Simulation Design (UI + server logic)
+│   ├── stage_data.py           ← 2. Data Diagnostics
+│   ├── stage_model.py          ← 3. Model Diagnostics (fits the candidate models on arrival)
+│   ├── stage_explorer.py       ← 4. Model Explorer
+│   ├── stage_pod.py            ← 5. PoD Analysis
+│   ├── script_export.py        ← writes the analysis as a standalone Python script
 │   ├── launcher.py             ← starts the server and opens the window
 │   └── www/                    ← static files served by Shiny (app.css, logos, favicon, MathJax)
 ├── _digiqual_cpp.*.so / .pyd   ← compiled C++ extension (built by setup.py)
@@ -61,7 +63,7 @@ flowchart LR
 ```
 
 - New data or columns clear everything. Changing a diagnostic threshold only marks the diagnostics as out of date.
-- The candidate models are fitted once per dataset, when the Model Explorer first opens. Choosing another model is part of the explorer settings: like a role change, it needs Update PoD and marks the bootstrap out of date.
+- The candidate models are fitted once per dataset, when Model Diagnostics first opens. Choosing another model is part of the explorer settings: like a role change, it needs Update PoD and marks the bootstrap out of date.
 - `explorer_config` (a `reactive.calc`) is the single source of the model, the plotted, integrated and sliced variables and the threshold. The explorer and the PoD Analysis tab both read it, and `AppState.pod_kwargs()` turns it into `study.pod()` arguments.
 - The bootstrap result keeps a copy of the settings it used. When they no longer match `explorer_config`, the PoD Analysis tab marks it as out of date instead of discarding it.
 
@@ -164,4 +166,4 @@ The version comes from `app/pyproject.toml`, which `just bump` keeps in step wit
 
 **Adding a static file** (an image, CSS or JavaScript) to the app: put it in `src/digiqual/gui/www/` and refer to it by file name (e.g. `src="my_image.png"`). It is packaged automatically.
 
-**Adding a page or feature to the app:** edit the relevant `tab_*.py` module (each holds that tab's UI and a `register(...)` function with its server logic; shared reactive state lives in `state.py`). A new tab is a new module, added to `app.py` and to `TABS` in `components.py`, which names the tabs everywhere (navbar, Home page, "go to" buttons). Prefer calling library functions (and `digiqual.defaults` for default values) over re-implementing statistics in the GUI. Nothing in `app/` or the workflow needs to change.
+**Adding a page or feature to the app:** edit the relevant `stage_*.py` module. Each builds its page with `components.stage_page()` (settings sidebar, results, Back / Next) and has a `register(...)` function with its server logic; shared reactive state lives in `state.py`. A new stage is a new module, added to `STAGE_MODULES` in `app.py`, to `STAGES` in `components.py` (which names the stages everywhere: stepper, start page, buttons) and to the status rules in `stepper.stage_statuses`. Navigation needs no server code per button: `components.nav_button()` sets the `goto_stage` input from the browser and one effect in `stepper.py` switches stage. Prefer calling library functions (and `digiqual.defaults` for default values) over re-implementing statistics in the GUI. Nothing in `app/` or the workflow needs to change.
