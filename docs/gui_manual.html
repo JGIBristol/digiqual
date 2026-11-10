@@ -292,10 +292,21 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#sec-layout" id="toc-sec-layout" class="nav-link active" data-scroll-target="#sec-layout"><span class="header-section-number">1</span> Finding Your Way Around</a></li>
+  <li><a href="#sec-layout" id="toc-sec-layout" class="nav-link active" data-scroll-target="#sec-layout"><span class="header-section-number">1</span> Finding Your Way Around</a>
+  <ul class="collapse">
+  <li><a href="#start-page" id="toc-start-page" class="nav-link" data-scroll-target="#start-page"><span class="header-section-number">1.1</span> Start page</a></li>
+  <li><a href="#header" id="toc-header" class="nav-link" data-scroll-target="#header"><span class="header-section-number">1.2</span> Header</a></li>
+  <li><a href="#stages" id="toc-stages" class="nav-link" data-scroll-target="#stages"><span class="header-section-number">1.3</span> Stages:</a></li>
+  <li><a href="#the-stepper" id="toc-the-stepper" class="nav-link" data-scroll-target="#the-stepper"><span class="header-section-number">1.4</span> The stepper</a></li>
+  </ul></li>
   <li><a href="#sec-tab-design" id="toc-sec-tab-design" class="nav-link" data-scroll-target="#sec-tab-design"><span class="header-section-number">2</span> Simulation Design</a></li>
   <li><a href="#sec-tab-diagnostics" id="toc-sec-tab-diagnostics" class="nav-link" data-scroll-target="#sec-tab-diagnostics"><span class="header-section-number">3</span> Data Diagnostics</a></li>
-  <li><a href="#sec-tab-model" id="toc-sec-tab-model" class="nav-link" data-scroll-target="#sec-tab-model"><span class="header-section-number">4</span> Model Diagnostics</a></li>
+  <li><a href="#sec-tab-model" id="toc-sec-tab-model" class="nav-link" data-scroll-target="#sec-tab-model"><span class="header-section-number">4</span> Model Diagnostics</a>
+  <ul class="collapse">
+  <li><a href="#run-models" id="toc-run-models" class="nav-link" data-scroll-target="#run-models"><span class="header-section-number">4.1</span> Run models</a></li>
+  <li><a href="#sidebar" id="toc-sidebar" class="nav-link" data-scroll-target="#sidebar"><span class="header-section-number">4.2</span> Sidebar</a></li>
+  <li><a href="#views" id="toc-views" class="nav-link" data-scroll-target="#views"><span class="header-section-number">4.3</span> Views</a></li>
+  </ul></li>
   <li><a href="#sec-tab-explorer" id="toc-sec-tab-explorer" class="nav-link" data-scroll-target="#sec-tab-explorer"><span class="header-section-number">5</span> Model Explorer</a></li>
   <li><a href="#sec-tab-pod" id="toc-sec-tab-pod" class="nav-link" data-scroll-target="#sec-tab-pod"><span class="header-section-number">6</span> PoD Analysis</a></li>
   </ul>
@@ -327,9 +338,17 @@ window.Quarto = {
 <p>The DigiQual app is a guided workflow and a visual alternative to the Python API. It follows the same steps as the <a href="../docs/qs_class.html">Quick Start</a>; the statistics behind each step are explained in <a href="../docs/generalised_pod.html">Generalised PoD</a>.</p>
 <section id="sec-layout" class="level2" data-number="1">
 <h2 data-number="1" class="anchored" data-anchor-id="sec-layout"><span class="header-section-number">1</span> Finding Your Way Around</h2>
-<p><strong>Start page.</strong> The app opens on a start page with two ways in: <strong>Plan simulations</strong> (go to Simulation Design and build a design to run in your solver) or <strong>Analyse results</strong> (go straight to Data Diagnostics with results you already have). Below them, <em>The workflow</em> gives an overview of the five stages.</p>
-<p><strong>Header.</strong> <strong>DigiQual</strong> and <strong>Home</strong> return to the start page. <strong>About</strong> opens a separate page with the version, links, methodology papers, funders and the disclaimer. <strong>Reset</strong> clears everything and starts again (after a confirmation).</p>
-<p><strong>Stages.</strong> The analysis is split into five stages, shown one at a time:</p>
+<section id="start-page" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="start-page"><span class="header-section-number">1.1</span> Start page</h3>
+<p>The app opens on a start page with two ways in: <strong>Plan simulations</strong> (go to Simulation Design and build a design to run in your solver) or <strong>Analyse results</strong> (go straight to Data Diagnostics with results you already have). Below them, <em>The workflow</em> gives an overview of the five stages.</p>
+</section>
+<section id="header" class="level3" data-number="1.2">
+<h3 data-number="1.2" class="anchored" data-anchor-id="header"><span class="header-section-number">1.2</span> Header</h3>
+<p><strong>DigiQual</strong> and <strong>Home</strong> return to the start page. <strong>About</strong> opens a separate page with the version, links, methodology papers, funders and the disclaimer. <strong>Reset</strong> clears everything and starts again (after a confirmation).</p>
+</section>
+<section id="stages" class="level3" data-number="1.3">
+<h3 data-number="1.3" class="anchored" data-anchor-id="stages"><span class="header-section-number">1.3</span> Stages:</h3>
+<p>The analysis is split into five stages, shown one at a time:</p>
 <ol type="1">
 <li><strong>Simulation Design</strong>: plan the runs (optional).</li>
 <li><strong>Data Diagnostics</strong>: upload the results and check they are sufficient.</li>
@@ -338,7 +357,10 @@ window.Quarto = {
 <li><strong>PoD Analysis</strong>: add confidence bounds, read off aX/Y values and export.</li>
 </ol>
 <p>Every stage has the same layout: its settings in a sidebar on the left, its results on the right (with tabs when there is more than one view), and <strong>Back</strong> / <strong>Next</strong> buttons at the bottom.</p>
-<p><strong>The stepper.</strong> The bar under the header shows every stage with its status and a one-line summary of what was decided there (for example <em>250 rows · 2 inputs</em>, <em>Poly 1 · R² 0.83</em>, <em>a90/95 = 7.244</em>). Click any stage to go to it. The stepper is hidden on the start and About pages.</p>
+</section>
+<section id="the-stepper" class="level3" data-number="1.4">
+<h3 data-number="1.4" class="anchored" data-anchor-id="the-stepper"><span class="header-section-number">1.4</span> The stepper</h3>
+<p>The bar under the header shows every stage with its status and a one-line summary of what was decided there (for example <em>250 rows · 2 inputs</em>, <em>Poly 1 · R² 0.83</em>, <em>a90/95 = 7.244</em>). Click any stage to go to it. The stepper is hidden on the start and About pages.</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 50%">
@@ -378,6 +400,7 @@ window.Quarto = {
 </tbody>
 </table>
 </section>
+</section>
 <section id="sec-tab-design" class="level2" data-number="2">
 <h2 data-number="2" class="anchored" data-anchor-id="sec-tab-design"><span class="header-section-number">2</span> Simulation Design</h2>
 <p><strong>Purpose:</strong> Generate a statistically sound set of sampling points for your physics solver to evaluate. This stage is optional.</p>
@@ -392,32 +415,39 @@ window.Quarto = {
 <h2 data-number="3" class="anchored" data-anchor-id="sec-tab-diagnostics"><span class="header-section-number">3</span> Data Diagnostics</h2>
 <p><strong>Purpose:</strong> Upload your results and check they are sufficient to model: coverage of the inputs, a learnable signal, stability, and correlated inputs.</p>
 <ol type="1">
-<li><strong>Upload Data:</strong> Upload the CSV containing your completed simulation results, one row per run. The file is cleaned the same way as <code>digiqual.io.read_results_csv</code>:
+<li><p><strong>Upload Data:</strong> Upload the CSV containing your completed simulation results, one row per run. The file is cleaned the same way as <code>digiqual.io.read_results_csv</code>:</p>
 <ul>
 <li>column names are trimmed, spaces become underscores and other special characters are removed;</li>
 <li>duplicate names are numbered (e.g.&nbsp;a second <code>Signal</code> becomes <code>Signal_1</code>);</li>
 <li>text columns are dropped, with a warning, and completely empty columns (e.g.&nbsp;from trailing commas) are dropped quietly;</li>
 <li>stray text cells in a numeric column become missing values, with a warning, and those rows are left out when the data is validated.</li>
 </ul>
-The file needs at least two numeric columns.</li>
-<li><strong>Choose Columns:</strong> Select the input variables and the outcome (the signal response). By default the last column is the outcome and all the others are inputs.</li>
-<li><strong>Run Diagnostics:</strong> The engine runs the five diagnostic tests (input coverage, model fit, two bootstrap-stability checks and collinearity). What each test measures and its default threshold are listed in <a href="../docs/optimisation.html#sec-diagnostics">Sampling &amp; Diagnostics</a>. The thresholds can be changed under <em>Diagnostic thresholds</em>; doing so marks the results as out of date until you run the diagnostics again, but keeps the fitted model.</li>
-<li><strong>Status and remediation:</strong> The result card shows whether all checks passed. If the coverage, model fit (CV) or bootstrap stability checks fail, it includes a <strong>Fix it with more runs</strong> box: set <strong>Samples per issue</strong> and press <strong>Generate New Samples</strong> to create new runs targeted at the gaps and unstable regions, then download them as <code>remediation_samples.csv</code>. Run them in your solver and upload the combined results. A collinearity failure can’t be fixed by adding runs; remove or decouple the correlated inputs instead.</li>
-<li><strong>Views:</strong> <strong>Report</strong> (test results, summary statistics and a preview of the data), <strong>Variables</strong> (distribution of each variable, or each input against the outcome, with any coverage gap shaded), <strong>Coverage</strong> (all inputs at once) and <strong>Collinearity</strong> (correlation heatmap with VIF values).</li>
+<p>The file needs at least two numeric columns.</p></li>
+<li><p><strong>Choose Columns:</strong> Select the input variables and the outcome (the signal response). By default the last column is the outcome and all the others are inputs.</p></li>
+<li><p><strong>Run Diagnostics:</strong> The engine runs the five diagnostic tests (input coverage, model fit, two bootstrap-stability checks and collinearity). What each test measures and its default threshold are listed in <a href="../docs/optimisation.html#sec-diagnostics">Sampling &amp; Diagnostics</a>. The thresholds can be changed under <em>Diagnostic thresholds</em>; doing so marks the results as out of date until you run the diagnostics again, but keeps the fitted model.</p></li>
+<li><p><strong>Status and remediation:</strong> The result card shows whether all checks passed. If the coverage, model fit (CV) or bootstrap stability checks fail, it includes a <strong>Fix it with more runs</strong> box: set <strong>Samples per issue</strong> and press <strong>Generate New Samples</strong> to create new runs targeted at the gaps and unstable regions, then download them as <code>remediation_samples.csv</code>. Run them in your solver and upload the combined results. A collinearity failure can’t be fixed by adding runs; remove or decouple the correlated inputs instead.</p></li>
+<li><p><strong>Views:</strong> <strong>Report</strong> (test results, summary statistics and a preview of the data), <strong>Variables</strong> (distribution of each variable, or each input against the outcome, with any coverage gap shaded), <strong>Coverage</strong> (all inputs at once) and <strong>Collinearity</strong> (correlation heatmap with VIF values).</p></li>
 </ol>
 </section>
 <section id="sec-tab-model" class="level2" data-number="4">
 <h2 data-number="4" class="anchored" data-anchor-id="sec-tab-model"><span class="header-section-number">4</span> Model Diagnostics</h2>
 <p><strong>Purpose:</strong> Choose the surrogate model of the signal response and check how well it fits.</p>
-<p><strong>Run models.</strong> Until the data diagnostics have run, this stage only says <em>Run the data diagnostics first.</em>, and the stepper shows it locked. After that, it explains what fitting involves and offers a large <strong>Run models</strong> button. Pressing it fits every candidate model once for the dataset:</p>
+<section id="run-models" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="run-models"><span class="header-section-number">4.1</span> Run models</h3>
+<p>Until the data diagnostics have run, this stage only says <em>Run the data diagnostics first.</em>, and the stepper shows it locked. After that, it explains what fitting involves and offers a large <strong>Run models</strong> button. Pressing it fits every candidate model once for the dataset:</p>
 <ol type="1">
 <li><strong>Cross-validation:</strong> Polynomials (degrees 1–10) and Kriging are each scored by 10-fold cross-validation (Kriging is skipped above 1000 runs).</li>
 <li><strong>Scatter model:</strong> how the spread of the signal around the model changes across the inputs, and which distribution describes it.</li>
 <li><strong>Sensitivity:</strong> total-order Sobol indices.</li>
 </ol>
 <p>This takes from a few seconds to a minute, depending on the data. The fit runs in the background: a progress panel shows each step, the candidate being scored (e.g.&nbsp;<em>Polynomial, degree 4 (4 of 15)</em>) and the elapsed time. The stepper shows <em>fitting models…</em>, and you can look at other stages meanwhile. When it finishes, the page switches to the model views below; you never need to run it again for this dataset. The models are always trained on <strong>all</strong> input variables, so nothing here depends on which variables you later plot, integrate over or slice.</p>
-<p><strong>Sidebar.</strong> The <strong>Model</strong> dropdown starts at “Auto”, which picks the simplest model within one standard error of the best (<a href="../docs/generalised_pod.html#sec-model-selection">how the choice is made</a>). Pick any other candidate instead. The candidates are already cross-validated and fitted, but the chosen model still needs its scatter model and Sobol indices, so the change runs in the background with a <em>Fitting the chosen model</em> progress panel (quicker for a model you have used before). A choice made while a fit is running is applied when that fit finishes. Below it are the model’s cross-validated <span class="math inline">\(R^2\)</span> (green if it passes the threshold from Data Diagnostics) and the <strong>parameter sensitivity</strong>: total-order Sobol indices, including interactions.</p>
-<p><strong>Views:</strong></p>
+</section>
+<section id="sidebar" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="sidebar"><span class="header-section-number">4.2</span> Sidebar</h3>
+<p>The <strong>Model</strong> dropdown starts at “Auto”, which picks the simplest model within one standard error of the best (<a href="../docs/generalised_pod.html#sec-model-selection">how the choice is made</a>). Pick any other candidate instead. The candidates are already cross-validated and fitted, but the chosen model still needs its scatter model and Sobol indices, so the change runs in the background with a <em>Fitting the chosen model</em> progress panel (quicker for a model you have used before). A choice made while a fit is running is applied when that fit finishes. Below it are the model’s cross-validated <span class="math inline">\(R^2\)</span> (green if it passes the threshold from Data Diagnostics) and the <strong>parameter sensitivity</strong>: total-order Sobol indices, including interactions.</p>
+</section>
+<section id="views" class="level3" data-number="4.3">
+<h3 data-number="4.3" class="anchored" data-anchor-id="views"><span class="header-section-number">4.3</span> Views</h3>
 <ul>
 <li><strong>Model selection:</strong> the cross-validation error of every candidate, marking the automatic choice and the one you picked.</li>
 <li><strong>Fit quality:</strong> actual vs predicted (in-sample for polynomials, leave-one-out for Kriging; pass/fail on the 10-fold cross-validated <span class="math inline">\(R^2\)</span>) and a bootstrap convergence trace, judged against the thresholds from Data Diagnostics.</li>
@@ -425,6 +455,7 @@ The file needs at least two numeric columns.</li>
 <li><strong>Equation &amp; statistics:</strong> the fitted equation (polynomials) and the fit statistics.</li>
 </ul>
 <p>If Data Diagnostics found issues, they are listed above the views.</p>
+</section>
 </section>
 <section id="sec-tab-explorer" class="level2" data-number="5">
 <h2 data-number="5" class="anchored" data-anchor-id="sec-tab-explorer"><span class="header-section-number">5</span> Model Explorer</h2>
@@ -473,12 +504,12 @@ The file needs at least two numeric columns.</li>
 <h2 data-number="6" class="anchored" data-anchor-id="sec-tab-pod"><span class="header-section-number">6</span> PoD Analysis</h2>
 <p><strong>Purpose:</strong> Add bootstrap confidence bounds to the PoD from the Model Explorer, read off reliability indices and export the results.</p>
 <ol type="1">
-<li><strong>Analysis setup:</strong> The sidebar summarises the settings the analysis uses (model, plotted, integrated and sliced variables, threshold), with a link back to edit them in the Model Explorer.</li>
-<li><strong>Run Bootstrap:</strong> Set <strong>Iterations</strong> (default 1000, minimum 10) and <strong>Parallel compute (faster)</strong> (on by default; it uses all but two of your CPU cores), then press <strong>Run Bootstrap</strong>. The data is resampled and the chosen model’s shape refitted many times to build the bounds (<a href="../docs/generalised_pod.html#sec-bootstrap">bootstrap details</a>); the bounds reflect parameter uncertainty assuming that shape is correct. The bootstrap runs in the background: a progress panel shows the iterations completed and the elapsed time, the stepper shows <em>bootstrap running…</em>, and you can look at other stages meanwhile.</li>
-<li><strong>Reliability targets:</strong> Choose a <strong>Target PoD (%)</strong> (50, 90, 95, 99) and a <strong>Confidence (%)</strong> (50, 90, 95, 99) to annotate the curve with the matching sizing point (e.g., <code>a90/95</code>). Changing them does not rerun the bootstrap.</li>
-<li><strong>Results:</strong> the PoD curve with confidence bounds, PoD against the detection threshold, the <strong>Reliability Index Matrix</strong> (aX/Y for every combination of Target PoD and Confidence Level) and the selected metric. With two plotted variables the PoD is a surface, so there are no aX/Y sizes or PoD-vs-threshold plot: you get the PoD surface and a <strong>Run Summary</strong> card instead. After a bootstrap the Model Explorer plots also show the confidence bounds, until a slice, the threshold or another setting changes.</li>
-<li><strong>Out-of-date results:</strong> If you change the model or explorer settings after running the bootstrap, the results are kept but marked as out of date (also in the stepper) until you run it again.</li>
-<li><strong>Export:</strong> the export button appears once a bootstrap has run.
+<li><p><strong>Analysis setup:</strong> The sidebar summarises the settings the analysis uses (model, plotted, integrated and sliced variables, threshold), with a link back to edit them in the Model Explorer.</p></li>
+<li><p><strong>Run Bootstrap:</strong> Set <strong>Iterations</strong> (default 1000, minimum 10) and <strong>Parallel compute (faster)</strong> (on by default; it uses all but two of your CPU cores), then press <strong>Run Bootstrap</strong>. The data is resampled and the chosen model’s shape refitted many times to build the bounds (<a href="../docs/generalised_pod.html#sec-bootstrap">bootstrap details</a>); the bounds reflect parameter uncertainty assuming that shape is correct. The bootstrap runs in the background: a progress panel shows the iterations completed and the elapsed time, the stepper shows <em>bootstrap running…</em>, and you can look at other stages meanwhile.</p></li>
+<li><p><strong>Reliability targets:</strong> Choose a <strong>Target PoD (%)</strong> (50, 90, 95, 99) and a <strong>Confidence (%)</strong> (50, 90, 95, 99) to annotate the curve with the matching sizing point (e.g., <code>a90/95</code>). Changing them does not rerun the bootstrap.</p></li>
+<li><p><strong>Results:</strong> the PoD curve with confidence bounds, PoD against the detection threshold, the <strong>Reliability Index Matrix</strong> (aX/Y for every combination of Target PoD and Confidence Level) and the selected metric. With two plotted variables the PoD is a surface, so there are no aX/Y sizes or PoD-vs-threshold plot: you get the PoD surface and a <strong>Run Summary</strong> card instead. After a bootstrap the Model Explorer plots also show the confidence bounds, until a slice, the threshold or another setting changes.</p></li>
+<li><p><strong>Out-of-date results:</strong> If you change the model or explorer settings after running the bootstrap, the results are kept but marked as out of date (also in the stepper) until you run it again.</p></li>
+<li><p><strong>Export:</strong> the export button appears once a bootstrap has run.</p>
 <ul>
 <li><strong>Excel Report:</strong> <code>digiqual_pod_report.xlsx</code>, with sheets for the model (statistics and equation), the analysis setup, the UQ metrics, the PoD curve data and the reliability matrix.</li>
 </ul></li>
