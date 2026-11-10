@@ -48,7 +48,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f62cf7f947e0d50e2712b632292fa896.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -268,18 +268,23 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#sec-short-version" id="toc-sec-short-version" class="nav-link active" data-scroll-target="#sec-short-version"><span class="header-section-number">1</span> The Short Version</a></li>
   <li><a href="#sec-layout" id="toc-sec-layout" class="nav-link" data-scroll-target="#sec-layout"><span class="header-section-number">2</span> Where Everything Lives</a></li>
-  <li><a href="#sec-launch-modes" id="toc-sec-launch-modes" class="nav-link" data-scroll-target="#sec-launch-modes"><span class="header-section-number">3</span> Ways the App Gets Launched</a></li>
-  <li><a href="#sec-launcher" id="toc-sec-launcher" class="nav-link" data-scroll-target="#sec-launcher"><span class="header-section-number">4</span> What <code>launcher.main()</code> Does</a></li>
-  <li><a href="#sec-design-decisions" id="toc-sec-design-decisions" class="nav-link" data-scroll-target="#sec-design-decisions"><span class="header-section-number">5</span> Why It’s Built This Way</a>
+  <li><a href="#sec-state" id="toc-sec-state" class="nav-link" data-scroll-target="#sec-state"><span class="header-section-number">3</span> How Results Flow Between Stages</a>
   <ul class="collapse">
-  <li><a href="#sec-briefcase" id="toc-sec-briefcase" class="nav-link" data-scroll-target="#sec-briefcase"><span class="header-section-number">5.1</span> Briefcase rather than PyInstaller</a></li>
-  <li><a href="#sec-worker-processes" id="toc-sec-worker-processes" class="nav-link" data-scroll-target="#sec-worker-processes"><span class="header-section-number">5.2</span> Worker processes and <code>sys.frozen</code></a></li>
-  <li><a href="#sec-stdio" id="toc-sec-stdio" class="nav-link" data-scroll-target="#sec-stdio"><span class="header-section-number">5.3</span> Redirecting stdout and stderr</a></li>
-  <li><a href="#sec-build-details" id="toc-sec-build-details" class="nav-link" data-scroll-target="#sec-build-details"><span class="header-section-number">5.4</span> Build details in <code>build_app.yml</code></a></li>
+  <li><a href="#sec-analysis-kwargs" id="toc-sec-analysis-kwargs" class="nav-link" data-scroll-target="#sec-analysis-kwargs"><span class="header-section-number">3.1</span> From app settings to library calls</a></li>
+  <li><a href="#sec-background" id="toc-sec-background" class="nav-link" data-scroll-target="#sec-background"><span class="header-section-number">3.2</span> Background tasks</a></li>
   </ul></li>
-  <li><a href="#sec-build-pipeline" id="toc-sec-build-pipeline" class="nav-link" data-scroll-target="#sec-build-pipeline"><span class="header-section-number">6</span> The Build Pipeline</a></li>
-  <li><a href="#sec-local-dev" id="toc-sec-local-dev" class="nav-link" data-scroll-target="#sec-local-dev"><span class="header-section-number">7</span> Working on the App Locally</a></li>
-  <li><a href="#sec-common-changes" id="toc-sec-common-changes" class="nav-link" data-scroll-target="#sec-common-changes"><span class="header-section-number">8</span> Common Changes</a></li>
+  <li><a href="#sec-launch-modes" id="toc-sec-launch-modes" class="nav-link" data-scroll-target="#sec-launch-modes"><span class="header-section-number">4</span> Ways the App Gets Launched</a></li>
+  <li><a href="#sec-launcher" id="toc-sec-launcher" class="nav-link" data-scroll-target="#sec-launcher"><span class="header-section-number">5</span> What <code>launcher.main()</code> Does</a></li>
+  <li><a href="#sec-design-decisions" id="toc-sec-design-decisions" class="nav-link" data-scroll-target="#sec-design-decisions"><span class="header-section-number">6</span> Why It’s Built This Way</a>
+  <ul class="collapse">
+  <li><a href="#sec-briefcase" id="toc-sec-briefcase" class="nav-link" data-scroll-target="#sec-briefcase"><span class="header-section-number">6.1</span> Briefcase rather than PyInstaller</a></li>
+  <li><a href="#sec-worker-processes" id="toc-sec-worker-processes" class="nav-link" data-scroll-target="#sec-worker-processes"><span class="header-section-number">6.2</span> Worker processes and <code>sys.frozen</code></a></li>
+  <li><a href="#sec-stdio" id="toc-sec-stdio" class="nav-link" data-scroll-target="#sec-stdio"><span class="header-section-number">6.3</span> Redirecting stdout and stderr</a></li>
+  <li><a href="#sec-build-details" id="toc-sec-build-details" class="nav-link" data-scroll-target="#sec-build-details"><span class="header-section-number">6.4</span> Build details in <code>build_app.yml</code></a></li>
+  </ul></li>
+  <li><a href="#sec-build-pipeline" id="toc-sec-build-pipeline" class="nav-link" data-scroll-target="#sec-build-pipeline"><span class="header-section-number">7</span> The Build Pipeline</a></li>
+  <li><a href="#sec-local-dev" id="toc-sec-local-dev" class="nav-link" data-scroll-target="#sec-local-dev"><span class="header-section-number">8</span> Working on the App Locally</a></li>
+  <li><a href="#sec-common-changes" id="toc-sec-common-changes" class="nav-link" data-scroll-target="#sec-common-changes"><span class="header-section-number">9</span> Common Changes</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/app_architecture.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -320,16 +325,21 @@ ul.task-list li input[type="checkbox"] {
 ├── gui/                        ← the app (a normal subpackage of digiqual)
 │   ├── __init__.py
 │   ├── __main__.py             ← makes `python -m digiqual.gui` work
-│   ├── app.py                  ← assembles the Shiny app: page layout + server()
-│   ├── state.py                ← per-session shared state and helpers used by every tab
-│   ├── ui_home.py              ← the Home page
-│   ├── tab_design.py           ← Experimental Design tab (UI + server logic)
-│   ├── tab_diagnostics.py      ← Simulation Diagnostics tab
-│   ├── tab_model_fit.py        ← Model Fit tab
-│   ├── tab_explorer.py         ← PoD Explorer tab
-│   ├── tab_uq.py               ← UQ Analysis tab
-│   ├── launcher.py             ← starts the server and opens the window
-│   └── www/                    ← static files served by Shiny (app.css, logos, favicon, MathJax)
+│   ├── app.py                  ← the page shell (header, stepper, hidden navset of stages) + server()
+│   ├── components.py           ← STAGES (order and names), the stage page template, shared helpers
+│   ├── state.py                ← per-session shared state, invalidation and the explorer settings
+│   ├── stepper.py              ← the workflow stepper: status rules (pure function) and rendering
+│   ├── start_page.py           ← the start page (entry cards and stage overview)
+│   ├── about_page.py           ← the About page (version, links, papers, funders)
+│   ├── stage_design.py         ← 1. Simulation Design (UI + server logic)
+│   ├── stage_data.py           ← 2. Data Diagnostics
+│   ├── stage_model.py          ← 3. Model Diagnostics (Run models: background fit with progress)
+│   ├── stage_explorer.py       ← 4. Model Explorer
+│   ├── stage_pod.py            ← 5. PoD Analysis
+│   ├── background.py           ← runs slow steps in a worker thread; progress tracking and panel
+│   ├── launcher.py             ← starts the server and opens the window (with its Help menu)
+│   └── www/                    ← static files served by Shiny: app.css, favicon.png, the funder
+│                                 logos and, if downloaded, mathjax-tex-svg.js
 ├── _digiqual_cpp.*.so / .pyd   ← compiled C++ extension (built by setup.py)
 └── ...                         ← the statistical library itself
 
@@ -344,9 +354,53 @@ app/                            ← Briefcase wrapper only (not part of the whee
 scripts/make_icon.py            ← draws the icon; writes app/icons/, gui/www/favicon.png, docs/www/
 .github/workflows/build_app.yml ← builds, self-tests and packages the installers</code></pre>
 <p>The static files in <code>gui/www/</code> are included in the wheel by <code>package_data</code> in <code>setup.py</code> and <code>MANIFEST.in</code>. <code>app.py</code> finds them relative to its own location, so this works the same installed or from a checkout.</p>
+<p>MathJax (which renders the model equation) is not kept in the repository. <code>mathjax-tex-svg.js</code> is downloaded into <code>www/</code> at build time, by <code>just fetch_mathjax</code> or the <code>build_app.yml</code> workflow, so the desktop app works offline. Without it, <code>app.py</code> loads MathJax from a CDN instead.</p>
 </section>
-<section id="sec-launch-modes" class="level2" data-number="3">
-<h2 data-number="3" class="anchored" data-anchor-id="sec-launch-modes"><span class="header-section-number">3</span> Ways the App Gets Launched</h2>
+<section id="sec-state" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="sec-state"><span class="header-section-number">3</span> How Results Flow Between Stages</h2>
+<p>Each stage’s results depend on the stages before it. <code>state.py</code> holds the per-session <code>AppState</code>, and <code>register_shared()</code> keeps the study in sync with the data: a new file or column choice builds a new <code>SimulationStudy</code> and calls <code>AppState.invalidate("data")</code>, which clears every result. <code>invalidate("diagnostics")</code> clears only the diagnostics (the model doesn’t use them).</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    D[Data + columns&lt;br/&gt;study_instance] --&gt; G[Diagnostics&lt;br/&gt;diagnostic_table]
+    G -. unlocks .-&gt; C[Candidate models&lt;br/&gt;candidates_ready]
+    D --&gt; C
+    C --&gt; M[Chosen model&lt;br/&gt;model_fit]
+    M --&gt; E[Explorer settings&lt;br/&gt;explorer_config]
+    E --&gt; A[Applied PoD setup&lt;br/&gt;applied_structure]
+    A --&gt; U[Bootstrap&lt;br/&gt;uq_result]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<ul>
+<li>New data or columns clear everything. Changing a diagnostic threshold only marks the diagnostics as out of date (<code>diagnostics_stale</code>).</li>
+<li>The candidate models are cross-validated once per dataset, when the user presses Run models in Model Diagnostics (which needs the diagnostics to have run). <code>candidates_ready</code> is then set, and <code>model_fit</code> holds the <code>study.fit_model()</code> result for the chosen model.</li>
+<li><code>explorer_config</code> (a <code>reactive.calc</code>) is the single source of the model, the plotted, integrated and sliced variables and the threshold. <code>AppState.structure(config)</code> is the part that needs the Update PoD button (model, plotted and integrated variables, distributions and ranges); after Update PoD it is stored as <code>applied_structure</code>. When the current structure differs from it, the explorer asks for Update PoD and the PoD Analysis stage won’t run. Slices and the threshold are not part of it: they update the plots live. Choosing another model therefore needs Update PoD, like a role change, and marks the bootstrap out of date.</li>
+<li>The bootstrap result (<code>uq_result</code>) is a record of everything the run used: <code>config</code> (the explorer settings), <code>fit</code> (model metrics, equation, name and dropdown choice), <code>settings</code> (iterations, <code>n_jobs</code>, target PoD and confidence, CSV name, columns and diagnostic thresholds), <code>results</code> (the <code>pod()</code> output) and <code>spectrum</code> (the threshold spectrum, for one plotted variable). When <code>config</code> no longer matches <code>explorer_config</code>, the PoD Analysis stage marks the result as out of date instead of discarding it. The exports are built from this record.</li>
+</ul>
+<section id="sec-analysis-kwargs" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="sec-analysis-kwargs"><span class="header-section-number">3.1</span> From app settings to library calls</h3>
+<p><code>state.analysis_kwargs(study, config)</code> is the single translation from an explorer config to <code>study.pod()</code> arguments: <code>poi_col</code>, <code>nuisance_col</code>, <code>slice_values</code>, <code>nuisance_dists</code>, <code>nuisance_bounds</code>, and <code>model_override</code> / <code>force_degree</code> from the config’s model key (via <code>core.model_key_args</code>). <code>AppState.pod_kwargs()</code> is a thin wrapper around it. Two other module-level helpers go with it: <code>nuisance_dists_for()</code> fits the chosen distributions (one that can’t be fitted is left out, so that variable is integrated uniformly) and <code>column_values()</code> gives a column’s numeric values. Update PoD, the live updates and the bootstrap all use it.</p>
+</section>
+<section id="sec-background" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="sec-background"><span class="header-section-number">3.2</span> Background tasks</h3>
+<p>The three slow steps (Run models or a model change, Update PoD, the bootstrap) run in a worker thread as <code>reactive.extended_task</code>s, so the page stays live. While a task runs, <code>fit_running</code> / <code>pod_running</code> / <code>uq_running</code> in <code>AppState</code> are set, the stepper shows a spinner, and the explorer’s live updates pause so nothing else changes the study. <code>background.py</code> provides the pieces:</p>
+<ul>
+<li><code>TaskProgress</code> follows one task: the library’s log messages from its thread (which mark its steps) and its <code>(done, total, label)</code> progress callback (<code>fit_model</code> and <code>pod</code> take one).</li>
+<li><code>step_states(reached, n)</code> turns “how far it got” into each step’s state (<code>done</code>, <code>active</code>, <code>todo</code>).</li>
+<li><code>progress_panel()</code> draws the panel once: spinner, elapsed time, bar and steps.</li>
+<li><code>push_progress()</code> then updates it in place twice a second through a custom message, handled in the browser by <code>PROGRESS_JS</code> (added to the page head in <code>app.py</code>). Redrawing the panel instead would restart its spinners.</li>
+</ul>
+</section>
+</section>
+<section id="sec-launch-modes" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="sec-launch-modes"><span class="header-section-number">4</span> Ways the App Gets Launched</h2>
 <p>Every route ends up in the same function, <code>digiqual.gui.launcher.main()</code>:</p>
 <table class="caption-top table">
 <colgroup>
@@ -382,13 +436,13 @@ scripts/make_icon.py            ← draws the icon; writes app/icons/, gui/www/f
 </tr>
 <tr class="even">
 <td><code>just app_dev</code></td>
-<td><code>shiny run src/digiqual/gui/app.py</code>: browser only, skips the launcher (for UI work)</td>
+<td><code>shiny run digiqual.gui.app:app</code>: browser only, skips the launcher (for UI work)</td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="sec-launcher" class="level2" data-number="4">
-<h2 data-number="4" class="anchored" data-anchor-id="sec-launcher"><span class="header-section-number">4</span> What <code>launcher.main()</code> Does</h2>
+<section id="sec-launcher" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="sec-launcher"><span class="header-section-number">5</span> What <code>launcher.main()</code> Does</h2>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div>
@@ -412,24 +466,24 @@ scripts/make_icon.py            ← draws the icon; writes app/icons/, gui/www/f
 </div>
 <p><code>launcher.py</code> keeps its module-level imports light (shiny and pywebview are only imported inside functions), because worker processes import it before they know they are workers.</p>
 </section>
-<section id="sec-design-decisions" class="level2" data-number="5">
-<h2 data-number="5" class="anchored" data-anchor-id="sec-design-decisions"><span class="header-section-number">5</span> Why It’s Built This Way</h2>
+<section id="sec-design-decisions" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="sec-design-decisions"><span class="header-section-number">6</span> Why It’s Built This Way</h2>
 <p>These are the decisions most likely to puzzle someone reading the code, with the reason for each.</p>
-<section id="sec-briefcase" class="level3" data-number="5.1">
-<h3 data-number="5.1" class="anchored" data-anchor-id="sec-briefcase"><span class="header-section-number">5.1</span> Briefcase rather than PyInstaller</h3>
+<section id="sec-briefcase" class="level3" data-number="6.1">
+<h3 data-number="6.1" class="anchored" data-anchor-id="sec-briefcase"><span class="header-section-number">6.1</span> Briefcase rather than PyInstaller</h3>
 <p>PyInstaller <em>freezes</em> an app: it analyses imports to decide which files to bundle. That missed Shiny’s static files, pythonnet’s DLLs and some hidden imports, which needed a long hand-maintained <code>.spec</code> file. Briefcase instead runs <code>pip install</code> into a bundled, standalone Python. The app therefore gets exactly the files a normal install would, including the prebuilt C++ extension from the <code>digiqual</code> wheel. Nothing has to be listed by hand.</p>
 </section>
-<section id="sec-worker-processes" class="level3" data-number="5.2">
-<h3 data-number="5.2" class="anchored" data-anchor-id="sec-worker-processes"><span class="header-section-number">5.2</span> Worker processes and <code>sys.frozen</code></h3>
+<section id="sec-worker-processes" class="level3" data-number="6.2">
+<h3 data-number="6.2" class="anchored" data-anchor-id="sec-worker-processes"><span class="header-section-number">6.2</span> Worker processes and <code>sys.frozen</code></h3>
 <p>The PoD bootstrap runs in parallel with <code>joblib</code> (<code>backend="multiprocessing"</code>), which starts worker processes by running <code>sys.executable</code> again. In the desktop app, <code>sys.executable</code> is the DigiQual app itself, not <code>python</code>, and it can’t run <code>python -c "..."</code> commands. Without special handling, every worker would open another DigiQual window.</p>
 <p>To prevent this, <code>digiqual_desktop/__main__.py</code> sets <code>sys.frozen = True</code>. That makes Python’s <code>multiprocessing</code> start workers as <code>DigiQual --multiprocessing-fork ...</code>. The first thing <code>launcher.main()</code> does is spot those arguments, and the <code>-c</code> commands used by Python’s and joblib’s resource trackers, and run the requested task instead of the app. This mirrors what PyInstaller’s runtime hooks do.</p>
 </section>
-<section id="sec-stdio" class="level3" data-number="5.3">
-<h3 data-number="5.3" class="anchored" data-anchor-id="sec-stdio"><span class="header-section-number">5.3</span> Redirecting stdout and stderr</h3>
+<section id="sec-stdio" class="level3" data-number="6.3">
+<h3 data-number="6.3" class="anchored" data-anchor-id="sec-stdio"><span class="header-section-number">6.3</span> Redirecting stdout and stderr</h3>
 <p>A desktop app has no console, so <code>sys.stdout</code> and <code>sys.stderr</code> are <code>None</code>. uvicorn, the web server under Shiny, calls <code>.isatty()</code> on them while setting up logging, and crashes the server thread. The window then shows a blank page. The launcher points them at the log file before starting the server.</p>
 </section>
-<section id="sec-build-details" class="level3" data-number="5.4">
-<h3 data-number="5.4" class="anchored" data-anchor-id="sec-build-details"><span class="header-section-number">5.4</span> Build details in <code>build_app.yml</code></h3>
+<section id="sec-build-details" class="level3" data-number="6.4">
+<h3 data-number="6.4" class="anchored" data-anchor-id="sec-build-details"><span class="header-section-number">6.4</span> Build details in <code>build_app.yml</code></h3>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 50%">
@@ -466,8 +520,8 @@ scripts/make_icon.py            ← draws the icon; writes app/icons/, gui/www/f
 </table>
 </section>
 </section>
-<section id="sec-build-pipeline" class="level2" data-number="6">
-<h2 data-number="6" class="anchored" data-anchor-id="sec-build-pipeline"><span class="header-section-number">6</span> The Build Pipeline</h2>
+<section id="sec-build-pipeline" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="sec-build-pipeline"><span class="header-section-number">7</span> The Build Pipeline</h2>
 <p><code>.github/workflows/build_app.yml</code> runs on Windows and macOS:</p>
 <ol type="1">
 <li>Build the <code>digiqual</code> wheel for Python 3.12 with cibuildwheel. This is the same C++ build that goes to PyPI.</li>
@@ -484,8 +538,8 @@ scripts/make_icon.py            ← draws the icon; writes app/icons/, gui/www/f
 </ul>
 <p>The version comes from <code>app/pyproject.toml</code>, which <code>just bump</code> keeps in step with the package version.</p>
 </section>
-<section id="sec-local-dev" class="level2" data-number="7">
-<h2 data-number="7" class="anchored" data-anchor-id="sec-local-dev"><span class="header-section-number">7</span> Working on the App Locally</h2>
+<section id="sec-local-dev" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="sec-local-dev"><span class="header-section-number">8</span> Working on the App Locally</h2>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 50%">
@@ -499,7 +553,7 @@ scripts/make_icon.py            ← draws the icon; writes app/icons/, gui/www/f
 </thead>
 <tbody>
 <tr class="odd">
-<td>Edit the UI with live reload in a browser</td>
+<td>Run the app in a browser, without the launcher (restart it to see code changes)</td>
 <td><code>just app_dev</code></td>
 </tr>
 <tr class="even">
@@ -531,11 +585,12 @@ scripts/make_icon.py            ← draws the icon; writes app/icons/, gui/www/f
 <li><strong>Linux:</strong> <code>~/.local/share/Digiqual/digiqual.log</code></li>
 </ul>
 </section>
-<section id="sec-common-changes" class="level2" data-number="8">
-<h2 data-number="8" class="anchored" data-anchor-id="sec-common-changes"><span class="header-section-number">8</span> Common Changes</h2>
+<section id="sec-common-changes" class="level2" data-number="9">
+<h2 data-number="9" class="anchored" data-anchor-id="sec-common-changes"><span class="header-section-number">9</span> Common Changes</h2>
 <p><strong>Adding a dependency.</strong> Add it to <code>dependencies</code> in the root <code>pyproject.toml</code>; the desktop app picks it up through the wheel. Check that it publishes wheels for Windows x64, macOS arm64 (macOS 12+) and Python 3.12. If it only publishes source, the desktop build fails or falls back to an older version; build a wheel of it in <code>build_app.yml</code> the way <code>proxy_tools</code> is.</p>
 <p><strong>Adding a static file</strong> (an image, CSS or JavaScript) to the app: put it in <code>src/digiqual/gui/www/</code> and refer to it by file name (e.g.&nbsp;<code>src="my_image.png"</code>). It is packaged automatically.</p>
-<p><strong>Adding a page or feature to the app:</strong> edit the relevant <code>tab_*.py</code> module (each holds that tab’s UI and a <code>register(...)</code> function with its server logic; shared reactive state lives in <code>state.py</code>). A new tab is a new module, added to <code>app.py</code>. Prefer calling library functions (and <code>digiqual.defaults</code> for default values) over re-implementing statistics in the GUI. Nothing in <code>app/</code> or the workflow needs to change.</p>
+<p><strong>Adding a page or feature to the app:</strong> edit the relevant <code>stage_*.py</code> module. Each builds its page with <code>components.stage_page()</code> (settings sidebar, results, Back / Next) and has a <code>register(...)</code> function with its server logic; shared reactive state lives in <code>state.py</code>. A new stage is a new module, added to <code>STAGE_MODULES</code> in <code>app.py</code>, to <code>STAGES</code> in <code>components.py</code> (which names the stages everywhere: stepper, start page, buttons), to the status rules in <code>stepper.stage_statuses</code> and, if those rules need new state, to <code>snapshot()</code> in <code>stepper.register</code>. A page that is not a stage (like Start and About) is a <code>ui.nav_panel</code> added to the <code>navset_hidden</code> in <code>app.py</code> and to the <code>("start", "about")</code> check in <code>stepper_ui</code>, which hides the stepper on it. Navigation needs no server code per button: <code>components.nav_button()</code> sets the <code>goto_stage</code> input from the browser and one effect in <code>stepper.py</code> switches stage. Prefer calling library functions (and <code>digiqual.defaults</code> for default values) over re-implementing statistics in the GUI. Nothing in <code>app/</code> or the workflow needs to change.</p>
+<p><strong>The desktop menu.</strong> The native window has a <strong>Help</strong> menu with <em>View Documentation</em> (opens the docs site in the browser) and <em>About DigiQual</em> (the version). It is defined in <code>launcher.launch_webview_window</code>, so it only exists in the pywebview window, not in a browser.</p>
 
 
 </section>

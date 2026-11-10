@@ -83,7 +83,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f62cf7f947e0d50e2712b632292fa896.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -898,7 +898,7 @@ Selected model: ('Polynomial', 1)</code></pre>
 <section id="sec-other-pitfalls" class="level3" data-number="5.4">
 <h3 data-number="5.4" class="anchored" data-anchor-id="sec-other-pitfalls"><span class="header-section-number">5.4</span> Other things to be wary of</h3>
 <ul>
-<li><strong>In-sample fit says nothing.</strong> Kriging can pass (almost) through every training point, so in-sample <span class="math inline">\(R^2\)</span> is near 1 for any data. Always judge it by CV or LOO error. The GUI’s model-fit diagnostic uses LOO predictions for Kriging for exactly this reason.</li>
+<li><strong>In-sample fit says nothing.</strong> Kriging can pass (almost) through every training point, so in-sample <span class="math inline">\(R^2\)</span> is near 1 for any data. Always judge it by CV or LOO error. For this reason the app’s <em>Fit quality</em> plot (in Model Diagnostics) shows leave-one-out predictions for Kriging. Its pass/fail mark uses the model’s 10-fold cross-validated <span class="math inline">\(R^2\)</span>, and the <em>Model Fit (CV)</em> check in Data Diagnostics also uses cross-validation (10-fold, of a cubic polynomial).</li>
 <li><strong>One length scale for the whole space (stationarity).</strong> A response that rises steeply for small flaws and then saturates has two very different “natural” length scales, and a stationary GP must compromise. Transforming the input (e.g.&nbsp;working in <span class="math inline">\(\log a\)</span>, as <span class="src src-m25">M25</span> §2g recommends) often makes the response closer to stationary.</li>
 <li><strong>One noise level for the whole space.</strong> The nugget <span class="math inline">\(\tau^2\)</span> is constant. If the real scatter varies strongly, the Kriging surface may be over-smoothed where the scatter is small and under-smoothed where it is large, and the LOO residuals will flag outliers (<span class="math inline">\(\gamma &gt; 1\)</span>). The variance model accounts for the varying scatter in the PoD itself.</li>
 <li><strong>No equation.</strong> A polynomial can be written down and checked by hand. A Kriging model is defined by its training data and hyperparameters, which makes it harder to audit.</li>
@@ -1150,43 +1150,43 @@ Figure&nbsp;3: Standardised LOO residuals for the selected Kriging model.
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;"><a href="../api_reference/pod.fit_all_robust_mean_models.html"><code>pod.fit_all_robust_mean_models</code></a></td>
+<td style="text-align: left;"><a href="../api_reference/digiqual.pod.fit_all_robust_mean_models.html"><code>pod.fit_all_robust_mean_models</code></a></td>
 <td style="text-align: left;">Fits the polynomial pool and the Kriging candidate, scores them, and picks the winner.</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><a href="../api_reference/pod.select_cv_winner.html"><code>pod.select_cv_winner</code></a></td>
+<td style="text-align: left;"><a href="../api_reference/digiqual.pod.select_cv_winner.html"><code>pod.select_cv_winner</code></a></td>
 <td style="text-align: left;">One-standard-error rule.</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;"><a href="../api_reference/pod.build_kriging_candidate_kernels.html"><code>pod.build_kriging_candidate_kernels</code></a></td>
+<td style="text-align: left;"><a href="../api_reference/digiqual.pod.build_kriging_candidate_kernels.html"><code>pod.build_kriging_candidate_kernels</code></a></td>
 <td style="text-align: left;">The four candidate kernels, <span class="math inline">\(\sigma^2 R + \tau^2\delta\)</span>.</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><a href="../api_reference/pod.ScaledGaussianProcessRegressor.html"><code>pod.ScaledGaussianProcessRegressor</code></a></td>
+<td style="text-align: left;"><a href="../api_reference/digiqual.pod.ScaledGaussianProcessRegressor.html"><code>pod.ScaledGaussianProcessRegressor</code></a></td>
 <td style="text-align: left;">GP with UQLab-style input standardisation.</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;"><a href="../api_reference/pod.build_kriging_gpr.html"><code>pod.build_kriging_gpr</code></a></td>
+<td style="text-align: left;"><a href="../api_reference/digiqual.pod.build_kriging_gpr.html"><code>pod.build_kriging_gpr</code></a></td>
 <td style="text-align: left;">An unfitted Kriging model with the production settings.</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><a href="../api_reference/pod.build_fixed_kernel_gpr.html"><code>pod.build_fixed_kernel_gpr</code></a></td>
+<td style="text-align: left;"><a href="../api_reference/digiqual.pod.build_fixed_kernel_gpr.html"><code>pod.build_fixed_kernel_gpr</code></a></td>
 <td style="text-align: left;">A Kriging model with frozen hyperparameters and scaling, for bootstrap refits.</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;"><a href="../api_reference/pod.compute_kriging_loo_residuals.html"><code>pod.compute_kriging_loo_residuals</code></a></td>
+<td style="text-align: left;"><a href="../api_reference/digiqual.pod.compute_kriging_loo_residuals.html"><code>pod.compute_kriging_loo_residuals</code></a></td>
 <td style="text-align: left;">LOO means, variances, standardised residuals and <span class="math inline">\(\gamma\)</span> (<span class="src src-m26">M26</span> Eq. 10–19).</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><a href="../api_reference/pod.compute_kriging_group_loo_means.html"><code>pod.compute_kriging_group_loo_means</code></a></td>
+<td style="text-align: left;"><a href="../api_reference/digiqual.pod.compute_kriging_group_loo_means.html"><code>pod.compute_kriging_group_loo_means</code></a></td>
 <td style="text-align: left;">Leave-one-group-out means, for resamples with duplicates.</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;"><a href="../api_reference/pod.fit_variance_model.html"><code>pod.fit_variance_model</code></a></td>
+<td style="text-align: left;"><a href="../api_reference/digiqual.pod.fit_variance_model.html"><code>pod.fit_variance_model</code></a></td>
 <td style="text-align: left;">Residuals (LOO for Kriging) and bandwidth for the variance model.</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><a href="../api_reference/plotting.plot_kriging_diagnostics.html"><code>plotting.plot_kriging_diagnostics</code></a></td>
+<td style="text-align: left;"><a href="../api_reference/digiqual.plotting.plot_kriging_diagnostics.html"><code>plotting.plot_kriging_diagnostics</code></a></td>
 <td style="text-align: left;">LOO residual histogram and outlier scatter (<span class="src src-m26">M26</span> Fig. 10).</td>
 </tr>
 </tbody>

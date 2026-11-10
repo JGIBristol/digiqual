@@ -81,7 +81,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f62cf7f947e0d50e2712b632292fa896.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -296,7 +296,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.core.SimulationStudy.compute_pod_spectrum" id="toc-digiqual.core.SimulationStudy.compute_pod_spectrum" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.compute_pod_spectrum">compute_pod_spectrum</a></li>
+  <li><a href="#digiqual.core.SimulationStudy.compute_pod_spectrum" id="toc-digiqual.core.SimulationStudy.compute_pod_spectrum" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.compute_pod_spectrum">compute_pod_spectrum</a>
+  <ul class="collapse">
+  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
+  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
+  <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
+  </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.compute_pod_spectrum.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -317,10 +322,97 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    model_override<span class="op">=</span><span class="st">'auto'</span>,</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    force_degree<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    nuisance_dists<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    nuisance_bounds<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Pre-calculates a spectrum of PoD curves across a range of signal thresholds.</p>
+<p>Takes the same settings as <code>pod()</code>. Afterwards <code>pod()</code> calls with these settings, <code>n_boot=0</code> and a threshold inside the observed signal range interpolate from the spectrum instead of integrating. <code>plot_pod_vs_threshold()</code> also reads it. Existing <code>self.pod_results</code> and <code>self.model_results</code> are kept; if there were none, they hold the (unbootstrapped) analysis at the median signal.</p>
+<section id="parameters" class="level2 doc-section doc-section-parameters">
+<h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 40%">
+<col style="width: 10%">
+<col style="width: 43%">
+<col style="width: 6%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>poi_col</td>
+<td>list | str</td>
+<td>The parameter(s) of interest, as in <code>pod()</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>nuisance_col</td>
+<td>list | str | None</td>
+<td>Parameters integrated out, as in <code>pod()</code>.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="odd">
+<td>slice_values</td>
+<td>dict | None</td>
+<td>Values of the sliced parameters, as in <code>pod()</code>.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="even">
+<td>n_threshold_points</td>
+<td>int</td>
+<td>Number of thresholds, evenly spaced between the smallest and largest observed signal.</td>
+<td><code>100</code></td>
+</tr>
+<tr class="odd">
+<td>bandwidth_ratio, model_override, force_degree, nuisance_dists, nuisance_bounds</td>
+<td></td>
+<td>As in <code>pod()</code>.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns" class="level2 doc-section doc-section-returns">
+<h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 18%">
+<col style="width: 72%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Dict</td>
+<td>Dict[str, Any]</td>
+<td><code>thresholds</code> (n_threshold_points,), <code>pod_matrix</code> (grid points x</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Dict[str, Any]</td>
+<td>thresholds) and <code>mean_curve</code>.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="examples" class="level2 doc-section doc-section-examples">
+<h2 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>spec <span class="op">=</span> study.compute_pod_spectrum(poi_col<span class="op">=</span><span class="st">"Length"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>study.plot_pod_vs_threshold()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

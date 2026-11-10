@@ -47,7 +47,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f62cf7f947e0d50e2712b632292fa896.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -262,11 +262,11 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#all-functions" id="toc-all-functions" class="nav-link active" data-scroll-target="#all-functions">All Functions</a>
+  <li><a href="#api-reference" id="toc-api-reference" class="nav-link active" data-scroll-target="#api-reference">API Reference</a>
   <ul class="collapse">
   <li><a href="#standard-workflow" id="toc-standard-workflow" class="nav-link" data-scroll-target="#standard-workflow">Standard Workflow</a></li>
-  <li><a href="#graphical-user-interface" id="toc-graphical-user-interface" class="nav-link" data-scroll-target="#graphical-user-interface">Graphical User Interface</a></li>
   <li><a href="#functional-api" id="toc-functional-api" class="nav-link" data-scroll-target="#functional-api">Functional API</a></li>
+  <li><a href="#settings-and-acceleration" id="toc-settings-and-acceleration" class="nav-link" data-scroll-target="#settings-and-acceleration">Settings and Acceleration</a></li>
   </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -277,26 +277,18 @@ ul.task-list li input[type="checkbox"] {
 
 
 
-<section id="all-functions" class="level1 doc doc-index">
-<h1 class="doc doc-index">All Functions</h1>
+<section id="api-reference" class="level1 doc doc-index">
+<h1 class="doc doc-index">API Reference</h1>
 <section id="standard-workflow" class="level2">
 <h2 class="anchored" data-anchor-id="standard-workflow">Standard Workflow</h2>
-<p>The core class for managing reliability studies.</p>
+<p>The <code>SimulationStudy</code> class runs the whole analysis: diagnostics, refinement, model fitting, PoD and plots. Most users only need this and <code>dq_ui</code>.</p>
 <table class="caption-top table">
 <tbody>
 <tr class="odd">
 <td><a href="../api_reference/core.SimulationStudy.html#digiqual.core.SimulationStudy">core.SimulationStudy</a></td>
 <td>A workflow manager for simulation reliability assessment.</td>
 </tr>
-</tbody>
-</table>
-</section>
-<section id="graphical-user-interface" class="level2">
-<h2 class="anchored" data-anchor-id="graphical-user-interface">Graphical User Interface</h2>
-<p>Launch the standalone DigiQual dashboard locally.</p>
-<table class="caption-top table">
-<tbody>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/dq_ui.html#digiqual.dq_ui">dq_ui</a></td>
 <td>Launch the DigiQual graphical user interface.</td>
 </tr>
@@ -305,164 +297,64 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="functional-api" class="level2">
 <h2 class="anchored" data-anchor-id="functional-api">Functional API</h2>
-<p>Standalone tools for Sampling, Diagnostics, PoD, and Plotting.</p>
+<p>The building blocks <code>SimulationStudy</code> uses, for custom workflows. Each module lists its functions.</p>
 <table class="caption-top table">
 <tbody>
 <tr class="odd">
-<td><a href="../api_reference/sampling.generate_lhs.html#digiqual.sampling.generate_lhs">sampling.generate_lhs</a></td>
-<td>Generates a Latin Hypercube Sample and scales it to the provided variable bounds.</td>
+<td><a href="../api_reference/core.html#digiqual.core">core</a></td>
+<td>The <code>SimulationStudy</code> workflow class, and helpers for choosing its fitted model.</td>
 </tr>
 <tr class="even">
-<td><a href="../api_reference/diagnostics.validate_simulation.html#digiqual.diagnostics.validate_simulation">diagnostics.validate_simulation</a></td>
-<td>Validates simulation data, coercing to numeric and removing invalid rows.</td>
+<td><a href="../api_reference/io.html#digiqual.io">io</a></td>
+<td>Reading simulation results from CSV files.</td>
 </tr>
 <tr class="odd">
-<td><a href="../api_reference/diagnostics.sample_sufficiency.html#digiqual.diagnostics.sample_sufficiency">diagnostics.sample_sufficiency</a></td>
-<td>Performs a suite of statistical diagnostics to evaluate if the current sample size is sufficient.</td>
+<td><a href="../api_reference/sampling.html#digiqual.sampling">sampling</a></td>
+<td>Space-filling experimental designs (Latin Hypercube sampling) for planning simulation runs.</td>
 </tr>
 <tr class="even">
-<td><a href="../api_reference/diagnostics.ValidationError.html#digiqual.diagnostics.ValidationError">diagnostics.ValidationError</a></td>
-<td>Raised when simulation data fails validation checks.</td>
+<td><a href="../api_reference/diagnostics.html#digiqual.diagnostics">diagnostics</a></td>
+<td>Data validation and sample-sufficiency diagnostics: input coverage, model fit, bootstrap stability and collinearity.</td>
 </tr>
 <tr class="odd">
-<td><a href="../api_reference/adaptive.run_adaptive_search.html#digiqual.adaptive.run_adaptive_search">adaptive.run_adaptive_search</a></td>
-<td>Orchestrates the Active Learning loop on raw DataFrames using the Executor architecture.</td>
+<td><a href="../api_reference/adaptive.html#digiqual.adaptive">adaptive</a></td>
+<td>Adaptive refinement: targeted new samples where the diagnostics fail, and the automated simulate-diagnose-refine loop.</td>
 </tr>
 <tr class="even">
-<td><a href="../api_reference/adaptive.generate_targeted_samples.html#digiqual.adaptive.generate_targeted_samples">adaptive.generate_targeted_samples</a></td>
-<td>Active Learning Engine: Generates new samples based on diagnostic failures.</td>
+<td><a href="../api_reference/pod.html#digiqual.pod">pod</a></td>
+<td>Surrogate (mean) models, the variance and error model, PoD curves, bootstrap bounds, reliability indices and sensitivity analysis.</td>
 </tr>
 <tr class="odd">
-<td><a href="../api_reference/pod.fit_all_robust_mean_models.html#digiqual.pod.fit_all_robust_mean_models">pod.fit_all_robust_mean_models</a></td>
-<td>Fits all polynomial models (and optionally Kriging) and returns them for caching.</td>
+<td><a href="../api_reference/integration.html#digiqual.integration">integration</a></td>
+<td>Monte Carlo integration over nuisance parameters, and fitted distributions for them.</td>
 </tr>
 <tr class="even">
-<td><a href="../api_reference/pod.select_cv_winner.html#digiqual.pod.select_cv_winner">pod.select_cv_winner</a></td>
-<td>Picks the expectation model using the one-standard-error rule.</td>
+<td><a href="../api_reference/ahat.html#digiqual.ahat">ahat</a></td>
+<td>The classical linear â-versus-a PoD method (Berens), as a baseline to compare with the generalised method.</td>
 </tr>
 <tr class="odd">
-<td><a href="../api_reference/pod.generate_latex_equation.html#digiqual.pod.generate_latex_equation">pod.generate_latex_equation</a></td>
-<td>Extracts a LaTeX formatted equation from a fitted Polynomial Pipeline.</td>
+<td><a href="../api_reference/plotting.html#digiqual.plotting">plotting</a></td>
+<td>Plots of the signal model, PoD curves and surfaces, and diagnostics. Each draws on the Matplotlib Axes it is given (or a new one) and returns it.</td>
 </tr>
 <tr class="even">
-<td><a href="../api_reference/pod.optimise_bandwidth.html#digiqual.pod.optimise_bandwidth">pod.optimise_bandwidth</a></td>
-<td>Finds the optimal kernel smoothing bandwidth using Leave-One-Out Cross-Validation (LOO-CV).</td>
+<td><a href="../api_reference/executors.html#digiqual.executors">executors</a></td>
+<td>Solver adapters that run simulations for <code>SimulationStudy.optimise</code>: Python functions, command-line programs and MATLAB.</td>
 </tr>
+</tbody>
+</table>
+</section>
+<section id="settings-and-acceleration" class="level2">
+<h2 class="anchored" data-anchor-id="settings-and-acceleration">Settings and Acceleration</h2>
+<p>Default thresholds and levels shared by the library and the app, and the C++ kernels with their NumPy fallback.</p>
+<table class="caption-top table">
+<tbody>
 <tr class="odd">
-<td><a href="../api_reference/pod.fit_variance_model.html#digiqual.pod.fit_variance_model">pod.fit_variance_model</a></td>
-<td>Calculates residuals and defines the smoothing bandwidth for variance estimation.</td>
+<td><a href="../api_reference/defaults.html#digiqual.defaults">defaults</a></td>
+<td>Default settings shared by the library and the app.</td>
 </tr>
 <tr class="even">
-<td><a href="../api_reference/pod.infer_best_distribution.html#digiqual.pod.infer_best_distribution">pod.infer_best_distribution</a></td>
-<td>Selects the best statistical distribution for the standardized residuals using AIC.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/pod.plot_model_selection.html#digiqual.pod.plot_model_selection">pod.plot_model_selection</a></td>
-<td>Generates a normalized bar chart of the Bias-Variance Tradeoff from CV scores,</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/pod.predict_local_std.html#digiqual.pod.predict_local_std">pod.predict_local_std</a></td>
-<td>Estimates the local standard deviation using Gaussian Kernel Smoothing.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/pod.ScaledGaussianProcessRegressor.html#digiqual.pod.ScaledGaussianProcessRegressor">pod.ScaledGaussianProcessRegressor</a></td>
-<td>Gaussian Process regressor that standardises its inputs before fitting.</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/pod.build_kriging_candidate_kernels.html#digiqual.pod.build_kriging_candidate_kernels">pod.build_kriging_candidate_kernels</a></td>
-<td>Builds the candidate covariance kernels evaluated for the Kriging surrogate.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/pod.build_kriging_gpr.html#digiqual.pod.build_kriging_gpr">pod.build_kriging_gpr</a></td>
-<td>Builds an unfitted Kriging model with the production settings.</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/pod.build_fixed_kernel_gpr.html#digiqual.pod.build_fixed_kernel_gpr">pod.build_fixed_kernel_gpr</a></td>
-<td>Builds a Kriging model that reuses already-optimised hyperparameters.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/pod.compute_kriging_loo_residuals.html#digiqual.pod.compute_kriging_loo_residuals">pod.compute_kriging_loo_residuals</a></td>
-<td>Computes exact LOO predictions, variances, standardized residuals e_i,</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/pod.compute_kriging_group_loo_means.html#digiqual.pod.compute_kriging_group_loo_means">pod.compute_kriging_group_loo_means</a></td>
-<td>Leave-one-group-out Kriging means, for data that contains repeated points.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/pod.compute_pod_curve.html#digiqual.pod.compute_pod_curve">pod.compute_pod_curve</a></td>
-<td>Calculates the Probability of Detection (PoD) curve.</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/pod.bootstrap_pod_ci.html#digiqual.pod.bootstrap_pod_ci">pod.bootstrap_pod_ci</a></td>
-<td>Estimates Confidence Bounds for the PoD curve via Bootstrapping.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/pod.calculate_reliability_point.html#digiqual.pod.calculate_reliability_point">pod.calculate_reliability_point</a></td>
-<td>Calculates the defect size (a90/95) where the Lower Confidence Bound</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/pod.calculate_sobol_indices.html#digiqual.pod.calculate_sobol_indices">pod.calculate_sobol_indices</a></td>
-<td>Calculates the Total-Order Sobol sensitivity index for the fitted mean model.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/integration.compute_multi_dim_pod.html#digiqual.integration.compute_multi_dim_pod">integration.compute_multi_dim_pod</a></td>
-<td>Calculates the marginal Probability of Detection (PoD) across a grid of Parameters of Interest (PoI).</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/ahat.fit_linear_a_hat_model.html#digiqual.ahat.fit_linear_a_hat_model">ahat.fit_linear_a_hat_model</a></td>
-<td>Fits a simple linear regression model according to the standard a-hat vs a method.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/ahat.compute_linear_pod_curve.html#digiqual.ahat.compute_linear_pod_curve">ahat.compute_linear_pod_curve</a></td>
-<td>Calculates the PoD curve using the standard a-hat vs a analytical assumptions.</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/ahat.bootstrap_linear_pod_ci.html#digiqual.ahat.bootstrap_linear_pod_ci">ahat.bootstrap_linear_pod_ci</a></td>
-<td>Estimates Confidence Bounds for the classical linear PoD curve via Bootstrapping.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/ahat.plot_linear_signal_model.html#digiqual.ahat.plot_linear_signal_model">ahat.plot_linear_signal_model</a></td>
-<td>Diagnostic Plot: Visualizes the standard linear a-hat vs a model.</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/plotting.plot_signal_model.html#digiqual.plotting.plot_signal_model">plotting.plot_signal_model</a></td>
-<td>Diagnostic Plot 1: Signal vs Parameter of Interest (The Physics).</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/plotting.plot_pod_curve.html#digiqual.plotting.plot_pod_curve">plotting.plot_pod_curve</a></td>
-<td>Result Plot 2: Probability of Detection (The Reliability).</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/plotting.plot_pod_surface.html#digiqual.plotting.plot_pod_surface">plotting.plot_pod_surface</a></td>
-<td>Plots a 2D heatmap / contour for multi-dimensional PoD (2 Parameters of Interest).</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/plotting.plot_signal_surface.html#digiqual.plotting.plot_signal_surface">plotting.plot_signal_surface</a></td>
-<td>Result Plot 1 (Multi-Dimensional): Signal vs Parameters of Interest.</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/plotting.plot_collinearity_matrix.html#digiqual.plotting.plot_collinearity_matrix">plotting.plot_collinearity_matrix</a></td>
-<td>Plots a Pearson correlation matrix heatmap of the input variables to visualize collinearity.</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/plotting.plot_kriging_diagnostics.html#digiqual.plotting.plot_kriging_diagnostics">plotting.plot_kriging_diagnostics</a></td>
-<td>Diagnostic Plot: Visualizes Standardized LOO Residuals and the outlier factor gamma.</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/executors.Executor.html#digiqual.executors.Executor">executors.Executor</a></td>
-<td>THE BLUEPRINT:</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/executors.PythonExecutor.html#digiqual.executors.PythonExecutor">executors.PythonExecutor</a></td>
-<td>THE IN-MEMORY TRANSLATOR:</td>
-</tr>
-<tr class="even">
-<td><a href="../api_reference/executors.CLIExecutor.html#digiqual.executors.CLIExecutor">executors.CLIExecutor</a></td>
-<td>THE HEAVY-DUTY TRANSLATOR (Process Isolation):</td>
-</tr>
-<tr class="odd">
-<td><a href="../api_reference/executors.MatlabExecutor.html#digiqual.executors.MatlabExecutor">executors.MatlabExecutor</a></td>
-<td>THE MATLAB TRANSLATOR:</td>
+<td><a href="../api_reference/cpp_fallback.html#digiqual.cpp_fallback">cpp_fallback</a></td>
+<td>Kernel smoothing and PoD probabilities, using the compiled C++ extension when it is available and NumPy otherwise.</td>
 </tr>
 </tbody>
 </table>

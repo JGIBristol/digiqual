@@ -83,7 +83,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f62cf7f947e0d50e2712b632292fa896.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -420,7 +420,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li><strong>Windows:</strong> <code>%LOCALAPPDATA%\Digiqual\digiqual.log</code> (paste that into the File Explorer address bar)</li>
 <li><strong>macOS:</strong> <code>~/Library/Logs/Digiqual/digiqual.log</code></li>
+<li><strong>Linux</strong> (when launched with Option B or C): <code>~/.local/share/Digiqual/digiqual.log</code></li>
 </ul>
+<p>The app window’s <strong>Help</strong> menu has <em>View Documentation</em> (opens this site) and <em>About DigiQual</em> (shows the version, which is worth including in an issue).</p>
 </section>
 </section>
 <section id="sec-uvx" class="level3" data-number="1.2">
@@ -439,7 +441,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="sec-python-launch" class="level3" data-number="1.3">
 <h3 data-number="1.3" class="anchored" data-anchor-id="sec-python-launch"><span class="header-section-number">1.3</span> Option C: From a Python Script</h3>
 <p>If you are already working inside a Python script or a Jupyter environment, you can launch it locally using the built-in UI function.</p>
-<div id="cb544108" class="cell" data-execution_count="1">
+<div id="8a9d7f02" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Launch the local application</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual <span class="im">import</span> dq_ui</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>

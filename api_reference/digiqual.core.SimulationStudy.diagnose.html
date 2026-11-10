@@ -81,7 +81,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f62cf7f947e0d50e2712b632292fa896.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -296,7 +296,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.core.SimulationStudy.diagnose" id="toc-digiqual.core.SimulationStudy.diagnose" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.diagnose">diagnose</a></li>
+  <li><a href="#digiqual.core.SimulationStudy.diagnose" id="toc-digiqual.core.SimulationStudy.diagnose" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.diagnose">diagnose</a>
+  <ul class="collapse">
+  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
+  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
+  </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.diagnose.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -316,8 +320,88 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    max_allowed_vif<span class="op">=</span>MAX_ALLOWED_VIF,</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Runs statistical diagnostics to evaluate if the current sample size is sufficient.</p>
+<section id="parameters" class="level2 doc-section doc-section-parameters">
+<h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 7%">
+<col style="width: 60%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>max_gap_ratio</td>
+<td>float</td>
+<td>Largest allowed coverage gap, as a fraction of each input’s range.</td>
+<td><code>MAX_GAP_RATIO</code></td>
+</tr>
+<tr class="even">
+<td>min_r2_score</td>
+<td>float</td>
+<td>Minimum cross-validated R² for the model-fit check.</td>
+<td><code>MIN_R2_SCORE</code></td>
+</tr>
+<tr class="odd">
+<td>max_avg_cv</td>
+<td>float</td>
+<td>Maximum average bootstrap spread (relative to the response std).</td>
+<td><code>MAX_AVG_CV</code></td>
+</tr>
+<tr class="even">
+<td>max_max_cv</td>
+<td>float</td>
+<td>Maximum bootstrap spread at any probe point.</td>
+<td><code>MAX_MAX_CV</code></td>
+</tr>
+<tr class="odd">
+<td>max_allowed_vif</td>
+<td>float</td>
+<td>Maximum Variance Inflation Factor for the collinearity check.</td>
+<td><code>MAX_ALLOWED_VIF</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns" class="level2 doc-section doc-section-returns">
+<h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 14%">
+<col style="width: 76%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>pd.DataFrame</td>
+<td>pd.DataFrame: One row per test with its value, threshold and pass/fail</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>pd.DataFrame</td>
+<td>(empty if there is no valid data).</td>
+</tr>
+</tbody>
+</table>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

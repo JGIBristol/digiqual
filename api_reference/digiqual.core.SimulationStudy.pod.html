@@ -81,7 +81,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f62cf7f947e0d50e2712b632292fa896.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -325,7 +325,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    n_jobs<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    nuisance_dists<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    progress_callback<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    nuisance_bounds<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Runs the generalized Probability of Detection (PoD) analysis.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
@@ -397,6 +398,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>n_jobs</td>
 <td>int | None</td>
 <td>Number of worker processes for the bootstrap. <code>None</code> or <code>1</code> (default) runs on a single core; <code>-1</code> uses all cores except two, so the machine stays responsive; <code>n</code> uses <code>n</code>.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="even">
+<td>nuisance_dists</td>
+<td>dict | None</td>
+<td>Non-uniform distributions for nuisance parameters, as returned by <code>estimate_nuisance_distribution</code>.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="odd">
+<td>progress_callback</td>
+<td>callable | None</td>
+<td>Called as <code>(done, total)</code> during the bootstrap.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="even">
+<td>nuisance_bounds</td>
+<td>dict | None</td>
+<td><code>{col: (low, high)}</code> limits for the integration over nuisance parameters. Defaults to the observed data range; limits outside it are clamped to it.</td>
 <td><code>None</code></td>
 </tr>
 </tbody>

@@ -81,7 +81,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f62cf7f947e0d50e2712b632292fa896.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -319,9 +319,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="doc-section doc-section-attributes anchored" data-anchor-id="attributes">Attributes</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 28%">
-<col style="width: 15%">
-<col style="width: 56%">
+<col style="width: 23%">
+<col style="width: 13%">
+<col style="width: 63%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -352,9 +352,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>Data that has passed validation.</td>
 </tr>
 <tr class="odd">
+<td>removed_data</td>
+<td>pd.DataFrame</td>
+<td>Rows dropped by validation (missing, non-numeric or infinite values).</td>
+</tr>
+<tr class="even">
 <td>sufficiency_results</td>
 <td>pd.DataFrame</td>
 <td>The latest diagnostic results.</td>
+</tr>
+<tr class="odd">
+<td>model_results</td>
+<td>Dict</td>
+<td>The fitted model from the latest <code>fit_model()</code> (or <code>pod()</code>) call.</td>
 </tr>
 <tr class="even">
 <td>pod_results</td>
@@ -380,6 +390,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>models_cache</td>
 <td>Dict</td>
 <td>Cached mean models to prevent redundant fitting.</td>
+</tr>
+<tr class="odd">
+<td>cv_scores_cache</td>
+<td>Dict</td>
+<td>Cross-validation error of every candidate model.</td>
+</tr>
+<tr class="even">
+<td>cv_winner_key</td>
+<td>Tuple | None</td>
+<td>Key of the model the one-standard-error rule picks.</td>
 </tr>
 <tr class="odd">
 <td>variance_cache</td>
@@ -436,47 +456,55 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.estimate_compute_time.html#digiqual.core.SimulationStudy.estimate_compute_time">estimate_compute_time</a></td>
-<td>Physics-aware heuristic to estimate PoD computation time in seconds.</td>
+<td>Estimates how long a PoD calculation will take, in seconds.</td>
 </tr>
 <tr class="odd">
+<td><a href="../api_reference/digiqual.core.SimulationStudy.fit_model.html#digiqual.core.SimulationStudy.fit_model">fit_model</a></td>
+<td>Fits the surrogate (mean) model, the variance model and the error distribution.</td>
+</tr>
+<tr class="even">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.get_data_summary.html#digiqual.core.SimulationStudy.get_data_summary">get_data_summary</a></td>
 <td>Calculates the minimum, maximum, and median values for a given column.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.get_unassigned_parameters.html#digiqual.core.SimulationStudy.get_unassigned_parameters">get_unassigned_parameters</a></td>
 <td>Calculates which input variables are not currently assigned as a Parameter</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.linear_pod.html#digiqual.core.SimulationStudy.linear_pod">linear_pod</a></td>
 <td>Runs the classical linear a-hat vs a PoD analysis with bootstrapped bounds.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.optimise.html#digiqual.core.SimulationStudy.optimise">optimise</a></td>
 <td>Runs the automated Active Learning loop (Initialize -&gt; Execute -&gt; Diagnose -&gt; Refine).</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.plot_collinearity.html#digiqual.core.SimulationStudy.plot_collinearity">plot_collinearity</a></td>
 <td>Plots a correlation matrix heatmap of the input variables to inspect collinearity.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.plot_pod_vs_threshold.html#digiqual.core.SimulationStudy.plot_pod_vs_threshold">plot_pod_vs_threshold</a></td>
 <td>Generates a plot of Probability of Detection (y-axis) vs.&nbsp;Detection Threshold (x-axis)</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.pod.html#digiqual.core.SimulationStudy.pod">pod</a></td>
 <td>Runs the generalized Probability of Detection (PoD) analysis.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.refine.html#digiqual.core.SimulationStudy.refine">refine</a></td>
 <td>Identifies gaps or high-variance regions and suggests new simulation points.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.update_slice.html#digiqual.core.SimulationStudy.update_slice">update_slice</a></td>
 <td>Updates the evaluated slice for the PoD surface using Layer 3 Caching.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../api_reference/digiqual.core.SimulationStudy.visualise.html#digiqual.core.SimulationStudy.visualise">visualise</a></td>
 <td>Generates and displays diagnostic plots (Signal Model and PoD Curve).</td>
+</tr>
+<tr class="even">
+<td><a href="../api_reference/digiqual.core.SimulationStudy.visualise_linear.html#digiqual.core.SimulationStudy.visualise_linear">visualise_linear</a></td>
+<td>Plots the results of <code>linear_pod()</code>: the signal model and the PoD curve.</td>
 </tr>
 </tbody>
 </table>

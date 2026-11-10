@@ -48,7 +48,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f62cf7f947e0d50e2712b632292fa896.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -292,11 +292,12 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#sec-tab-design" id="toc-sec-tab-design" class="nav-link active" data-scroll-target="#sec-tab-design"><span class="header-section-number">1</span> Experimental Design</a></li>
-  <li><a href="#sec-tab-diagnostics" id="toc-sec-tab-diagnostics" class="nav-link" data-scroll-target="#sec-tab-diagnostics"><span class="header-section-number">2</span> Simulation Diagnostics</a></li>
-  <li><a href="#sec-tab-model-fit" id="toc-sec-tab-model-fit" class="nav-link" data-scroll-target="#sec-tab-model-fit"><span class="header-section-number">3</span> Model Fit (Physics)</a></li>
-  <li><a href="#sec-tab-explorer" id="toc-sec-tab-explorer" class="nav-link" data-scroll-target="#sec-tab-explorer"><span class="header-section-number">4</span> PoD Explorer (Reliability)</a></li>
-  <li><a href="#sec-tab-uq" id="toc-sec-tab-uq" class="nav-link" data-scroll-target="#sec-tab-uq"><span class="header-section-number">5</span> UQ Analysis (Confidence)</a></li>
+  <li><a href="#sec-layout" id="toc-sec-layout" class="nav-link active" data-scroll-target="#sec-layout"><span class="header-section-number">1</span> Finding Your Way Around</a></li>
+  <li><a href="#sec-tab-design" id="toc-sec-tab-design" class="nav-link" data-scroll-target="#sec-tab-design"><span class="header-section-number">2</span> Simulation Design</a></li>
+  <li><a href="#sec-tab-diagnostics" id="toc-sec-tab-diagnostics" class="nav-link" data-scroll-target="#sec-tab-diagnostics"><span class="header-section-number">3</span> Data Diagnostics</a></li>
+  <li><a href="#sec-tab-model" id="toc-sec-tab-model" class="nav-link" data-scroll-target="#sec-tab-model"><span class="header-section-number">4</span> Model Diagnostics</a></li>
+  <li><a href="#sec-tab-explorer" id="toc-sec-tab-explorer" class="nav-link" data-scroll-target="#sec-tab-explorer"><span class="header-section-number">5</span> Model Explorer</a></li>
+  <li><a href="#sec-tab-pod" id="toc-sec-tab-pod" class="nav-link" data-scroll-target="#sec-tab-pod"><span class="header-section-number">6</span> PoD Analysis</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/docs/gui_manual.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -323,65 +324,166 @@ window.Quarto = {
 
 
 <p>This manual provides a detailed breakdown of the functionality found inside the DigiQual Shiny application. For instructions on how to install or launch the app, see the <a href="../docs/gui.html">Launch the App</a> guide.</p>
-<p>The DigiQual GUI is built with a modern “Fluent” design system and provides a visual alternative to the Python API. Alongside the Home dashboard it has five tabs, used left to right: <strong>Experimental Design</strong>, <strong>Simulation Diagnostics</strong>, <strong>Model Fit</strong>, <strong>PoD Explorer</strong> and <strong>UQ Analysis</strong>. They map directly onto the Python workflow in the <a href="../docs/qs_class.html">Quick Start</a>. The statistics behind each step are explained in <a href="../docs/generalised_pod.html">Generalised PoD</a>.</p>
-<section id="sec-tab-design" class="level2" data-number="1">
-<h2 data-number="1" class="anchored" data-anchor-id="sec-tab-design"><span class="header-section-number">1</span> Experimental Design</h2>
-<p><strong>Purpose:</strong> Generate a statistically sound framework of sampling points for your physics solvers to evaluate.</p>
-<p>Instead of writing scripts to generate arrays, you can visually define your parameters and automatically export a completed Latin Hypercube Sample (LHS).</p>
+<p>The DigiQual app is a guided workflow and a visual alternative to the Python API. It follows the same steps as the <a href="../docs/qs_class.html">Quick Start</a>; the statistics behind each step are explained in <a href="../docs/generalised_pod.html">Generalised PoD</a>.</p>
+<section id="sec-layout" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="sec-layout"><span class="header-section-number">1</span> Finding Your Way Around</h2>
+<p><strong>Start page.</strong> The app opens on a start page with two ways in: <strong>Plan simulations</strong> (go to Simulation Design and build a design to run in your solver) or <strong>Analyse results</strong> (go straight to Data Diagnostics with results you already have). Below them, <em>The workflow</em> gives an overview of the five stages.</p>
+<p><strong>Header.</strong> <strong>DigiQual</strong> and <strong>Home</strong> return to the start page. <strong>About</strong> opens a separate page with the version, links, methodology papers, funders and the disclaimer. <strong>Reset</strong> clears everything and starts again (after a confirmation).</p>
+<p><strong>Stages.</strong> The analysis is split into five stages, shown one at a time:</p>
 <ol type="1">
-<li><strong>Add Variables:</strong> Click “Add Variable” for each continuous parameter in your simulation (e.g., <code>Length</code>, <code>Angle</code>).</li>
-<li><strong>Define Bounds:</strong> Set the minimum and maximum physical limits for each parameter. The LHS algorithm will ensure these bounds are evenly covered.</li>
-<li><strong>Specify Samples:</strong> Enter the total number of initial simulation runs you plan to execute (<span class="math inline">\(N\)</span>).</li>
-<li><strong>Generate Framework:</strong> The tool builds a space-filling Latin Hypercube design. The rows are ordered so that any first <span class="math inline">\(k\)</span> of them are also well spread, so you can run the simulations in order and stop early (<a href="../docs/optimisation.html#sec-diagnostics">how this works</a>).</li>
-<li><strong>Download CSV:</strong> Save <code>generated_sample.csv</code>. You can now feed this CSV into your external solver tool (e.g., MATLAB, Abaqus, ANSYS) to calculate the actual signal responses.</li>
+<li><strong>Simulation Design</strong>: plan the runs (optional).</li>
+<li><strong>Data Diagnostics</strong>: upload the results and check they are sufficient.</li>
+<li><strong>Model Diagnostics</strong>: choose the surrogate model and check its fit.</li>
+<li><strong>Model Explorer</strong>: decide how the model becomes a PoD, and explore it.</li>
+<li><strong>PoD Analysis</strong>: add confidence bounds, read off aX/Y values and export.</li>
+</ol>
+<p>Every stage has the same layout: its settings in a sidebar on the left, its results on the right (with tabs when there is more than one view), and <strong>Back</strong> / <strong>Next</strong> buttons at the bottom.</p>
+<p><strong>The stepper.</strong> The bar under the header shows every stage with its status and a one-line summary of what was decided there (for example <em>250 rows · 2 inputs</em>, <em>Poly 1 · R² 0.83</em>, <em>a90/95 = 7.244</em>). Click any stage to go to it. The stepper is hidden on the start and About pages.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Status</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Green tick</td>
+<td>Done</td>
+</tr>
+<tr class="even">
+<td>Amber warning</td>
+<td>Done, but with a problem worth a look (failed data checks, model R² below the threshold)</td>
+</tr>
+<tr class="odd">
+<td>Amber arrows</td>
+<td>Out of date: something earlier changed (e.g.&nbsp;<em>re-run checks</em>, <em>update needed</em>)</td>
+</tr>
+<tr class="even">
+<td>Grey circle</td>
+<td>Ready to do</td>
+</tr>
+<tr class="odd">
+<td>Spinner</td>
+<td>A background task is running: <em>fitting models…</em>, <em>computing PoD…</em> or <em>bootstrap running…</em></td>
+</tr>
+<tr class="even">
+<td>Faded, with a lock</td>
+<td>Waiting for an earlier stage; opening it explains what’s missing</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="sec-tab-design" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="sec-tab-design"><span class="header-section-number">2</span> Simulation Design</h2>
+<p><strong>Purpose:</strong> Generate a statistically sound set of sampling points for your physics solver to evaluate. This stage is optional.</p>
+<ol type="1">
+<li><strong>Add Variables:</strong> Click “Add Variable” for each continuous parameter in your simulation (e.g., <code>Length</code>, <code>Angle</code>) and set its minimum and maximum. The design covers these ranges evenly.</li>
+<li><strong>Number of runs:</strong> Enter the total number of simulation runs you plan to execute (<span class="math inline">\(N\)</span>).</li>
+<li><strong>Generate Design:</strong> The tool builds a space-filling Latin Hypercube design. The rows are ordered so that any first <span class="math inline">\(k\)</span> of them are also well spread, so you can run the simulations in order and stop early (<a href="../docs/optimisation.html#sec-diagnostics">how this works</a>).</li>
+<li><strong>Download CSV:</strong> Save <code>generated_sample.csv</code> and feed it into your external solver (e.g., MATLAB, Abaqus, ANSYS) to calculate the signal responses.</li>
 </ol>
 </section>
-<section id="sec-tab-diagnostics" class="level2" data-number="2">
-<h2 data-number="2" class="anchored" data-anchor-id="sec-tab-diagnostics"><span class="header-section-number">2</span> Simulation Diagnostics</h2>
-<p><strong>Purpose:</strong> Validate your dataset, detect input correlations, and identify regions where the physics solver failed to provide sufficient coverage or converged poorly.</p>
+<section id="sec-tab-diagnostics" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="sec-tab-diagnostics"><span class="header-section-number">3</span> Data Diagnostics</h2>
+<p><strong>Purpose:</strong> Upload your results and check they are sufficient to model: coverage of the inputs, a learnable signal, stability, and correlated inputs.</p>
 <ol type="1">
-<li><strong>Upload Data:</strong> Upload the CSV containing your completed simulation results.</li>
-<li><strong>Configure Columns:</strong> Select which variables are the inputs (e.g., Flaw Size, Angle) and which is the output (the Signal Response).</li>
-<li><strong>Run Diagnostics:</strong> The engine runs the five diagnostic tests (input coverage, model fit, two bootstrap-stability checks and collinearity). What each test measures and its default threshold are listed in <a href="../docs/optimisation.html#sec-diagnostics">Sampling &amp; Diagnostics</a>.</li>
-<li><strong>Configure Thresholds:</strong> Adjust any of the test thresholds, including <strong>Max Allowed VIF</strong>, to define your own pass limits.</li>
-<li><strong>Collinearity Analysis:</strong> A dedicated card displays a correlation heatmap of your input variables, complete with VIF values and correlation coefficients, highlighting any strongly correlated variables that could destabilize model fitting.</li>
-<li><strong>Remediation:</strong> If the data fails the coverage or model-fit/stability checks, the app offers an Active Learning “Remediation” tool. A collinearity failure is highlighted but can’t be fixed by adding samples; remove or combine the correlated inputs instead. Enter the number of new samples you want, and it will generate a targeted CSV of new coordinates specifically designed to fill the detected gaps and stabilize the model.</li>
+<li><strong>Upload Data:</strong> Upload the CSV containing your completed simulation results, one row per run. The file is cleaned the same way as <code>digiqual.io.read_results_csv</code>:
+<ul>
+<li>column names are trimmed, spaces become underscores and other special characters are removed;</li>
+<li>duplicate names are numbered (e.g.&nbsp;a second <code>Signal</code> becomes <code>Signal_1</code>);</li>
+<li>text columns are dropped, with a warning, and completely empty columns (e.g.&nbsp;from trailing commas) are dropped quietly;</li>
+<li>stray text cells in a numeric column become missing values, with a warning, and those rows are left out when the data is validated.</li>
+</ul>
+The file needs at least two numeric columns.</li>
+<li><strong>Choose Columns:</strong> Select the input variables and the outcome (the signal response). By default the last column is the outcome and all the others are inputs.</li>
+<li><strong>Run Diagnostics:</strong> The engine runs the five diagnostic tests (input coverage, model fit, two bootstrap-stability checks and collinearity). What each test measures and its default threshold are listed in <a href="../docs/optimisation.html#sec-diagnostics">Sampling &amp; Diagnostics</a>. The thresholds can be changed under <em>Diagnostic thresholds</em>; doing so marks the results as out of date until you run the diagnostics again, but keeps the fitted model.</li>
+<li><strong>Status and remediation:</strong> The result card shows whether all checks passed. If the coverage, model fit (CV) or bootstrap stability checks fail, it includes a <strong>Fix it with more runs</strong> box: set <strong>Samples per issue</strong> and press <strong>Generate New Samples</strong> to create new runs targeted at the gaps and unstable regions, then download them as <code>remediation_samples.csv</code>. Run them in your solver and upload the combined results. A collinearity failure can’t be fixed by adding runs; remove or decouple the correlated inputs instead.</li>
+<li><strong>Views:</strong> <strong>Report</strong> (test results, summary statistics and a preview of the data), <strong>Variables</strong> (distribution of each variable, or each input against the outcome, with any coverage gap shaded), <strong>Coverage</strong> (all inputs at once) and <strong>Collinearity</strong> (correlation heatmap with VIF values).</li>
 </ol>
 </section>
-<section id="sec-tab-model-fit" class="level2" data-number="3">
-<h2 data-number="3" class="anchored" data-anchor-id="sec-tab-model-fit"><span class="header-section-number">3</span> Model Fit (Physics)</h2>
-<p><strong>Purpose:</strong> Determine the mathematical structure of your parameters rapidly without heavy computation.</p>
+<section id="sec-tab-model" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="sec-tab-model"><span class="header-section-number">4</span> Model Diagnostics</h2>
+<p><strong>Purpose:</strong> Choose the surrogate model of the signal response and check how well it fits.</p>
+<p><strong>Run models.</strong> Until the data diagnostics have run, this stage only says <em>Run the data diagnostics first.</em>, and the stepper shows it locked. After that, it explains what fitting involves and offers a large <strong>Run models</strong> button. Pressing it fits every candidate model once for the dataset:</p>
 <ol type="1">
-<li><strong>Configure Parameters:</strong> Select up to 2 Parameters of Interest (to plot) and up to 2 Nuisance parameters (to integrate out). Unassigned parameters will automatically be held as constant slices.</li>
-<li><strong>Nuisance Parameters Integration Profile:</strong> For each selected Nuisance variable, you can configure its statistical distribution: <strong>Uniform</strong> (over the observed data limits), <strong>Normal</strong>, <strong>Lognormal</strong> or <strong>Weibull</strong>. The app fits the distribution to the uploaded data (Lognormal and Weibull need positive values) and previews its 95% range. Samples are always kept within the observed limits.</li>
-<li><strong>Select Model:</strong> Choose “Auto (Best Fit)” to let 10-fold cross-validation compare Polynomials (degrees 1–10) and Kriging and pick the simplest model within one standard error of the best (<a href="../docs/generalised_pod.html#sec-model-selection">how the choice is made</a>), or force a specific model type.</li>
-<li><strong>Fit Model:</strong> Click the fit button. The engine fits the mean response, the varying scatter (noise) profile and the error distribution, and keeps them in memory so the next two tabs respond instantly.</li>
-<li><strong>Parameter Sensitivity (Sobol):</strong> Once fit, a <strong>Parameter Sensitivity (Total Effect)</strong> card appears. This displays the total-order Sobol indices (as percentages) for each parameter, ranking them by their direct impact on the signal response (including their multi-dimensional interactions).</li>
-<li><strong>Diagnostics plots:</strong> The tab shows the model-selection chart, the signal fit, and a two-panel fit check: actual vs predicted (pass/fail on the 10-fold cross-validated <span class="math inline">\(R^2\)</span>) and a bootstrap convergence trace.</li>
+<li><strong>Cross-validation:</strong> Polynomials (degrees 1–10) and Kriging are each scored by 10-fold cross-validation (Kriging is skipped above 1000 runs).</li>
+<li><strong>Scatter model:</strong> how the spread of the signal around the model changes across the inputs, and which distribution describes it.</li>
+<li><strong>Sensitivity:</strong> total-order Sobol indices.</li>
+</ol>
+<p>This takes from a few seconds to a minute, depending on the data. The fit runs in the background: a progress panel shows each step, the candidate being scored (e.g.&nbsp;<em>Polynomial, degree 4 (4 of 15)</em>) and the elapsed time. The stepper shows <em>fitting models…</em>, and you can look at other stages meanwhile. When it finishes, the page switches to the model views below; you never need to run it again for this dataset. The models are always trained on <strong>all</strong> input variables, so nothing here depends on which variables you later plot, integrate over or slice.</p>
+<p><strong>Sidebar.</strong> The <strong>Model</strong> dropdown starts at “Auto”, which picks the simplest model within one standard error of the best (<a href="../docs/generalised_pod.html#sec-model-selection">how the choice is made</a>). Pick any other candidate instead. The candidates are already cross-validated and fitted, but the chosen model still needs its scatter model and Sobol indices, so the change runs in the background with a <em>Fitting the chosen model</em> progress panel (quicker for a model you have used before). A choice made while a fit is running is applied when that fit finishes. Below it are the model’s cross-validated <span class="math inline">\(R^2\)</span> (green if it passes the threshold from Data Diagnostics) and the <strong>parameter sensitivity</strong>: total-order Sobol indices, including interactions.</p>
+<p><strong>Views:</strong></p>
+<ul>
+<li><strong>Model selection:</strong> the cross-validation error of every candidate, marking the automatic choice and the one you picked.</li>
+<li><strong>Fit quality:</strong> actual vs predicted (in-sample for polynomials, leave-one-out for Kriging; pass/fail on the 10-fold cross-validated <span class="math inline">\(R^2\)</span>) and a bootstrap convergence trace, judged against the thresholds from Data Diagnostics.</li>
+<li><strong>Kriging residuals</strong> (Kriging only): the standardised leave-one-out residuals, to spot outliers or an over-smooth kernel.</li>
+<li><strong>Equation &amp; statistics:</strong> the fitted equation (polynomials) and the fit statistics.</li>
+</ul>
+<p>If Data Diagnostics found issues, they are listed above the views.</p>
+</section>
+<section id="sec-tab-explorer" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="sec-tab-explorer"><span class="header-section-number">5</span> Model Explorer</h2>
+<p><strong>Purpose:</strong> Decide how the multi-dimensional model is turned into a PoD, and explore it in real time.</p>
+<p>The sidebar holds the chosen model (with a link back to change it), the <strong>Detection Threshold</strong> and the <strong>Update PoD</strong> button. Above the plots, the <strong>PoD setup</strong> table has one row per input variable: its range, its role (chosen with the Plot / Integrate / Slice buttons) and the settings for that role, on one line:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Role</th>
+<th>What it means</th>
+<th>Controls</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Plot</strong></td>
+<td>On the x-axis (1 variable: PoD curve) or one of two axes (2 variables: PoD surface)</td>
+<td>None: the full data range is used</td>
+</tr>
+<tr class="even">
+<td><strong>Integrate</strong></td>
+<td>Averaged out by Monte Carlo integration (at most 2)</td>
+<td>Distribution (<strong>Uniform</strong>, <strong>Normal</strong>, <strong>Lognormal</strong> or <strong>Weibull</strong>, fitted to the data) and the range (<strong>from</strong>, <strong>to</strong>)</td>
+</tr>
+<tr class="odd">
+<td><strong>Slice</strong></td>
+<td>Held at a fixed value</td>
+<td>A slider plus a box for an exact value</td>
+</tr>
+</tbody>
+</table>
+<p>The roles start with the most influential input (highest Sobol index) plotted and the rest sliced at their medians. Exact values are shown and used to 3 decimal places (more only for variables with a very small range). Problems such as no plotted variable or an empty integration range are shown above the <strong>Update PoD</strong> button.</p>
+<p>Under the table, a note for each integrated variable says what will be used: for a fitted distribution its parameters (e.g.&nbsp;μ and σ for Normal) and the range holding 95% of its values, and the range sampled, marked <em>limited to the data range</em> if you typed limits outside the data. If a distribution can’t be fitted, for example Lognormal or Weibull for a variable with values ≤ 0, the note says so and <strong>Uniform</strong> is used instead.</p>
+<ol type="1">
+<li><strong>Update PoD:</strong> After changing the model, which variables are plotted or integrated, or a distribution or integration range, press <strong>Update PoD</strong>. It computes the PoD and a 100-threshold spectrum (<a href="../docs/caching.html">caching details</a>). This runs in the background: a progress panel shows each step in place of the plots, and the stepper shows <em>computing PoD…</em>.</li>
+<li><strong>Slices and threshold (live):</strong> Moving a slice or the <strong>Detection Threshold</strong> (slider or exact value) updates the plots immediately. The slider is for quick moves; type a value for an exact one. Integration ranges are limited to the observed data, because the model can’t be trusted outside it.</li>
+<li><strong>Plots:</strong> the signal model (left) and the PoD curve or surface (right).</li>
 </ol>
 </section>
-<section id="sec-tab-explorer" class="level2" data-number="4">
-<h2 data-number="4" class="anchored" data-anchor-id="sec-tab-explorer"><span class="header-section-number">4</span> PoD Explorer (Reliability)</h2>
-<p><strong>Purpose:</strong> Real-time reliability evaluation using pre-calculated Threshold Spectrums.</p>
-<p>Because the heavy computation was done in <strong>Model Fit</strong>, exploring the reliability surface here is virtually instantaneous (see <a href="../docs/caching.html">Caching Architecture</a> for how).</p>
+<section id="sec-tab-pod" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="sec-tab-pod"><span class="header-section-number">6</span> PoD Analysis</h2>
+<p><strong>Purpose:</strong> Add bootstrap confidence bounds to the PoD from the Model Explorer, read off reliability indices and export the results.</p>
 <ol type="1">
-<li><strong>Detection Threshold:</strong> Dragging this slider interpolates across a pre-calculated 100-threshold spectrum matrix, shifting the PoD S-Curve left and right instantly.</li>
-<li><strong>Dynamic Slice Sliders:</strong> Any parameters you did not assign in <strong>Model Fit</strong> appear here as sliders. Moving a slider isolates a new 2D slice of your multidimensional space. The engine takes a vectorized “Fast Path” to evaluate the new physics and updates the PoD curve in milliseconds without needing to refit the core model.</li>
-<li><strong>Side-by-Side View:</strong> Watch the Signal Response model (left) shift up and down alongside the PoD Curve (right) to intuitively understand the relationship between physics and reliability.</li>
+<li><strong>Analysis setup:</strong> The sidebar summarises the settings the analysis uses (model, plotted, integrated and sliced variables, threshold), with a link back to edit them in the Model Explorer.</li>
+<li><strong>Run Bootstrap:</strong> Set <strong>Iterations</strong> (default 1000, minimum 10) and <strong>Parallel compute (faster)</strong> (on by default; it uses all but two of your CPU cores), then press <strong>Run Bootstrap</strong>. The data is resampled and the chosen model’s shape refitted many times to build the bounds (<a href="../docs/generalised_pod.html#sec-bootstrap">bootstrap details</a>); the bounds reflect parameter uncertainty assuming that shape is correct. The bootstrap runs in the background: a progress panel shows the iterations completed and the elapsed time, the stepper shows <em>bootstrap running…</em>, and you can look at other stages meanwhile.</li>
+<li><strong>Reliability targets:</strong> Choose a <strong>Target PoD (%)</strong> (50, 90, 95, 99) and a <strong>Confidence (%)</strong> (50, 90, 95, 99) to annotate the curve with the matching sizing point (e.g., <code>a90/95</code>). Changing them does not rerun the bootstrap.</li>
+<li><strong>Results:</strong> the PoD curve with confidence bounds, PoD against the detection threshold, the <strong>Reliability Index Matrix</strong> (aX/Y for every combination of Target PoD and Confidence Level) and the selected metric. With two plotted variables the PoD is a surface, so there are no aX/Y sizes or PoD-vs-threshold plot: you get the PoD surface and a <strong>Run Summary</strong> card instead. After a bootstrap the Model Explorer plots also show the confidence bounds, until a slice, the threshold or another setting changes.</li>
+<li><strong>Out-of-date results:</strong> If you change the model or explorer settings after running the bootstrap, the results are kept but marked as out of date (also in the stepper) until you run it again.</li>
+<li><strong>Export:</strong> the export button appears once a bootstrap has run.
+<ul>
+<li><strong>Excel Report:</strong> <code>digiqual_pod_report.xlsx</code>, with sheets for the model (statistics and equation), the analysis setup, the UQ metrics, the PoD curve data and the reliability matrix.</li>
+</ul></li>
 </ol>
-</section>
-<section id="sec-tab-uq" class="level2" data-number="5">
-<h2 data-number="5" class="anchored" data-anchor-id="sec-tab-uq"><span class="header-section-number">5</span> UQ Analysis (Confidence)</h2>
-<p><strong>Purpose:</strong> Construct rigorous Probability of Detection bounds via parallelised Bootstrapping, and inspect threshold sensitivity and multi-confidence level reliability matrices.</p>
-<p>Once you have used the PoD Explorer to find the exact threshold and parameter slice you care about, you move to this final tab to perform Uncertainty Quantification (UQ).</p>
-<ol type="1">
-<li><strong>Bootstrap Configuration:</strong> Define the number of resampling iterations (typically 1000). Enable Parallel Compute to use all but two of your CPU cores (keeping the computer responsive).</li>
-<li><strong>Run UQ:</strong> The model chosen in <strong>Model Fit</strong> is locked, and the data is resampled and refitted many times to build the confidence bounds (<a href="../docs/generalised_pod.html#sec-bootstrap">bootstrap details</a>).</li>
-<li><strong>Select Reliability Targets:</strong> Select a specific <strong>Target PoD</strong> (50%, 90%, 95%, 99%) and a <strong>Confidence Level</strong> (50%, 90%, 95%, 99%) to annotate and display the exact reliability sizing point (e.g., <code>a90/95</code> or <code>a90/90</code>) on the curve.</li>
-<li><strong>Reliability Index Matrix (aX/Y):</strong> When a single Parameter of Interest is analyzed, the app displays a complete matrix table showing the flaw sizing values required to reach standard combinations of Target Probability of Detection (rows) and Confidence Levels (columns).</li>
-<li><strong>Threshold Sensitivity Plot:</strong> The app displays a curve plotting the Probability of Detection against the Detection Threshold for representative defect sizes, showing how changing the threshold affects reliability.</li>
-<li><strong>Export Results:</strong> Download a comprehensive Excel workbook containing your configuration metrics, the model equation (plain text), the raw numerical curve data, and the newly added <strong>Reliability Matrix</strong> spreadsheet tab.</li>
-</ol>
+<p>The report describes the analysis the bootstrap actually ran (model, setup, threshold and iterations), even if you have changed settings since. Target PoD and Confidence don’t change the bootstrap, so the report uses the values selected when it ran: its <em>UQ Metrics</em> sheet reports that aX/Y (all combinations are in its <em>Reliability Matrix</em> sheet).</p>
 
 
 </section>

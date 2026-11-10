@@ -81,7 +81,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f62cf7f947e0d50e2712b632292fa896.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -299,6 +299,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#digiqual.core.SimulationStudy.optimise" id="toc-digiqual.core.SimulationStudy.optimise" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.optimise">optimise</a>
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
+  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
+  <li><a href="#raises" id="toc-raises" class="nav-link" data-scroll-target="#raises">Raises</a></li>
   <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
   </ul></li>
   </ul>
@@ -333,10 +335,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <table class="caption-top table">
 <colgroup>
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 77%">
 <col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 74%">
-<col style="width: 9%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -356,50 +358,133 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="even">
 <td>ranges</td>
 <td>Dict</td>
-<td>Input bounds, e.g.&nbsp;{“Length”: (0, 10)}.</td>
+<td>Input bounds, e.g.&nbsp;{“Length”: (0, 10)}. The keys must match the study’s input columns.</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
-<td>n_start</td>
-<td>int</td>
-<td>Initial sample size (only if data is empty).</td>
-<td><code>20</code></td>
-</tr>
-<tr class="even">
-<td>n_step</td>
-<td>int</td>
-<td>Batch size for refinement.</td>
-<td><code>10</code></td>
-</tr>
-<tr class="odd">
-<td>max_iter</td>
-<td>int</td>
-<td>Max refinement loops.</td>
-<td><code>5</code></td>
-</tr>
-<tr class="even">
-<td>max_hours</td>
-<td>float</td>
-<td>Physical time limit in hours to safely stop the loop.</td>
+<td>outcome_col</td>
+<td>str</td>
+<td>Name of the outcome column. Required when the study has no data yet (cold start), in which case the inputs are taken from the keys of <code>ranges</code>; ignored otherwise. Defaults to None.</td>
 <td><code>None</code></td>
 </tr>
+<tr class="even">
+<td>n_start</td>
+<td>int</td>
+<td>Initial sample size (only if data is empty). Defaults to 20.</td>
+<td><code>20</code></td>
+</tr>
 <tr class="odd">
+<td>n_step</td>
+<td>int</td>
+<td>Batch size for refinement. Defaults to 10.</td>
+<td><code>10</code></td>
+</tr>
+<tr class="even">
+<td>max_iter</td>
+<td>int</td>
+<td>Max refinement loops. Defaults to 5.</td>
+<td><code>5</code></td>
+</tr>
+<tr class="odd">
+<td>max_hours</td>
+<td>float</td>
+<td>Wall-clock time limit in hours after which the loop stops. Defaults to None (no limit).</td>
+<td><code>None</code></td>
+</tr>
+<tr class="even">
+<td>max_gap_ratio</td>
+<td>float</td>
+<td>Largest allowed coverage gap, as a fraction of each input’s range.</td>
+<td><code>MAX_GAP_RATIO</code></td>
+</tr>
+<tr class="odd">
+<td>min_r2_score</td>
+<td>float</td>
+<td>Minimum cross-validated R² for the model-fit check.</td>
+<td><code>MIN_R2_SCORE</code></td>
+</tr>
+<tr class="even">
+<td>max_avg_cv</td>
+<td>float</td>
+<td>Maximum average bootstrap spread (relative to the response std).</td>
+<td><code>MAX_AVG_CV</code></td>
+</tr>
+<tr class="odd">
+<td>max_max_cv</td>
+<td>float</td>
+<td>Maximum bootstrap spread at any probe point.</td>
+<td><code>MAX_MAX_CV</code></td>
+</tr>
+<tr class="even">
 <td>output_csv</td>
 <td>str</td>
 <td>Path to write the output CSV results incrementally.</td>
 <td><code>None</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>max_allowed_vif</td>
 <td>float</td>
 <td>Collinearity (VIF) threshold. Collinearity cannot be fixed by sampling, so a failure stops the loop with a warning.</td>
 <td><code>MAX_ALLOWED_VIF</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>seed</td>
 <td>int</td>
 <td>Seed for reproducible designs and refinements.</td>
 <td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns" class="level2 doc-section doc-section-returns">
+<h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 80%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>None</td>
+<td>None</td>
+<td><code>data</code> (and the cleaned data) are replaced with all inputs and</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>None</td>
+<td>outcomes collected by the loop, existing rows included.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="raises" class="level2 doc-section doc-section-raises">
+<h2 class="doc-section doc-section-raises anchored" data-anchor-id="raises">Raises</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 9%">
+<col style="width: 83%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>ValueError</td>
+<td>If <code>outcome_col</code> is missing on a cold start, or the keys of <code>ranges</code> do not match the study’s inputs.</td>
 </tr>
 </tbody>
 </table>

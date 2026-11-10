@@ -81,7 +81,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f62cf7f947e0d50e2712b632292fa896.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -296,7 +296,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.core.SimulationStudy.linear_pod" id="toc-digiqual.core.SimulationStudy.linear_pod" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.linear_pod">linear_pod</a></li>
+  <li><a href="#digiqual.core.SimulationStudy.linear_pod" id="toc-digiqual.core.SimulationStudy.linear_pod" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.linear_pod">linear_pod</a>
+  <ul class="collapse">
+  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
+  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
+  <li><a href="#raises" id="toc-raises" class="nav-link" data-scroll-target="#raises">Raises</a></li>
+  <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
+  </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.linear_pod.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -318,8 +324,145 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    progress_callback<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Runs the classical linear a-hat vs a PoD analysis with bootstrapped bounds.</p>
+<p>Fits a straight line to the outcome against <code>poi_col</code> (optionally on log axes) with Gaussian residuals, computes the PoD curve on 100 points across the observed range and bootstraps confidence bounds. Uses the cleaned data and the study’s outcome column. Results are stored in <code>linear_pod_results</code>.</p>
+<section id="parameters" class="level2 doc-section doc-section-parameters">
+<h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 5%">
+<col style="width: 76%">
+<col style="width: 6%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>poi_col</td>
+<td>str</td>
+<td>The parameter of interest (e.g.&nbsp;defect size).</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>threshold</td>
+<td>float</td>
+<td>Detection threshold on the outcome, in its original units.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>xlog</td>
+<td>bool</td>
+<td>Fit against log(<code>poi_col</code>). Defaults to False.</td>
+<td><code>False</code></td>
+</tr>
+<tr class="even">
+<td>ylog</td>
+<td>bool</td>
+<td>Fit log(outcome). Defaults to False.</td>
+<td><code>False</code></td>
+</tr>
+<tr class="odd">
+<td>n_boot</td>
+<td>int</td>
+<td>Bootstrap iterations for the confidence bounds; 0 skips them (bounds then equal the PoD curve and a90/95 is NaN). Defaults to 1000.</td>
+<td><code>1000</code></td>
+</tr>
+<tr class="even">
+<td>n_jobs</td>
+<td>int</td>
+<td>Parallel workers for the bootstrap. Defaults to None.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="odd">
+<td>progress_callback</td>
+<td>callable</td>
+<td>Called with bootstrap progress. Defaults to None.</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns" class="level2 doc-section doc-section-returns">
+<h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 18%">
+<col style="width: 73%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Dict[str, Any]</td>
+<td>Dict[str, Any]: The results, also stored in <code>linear_pod_results</code>. Keys</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Dict[str, Any]</td>
+<td>include <code>"model"</code>, <code>"tau"</code> (residual std), <code>"X_eval"</code>,</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td>Dict[str, Any]</td>
+<td><code>"curves"</code> (<code>mean_response</code>, <code>pod</code>, <code>ci_lower</code>, <code>ci_upper</code>),</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Dict[str, Any]</td>
+<td><code>"ci_bounds"</code> (per confidence level), <code>"a90_95"</code> and</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td>Dict[str, Any]</td>
+<td><code>"reliability_table"</code> (keyed by <code>(target PoD %, confidence %)</code>).</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="raises" class="level2 doc-section doc-section-raises">
+<h2 class="doc-section doc-section-raises anchored" data-anchor-id="raises">Raises</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 15%">
+<col style="width: 74%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>ValueError</td>
+<td>If there is no valid data or <code>poi_col</code> is not a column.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="examples" class="level2 doc-section doc-section-examples">
+<h2 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> study.linear_pod(poi_col<span class="op">=</span><span class="st">"Length"</span>, threshold<span class="op">=</span><span class="fl">4.0</span>, n_boot<span class="op">=</span><span class="dv">500</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(res[<span class="st">"a90_95"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

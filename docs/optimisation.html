@@ -83,7 +83,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f62cf7f947e0d50e2712b632292fa896.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -413,10 +413,10 @@ window.Quarto = {
 </section>
 <section id="sec-diagnostics" class="level2" data-number="2">
 <h2 data-number="2" class="anchored" data-anchor-id="sec-diagnostics"><span class="header-section-number">2</span> Sampling &amp; Diagnostics</h2>
-<p>The same sampling and diagnostic tools are used by <code>optimise</code>, by <code>study.diagnose()</code> / <code>study.refine()</code> in the <a href="../docs/qs_class.html">Quick Start</a>, and by the <em>Experimental Design</em> and <em>Simulation Diagnostics</em> tabs of the <a href="../docs/gui_manual.html">app</a>.</p>
+<p>The same sampling and diagnostic tools are used by <code>optimise</code>, by <code>study.diagnose()</code> / <code>study.refine()</code> in the <a href="../docs/qs_class.html">Quick Start</a>, and by the <em>Simulation Design</em> and <em>Data Diagnostics</em> stages of the <a href="../docs/gui_manual.html">app</a>.</p>
 <section id="sec-lhs" class="level3" data-number="2.1">
 <h3 data-number="2.1" class="anchored" data-anchor-id="sec-lhs"><span class="header-section-number">2.1</span> Space-filling designs</h3>
-<p><code>digiqual.sampling.generate_lhs(n, ranges)</code> (the app’s <em>Experimental Design</em> tab) draws a Latin Hypercube Sample over the input ranges. It then reorders the points with a <strong>greedy max-min distance algorithm</strong>: each next point is the one furthest from all points chosen so far. As a result, any first <span class="math inline">\(k\)</span> rows of the design are themselves as space-filling as possible, so you can run the simulations in order and stop early, or run them in batches, and still have good coverage.</p>
+<p><code>digiqual.sampling.generate_lhs(n, ranges)</code> (the app’s <em>Simulation Design</em> stage) draws a Latin Hypercube Sample over the input ranges. It then reorders the points with a <strong>greedy max-min distance algorithm</strong>: each next point is the one furthest from all points chosen so far. As a result, any first <span class="math inline">\(k\)</span> rows of the design are themselves as space-filling as possible, so you can run the simulations in order and stop early, or run them in batches, and still have good coverage.</p>
 </section>
 <section id="sec-diagnostic-tests" class="level3" data-number="2.2">
 <h3 data-number="2.2" class="anchored" data-anchor-id="sec-diagnostic-tests"><span class="header-section-number">2.2</span> Diagnostic tests</h3>
@@ -463,7 +463,7 @@ window.Quarto = {
 </tbody>
 </table>
 <p>The bootstrap spread is measured relative to the scatter of the response, so a signal recorded near zero (e.g.&nbsp;in dB) or with a large constant offset is judged fairly. Versions up to 0.27 divided by the mean prediction instead, which made near-zero signals fail regardless of stability.</p>
-<p>If a test fails, <strong>refinement</strong> (<code>study.refine()</code>, or the app’s Remediation tool) generates targeted new points: in the largest coverage gaps, and where a bootstrap committee of models disagrees most (Query-by-Committee). Failed solver runs are excluded from future sampling (see the graveyard, below).</p>
+<p>If a test fails, <strong>refinement</strong> (<code>study.refine()</code>, or <strong>Generate New Samples</strong> in the app’s <em>Fix it with more runs</em> box) generates targeted new points: in the largest coverage gaps, and where a bootstrap committee of models disagrees most (Query-by-Committee). Failed solver runs are excluded from future sampling (see the graveyard, below).</p>
 </section>
 </section>
 <section id="sec-executors" class="level2" data-number="3">
@@ -487,7 +487,7 @@ window.Quarto = {
 <section id="sec-workflow-solver" class="level3" data-number="4.1">
 <h3 data-number="4.1" class="anchored" data-anchor-id="sec-workflow-solver"><span class="header-section-number">4.1</span> Define a Solver and Executor</h3>
 <p>For this tutorial, we will write a standard Python function to simulate our physics. We will then wrap it in the <code>PythonExecutor</code>.</p>
-<div id="0c64a2e3" class="cell" data-execution_count="1">
+<div id="a6dbfea2" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> PythonExecutor</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -533,7 +533,7 @@ window.Quarto = {
 <section id="sec-workflow-configure" class="level3" data-number="4.2">
 <h3 data-number="4.2" class="anchored" data-anchor-id="sec-workflow-configure"><span class="header-section-number">4.2</span> Configure the Study</h3>
 <p>We define our input variables and the ranges we want to explore.</p>
-<div id="99099944" class="cell" data-execution_count="2">
+<div id="f18b652c" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.core <span class="im">import</span> SimulationStudy</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define inputs ranges</span></span>
@@ -546,7 +546,7 @@ window.Quarto = {
 <section id="sec-workflow-run" class="level3" data-number="4.3">
 <h3 data-number="4.3" class="anchored" data-anchor-id="sec-workflow-run"><span class="header-section-number">4.3</span> Run Optimisation</h3>
 <p>This single command handles the entire Active Learning loop:</p>
-<div id="ace815a0" class="cell" data-execution_count="3">
+<div id="2e69bffa" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>study.optimise(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    executor<span class="op">=</span>executor,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    ranges<span class="op">=</span>ranges,</span>
@@ -567,7 +567,6 @@ window.Quarto = {
 --- Iteration 1: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Active Graveyard Tracker: Protecting against 2 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 1 (10 points) ---
    -&gt; Executing Python model for 10 points...
@@ -575,7 +574,6 @@ Diagnostics flagged issues. Initiating Active Learning...
 --- Iteration 2: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Active Graveyard Tracker: Protecting against 2 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 2 (10 points) ---
    -&gt; Executing Python model for 10 points...
@@ -583,36 +581,23 @@ Diagnostics flagged issues. Initiating Active Learning...
 --- Iteration 3: Diagnostics Check ---
 &gt;&gt; Model invalid. Refining design...
 Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Active Graveyard Tracker: Protecting against 3 known bad regions.
  -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
 --- Running Batch 3 (10 points) ---
    -&gt; Executing Python model for 10 points...
 
 --- Iteration 4: Diagnostics Check ---
-&gt;&gt; Model invalid. Refining design...
-Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Active Graveyard Tracker: Protecting against 6 known bad regions.
- -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
---- Running Batch 4 (10 points) ---
-   -&gt; Executing Python model for 10 points...
 
---- Iteration 5: Diagnostics Check ---
-&gt;&gt; Model invalid. Refining design...
-Diagnostics flagged issues. Initiating Active Learning...
- -&gt; Active Graveyard Tracker: Protecting against 6 known bad regions.
- -&gt; Strategy: Exploitation (Targeting high uncertainty regions)
---- Running Batch 5 (10 points) ---
-   -&gt; Executing Python model for 10 points...
+&gt;&gt;&gt; CONVERGENCE REACHED! &lt;&lt;&lt;
 
 ----------------------------------------
 &gt;&gt;&gt; SEARCH COMPLETE &lt;&lt;&lt;
 Total Time:      0.01 minutes
-Successful Runs: 64
-Failed Runs:     6 (in graveyard)
-Total Attempted: 70
+Successful Runs: 49
+Failed Runs:     1 (in graveyard)
+Total Attempted: 50
 ----------------------------------------
 
-Data initialized/overwritten. Total rows: 64</code></pre>
+Data initialized/overwritten. Total rows: 49</code></pre>
 </div>
 </div>
 </section>
@@ -631,17 +616,17 @@ Data initialized/overwritten. Total rows: 64</code></pre>
 <div aria-describedby="fig-results-optim-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="quarto-layout-row">
 <div class="cell-output cell-output-stdout quarto-layout-cell" style="flex-basis: 100.0%;justify-content: flex-start;">
-<pre><code>Total Simulations Run: 64
+<pre><code>Total Simulations Run: 49
 Running validation...
-Validation passed. 64 valid rows ready.
+Validation passed. 49 valid rows ready.
 --- Starting Reliability Analysis (PoIs: ['Length', 'Angle'] - Nuisance: ['Roughness']) ---
 1. Training all surrogate models (Cache Miss)...
--&gt; Selected Model: Polynomial (Degree 2)
+-&gt; Selected Model: Polynomial (Degree 3)
 2. Fitting Variance Model &amp; Inferring Distribution (Cache Miss)...
    -&gt; Optimizing bandwidth via LOO-CV...
 -&gt; Calculating Total-Order Sobol Indices...
-   -&gt; Smoothing Bandwidth: 1.1311 (input std devs)
-   -&gt; Selected Distribution: laplace
+   -&gt; Smoothing Bandwidth: 1.2957 (input std devs)
+   -&gt; Selected Distribution: norm
 3. Integrating PoD Curve from Scratch (Cache Miss)...
 4. Running Bootstrap (1000 iterations on 10 cores)...
    -&gt; [Bootstrap] Running 1000 iterations on 10 worker core(s)...
@@ -687,7 +672,7 @@ Validation passed. 64 valid rows ready.
 <div id="fig-results-optim-2" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-subfloat-fig figure">
 <div aria-describedby="fig-results-optim-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="optimisation_files/figure-html/fig-results-optim-output-3.png" data-ref-parent="fig-results-optim" width="475" height="488" class="figure-img">
+<img src="optimisation_files/figure-html/fig-results-optim-output-3.png" data-ref-parent="fig-results-optim" width="476" height="485" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-results-optim-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 (b) Signal Response Model (Physics)
@@ -761,7 +746,7 @@ end</code></pre>
 <section id="sec-matlab-run" class="level4" data-number="5.1.2">
 <h4 data-number="5.1.2" class="anchored" data-anchor-id="sec-matlab-run"><span class="header-section-number">5.1.2</span> The DigiQual Execution</h4>
 <p>You just provide the name of the MATLAB file. The Executor builds the headless terminal command automatically.</p>
-<div id="2ce99b9a" class="cell" data-execution_count="5">
+<div id="dc27d8e4" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> MatlabExecutor</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>executor <span class="op">=</span> MatlabExecutor(wrapper_name<span class="op">=</span><span class="st">"matlab_wrapper"</span>)</span>
@@ -777,7 +762,7 @@ end</code></pre>
 <section id="sec-cli-solver" class="level4" data-number="5.2.1">
 <h4 data-number="5.2.1" class="anchored" data-anchor-id="sec-cli-solver"><span class="header-section-number">5.2.1</span> The External Solver Script (<code>run_ansys_simulation.py</code>)</h4>
 <p>This script represents your standalone software. It must accept the input and output file paths as command-line arguments, read the input CSV, perform its calculations, and save the output CSV.</p>
-<div id="ebef9af7" class="cell" data-execution_count="6">
+<div id="a2af5531" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -809,7 +794,7 @@ end</code></pre>
 <section id="sec-cli-run" class="level4" data-number="5.2.2">
 <h4 data-number="5.2.2" class="anchored" data-anchor-id="sec-cli-run"><span class="header-section-number">5.2.2</span> The DigiQual Execution</h4>
 <p>You define the exact terminal command needed to run the script above, and pass it to the <code>CLIExecutor</code>.</p>
-<div id="ff92be2c" class="cell" data-execution_count="7">
+<div id="1d68bdf5" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> digiqual.executors <span class="im">import</span> CLIExecutor</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># The exact command you would type into your terminal</span></span>

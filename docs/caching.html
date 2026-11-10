@@ -49,7 +49,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f62cf7f947e0d50e2712b632292fa896.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -78,6 +78,35 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -322,20 +351,21 @@ ul.task-list li input[type="checkbox"] {
 <p>The state of the caches is managed inside <code>core.py</code>. Whenever the physical dataset changes (e.g., a user uploads a new CSV), all caches are instantly wiped to prevent state mismatch.</p>
 <section id="sec-layer-models" class="level3" data-number="2.1">
 <h3 data-number="2.1" class="anchored" data-anchor-id="sec-layer-models"><span class="header-section-number">2.1</span> Layer 1: The Mean Model Cache (<code>models_cache</code>)</h3>
-<p><strong>What it does:</strong> Caches the fundamental physics regressions. <strong>Trigger:</strong> Clicking <strong>Step 1: Fit Physics Model</strong> on the <em>Model Fit</em> tab (or the first <code>study.pod()</code> call).</p>
-<p>Instead of only fitting the single “best” model, the engine evaluates <em>all</em> polynomial degrees (1-10) and the Kriging (Gaussian Process) model via cross-validation, and then fits every one of them to the full dataset. The CV scores, their standard errors (<code>cv_se_</code>) and the automatic choice made by the one-standard-error rule are cached with them (<a href="../docs/generalised_pod.html#sec-model-selection">how the choice is made</a>).</p>
+<p><strong>What it does:</strong> Caches the fundamental physics regressions. <strong>Trigger:</strong> Pressing <strong>Run models</strong> in <em>Model Diagnostics</em> (<code>study.fit_model()</code>), or the first <code>study.pod()</code> call.</p>
+<p>Instead of only fitting the single “best” model, the engine evaluates <em>all</em> polynomial degrees (1-10) and the Kriging (Gaussian Process) model via cross-validation, and then fits every one of them to the full dataset. For Kriging, several candidate kernels are first fitted and scored by leave-one-out error, and only the best is cross-validated (<a href="../docs/kriging_metamodeling.html">details</a>); Kriging is skipped above 1000 runs, because each fit is <span class="math inline">\(O(N^3)\)</span>. The CV scores (<code>cv_scores_cache</code>), their standard errors (<code>cv_se_</code>) and the automatic choice made by the one-standard-error rule (<code>cv_winner_key</code>) are cached with them (<a href="../docs/generalised_pod.html#sec-model-selection">how the choice is made</a>).</p>
 <ul>
 <li><strong>Cache Key:</strong> <code>('Polynomial', 3)</code> or <code>('Kriging', None)</code></li>
 <li><strong>Stored Data:</strong> The fitted <code>scikit-learn</code> pipeline.</li>
-<li><strong>Benefit:</strong> If a user looks at the CV bar chart and decides to manually override the “Auto (Best Fit)” selection from Polynomial Degree 3 to Degree 4, the app retrieves the pre-trained Degree 4 model instantly without running regression again.</li>
+<li><strong>Benefit:</strong> If a user looks at the CV bar chart and switches the Model dropdown from “Auto” (say Polynomial Degree 3) to Degree 4, the app retrieves the pre-trained Degree 4 model instantly without running regression again.</li>
 </ul>
 </section>
 <section id="sec-layer-variance" class="level3" data-number="2.2">
 <h3 data-number="2.2" class="anchored" data-anchor-id="sec-layer-variance"><span class="header-section-number">2.2</span> Layer 2: The Variance Model Cache (<code>variance_cache</code>)</h3>
-<p><strong>What it does:</strong> Caches the heteroscedastic noise profile and parameter sensitivity results. <strong>Trigger:</strong> Resolving a specific mean model.</p>
+<p><strong>What it does:</strong> Caches the heteroscedastic noise profile and parameter sensitivity results. <strong>Trigger:</strong> <code>study.fit_model()</code> for a specific mean model: pressing <strong>Run models</strong> (the automatic choice), choosing another model in <em>Model Diagnostics</em>, or any <code>pod()</code> call, which calls <code>fit_model()</code> itself.</p>
+<p>In the app, a model change is therefore a Layer-1 hit but can be a Layer-2 miss. It runs in the background with a <em>Fitting the chosen model</em> progress panel, and is quick if that model was used before. <code>fit_model()</code> stores its result in <code>study.model_results</code>.</p>
 <p>Once a mean model is selected, the engine must estimate how the noise (variance) changes across the surface. It uses Leave-One-Out Cross-Validation (LOO-CV) to find the optimal smoothing bandwidth for the residuals, and tests candidate statistical distributions to find the best fit. In addition, the engine computes the Total-Order Sobol Sensitivity Indices to quantify parameter importance.</p>
 <ul>
-<li><strong>Cache Key:</strong> The Mean Model key plus the bandwidth setting (e.g., <code>(('Polynomial', 3), None)</code>, where <code>None</code> means the bandwidth was chosen automatically). Layers 3 and 4 build on this key, so changing <code>bandwidth_ratio</code> never reuses a stale variance model.</li>
+<li><strong>Cache Key:</strong> the <code>variance_key</code>: the Mean Model key plus the bandwidth setting (e.g., <code>(('Polynomial', 3), None)</code>, where <code>None</code> means the bandwidth was chosen automatically). Layers 3 and 4 build on this key, so changing <code>bandwidth_ratio</code> never reuses a stale variance model.</li>
 <li><strong>Stored Data:</strong> <code>residuals</code>, <code>bandwidth</code>, <code>dist_info</code> (name and parameters), and <code>sobol_indices</code>.</li>
 <li><strong>Benefit:</strong> Bandwidth optimization and Sobol sensitivity computations are slow. By caching them, the system never has to recalculate the noise profile or parameter sensitivities for a model it has already analyzed.</li>
 </ul>
@@ -345,20 +375,22 @@ ul.task-list li input[type="checkbox"] {
 <p><strong>What it does:</strong> Caches a specific, integrated S-Curve. <strong>Trigger:</strong> Evaluating a specific slice of the parameter space.</p>
 <p>This layer stores the output of the <code>integration.py</code> engine. It locks in the specific grid coordinates (<code>X_eval</code>) and either performs heavy Monte Carlo integration (if there are active nuisance parameters) or fast vectorization (if all other variables are locked as constant slices).</p>
 <ul>
-<li><strong>Cache Key:</strong> <code>(selected_key, threshold, poi_cols, nuisance_cols, slice_values)</code></li>
+<li><strong>Cache Key:</strong> <code>(variance_key, threshold, poi_cols, nuisance_cols, slice_values, nuisance_dists, nuisance_bounds)</code></li>
 <li><strong>Stored Data:</strong> The final <code>pod_curve</code> (1D array), <code>mean_curve</code>, and the mathematical grids used.</li>
 <li><strong>Benefit:</strong> If a user navigates away from a specific slice and then comes back to it, the fully integrated curve is loaded instantly.</li>
 </ul>
 </section>
 <section id="sec-layer-spectrum" class="level3" data-number="2.4">
 <h3 data-number="2.4" class="anchored" data-anchor-id="sec-layer-spectrum"><span class="header-section-number">2.4</span> Layer 4: Threshold Spectrum Cache (<code>threshold_spectrum_cache</code>)</h3>
-<p><strong>What it does:</strong> The “Crown Jewel” that enables real-time threshold scrubbing. <strong>Trigger:</strong> Runs silently in the background immediately after Layer 1 &amp; 2 are complete.</p>
+<p><strong>What it does:</strong> The “Crown Jewel” that enables real-time threshold scrubbing. <strong>Trigger:</strong> Pressing <strong>Update PoD</strong> in the <em>Model Explorer</em> (<code>study.compute_pod_spectrum()</code>), and after each slice change when nothing is integrated.</p>
 <p>The <code>integration.py</code> engine is fully vectorized to handle multiple thresholds simultaneously. Instead of calculating one PoD curve, Layer 4 calculates <strong>100 PoD curves</strong> across the entire minimum-to-maximum range of the signal data in a single array operation.</p>
 <ul>
-<li><strong>Cache Key:</strong> strictly <em>excludes</em> the threshold: <code>(selected_key, poi_cols, nuisance_cols, slice_values)</code></li>
+<li><strong>Cache Key:</strong> strictly <em>excludes</em> the threshold: <code>(variance_key, poi_cols, nuisance_cols, slice_values, nuisance_dists, nuisance_bounds)</code></li>
 <li><strong>Stored Data:</strong> A massive 2D matrix (<code>pod_matrix</code>) where rows are X-axis grid points and columns are the 100 different thresholds.</li>
-<li><strong>Benefit:</strong> When the user drags the “Detection Threshold” slider on the <em>PoD Explorer</em> tab, the app intercepts the slider value, performs a 1D linear interpolation across the pre-calculated <code>pod_matrix</code>, and returns the shifted S-Curve in less than a millisecond.</li>
+<li><strong>Benefit:</strong> When the user drags the “Detection Threshold” slider in the <em>Model Explorer</em>, <code>pod()</code> performs a 1D linear interpolation across the pre-calculated <code>pod_matrix</code> and returns the shifted S-Curve in less than a millisecond.</li>
+<li><strong>Limits:</strong> The spectrum covers the observed signal range only. For a threshold outside it, <code>pod()</code> ignores the spectrum and computes the PoD directly (Layer 3), since interpolation would just repeat the end values. The spectrum is also never used when <code>n_boot &gt; 0</code>.</li>
 </ul>
+<p><code>compute_pod_spectrum()</code> builds the spectrum by calling <code>pod()</code> at the median signal, but it keeps any existing <code>study.pod_results</code> and <code>study.model_results</code>: building the cache doesn’t replace the results you are looking at.</p>
 <hr>
 </section>
 </section>
@@ -367,20 +399,20 @@ ul.task-list li input[type="checkbox"] {
 <p>Let’s trace exactly what happens in the engine when a user interacts with the application.</p>
 <section id="sec-journey-fit" class="level3" data-number="3.1">
 <h3 data-number="3.1" class="anchored" data-anchor-id="sec-journey-fit"><span class="header-section-number">3.1</span> Step 1: The Initial Fit</h3>
-<p>The user uploads 500 simulations of an ultrasonic inspection with <code>Length</code>, <code>Angle</code>, and <code>Roughness</code>. They select <code>Length</code> as the Parameter of Interest, and click <strong>Step 1: Fit Physics Model</strong>.</p>
+<p>The user uploads 500 simulations of an ultrasonic inspection with <code>Length</code>, <code>Angle</code>, and <code>Roughness</code>. They press <strong>Run models</strong> in <em>Model Diagnostics</em>, which fits the candidate models. Then, in the <em>Model Explorer</em>, they plot <code>Length</code>, slice <code>Angle</code> and <code>Roughness</code> at their medians and press <strong>Update PoD</strong>.</p>
 <ol type="1">
-<li><strong>Layer 1 Miss:</strong> The engine trains 10 polynomials and 1 Kriging model. It caches all 11 models. It selects “Polynomial (Degree 2)” as the winner.</li>
+<li><strong>Layer 1 Miss (Run models):</strong> The engine trains 10 polynomials and 1 Kriging model. It caches all 11 models. It selects “Polynomial (Degree 2)” as the winner.</li>
 <li><strong>Layer 2 Miss:</strong> It optimizes the bandwidth and fits a Normal distribution for Poly 2. It caches the variance parameters.</li>
-<li><strong>Layer 3 Miss:</strong> It evaluates the curve using the median threshold (e.g., 15.0 dB) and median slices for Angle and Roughness. It caches this base curve.</li>
-<li><strong>Layer 4 Miss (Background):</strong> The UI says “Generating Instant Threshold Spectrum…”. The engine pulls <code>X_train</code> and the <code>bandwidth</code> from Layer 2, generates a vector of 100 thresholds (from 0 dB to 50 dB), and runs the fast-path vectorized math. The 100-curve matrix is cached.</li>
+<li><strong>Layer 3 Miss (Update PoD):</strong> It evaluates the curve using the median threshold (e.g., 15.0 dB) and median slices for Angle and Roughness. It caches this base curve.</li>
+<li><strong>Layer 4 Miss (Update PoD):</strong> The engine pulls <code>X_train</code> and the <code>bandwidth</code> from Layer 2, generates a vector of 100 thresholds (from 0 dB to 50 dB), and runs the fast-path vectorized math. The 100-curve matrix is cached.</li>
 </ol>
 <p><em>Total Compute Time: ~2.5 seconds.</em></p>
 </section>
 <section id="sec-journey-slider" class="level3" data-number="3.2">
 <h3 data-number="3.2" class="anchored" data-anchor-id="sec-journey-slider"><span class="header-section-number">3.2</span> Step 2: The Real-Time Slider</h3>
-<p>The user moves to the <em>PoD Explorer</em> tab and rapidly drags the <strong>Detection Threshold</strong> slider from <code>15.0 dB</code> to <code>22.5 dB</code>.</p>
+<p>The user rapidly drags the <strong>Detection Threshold</strong> slider from <code>15.0 dB</code> to <code>22.5 dB</code> (inside the observed signal range).</p>
 <ol type="1">
-<li>The <code>realtime_threshold_update</code> function fires in <code>digiqual/gui/app.py</code>.</li>
+<li>The <code>live_update</code> effect fires in <code>digiqual/gui/stage_explorer.py</code>.</li>
 <li>It calls <code>study.pod(threshold=22.5, n_boot=0)</code>.</li>
 <li><strong>Layer 1 Hit:</strong> Poly 2 loaded instantly.</li>
 <li><strong>Layer 2 Hit:</strong> Bandwidth loaded instantly.</li>
@@ -393,7 +425,7 @@ ul.task-list li input[type="checkbox"] {
 <h3 data-number="3.3" class="anchored" data-anchor-id="sec-journey-slice"><span class="header-section-number">3.3</span> Step 3: Changing a Slice</h3>
 <p>The user moves the <strong>Angle Slice Slider</strong> from 0 degrees to 45 degrees.</p>
 <ol type="1">
-<li>The <code>realtime_slice_update</code> function fires.</li>
+<li>The same <code>live_update</code> effect fires.</li>
 <li><strong>Layer 1 &amp; 2 Hit:</strong> Poly 2 physics loaded instantly.</li>
 <li><strong>Layer 4 Miss:</strong> The cache key requires an exact match on <code>slice_values</code>. Because Angle changed, the old matrix doesn’t apply.</li>
 <li>The engine falls back to <code>integration.py</code>. Because <code>Angle</code> is a constant slice (no Monte Carlo required), it takes the Fast Path.</li>
@@ -403,12 +435,12 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="sec-journey-uq" class="level3" data-number="3.4">
 <h3 data-number="3.4" class="anchored" data-anchor-id="sec-journey-uq"><span class="header-section-number">3.4</span> Step 4: Uncertainty Quantification (Bypassing the Cache)</h3>
-<p>The user is happy with a threshold of <code>22.5 dB</code> and clicks <strong>Run Uncertainty Quantification</strong> on the <em>UQ Analysis</em> tab.</p>
+<p>The user is happy with a threshold of <code>22.5 dB</code> and clicks <strong>Run Bootstrap</strong> in the <em>PoD Analysis</em> stage.</p>
 <ol type="1">
-<li>The function calls <code>study.pod(threshold=22.5, n_boot=1000)</code>.</li>
-<li>The engine recognizes <code>n_boot &gt; 0</code>.</li>
-<li>It completely bypasses the Layer 4 slider approximation.</li>
-<li>It calls <code>bootstrap_pod_ci()</code>, firing up parallel CPU cores to resample the data 1,000 times, refitting the models and running strict Layer 3 math on every iteration to build robust Confidence Bounds for a range of levels (50%, 90%, 95%, 99%) simultaneously. These bounds are stored in a <code>ci_bounds</code> dictionary and a full <code>reliability_table</code> matrix.</li>
+<li>With one plotted variable, the bootstrap task first calls <code>study.compute_pod_spectrum()</code> for the PoD-vs-threshold plot. This is a Layer 4 hit unless the slice has moved since Update PoD.</li>
+<li>It then calls <code>study.pod(threshold=22.5, n_boot=1000, n_jobs=...)</code>, with <code>n_jobs=-1</code> (all cores but two) when <em>Parallel compute</em> is ticked, and <code>1</code> otherwise.</li>
+<li>The engine recognizes <code>n_boot &gt; 0</code> and completely bypasses the Layer 4 slider approximation.</li>
+<li>It calls <code>bootstrap_pod_ci()</code>, using the chosen CPU cores to resample the data 1,000 times, refitting the models and running strict Layer 3 math on every iteration to build robust Confidence Bounds for a range of levels (50%, 90%, 95%, 99%) simultaneously. These bounds are stored in a <code>ci_bounds</code> dictionary and a full <code>reliability_table</code> matrix.</li>
 </ol>
 <p><em>Total Compute Time: ~6.0 seconds.</em></p>
 <hr>

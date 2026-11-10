@@ -81,7 +81,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-4351d8c5b8e42bdfdf2e00c64e4894ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f62cf7f947e0d50e2712b632292fa896.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -296,7 +296,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#digiqual.core.SimulationStudy.estimate_compute_time" id="toc-digiqual.core.SimulationStudy.estimate_compute_time" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.estimate_compute_time">estimate_compute_time</a></li>
+  <li><a href="#digiqual.core.SimulationStudy.estimate_compute_time" id="toc-digiqual.core.SimulationStudy.estimate_compute_time" class="nav-link active" data-scroll-target="#digiqual.core.SimulationStudy.estimate_compute_time">estimate_compute_time</a>
+  <ul class="collapse">
+  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
+  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
+  </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/JGIBristol/digiqual/edit/main/api_reference/digiqual.core.SimulationStudy.estimate_compute_time.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/JGIBristol/digiqual/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -309,9 +313,79 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="digiqual.core.SimulationStudy.estimate_compute_time" class="level1">
 <h1>estimate_compute_time</h1>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>estimate_compute_time(model_type, n_boot, n_nuisances, n_jobs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Physics-aware heuristic to estimate PoD computation time in seconds. Accounts for initial cache-building (CV), Kriging complexity, and MC Integration.</p>
+<p>Estimates how long a PoD calculation will take, in seconds.</p>
+<p>A rough heuristic based on the number of samples. It accounts for the first model-selection pass (cross-validation, done when nothing is cached yet), the cost of Kriging, Monte Carlo integration over nuisance inputs and bootstrap parallelism. Intended for progress estimates, not precise timing.</p>
+<section id="parameters" class="level2 doc-section doc-section-parameters">
+<h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 9%">
+<col style="width: 62%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>model_type</td>
+<td>str</td>
+<td><code>"polynomial"</code> or <code>"kriging"</code> (case-insensitive).</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>n_boot</td>
+<td>int</td>
+<td>Number of bootstrap iterations; 0 for a single fit.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>n_nuisances</td>
+<td>int</td>
+<td>Number of nuisance inputs integrated out.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>n_jobs</td>
+<td>int</td>
+<td>Parallel workers for the bootstrap (as in <code>pod()</code>).</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns" class="level2 doc-section doc-section-returns">
+<h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 77%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>float</td>
+<td>float</td>
+<td>Estimated time in seconds (0.0 if there is no data).</td>
+</tr>
+</tbody>
+</table>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
