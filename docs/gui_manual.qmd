@@ -9,11 +9,14 @@ The DigiQual app is a guided workflow and a visual alternative to the Python API
 
 ## Finding Your Way Around {#sec-layout}
 
-**Start page.** The app opens on a start page with two ways in: **Plan simulations** (go to Simulation Design and build a design to run in your solver) or **Analyse results** (go straight to Data Diagnostics with results you already have). Below them, *The workflow* gives an overview of the five stages.
+### Start page
+The app opens on a start page with two ways in: **Plan simulations** (go to Simulation Design and build a design to run in your solver) or **Analyse results** (go straight to Data Diagnostics with results you already have). Below them, *The workflow* gives an overview of the five stages.
 
-**Header.** **DigiQual** and **Home** return to the start page. **About** opens a separate page with the version, links, methodology papers, funders and the disclaimer. **Reset** clears everything and starts again (after a confirmation).
+### Header
+**DigiQual** and **Home** return to the start page. **About** opens a separate page with the version, links, methodology papers, funders and the disclaimer. **Reset** clears everything and starts again (after a confirmation).
 
-**Stages.** The analysis is split into five stages, shown one at a time:
+### Stages:
+The analysis is split into five stages, shown one at a time:
 
 1. **Simulation Design**: plan the runs (optional).
 2. **Data Diagnostics**: upload the results and check they are sufficient.
@@ -23,7 +26,8 @@ The DigiQual app is a guided workflow and a visual alternative to the Python API
 
 Every stage has the same layout: its settings in a sidebar on the left, its results on the right (with tabs when there is more than one view), and **Back** / **Next** buttons at the bottom.
 
-**The stepper.** The bar under the header shows every stage with its status and a one-line summary of what was decided there (for example *250 rows · 2 inputs*, *Poly 1 · R² 0.83*, *a90/95 = 7.244*). Click any stage to go to it. The stepper is hidden on the start and About pages.
+### The stepper
+The bar under the header shows every stage with its status and a one-line summary of what was decided there (for example *250 rows · 2 inputs*, *Poly 1 · R² 0.83*, *a90/95 = 7.244*). Click any stage to go to it. The stepper is hidden on the start and About pages.
 
 | Status | Meaning |
 |---|---|
@@ -54,6 +58,7 @@ Every stage has the same layout: its settings in a sidebar on the left, its resu
     - stray text cells in a numeric column become missing values, with a warning, and those rows are left out when the data is validated.
 
     The file needs at least two numeric columns.
+
 2. **Choose Columns:** Select the input variables and the outcome (the signal response). By default the last column is the outcome and all the others are inputs.
 3. **Run Diagnostics:** The engine runs the five diagnostic tests (input coverage, model fit, two bootstrap-stability checks and collinearity). What each test measures and its default threshold are listed in [Sampling & Diagnostics](optimisation.qmd#sec-diagnostics). The thresholds can be changed under *Diagnostic thresholds*; doing so marks the results as out of date until you run the diagnostics again, but keeps the fitted model.
 4. **Status and remediation:** The result card shows whether all checks passed. If the coverage, model fit (CV) or bootstrap stability checks fail, it includes a **Fix it with more runs** box: set **Samples per issue** and press **Generate New Samples** to create new runs targeted at the gaps and unstable regions, then download them as `remediation_samples.csv`. Run them in your solver and upload the combined results. A collinearity failure can't be fixed by adding runs; remove or decouple the correlated inputs instead.
@@ -63,7 +68,8 @@ Every stage has the same layout: its settings in a sidebar on the left, its resu
 
 **Purpose:** Choose the surrogate model of the signal response and check how well it fits.
 
-**Run models.** Until the data diagnostics have run, this stage only says *Run the data diagnostics first.*, and the stepper shows it locked. After that, it explains what fitting involves and offers a large **Run models** button. Pressing it fits every candidate model once for the dataset:
+### Run models
+Until the data diagnostics have run, this stage only says *Run the data diagnostics first.*, and the stepper shows it locked. After that, it explains what fitting involves and offers a large **Run models** button. Pressing it fits every candidate model once for the dataset:
 
 1. **Cross-validation:** Polynomials (degrees 1–10) and Kriging are each scored by 10-fold cross-validation (Kriging is skipped above 1000 runs).
 2. **Scatter model:** how the spread of the signal around the model changes across the inputs, and which distribution describes it.
@@ -71,9 +77,10 @@ Every stage has the same layout: its settings in a sidebar on the left, its resu
 
 This takes from a few seconds to a minute, depending on the data. The fit runs in the background: a progress panel shows each step, the candidate being scored (e.g. *Polynomial, degree 4 (4 of 15)*) and the elapsed time. The stepper shows *fitting models…*, and you can look at other stages meanwhile. When it finishes, the page switches to the model views below; you never need to run it again for this dataset. The models are always trained on **all** input variables, so nothing here depends on which variables you later plot, integrate over or slice.
 
-**Sidebar.** The **Model** dropdown starts at "Auto", which picks the simplest model within one standard error of the best ([how the choice is made](generalised_pod.qmd#sec-model-selection)). Pick any other candidate instead. The candidates are already cross-validated and fitted, but the chosen model still needs its scatter model and Sobol indices, so the change runs in the background with a *Fitting the chosen model* progress panel (quicker for a model you have used before). A choice made while a fit is running is applied when that fit finishes. Below it are the model's cross-validated $R^2$ (green if it passes the threshold from Data Diagnostics) and the **parameter sensitivity**: total-order Sobol indices, including interactions.
+### Sidebar
+The **Model** dropdown starts at "Auto", which picks the simplest model within one standard error of the best ([how the choice is made](generalised_pod.qmd#sec-model-selection)). Pick any other candidate instead. The candidates are already cross-validated and fitted, but the chosen model still needs its scatter model and Sobol indices, so the change runs in the background with a *Fitting the chosen model* progress panel (quicker for a model you have used before). A choice made while a fit is running is applied when that fit finishes. Below it are the model's cross-validated $R^2$ (green if it passes the threshold from Data Diagnostics) and the **parameter sensitivity**: total-order Sobol indices, including interactions.
 
-**Views:**
+### Views
 
 - **Model selection:** the cross-validation error of every candidate, marking the automatic choice and the one you picked.
 - **Fit quality:** actual vs predicted (in-sample for polynomials, leave-one-out for Kriging; pass/fail on the 10-fold cross-validated $R^2$) and a bootstrap convergence trace, judged against the thresholds from Data Diagnostics.
@@ -107,10 +114,15 @@ Under the table, a note for each integrated variable says what will be used: for
 **Purpose:** Add bootstrap confidence bounds to the PoD from the Model Explorer, read off reliability indices and export the results.
 
 1. **Analysis setup:** The sidebar summarises the settings the analysis uses (model, plotted, integrated and sliced variables, threshold), with a link back to edit them in the Model Explorer.
+
 2. **Run Bootstrap:** Set **Iterations** (default 1000, minimum 10) and **Parallel compute (faster)** (on by default; it uses all but two of your CPU cores), then press **Run Bootstrap**. The data is resampled and the chosen model's shape refitted many times to build the bounds ([bootstrap details](generalised_pod.qmd#sec-bootstrap)); the bounds reflect parameter uncertainty assuming that shape is correct. The bootstrap runs in the background: a progress panel shows the iterations completed and the elapsed time, the stepper shows *bootstrap running…*, and you can look at other stages meanwhile.
+
 3. **Reliability targets:** Choose a **Target PoD (%)** (50, 90, 95, 99) and a **Confidence (%)** (50, 90, 95, 99) to annotate the curve with the matching sizing point (e.g., `a90/95`). Changing them does not rerun the bootstrap.
+
 4. **Results:** the PoD curve with confidence bounds, PoD against the detection threshold, the **Reliability Index Matrix** (aX/Y for every combination of Target PoD and Confidence Level) and the selected metric. With two plotted variables the PoD is a surface, so there are no aX/Y sizes or PoD-vs-threshold plot: you get the PoD surface and a **Run Summary** card instead. After a bootstrap the Model Explorer plots also show the confidence bounds, until a slice, the threshold or another setting changes.
+
 5. **Out-of-date results:** If you change the model or explorer settings after running the bootstrap, the results are kept but marked as out of date (also in the stepper) until you run it again.
+
 6. **Export:** the export button appears once a bootstrap has run.
     - **Excel Report:** `digiqual_pod_report.xlsx`, with sheets for the model (statistics and equation), the analysis setup, the UQ metrics, the PoD curve data and the reliability matrix.
 
