@@ -3,8 +3,19 @@ name: CI/CD
 on:
   push:
     branches: [main, dev]
+    paths-ignore: &docs-only
+      - "docs/**"
+      - "_freeze/**"
+      - "materials/**"
+      - "**.qmd"
+      - "**.md"
+      - "_quarto.yml"
+      - "custom.scss"
+      - "CITATION.cff"
+      - "LICENCE"
   pull_request:
     branches: [main]
+    paths-ignore: *docs-only
   workflow_dispatch:
 
 jobs:
